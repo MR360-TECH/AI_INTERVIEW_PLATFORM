@@ -1,4 +1,4 @@
-Got it — you want the full formatted version (headers, bullet points, etc.) but all in **one single code block** so you only copy once. Here it is:
+
 
 # 🎯 AI Interview Platform
 
@@ -64,4 +64,4 @@ This project was built for academic purposes as part of a BCA curriculum.
 
 ---
 
-That's the whole thing in one block — select all of it (from `# 🎯 AI Interview Platform` down to `academic purposes as part of a BCA curriculum.`), copy once, and paste into the GitHub README editor.
+T
