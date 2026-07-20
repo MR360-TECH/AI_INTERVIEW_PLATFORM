@@ -1,66 +1,116 @@
+# 🤖 AI Interview Platform
 
-
-# 🎯 AI Interview Platform
-
-An AI-powered mock interview web application that helps candidates practice job interviews with real-time, adaptive questioning and instant performance evaluation.
-
-
-
-## 📖 About
-
-This platform simulates a real job interview experience using Google's Gemini AI. Instead of static, pre-written questions, the AI dynamically generates each question based on the candidate's role and their previous answers — making every interview unique and adaptive.
-
-After the interview, the AI evaluates the candidate's performance and provides a score out of 10, key strengths, areas for improvement, and a final verdict — Selected or Rejected.
-
-All interview data is securely stored in a MySQL database, with a dedicated admin dashboard to review candidate performance.
-
-## ✨ Features
-
-- Secure Authentication — Registration and login with hashed passwords
-- Dynamic AI Interviews — Adaptive questions generated in real-time based on candidate responses (5–8 questions per session)
-- AI-Powered Evaluation — Automatic scoring, strengths, and improvement feedback
-- Selection Verdict — Automatic Selected/Rejected decision based on performance
-- Admin Dashboard — View all candidates, filter by today/all-time, view detailed candidate profiles, and manage records
-- Candidate Profiles — Captures education level, course, and semester during registration
-
-## 🛠️ Tech Stack
-
-Backend — Python, Flask
-Database — MySQL via Flask-SQLAlchemy
-AI — Google Gemini API
-Frontend — HTML, Bootstrap 5
-Auth — Werkzeug password hashing, Flask sessions
-
-## ⚙️ Setup & Installation
-
-1. Clone the repository: `git clone https://github.com/MR360-TECH/AI_INTERVIEW_PLATFORM.git` then `cd AI_INTERVIEW_PLATFORM`
-2. Install dependencies: `pip install flask flask_sqlalchemy pymysql werkzeug google-genai python-dotenv`
-3. Set up MySQL by creating a database named `ai_interview_platform` and updating the database connection string in `app.py` with your MySQL credentials
-4. Add your Gemini API key by creating a `.env` file in the project root with `GEMINI_API_KEY=your_api_key_here`, obtainable free at Google AI Studio
-5. Run the app with `python app.py` and visit `http://127.0.0.1:5000` in your browser
-
-## 🔐 Admin Access
-
-Admin credentials are configured directly in `app.py`. Log in with the admin email/password to access the dashboard at `/admin`.
-
-## 📊 Database Schema
-
-The `users` table stores candidate registration details — name, email, password, education, course, and semester.
-The `interview_results` table stores each interview attempt — score, status, strengths, improvements, and timestamp — linked to `users` via foreign key.
-
-## 🚀 Future Improvements
-
-Public deployment for remote access, voice-based interview support, export candidate reports as PDF, and multi-language question support.
-
-## 👤 Author
-
-**Gowtham V**
-
-
-## 📝 License
-
-This project was built for academic purposes as part of a BCA curriculum.
+## 📌 Project Overview
+AI Interview Platform is a full-stack web application developed using Flask, MySQL, and Google Gemini AI. The system simulates a real job interview by asking AI-generated questions based on the candidate's chosen role, evaluates their responses, calculates a score, and provides personalized feedback. It also maintains detailed interview records and an admin dashboard for monitoring candidate activity.
 
 ---
 
-T
+## ✨ Features
+
+- Secure user registration and login
+- Password hashing for enhanced security
+- Candidate profile management
+- Education selection using radio buttons
+- AI-generated interview questions using Google Gemini
+- Dynamic interview based on candidate responses
+- Automatic interview evaluation
+- Score generation (out of 10)
+- Candidate selection based on score
+- Personalized strengths and improvement suggestions
+- Stores interview date and time
+- Records interview status (Selected / Not Selected)
+- Admin-only dashboard
+- Daily interview statistics
+- Today's registrations count
+- Today's interviews count
+- Selected and Not Selected candidate lists
+- Candidate details including Name, Education, Course, Date & Time
+
+---
+
+## 🛠 Technologies Used
+
+- Python
+- Flask
+- HTML5
+- CSS3
+- Bootstrap
+- JavaScript
+- MySQL
+- SQLAlchemy
+- Google Gemini AI API
+- Jinja2
+- Werkzeug Security
+
+---
+
+## 📂 Database
+
+The application stores:
+
+- User Information
+- Login Details
+- Educational Qualification
+- Interview Records
+- Interview Date & Time
+- AI Evaluation
+- Interview Score
+- Selection Status
+- Admin Reports
+
+---
+
+## 👨‍💻 Admin Dashboard
+
+The admin dashboard provides:
+
+- Total Registered Candidates
+- Today's Registrations
+- Total Interviews Conducted
+- Today's Interviews
+- Selected Candidates
+- Not Selected Candidates
+- Complete Candidate Report
+- Interview History with Date & Time
+
+Only the administrator can access this dashboard.
+
+---
+
+## 🎯 Selection Criteria
+
+- **Score > 3** → Selected
+- **Score ≤ 3** → Not Selected
+
+Candidates who are not selected receive a polite message encouraging them to improve and apply again in the future.
+
+---
+
+## 🚀 Future Enhancements
+
+- Resume Upload
+- Voice-Based Interviews
+- Video Interview Support
+- Email Notifications
+- Performance Analytics
+- Company-wise Interview Modules
+- Certificate Generation
+
+---
+
+## 📸 Screens
+
+- Home Page
+- Register
+- Login
+- Dashboard
+- AI Interview
+- Interview Result
+- Admin Dashboard
+
+---
+
+## 👤 Developer
+
+**Gowtham V**
+
