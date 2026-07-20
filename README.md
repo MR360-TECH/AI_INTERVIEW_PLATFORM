@@ -4,8 +4,7 @@
 
 An AI-powered mock interview web application that helps candidates practice job interviews with real-time, adaptive questioning and instant performance evaluation.
 
-**Made by Gowtham V**
-Final Year BCA Project
+
 
 ## 📖 About
 
