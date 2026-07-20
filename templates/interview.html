@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mock Interview Session</title>
+    <style>
+        /* Modern UI Design Configurations */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .interview-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 680px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        /* Top Progress Panel Graphic */
+        .header-panel {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            padding: 24px 32px;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-panel h2 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+        }
+
+        .content-body {
+            padding: 35px 32px;
+        }
+
+        /* AI Prompt Speech Container Graphic */
+        .ai-question-box {
+            background: #f8fafc;
+            border-left: 5px solid #4f46e5;
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 28px;
+        }
+
+        .label-text {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .question-text {
+            color: #1e293b;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* Input Text Area Graphic */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            color: #334155;
+            resize: none;
+            transition: all 0.3s ease;
+            outline: none;
+            background-color: #fafafa;
+        }
+
+        textarea:focus {
+            border-color: #3b82f6;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Action Buttons Graphics */
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+        }
+
+        .btn-exit {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .btn-exit:hover {
+            color: #334155;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="interview-container">
+        <!-- Top Status Bar -->
+        <div class="header-panel">
+            <h2>AI Interview Session</h2>
+            <div class="badge">Question {{ q_num }} of {{ total }}</div>
+        </div>
+
+        <!-- Chat Workspace -->
+        <div class="content-body">
+            
+            <!-- AI Question -->
+            <div class="ai-question-box">
+                <div class="label-text">AI Interviewer</div>
+                <div class="question-text">{{ question }}</div>
+            </div>
+
+            <!-- User Form -->
+            <form action="/interview" method="POST">
+                <div style="margin-bottom: 20px;">
+                    <label for="response-input">Your Response</label>
+                    <textarea id="response-input" name="answer" rows="4" placeholder="Provide your answer to the interviewer..." required></textarea>
+                </div>
+                
+                <div class="action-row">
+                    <a href="/dashboard" class="btn-exit">Quit Interview</a>
+                    <button type="submit" class="btn-submit">Submit Response →</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</body>
+</html>
