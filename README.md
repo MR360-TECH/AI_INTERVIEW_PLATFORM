@@ -112,7 +112,7 @@ This project took me through the full stack — from designing a relational data
 
 ## 📄 License
 
-Built for academic purposes as part of the academic curriculum.
+Built for academic purposes as part of the college curriculum.
 
 ---
 
