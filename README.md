@@ -2,7 +2,7 @@
 
 # 🤖 AI Interview Platform
 
-A full-stack AI-powered mock interview web application developed as a BCA final-year project. This platform conducts genuinely dynamic, adaptive interviews using Google Gemini AI and automatically evaluates candidate performance, while securely managing all data with MySQL.
+A full-stack AI-powered mock interview web application built to help candidates practice realistic, adaptive job interviews using Google Gemini AI, with secure data management powered by MySQL.
 
 **What makes this fundamentally different from typical mock interview tools:**
 
@@ -64,47 +64,32 @@ In short: this isn't a system that *simulates* an interview using pre-set conten
 
 ## 🏗️ System Architecture & Data Flow
 
-```
-┌────────────┐      register/login      ┌────────────┐
-│  Candidate  │ ───────────────────────► │   Flask App  │
-└────────────┘                            └────────────┘
-                                                 │
-                                                 ▼
-                                         ┌─────────────┐
-                                         │  MySQL DB     │
-                                         │  users table   │
-                                         └─────────────┘
-                                                 │
-                              interview session   │
-                                                 ▼
-                                         ┌─────────────┐
-                                         │ Gemini AI API  │
-                                         │ (Question Gen) │
-                                         └─────────────┘
-                                                 │
-                              adaptive Q&A loop   │
-                                          (5–8 rounds)
-                                                 ▼
-                                         ┌─────────────┐
-                                         │ Gemini AI API  │
-                                         │ (Evaluation)    │
-                                         └─────────────┘
-                                                 │
-                                                 ▼
-                                    ┌───────────────────┐
-                                    │  interview_results   │
-                                    │  table (score,        │
-                                    │  verdict, feedback)     │
-                                    └───────────────────┘
-                                                 │
-                                                 ▼
-                                    ┌───────────────────┐
-                                    │   Admin Dashboard     │
-                                    │  (view/filter/delete)  │
-                                    └───────────────────┘
+```mermaid
+flowchart TD
+    A([👤 Candidate]) -->|Register / Login| B[/Flask Application/]
+    B -->|Store Profile| C[(🗄️ MySQL<br/>users table)]
+    B -->|Start Interview| D{{🤖 Gemini AI<br/>Question Generation}}
+    D -->|Adaptive Q&A<br/>5–8 rounds| B
+    B -->|Interview Complete| E{{🤖 Gemini AI<br/>Evaluation Engine}}
+    E -->|Score · Strengths<br/>Improvements| F[(🗄️ MySQL<br/>interview_results table)]
+    C -.->|Linked via user_id| F
+    F -->|Aggregated Data| G([👨‍💼 Admin Dashboard])
+    G -->|View / Filter / Delete| F
+
+    classDef candidate fill:#4e73df,stroke:#224abe,color:#fff,stroke-width:2px
+    classDef app fill:#224abe,stroke:#1a3a9e,color:#fff,stroke-width:2px
+    classDef db fill:#1cc88a,stroke:#17a673,color:#fff,stroke-width:2px
+    classDef ai fill:#8E44AD,stroke:#6c3483,color:#fff,stroke-width:2px
+    classDef admin fill:#e74a3b,stroke:#c0392b,color:#fff,stroke-width:2px
+
+    class A candidate
+    class B app
+    class C,F db
+    class D,E ai
+    class G admin
 ```
 
-Every candidate action flows through Flask, which coordinates between the MySQL database (for persistent storage) and the Gemini API (for live AI reasoning) — keeping the two cleanly separated so the AI never directly touches the database.
+Every candidate action flows through Flask, which coordinates between the MySQL database (for persistent storage) and the Gemini API (for live AI reasoning) — keeping the two cleanly separated so the AI never directly touches the database. The dotted line shows how `interview_results` stays linked back to `users` through the foreign key, allowing the Admin Dashboard to pull complete, joined candidate data in a single view.
 
 ---
 
@@ -128,6 +113,39 @@ Stores each candidate's registration profile: full name, email (unique), hashed 
 Stores every completed interview attempt: score, verdict, AI-generated strengths and improvements (stored as text), and the exact date/time of the interview. Connected to `users` via a foreign key (`user_id`), meaning one candidate can have multiple interview records — a complete, traceable history rather than just a single snapshot.
 
 This relational structure is what powers the Admin Dashboard's ability to join candidate profile data with their interview performance in a single view.
+
+---
+
+## 📊 ER Diagram
+
+```mermaid
+erDiagram
+    USERS ||--o{ INTERVIEW_RESULTS : "has many"
+
+    USERS {
+        int id PK
+        varchar full_name
+        varchar email UK
+        varchar password
+        varchar gender
+        varchar education
+        varchar course
+        varchar semester
+        datetime registered_at
+    }
+
+    INTERVIEW_RESULTS {
+        int id PK
+        int user_id FK
+        decimal score
+        varchar status
+        text strengths
+        text improvements
+        datetime interview_datetime
+    }
+```
+
+Each user can have multiple interview results (one-to-many relationship), with every result traceable back to exactly one candidate through the `user_id` foreign key.
 
 ---
 
@@ -173,4 +191,3 @@ To provide students and job seekers with an AI-powered interview preparation pla
 ## 👨‍💻 Developed By
 
 **Gowtham V**
-
