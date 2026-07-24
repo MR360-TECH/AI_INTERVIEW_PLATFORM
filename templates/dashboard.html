@@ -2,151 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Dashboard</title>
-    <style>
-        /* Modern Premium Layout Styles */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .dashboard-container {
-            background: #ffffff;
-            width: 100%;
-            max-width: 650px;
-            border-radius: 24px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Top Bar Panel */
-        .top-navbar {
-            background: #ffffff;
-            padding: 24px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .welcome-msg {
-            color: #1e293b;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
-        .welcome-msg span {
-            color: #4f46e5;
-        }
-
-        .btn-logout {
-            color: #ef4444;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1.5px solid #fca5a5;
-            transition: all 0.2s ease;
-        }
-
-        .btn-logout:hover {
-            background-color: #fef2f2;
-            border-color: #ef4444;
-        }
-
-        /* Card Workspace Content */
-        .dashboard-body {
-            padding: 40px 32px;
-            text-align: center;
-        }
-
-        .action-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 35px 24px;
-            margin-bottom: 10px;
-        }
-
-        .action-card h3 {
-            color: #1e293b;
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-            letter-spacing: -0.3px;
-        }
-
-        .action-card p {
-            color: #64748b;
-            font-size: 0.95rem;
-            line-height: 1.6;
-            margin-bottom: 28px;
-            max-width: 440px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* Action Launch Button Graphic */
-        .btn-start {
-            display: inline-block;
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-            color: #ffffff;
-            text-decoration: none;
-            padding: 14px 35px;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-        }
-
-        .btn-start:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
-        }
-
-        .btn-start:active {
-            transform: translateY(1px);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <title>Dashboard — AI Recruitment &amp; Assessment Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+<div class="container">
 
-    <div class="dashboard-container">
-        <!-- Top Navigation Status Bar -->
-        <div class="top-navbar">
-            <div class="welcome-msg">Welcome, <span>{{ name }}</span> 👋</div>
-            <a href="/logout" class="btn-logout">Logout</a>
+    <div class="topbar">
+        <div>
+            <h4 class="mb-0">Welcome, <span>{{ name }}</span> 👋</h4>
+            <p class="mb-0 text-muted" style="font-size:0.83rem;margin-top:2px;">AI Recruitment &amp; Assessment Platform &middot; Candidate Portal</p>
         </div>
+        <div class="d-flex gap-2">
+            <a href="/edit-profile" class="icon-btn" title="Edit Profile">
+                <i class="bi bi-person-gear"></i>
+            </a>
+            <a href="/logout" class="icon-btn" title="Logout" style="color:#e74a3b;">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </div>
 
-        <!-- Main Workspace Action Card Panel -->
-        <div class="dashboard-body">
-            <div class="action-card">
-                <h3>Ready for your Mock Interview?</h3>
-                <p>Click below to start a simulated job interview session. You will be asked tailored track questions to practice and evaluate your skills.</p>
-                <a href="/interview" class="btn-start">Start Interview Track →</a>
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-7">
+            {% if error %}
+            <div class="alert alert-danger mb-4 shadow-sm" style="border-radius:12px; font-weight:500;">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="card hero-card">
+                {% if has_progress %}
+                    <h2>Placement Assessment In Progress</h2>
+                    <p>You have an active official assessment session. Resume your placement evaluation or reset to start fresh.</p>
+                {% else %}
+                    <h2>Begin Recruitment Assessment</h2>
+                    <p>Start your formal recruitment evaluation. The AI examiner will conduct an adaptive, domain-specific interview session and compile a certified evaluation report upon completion.</p>
+                {% endif %}
+
+                <div class="d-grid gap-3 mt-3">
+                    <a href="/interview" class="btn btn-main">
+                        {% if has_progress %}Resume Assessment &rarr;{% else %}Start Recruitment Assessment &rarr;{% endif %}
+                    </a>
+
+                    {% if has_progress %}
+                    <a href="/interview?restart=1" class="btn btn-outline-danger" onclick="return confirm('This will discard your current assessment session and start a fresh recruitment evaluation. Are you sure?');">
+                        <i class="bi bi-arrow-clockwise"></i> Reset Assessment Session
+                    </a>
+                    {% endif %}
+
+                    {% if has_result %}
+                    <a href="/latest-result" class="btn btn-history">
+                        <i class="bi bi-file-earmark-text"></i> View Latest Evaluation Report
+                    </a>
+                    {% endif %}
+
+                    <a href="/my-history" class="btn btn-history">
+                        <i class="bi bi-clock-history"></i> Placement Assessment Records
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

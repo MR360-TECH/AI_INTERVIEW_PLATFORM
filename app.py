@@ -1,44 +1,131 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
+from google.genai import types
 import os
+import re
+import json
+from authlib.integrations.flask_client import OAuth
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:1817@localhost/ai_interview_platform'
+# Real-time configurable credentials with environment variables
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@gmail.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
+# Database URL configuration and fallback
+db_url = os.environ.get("DATABASE_URL")
+if not db_url:
+    db_user = os.environ.get("DB_USER", "root")
+    db_pass = os.environ.get("DB_PASSWORD", "1817")
+    db_host = os.environ.get("DB_HOST", "localhost")
+    db_name = os.environ.get("DB_NAME", "ai_interview_platform")
+    db_url = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}'
+
+# Verify MySQL connection or fallback to SQLite
+if db_url.startswith("mysql"):
+    try:
+        import pymysql
+        match = re.match(r'mysql\+pymysql://([^:]+):([^@]+)@([^/:]+)(?::(\d+))?/([^?]+)', db_url)
+        if match:
+            user, password, host, port, db_name = match.groups()
+            port = int(port) if port else 3306
+            # Connect to MySQL server to ensure it is alive and create database if missing
+            conn = pymysql.connect(
+                host=host,
+                user=user,
+                password=password,
+                port=port,
+                connect_timeout=3
+            )
+            with conn.cursor() as cursor:
+                cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+            conn.close()
+            print(f"Verified/Created MySQL database '{db_name}' successfully.")
+        else:
+            raise ValueError("Invalid MySQL URI format")
+    except Exception as e:
+        print(f"MySQL database connection failed ({e}). Falling back to local SQLite database.")
+        db_url = "sqlite:///ai_interview_platform.db"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 MODEL_NAME = "gemini-flash-lite-latest"
 
 
-import re
+from authlib.integrations.flask_client import OAuth
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
+
+oauth = OAuth(app)
+if has_google_oauth:
+    google = oauth.register(
+        name='google',
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'}
+    )
+else:
+    google = None
+
 
 def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
 
-MIN_QUESTIONS = 3
-MAX_QUESTIONS = 8
-PASS_SCORE = 3
-ADMIN_EMAIL = "admin@gmail.com"
-ADMIN_PASSWORD = "admin123"
 
+def profile_is_complete(user):
+    return bool(user.gender and user.education and user.course and user.semester)
+
+
+def analyze_attachment(file_bytes, mime_type, context_hint=""):
+    try:
+        prompt = "Analyze this file in the context of a job interview. " + context_hint + " Be factual and concise, 2-4 sentences only."
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                prompt
+            ]
+        )
+        return response.text.strip()
+    except Exception as e:
+        return "Could not analyze the attached file."
 
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    password = db.Column(db.String(255), nullable=True)
     gender = db.Column(db.String(10))
     education = db.Column(db.String(50))
     course = db.Column(db.String(100))
     semester = db.Column(db.String(20))
+    auth_provider = db.Column(db.String(20), default='local')
+    google_id = db.Column(db.String(100), unique=True, nullable=True)
     registered_at = db.Column(db.DateTime, server_default=db.func.now())
 
 
@@ -50,7 +137,55 @@ class InterviewResult(db.Model):
     status = db.Column(db.String(20))
     strengths = db.Column(db.Text)
     improvements = db.Column(db.Text)
+    summary = db.Column(db.Text)
+    domain = db.Column(db.String(150))
     interview_datetime = db.Column(db.DateTime, server_default=db.func.now())
+
+
+class InterviewProgress(db.Model):
+    __tablename__ = 'interview_progress'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    chat_history = db.Column(db.Text, default='[]')
+    q_count = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+
+
+class AdminSettings(db.Model):
+    __tablename__ = 'admin_settings'
+    id = db.Column(db.Integer, primary_key=True)
+    min_questions = db.Column(db.Integer, default=3)
+    max_questions = db.Column(db.Integer, default=8)
+    pass_score = db.Column(db.Integer, default=3)
+    default_difficulty = db.Column(db.String(20), default='student')
+
+
+def get_settings():
+    settings = AdminSettings.query.first()
+    if not settings:
+        settings = AdminSettings(min_questions=3, max_questions=8, pass_score=3, default_difficulty='student')
+        db.session.add(settings)
+        db.session.commit()
+    # backfill for existing rows that predate this column
+    if not settings.default_difficulty:
+        settings.default_difficulty = 'student'
+        db.session.commit()
+    return settings
+
+
+def save_progress(user_id, chat_history, q_count):
+    progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    if not progress:
+        progress = InterviewProgress(user_id=user_id)
+        db.session.add(progress)
+    progress.chat_history = json.dumps(chat_history)
+    progress.q_count = q_count
+    db.session.commit()
+
+
+def clear_progress(user_id):
+    InterviewProgress.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
 
 
 @app.route("/")
@@ -60,41 +195,85 @@ def home():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    is_google = request.args.get("google") == "1"
+    is_guest = request.args.get("guest") == "1"
+
     if request.method == "POST":
         full_name = request.form["full_name"]
-        email = request.form["email"]
-        password = request.form["password"]
         gender = request.form.get("gender")
         education = request.form.get("education")
         course = request.form.get("course")
         semester = request.form.get("semester")
 
-        if not is_valid_email(email):
-            return render_template("register.html", error="Please enter a valid email address.")
+        if session.get("pending_google_email"):
+            email = session.get("pending_google_email")
+            new_user = User(
+                full_name=full_name,
+                email=email,
+                password=None,
+                gender=gender,
+                education=education,
+                course=course,
+                semester=semester,
+                auth_provider="google",
+                google_id=session.get("pending_google_id")
+            )
+            session.pop("pending_google_email", None)
+            session.pop("pending_google_name", None)
+            session.pop("pending_google_id", None)
 
-        if email == ADMIN_EMAIL:
-            return render_template("register.html", error="This email is reserved. Please use a different email.")
+        elif session.get("pending_guest_email"):
+            email = session.get("pending_guest_email")
+            new_user = User(
+                full_name=full_name,
+                email=email,
+                password=session.get("pending_guest_password"),
+                gender=gender,
+                education=education,
+                course=course,
+                semester=semester,
+                auth_provider="local"
+            )
+            session.pop("pending_guest_email", None)
+            session.pop("pending_guest_password", None)
 
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            return render_template("register.html", error="Email already registered. Please login.")
+        else:
+            return redirect("/login")
 
-        hashed_pw = generate_password_hash(password)
-        new_user = User(
-            full_name=full_name,
-            email=email,
-            password=hashed_pw,
-            gender=gender,
-            education=education,
-            course=course,
-            semester=semester
-        )
         db.session.add(new_user)
         db.session.commit()
 
+        session["user_id"] = new_user.id
+        session["user_name"] = new_user.full_name
+        return redirect("/dashboard")
+
+    if not session.get("pending_google_email") and not session.get("pending_guest_email"):
         return redirect("/login")
 
-    return render_template("register.html")
+    prefill_name = session.get("pending_google_name", "")
+    prefill_email = session.get("pending_google_email") or session.get("pending_guest_email", "")
+
+    return render_template("register.html", is_google=is_google, is_guest=is_guest, prefill_name=prefill_name, prefill_email=prefill_email)
+
+@app.route("/guest-signup", methods=["POST"])
+def guest_signup():
+    email = request.form["email"]
+    password = request.form["password"]
+
+    if not is_valid_email(email):
+        return render_template("login.html", error="Please enter a valid email address.")
+
+    if email == ADMIN_EMAIL:
+        return render_template("login.html", error="This email is reserved. Please use a different email.")
+
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return render_template("login.html", error="This email is already registered. Please login instead.")
+
+    session["pending_guest_email"] = email
+    session["pending_guest_password"] = generate_password_hash(password)
+
+    return redirect("/register?guest=1")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -104,7 +283,7 @@ def login():
         password = request.form["password"]
 
         if not is_valid_email(email):
-            return render_template("login.html",error="please enter a valid email address.")
+            return render_template("login.html", error="Please enter a valid email address.", has_google_oauth=has_google_oauth)
 
         if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
             session.clear()
@@ -114,15 +293,74 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
-        if user and check_password_hash(user.password, password):
+        if user and user.password and check_password_hash(user.password, password):
             session.clear()
             session["user_id"] = user.id
             session["user_name"] = user.full_name
+            if not profile_is_complete(user):
+                return redirect("/register")
             return redirect("/dashboard")
         else:
-            return render_template("login.html", error="Invalid email or password")
+            return render_template("login.html", error="Invalid email or password", has_google_oauth=has_google_oauth)
 
-    return render_template("login.html")
+    error_msg = None
+    err_code = request.args.get("error")
+    if err_code == "file_too_large":
+        error_msg = "Uploaded file is too large. The maximum size limit is 10MB."
+    elif err_code == "google_not_configured":
+        error_msg = "Google Sign-in is not configured on this server."
+    return render_template("login.html", error=error_msg, has_google_oauth=has_google_oauth)
+
+@app.route("/auth/google")
+def auth_google():
+    if not has_google_oauth:
+        return redirect("/login?error=google_not_configured")
+    redirect_uri = url_for("auth_google_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+
+@app.route("/auth/google/callback")
+def auth_google_callback():
+    if not has_google_oauth:
+        return redirect("/login")
+    token = google.authorize_access_token()
+    user_info = token.get("userinfo")
+
+    if not user_info:
+        return redirect("/login")
+
+    google_id = user_info["sub"]
+    email = user_info["email"]
+    name = user_info.get("name", email.split("@")[0])
+
+    user = User.query.filter_by(google_id=google_id).first()
+
+    if not user:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.google_id = google_id
+            user.auth_provider = "google"
+            db.session.commit()
+
+    if user:
+        session.clear()
+        session["user_id"] = user.id
+        session["user_name"] = user.full_name
+        if not profile_is_complete(user):
+            return redirect("/register")
+        return redirect("/dashboard")
+    else:
+        session["pending_google_email"] = email
+        session["pending_google_name"] = name
+        session["pending_google_id"] = google_id
+        return redirect("/register?google=1")
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    if "user_id" in session:
+        return redirect("/dashboard?error=file_too_large")
+    return redirect("/login?error=file_too_large")
 
 
 @app.route("/dashboard")
@@ -131,7 +369,73 @@ def dashboard():
         return redirect("/admin")
     if "user_id" not in session:
         return redirect("/login")
-    return render_template("dashboard.html", name=session["user_name"])
+
+    current_user = User.query.get(session["user_id"])
+    if current_user and not profile_is_complete(current_user):
+        return redirect("/register")
+
+    progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
+    has_progress = bool(progress and progress.q_count > 0)
+
+    has_result = InterviewResult.query.filter_by(user_id=session["user_id"]).first() is not None
+
+    error_msg = None
+    err_code = request.args.get("error")
+    if err_code == "file_too_large":
+        error_msg = "Uploaded file is too large. The maximum size limit is 10MB."
+    elif err_code == "api_key_missing":
+        error_msg = "AI Placement evaluation is not configured. Please set the GEMINI_API_KEY environment variable."
+
+    return render_template("dashboard.html", name=session["user_name"], has_progress=has_progress, has_result=has_result, error=error_msg)
+
+
+@app.route("/edit-profile", methods=["GET", "POST"])
+def edit_profile():
+    if session.get("is_admin"):
+        return redirect("/admin")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    user = User.query.get(session["user_id"])
+
+    if request.method == "POST":
+        user.full_name = request.form.get("full_name")
+        user.gender = request.form.get("gender")
+        user.education = request.form.get("education")
+        user.course = request.form.get("course")
+        user.semester = request.form.get("semester")
+        db.session.commit()
+        session["user_name"] = user.full_name
+        return render_template("edit_profile.html", user=user, success="Profile updated successfully.")
+
+    return render_template("edit_profile.html", user=user)
+
+
+@app.route("/latest-result")
+def latest_result():
+    if session.get("is_admin"):
+        return redirect("/admin")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    result = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).first()
+
+    if not result:
+        return redirect("/dashboard")
+
+    return render_template(
+        "interview_result.html",
+        score=result.score,
+        score_percent=min(int((float(result.score) / 10) * 100), 100) if result.score else 0,
+        label="Excellent" if result.score and result.score >= 8 else "Good" if result.score and result.score >= 6 else "Fair" if result.score and result.score >= 4 else "Needs Work",
+        label_color="#1cc88a" if result.score and result.score >= 8 else "#4e73df" if result.score and result.score >= 6 else "#f6c23e" if result.score and result.score >= 4 else "#e74a3b",
+        summary=result.summary,
+        verdict=result.status,
+        verdict_message="🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment." if result.status == "Selected" else "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills.",
+        candidate_name=session.get("user_name", "Candidate"),
+        report_date=result.interview_datetime.strftime("%B %d, %Y"),
+        domain=result.domain or "General"
+    )
 
 
 @app.route("/admin")
@@ -143,20 +447,57 @@ def admin():
 
     from datetime import date
     today = date.today()
+    current_month = today.month
+    current_year = today.year
 
     filter_type = request.args.get("filter", "all")
 
     all_results = db.session.query(InterviewResult, User).join(User, InterviewResult.user_id == User.id).order_by(InterviewResult.interview_datetime.desc()).all()
 
     today_count = sum(1 for r, u in all_results if r.interview_datetime.date() == today)
+    month_count = sum(1 for r, u in all_results if r.interview_datetime.year == current_year and r.interview_datetime.month == current_month)
     total_count = len(all_results)
+    selected_count = sum(1 for r, u in all_results if r.status == "Selected")
+    rejected_count = sum(1 for r, u in all_results if r.status == "Rejected")
 
     if filter_type == "today":
         results = [(r, u) for r, u in all_results if r.interview_datetime.date() == today]
+    elif filter_type == "month":
+        results = [(r, u) for r, u in all_results if r.interview_datetime.year == current_year and r.interview_datetime.month == current_month]
+    elif filter_type == "selected":
+        results = [(r, u) for r, u in all_results if r.status == "Selected"]
+    elif filter_type == "rejected":
+        results = [(r, u) for r, u in all_results if r.status == "Rejected"]
     else:
         results = all_results
 
-    return render_template("admin.html", results=results, today_count=today_count, total_count=total_count, filter_type=filter_type)
+    return render_template(
+        "admin.html",
+        results=results,
+        today_count=today_count,
+        month_count=month_count,
+        total_count=total_count,
+        selected_count=selected_count,
+        rejected_count=rejected_count,
+        filter_type=filter_type
+    )
+
+@app.route("/admin/settings", methods=["GET", "POST"])
+def admin_settings():
+    if not session.get("is_admin"):
+        return redirect("/login")
+
+    settings = get_settings()
+
+    if request.method == "POST":
+        settings.min_questions = int(request.form["min_questions"])
+        settings.max_questions = int(request.form["max_questions"])
+        settings.pass_score = int(request.form["pass_score"])
+        settings.default_difficulty = request.form.get("default_difficulty", "student")
+        db.session.commit()
+        return redirect("/admin/settings?saved=1")
+
+    return render_template("admin_settings.html", settings=settings, saved=request.args.get("saved"))
 
 
 @app.route("/admin/delete/<int:result_id>")
@@ -171,12 +512,14 @@ def delete_result(result_id):
 
     return redirect("/admin")
 
+
 @app.route("/admin/delete-user/<int:user_id>")
 def delete_user(user_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
     InterviewResult.query.filter_by(user_id=user_id).delete()
+    InterviewProgress.query.filter_by(user_id=user_id).delete()
 
     user = User.query.get(user_id)
     if user:
@@ -201,6 +544,24 @@ def admin_user_detail(user_id):
     return render_template("admin_user_detail.html", user=user, interviews=interviews)
 
 
+@app.route("/admin/interview/<int:result_id>")
+def admin_interview_detail(result_id):
+    if not session.get("is_admin"):
+        return redirect("/login")
+
+    result = InterviewResult.query.get(result_id)
+    if not result:
+        return redirect("/admin")
+
+    candidate = User.query.get(result.user_id)
+
+    try:
+        score_percent = min(int((float(result.score) / 10) * 100), 100)
+    except:
+        score_percent = 0
+
+    return render_template("admin_interview_detail.html", result=result, candidate=candidate, score_percent=score_percent)
+
 @app.route("/interview", methods=["GET", "POST"])
 def interview():
     if session.get("is_admin"):
@@ -208,34 +569,134 @@ def interview():
     if "user_id" not in session:
         return redirect("/login")
 
+    # Guard against missing Gemini API Key in production
+    if not os.environ.get("GEMINI_API_KEY"):
+        return redirect("/dashboard?error=api_key_missing")
+
+    user_id = session["user_id"]
+
+    settings = get_settings()
+    MIN_QUESTIONS = settings.min_questions
+    MAX_QUESTIONS = settings.max_questions
+
+    if request.args.get("restart") == "1":
+        clear_progress(user_id)
+        session.pop("chat_history", None)
+        session.pop("q_count", None)
+        session.pop("resume_summary", None)
+
     if "chat_history" not in session:
-        session["chat_history"] = []
-        session["q_count"] = 0
+        progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+        if progress:
+            session["chat_history"] = json.loads(progress.chat_history)
+            session["q_count"] = progress.q_count
+        else:
+            session["chat_history"] = []
+            session["q_count"] = 0
 
     if request.method == "POST":
-        answer = request.form["answer"]
-        session["chat_history"].append({"role": "answer", "text": answer})
-        session["q_count"] += 1
-        session.modified = True
+        answer = request.form.get("answer", "").strip()
+        attachment = request.files.get("attachment")
+        resume_file = request.files.get("resume")
 
+        if session["q_count"] == 0 and resume_file and resume_file.filename and allowed_file(resume_file.filename):
+            file_bytes = resume_file.read()
+            mime_type = resume_file.mimetype
+            resume_analysis = analyze_attachment(
+                file_bytes, mime_type,
+                context_hint="This is supposed to be the candidate's resume. First, verify it genuinely looks like a resume/CV (has sections like experience, education, or skills). If it does NOT look like a real resume, respond with exactly: NOT_A_RESUME. If it IS a resume, summarize their role, key skills, and experience level in 3-4 sentences."
+            )
+            if "NOT_A_RESUME" not in resume_analysis:
+                session["resume_summary"] = resume_analysis
+
+        if answer:
+            if session["q_count"] == 0:
+                session["interview_domain"] = answer.strip()
+                # difficulty is set by admin globally — candidate has no choice
+                session["interview_difficulty"] = settings.default_difficulty or "student"
+            full_answer = answer
+
+            if attachment and attachment.filename and allowed_file(attachment.filename):
+                file_bytes = attachment.read()
+                mime_type = attachment.mimetype
+                analysis = analyze_attachment(
+                    file_bytes, mime_type,
+                    context_hint="This was attached by the candidate alongside their answer during a job interview."
+                )
+                full_answer += " [Attached file analysis: " + analysis + "]"
+
+            session["chat_history"].append({"role": "answer", "text": full_answer})
+            session["q_count"] += 1
+            session.modified = True
+            save_progress(user_id, session["chat_history"], session["q_count"])
+
+            
     if session["q_count"] >= MAX_QUESTIONS:
         return redirect("/interview-result")
 
+    if session["chat_history"] and session["chat_history"][-1]["role"] == "question":
+        last_question = session["chat_history"][-1]["text"]
+        return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS)
+
     conversation_text = ""
     for entry in session["chat_history"]:
-        conversation_text += entry["role"] + ": " + entry["text"] + "\n"
+        conversation_text += f"{entry['role']}: {entry['text']}\n"
 
     try:
         if session["q_count"] == 0:
-            prompt = "You are an interviewer starting a mock job interview. Ask the candidate which role or domain they are interviewing for (e.g. Software Engineer, Marketing, Data Analyst). Only output the question, nothing else."
-        else:
-            can_end = session["q_count"] >= MIN_QUESTIONS
-            if can_end:
-                end_instruction = "You have asked at least 5 questions already, which is normally enough to judge a candidate. Strongly prefer ending now unless the candidate's answers were too short or vague to evaluate confidently. If you decide to end, output exactly: INTERVIEW_COMPLETE and nothing else. Only continue asking if truly necessary, and if so, ask"
-            else:
-                end_instruction = "Ask"
+            resume_context = ""
+            if session.get("resume_summary"):
+                resume_context = "The candidate uploaded their resume, summarized as: " + session["resume_summary"] + " Use this context when useful, but still ask them to confirm their role/domain first. "
 
-            prompt = "You are an interviewer conducting a mock job interview. Conversation so far (the first answer tells you the candidate's role/domain): " + conversation_text + " " + end_instruction + " ONE short, clear next interview question relevant to that role, going deeper based on their previous answers. Do not repeat previous questions. Only output the question (or INTERVIEW_COMPLETE), nothing else."
+            prompt = (
+                "You are an interviewer starting an interview. "
+                + resume_context +
+                "Ask the candidate which specific role or domain they are interviewing for. "
+                "Output ONLY the question text itself. No preamble, no intro."
+            )
+        else:
+            difficulty = session.get("interview_difficulty", "student")
+            if difficulty == "student":
+                difficulty_instruction = (
+                    "The candidate is a Student/Beginner. Keep questions friendly, encouraging, and focused on core fundamentals. "
+                    "Do NOT ask highly complex technical engineering or design scenario questions. If they answer incorrectly or struggle, "
+                    "ask a simpler follow-up or guide them gently. Do not end early unless you have asked at least 5 questions."
+                )
+            elif difficulty == "senior":
+                difficulty_instruction = (
+                    "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
+                    "Challenge their decisions, drill down into technical specifics, and maintain a high bar."
+                )
+            else:
+                difficulty_instruction = (
+                    "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
+                    "Adjust difficulty adaptively based on their performance."
+                )
+
+            completion_option = ""
+            if session["q_count"] >= MIN_QUESTIONS:
+                if difficulty != "student" or session["q_count"] >= 5:
+                    completion_option = (
+                        f"\n5. You have asked at least {MIN_QUESTIONS} questions. If you feel you have gathered "
+                        "enough evaluation data, respond with EXACTLY 'INTERVIEW_COMPLETE'.\n"
+                    )
+
+            prompt = (
+                "You are an interviewer conducting a real job interview.\n\n"
+                f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
+                "CRITICAL DOMAIN RULE:\n"
+                "Look at the candidate's VERY FIRST ANSWER in the conversation below. "
+                "Identify their specified domain/field (e.g., Fitness Coach, Software Engineer, Marketing). "
+                "You MUST stay 100% inside this domain for every question. NEVER switch or mix in unrelated fields.\n\n"
+                "RULES FOR OUTPUT:\n"
+                "1. Output ONLY the raw next question (or INTERVIEW_COMPLETE). ZERO preamble, no conversational filler like 'Great', 'Moving on', or 'Since you are in...'.\n"
+                "2. Even if previous answer is not up to mark and if candidate is trying to answer his best, show some mercy and ask him simpler and fundamental question.\n"
+                "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios.\n"
+                "4. Explore diverse categories WITHIN their field (e.g. practical scenarios, fundamentals, safety/client handling, background experience). Do not repeat similar questions.\n"
+                f"{completion_option}\n"
+                f"Conversation so far:\n{conversation_text}\n"
+                "Output ONLY the raw question text below:"
+            )
 
         response = client.models.generate_content(
             model=MODEL_NAME,
@@ -244,13 +705,14 @@ def interview():
         question_text = response.text.strip()
 
     except Exception as e:
-        return "AI error: " + str(e)
+        return f"AI error: {str(e)}"
 
     if question_text == "INTERVIEW_COMPLETE":
         return redirect("/interview-result")
 
     session["chat_history"].append({"role": "question", "text": question_text})
     session.modified = True
+    save_progress(user_id, session["chat_history"], session["q_count"])
 
     return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS)
 
@@ -262,12 +724,51 @@ def interview_result():
     if "user_id" not in session:
         return redirect("/login")
 
+    settings = get_settings()
+    PASS_SCORE = settings.pass_score
+
     conversation_text = ""
     for entry in session.get("chat_history", []):
         conversation_text += entry["role"] + ": " + entry["text"] + "\n"
 
     try:
-        prompt = "You are an interview evaluator. Based on this mock interview conversation, respond in EXACTLY this format, nothing else, no markdown symbols like ** or #:\nSCORE: [a number out of 10]\nSTRENGTHS:\n1. [point]\n2. [point]\nIMPROVEMENTS:\n1. [point]\n2. [point]\n\nConversation: " + conversation_text
+        difficulty = session.get("interview_difficulty", "student")
+        if difficulty == "student":
+            grading_instruction = (
+                "CRITICAL GRADING LEVEL: The candidate is a Student / Beginner. Grade them leniently. "
+                "Evaluate them on basic concepts, enthusiasm, structural thinking, and foundational knowledge. "
+                "Do NOT penalize them for lacking deep production/architectural experience or advanced corporate scenario management. "
+                "For a student, a solid basic answer should easily earn a 7-8 out of 10. Be encouraging and focus on potential."
+            )
+        elif difficulty == "senior":
+            grading_instruction = (
+                "CRITICAL GRADING LEVEL: The candidate is a Senior / Expert. Grade them strictly. "
+                "Expect detailed technical answers, architectural awareness, system design trade-offs, real-world case experiences, "
+                "and robust scenario management. A basic answer without depth should get a low score. Reserve 8-10 for outstanding professional-level answers."
+            )
+        else:
+            grading_instruction = (
+                "CRITICAL GRADING LEVEL: The candidate is Mid-Level. Grade them on standard expectations. "
+                "Expect practical knowledge, mid-level competency, and clean implementation. Grade balanced and fairly."
+            )
+
+        prompt = ("You are a senior interviewer at a professional hiring panel, writing the official written evaluation for a candidate's interview record. "
+          f"{grading_instruction}\n\n"
+          "This candidate may be interviewing in ANY field, software engineering, music performance, dance, fitness coaching, marketing, teaching, or any other domain. "
+          "You already know their field from the first exchange in the conversation below. Evaluate them using criteria that a real expert or hiring panel in THAT specific field would actually use, "
+          "for example, a fitness coach should be judged on client communication, programming knowledge, and safety awareness, not on unrelated technical skills; a musician should be judged on artistic understanding, technique discussion, and stage/performance readiness where relevant to their answers.\n\n"
+          "Ground every claim in what the candidate actually said, reference specific moments or themes from their real answers rather than generic praise or criticism. Do not invent details not present in the conversation. "
+          "Initially tell some strengths of the candidate even if he has even one question answered correctly. "
+          "Show some mercy on the candidate even if he didn't perform well and tried his best to answer any question. "
+          "If an answer was thin, evasive, or off-topic, say so plainly and explain why it fell short. If an answer was excellent, explain specifically what made it strong. "
+          "Note how the candidate's performance trended across the interview, did they warm up and improve, stay consistent, or fade under harder questions?\n\n"
+          "Write in formal, precise business-evaluation language, the way a hiring committee's official written report reads. No casual phrasing, no filler praise, no hedging. "
+          "Calibrate the score honestly: 9-10 is reserved for exceptional, hire-immediately performance; 7-8 is solid and competent; 5-6 is mixed with real gaps; below 5 means significant weaknesses outweighed strengths. "
+          "Respond in EXACTLY this format, nothing else, no markdown symbols like ** or #:\n"
+          "SCORE: [a number out of 10]\n"
+          "SUMMARY:\n"
+          "[A formal, multi-paragraph evaluation of at least 180 words, written as a real hiring panel report. Structure it as flowing paragraphs (not bullet points or labeled sections) covering: overall impression and field-appropriate competence; concrete strengths grounded in specific answers; concrete weaknesses or gaps grounded in specific answers; how they performed under increasing difficulty; and a closing paragraph with a clear, actionable recommendation for what they should work on next.]\n\n"
+          "Conversation: " + conversation_text)
 
         response = client.models.generate_content(
             model=MODEL_NAME,
@@ -276,36 +777,29 @@ def interview_result():
         evaluation = response.text.strip()
 
         score = "N/A"
-        strengths = []
-        improvements = []
-        current_section = None
+        summary_lines = []
+        in_summary = False
 
         for raw_line in evaluation.split("\n"):
             line = raw_line.strip()
             if not line:
+                if in_summary:
+                    summary_lines.append("")
                 continue
 
             upper_line = line.upper()
 
             if upper_line.startswith("SCORE"):
                 score = line.split(":", 1)[-1].strip()
-                current_section = None
-            elif upper_line.startswith("STRENGTH"):
-                current_section = "strengths"
-            elif upper_line.startswith("IMPROVEMENT") or upper_line.startswith("AREAS"):
-                current_section = "improvements"
-            elif current_section:
-                cleaned = line.lstrip("0123456789.-)*• ").strip()
-                if cleaned:
-                    if current_section == "strengths":
-                        strengths.append(cleaned)
-                    else:
-                        improvements.append(cleaned)
+                in_summary = False
+            elif upper_line.startswith("SUMMARY"):
+                in_summary = True
+            elif in_summary:
+                summary_lines.append(line)
 
-        if not strengths:
-            strengths = ["Not enough data to determine strengths."]
-        if not improvements:
-            improvements = ["Not enough data to determine improvements."]
+        summary_text = "\n".join(summary_lines).strip()
+        if not summary_text:
+            summary_text = "Not enough data to generate a report."
 
         try:
             score_num = float(score.split("/")[0].strip())
@@ -330,16 +824,17 @@ def interview_result():
         verdict = "Selected" if score_num >= PASS_SCORE else "Rejected"
 
         if verdict == "Selected":
-            verdict_message = "🎉 Congratulations! You've been selected."
+            verdict_message = "🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment."
         else:
-            verdict_message = "Better luck next time. Keep practicing!"
+            verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
 
+        domain_val = session.get("interview_domain", "General")
         result_record = InterviewResult(
             user_id=session["user_id"],
             score=score_num,
             status=verdict,
-            strengths="; ".join(strengths),
-            improvements="; ".join(improvements)
+            summary=summary_text,
+            domain=domain_val
         )
         db.session.add(result_record)
         db.session.commit()
@@ -349,6 +844,11 @@ def interview_result():
 
     session.pop("chat_history", None)
     session.pop("q_count", None)
+    session.pop("resume_choice", None)
+    session.pop("resume_summary", None)
+    session.pop("interview_domain", None)
+    session.pop("interview_difficulty", None)
+    clear_progress(session["user_id"])
 
     return render_template(
         "interview_result.html",
@@ -356,10 +856,78 @@ def interview_result():
         score_percent=score_percent,
         label=label,
         label_color=label_color,
-        strengths=strengths,
-        improvements=improvements,
+        summary=summary_text,
         verdict=verdict,
-        verdict_message=verdict_message
+        verdict_message=verdict_message,
+        candidate_name=session.get("user_name", "Candidate"),
+        report_date=datetime.now().strftime("%B %d, %Y"),
+        domain=domain_val
+    )
+
+
+@app.route("/my-history")
+def my_history():
+    if session.get("is_admin"):
+        return redirect("/admin")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    attempts = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).all()
+
+    chart_labels = [a.interview_datetime.strftime('%d %b') for a in reversed(attempts)]
+    chart_scores = [float(a.score) if a.score is not None else 0 for a in reversed(attempts)]
+
+    return render_template("my_history.html", attempts=attempts, chart_labels=chart_labels, chart_scores=chart_scores)
+
+
+@app.route("/my-history/<int:result_id>")
+def view_past_result(result_id):
+    if session.get("is_admin"):
+        return redirect("/admin")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    result = InterviewResult.query.filter_by(id=result_id, user_id=session["user_id"]).first()
+    if not result:
+        return redirect("/my-history")
+
+    try:
+        score_num = float(result.score)
+    except:
+        score_num = 0
+
+    if score_num >= 8:
+        label = "Excellent"
+        label_color = "#1cc88a"
+    elif score_num >= 6:
+        label = "Good"
+        label_color = "#4e73df"
+    elif score_num >= 4:
+        label = "Fair"
+        label_color = "#f6c23e"
+    else:
+        label = "Needs Work"
+        label_color = "#e74a3b"
+
+    score_percent = min(int((score_num / 10) * 100), 100)
+    verdict = result.status
+    if verdict == "Selected":
+        verdict_message = "🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment."
+    else:
+        verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
+
+    return render_template(
+        "interview_result.html",
+        score=result.score,
+        score_percent=score_percent,
+        label=label,
+        label_color=label_color,
+        summary=result.summary,
+        verdict=verdict,
+        verdict_message=verdict_message,
+        candidate_name=session.get("user_name", "Candidate"),
+        report_date=result.interview_datetime.strftime("%B %d, %Y"),
+        domain=result.domain or "General"
     )
 
 
@@ -368,6 +936,14 @@ def logout():
     session.clear()
     return redirect("/login")
 
+
+# Initialize tables dynamically on load for WSGI servers like Gunicorn
+with app.app_context():
+    try:
+        db.create_all()
+        print("Database tables verified/created successfully.")
+    except Exception as e:
+        print(f"Error creating database tables: {e}")
 
 if __name__ == "__main__":
     app.run(debug=True)

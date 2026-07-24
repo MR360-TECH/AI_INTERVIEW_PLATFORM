@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assessment Settings — AI Recruitment Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <style>
+        body { background: linear-gradient(135deg, #eef2f7, #e4e9f2); }
+        .settings-card { border: none; border-radius: 14px; }
+        .form-label { font-weight: 600; color: #333; }
+        .form-text { font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+<div class="container mt-5 mb-5" style="max-width: 640px;">
+    <div class="d-flex justify-content-end mb-4">
+        <a href="/admin" class="back-btn-global">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="card settings-card shadow-sm p-4">
+        <h3 class="mb-1">Assessment Settings</h3>
+        <p class="text-muted mb-4">These parameters control candidate recruitment assessments.</p>
+
+        {% if saved %}
+        <div class="alert alert-success">Settings updated successfully.</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Minimum Questions</label>
+                <input type="number" name="min_questions" class="form-control" min="1" max="20" value="{{ settings.min_questions }}" required>
+                <div class="form-text">The AI cannot end the assessment session before this many questions are asked.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Maximum Questions</label>
+                <input type="number" name="max_questions" class="form-control" min="1" max="20" value="{{ settings.max_questions }}" required>
+                <div class="form-text">The assessment session is force-ended after this many questions, regardless of the AI's judgment.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Passing Score (out of 10)</label>
+                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="0.5" value="{{ settings.pass_score }}" required>
+                <div class="form-text">Candidates scoring at or above this are marked "Recommended".</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Default Assessment Level</label>
+                <select name="default_difficulty" class="form-select">
+                    <option value="student" {% if settings.default_difficulty == 'student' or not settings.default_difficulty %}selected{% endif %}>
+                        Student / Entry-Level — Fundamental questions, standard evaluation
+                    </option>
+                    <option value="mid" {% if settings.default_difficulty == 'mid' %}selected{% endif %}>
+                        Mid-Level — Professional placement evaluation
+                    </option>
+                    <option value="senior" {% if settings.default_difficulty == 'senior' %}selected{% endif %}>
+                        Senior / Professional — Complex scenarios, rigorous evaluation
+                    </option>
+                </select>
+                <div class="form-text">All new assessments will use this difficulty level. Candidates cannot change it.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Save Settings</button>
+
+        </form>
+    </div>
+</div>
+</body>
+</html>

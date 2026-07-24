@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background: linear-gradient(135deg, #1a2036, #224abe);">
+    <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/dashboard" style="letter-spacing:-0.01em;">
+            <span style="background:rgba(255,255,255,0.12);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;">
+                <i class="bi bi-clipboard2-check-fill"></i>
+            </span>
+            AI Recruitment &amp; Assessment Platform
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/my-history">My Assessments</a>
+                </li>
+                {% if request.path != '/interview' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/interview">New Assessment</a>
+                </li>
+                {% endif %}
+                <li class="nav-item ms-lg-2 d-flex align-items-center gap-2">
+                    <span class="text-white-50 small"><i class="bi bi-person-circle me-1"></i>{{ session.get('user_name', '') }}</span>
+                    <a href="/logout" class="btn btn-sm" style="background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:7px;padding:4px 14px;font-weight:600;font-size:0.82rem;">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

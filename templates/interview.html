@@ -1,200 +1,156 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mock Interview Session</title>
-    <style>
-        /* Modern UI Design Configurations */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .interview-container {
-            background: #ffffff;
-            width: 100%;
-            max-width: 680px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            overflow: hidden;
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        /* Top Progress Panel Graphic */
-        .header-panel {
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-            padding: 24px 32px;
-            color: #ffffff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-panel h2 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            letter-spacing: -0.5px;
-        }
-
-        .badge {
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 14px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            backdrop-filter: blur(5px);
-        }
-
-        .content-body {
-            padding: 35px 32px;
-        }
-
-        /* AI Prompt Speech Container Graphic */
-        .ai-question-box {
-            background: #f8fafc;
-            border-left: 5px solid #4f46e5;
-            padding: 20px;
-            border-radius: 0 12px 12px 0;
-            margin-bottom: 28px;
-        }
-
-        .label-text {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #64748b;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .question-text {
-            color: #1e293b;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            font-weight: 500;
-        }
-
-        /* Input Text Area Graphic */
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #475569;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        textarea {
-            width: 100%;
-            padding: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            color: #334155;
-            resize: none;
-            transition: all 0.3s ease;
-            outline: none;
-            background-color: #fafafa;
-        }
-
-        textarea:focus {
-            border-color: #3b82f6;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-        }
-
-        /* Action Buttons Graphics */
-        .action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 24px;
-        }
-
-        .btn-exit {
-            color: #64748b;
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 600;
-            transition: color 0.2s ease;
-        }
-
-        .btn-exit:hover {
-            color: #334155;
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-            color: #ffffff;
-            border: none;
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
-        }
-
-        .btn-submit:active {
-            transform: translateY(1px);
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+    <title>Placement Assessment — AI Recruitment Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+{% include 'navbar.html' %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card interview-card p-4">
 
-    <div class="interview-container">
-        <!-- Top Status Bar -->
-        <div class="header-panel">
-            <h2>AI Interview Session</h2>
-            <div class="badge">Question {{ q_num }} of {{ total }}</div>
-        </div>
+                <div class="top-row">
+                    <span class="hint-tag"><kbd>Insert</kbd> toggle mic &nbsp;·&nbsp; <kbd>Enter</kbd> submit</span>
+                    <a href="/dashboard" class="btn btn-quit" onclick="return confirm('Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.');">
+                        <i class="bi bi-x-lg"></i> Exit Assessment
+                    </a>
+                </div>
 
-        <!-- Chat Workspace -->
-        <div class="content-body">
-            
-            <!-- AI Question -->
-            <div class="ai-question-box">
-                <div class="label-text">AI Interviewer</div>
-                <div class="question-text">{{ question }}</div>
+                <h3 class="mb-4 question-text">{{ question }}</h3>
+
+                <form method="POST" id="answerForm" enctype="multipart/form-data">
+
+
+                    <div class="upload-box mb-3">
+                        <label class="upload-title"><i class="bi bi-file-earmark-text"></i> Upload your resume (optional — helps AI ask better questions)</label>
+                        <div class="upload-row">
+                            <label class="upload-icon-btn" title="Upload resume">
+                                <i class="bi bi-upload"></i>
+                                <input type="file" name="resume" id="resumeInput" accept="image/*,application/pdf" style="display:none;">
+                            </label>
+                            <span class="file-name-tag" id="resumeFileName" style="display:none;"></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeResumeBtn" style="display:none;">
+                                <i class="bi bi-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="upload-box">
+                        <label class="upload-title"><i class="bi bi-paperclip"></i> Attach a photo or file (optional)</label>
+                        <div class="upload-row">
+                            <label class="upload-icon-btn" title="Upload file">
+                                <i class="bi bi-upload"></i>
+                                <input type="file" name="attachment" id="attachmentInput" accept="image/*,application/pdf" style="display:none;">
+                            </label>
+                            <span class="file-name-tag" id="attachmentFileName" style="display:none;"></span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn" style="display:none;">
+                                <i class="bi bi-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="answer-input-group mb-1">
+                        <textarea name="answer" id="answerBox" class="form-control" rows="4" required placeholder="Type your answer, or click the mic to speak..."></textarea>
+                        <button type="button" class="mic-btn" id="micBtn" title="Click to speak your answer (or press Insert)">
+                            <i class="bi bi-mic-fill" id="micIcon"></i>
+                        </button>
+                    </div>
+                    <span class="empty-warning" id="emptyWarning"><i class="bi bi-exclamation-circle"></i> Please enter something in the answer box before submitting.</span>
+                    <span class="listening-tag mb-3 d-block" id="listeningTag">🎙️ Listening... speak now</span>
+
+                    <button class="btn btn-submit btn-primary w-100 text-white mt-2">Submit Answer</button>
+                </form>
             </div>
-
-            <!-- User Form -->
-            <form action="/interview" method="POST">
-                <div style="margin-bottom: 20px;">
-                    <label for="response-input">Your Response</label>
-                    <textarea id="response-input" name="answer" rows="4" placeholder="Provide your answer to the interviewer..." required></textarea>
-                </div>
-                
-                <div class="action-row">
-                    <a href="/dashboard" class="btn-exit">Quit Interview</a>
-                    <button type="submit" class="btn-submit">Submit Response →</button>
-                </div>
-            </form>
-
         </div>
     </div>
+</div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/speech.js') }}"></script>
+<script>
+    const answerBox = document.getElementById('answerBox');
+    const emptyWarning = document.getElementById('emptyWarning');
+    const answerForm = document.getElementById('answerForm');
+
+    function trySubmit() {
+        if (answerBox.value.trim().length === 0) {
+            emptyWarning.classList.add('active');
+            answerBox.classList.add('input-error');
+            answerBox.focus();
+        } else {
+            emptyWarning.classList.remove('active');
+            answerBox.classList.remove('input-error');
+            answerForm.requestSubmit();
+        }
+    }
+
+    answerBox.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            trySubmit();
+        }
+    });
+
+    answerBox.addEventListener('input', function() {
+        if (answerBox.value.trim().length > 0) {
+            emptyWarning.classList.remove('active');
+            answerBox.classList.remove('input-error');
+        }
+    });
+
+    answerForm.addEventListener('submit', function(e) {
+        if (answerBox.value.trim().length === 0) {
+            e.preventDefault();
+            emptyWarning.classList.add('active');
+            answerBox.classList.add('input-error');
+            answerBox.focus();
+        }
+    });
+
+    const resumeInput = document.getElementById('resumeInput');
+    const resumeFileName = document.getElementById('resumeFileName');
+    const removeResumeBtn = document.getElementById('removeResumeBtn');
+
+    if (resumeInput) {
+        resumeInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                resumeFileName.textContent = this.files[0].name;
+                resumeFileName.style.display = 'inline-block';
+                removeResumeBtn.style.display = 'inline-block';
+            }
+        });
+
+        removeResumeBtn.addEventListener('click', function() {
+            resumeInput.value = '';
+            resumeFileName.style.display = 'none';
+            removeResumeBtn.style.display = 'none';
+        });
+    }
+
+    const attachmentInput = document.getElementById('attachmentInput');
+    const attachmentFileName = document.getElementById('attachmentFileName');
+    const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
+
+    attachmentInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            attachmentFileName.textContent = this.files[0].name;
+            attachmentFileName.style.display = 'inline-block';
+            removeAttachmentBtn.style.display = 'inline-block';
+        }
+    });
+
+    removeAttachmentBtn.addEventListener('click', function() {
+        attachmentInput.value = '';
+        attachmentFileName.style.display = 'none';
+        removeAttachmentBtn.style.display = 'none';
+    });
+</script>
 </body>
 </html>

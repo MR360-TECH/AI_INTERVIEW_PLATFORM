@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Placement Assessment History — AI Recruitment Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --navy: #1a2036;
+            --blue: #4e73df;
+            --blue-deep: #224abe;
+            --green: #1cc88a;
+            --red: #e74a3b;
+            --muted: #64708a;
+            --hairline: #e3e7f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--navy);
+            background-color: #f8f9fc;
+        }
+
+        .history-page-title {
+            font-family: 'Source Serif 4', serif;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .attempt-row-card {
+            border: none;
+            border-radius: 12px;
+            background: #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .attempt-row-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(26, 32, 54, 0.08) !important;
+        }
+
+        .attempt-domain {
+            font-family: 'Source Serif 4', serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--navy);
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .attempt-date {
+            font-size: 0.82rem;
+        }
+
+        .attempt-score-container {
+            font-size: 0.95rem;
+        }
+
+        .score-val {
+            color: var(--navy);
+        }
+
+        .badge-custom {
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .badge-selected {
+            background-color: rgba(28, 200, 138, 0.1);
+            color: #17b978;
+        }
+
+        .badge-rejected {
+            background-color: rgba(231, 74, 59, 0.1);
+            color: #f0685a;
+        }
+
+        .btn-view-report {
+            background-color: #ffffff;
+            color: var(--blue);
+            border: 1.5px solid var(--blue);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 6px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-view-report:hover {
+            background-color: var(--blue);
+            color: #ffffff;
+            border-color: var(--blue);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(78, 115, 223, 0.15);
+        }
+    </style>
+</head>
+<body>
+{% include 'navbar.html' %}
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="history-page-title mb-0">Placement Assessment History</h2>
+        <a href="/dashboard" class="back-btn-global">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    {% if attempts %}
+    <div class="card shadow-lg p-4 mb-4">
+        <h5 class="mb-1" style="font-family:'Source Serif 4',serif;font-weight:700;">Score Trend</h5>
+        <p class="text-muted mb-3" style="font-size:0.82rem;">Overall score across all assessment sessions</p>
+        <canvas id="scoreChart" height="100"></canvas>
+    </div>
+
+    <h5 class="mb-3" style="font-weight:700;color:#1a2036;">Assessment Records</h5>
+
+    {% for a in attempts %}
+    <div class="card attempt-row-card shadow-sm mb-3">
+        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle-icon bg-light text-navy rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-briefcase-fill fs-5 text-primary"></i>
+                </div>
+                <div>
+                    <h5 class="attempt-domain mb-1 text-uppercase">{{ a.domain or 'General' }}</h5>
+                    <span class="attempt-date text-muted"><i class="bi bi-calendar3 me-1"></i> {{ a.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="attempt-score-container me-2">
+                    <span class="score-label text-muted me-1">Score:</span>
+                    <span class="score-val fw-bold fs-6">{{ a.score }}/10</span>
+                </div>
+                {% if a.status == "Selected" %}
+                <span class="badge-custom badge-selected">
+                    <i class="bi bi-check-circle-fill me-1"></i> Recommended
+                </span>
+                {% else %}
+                <span class="badge-custom badge-rejected">
+                    <i class="bi bi-x-circle-fill me-1"></i> Not Recommended
+                </span>
+                {% endif %}
+                <a href="/my-history/{{ a.id }}" class="btn-view-report">
+                    View Report <i class="bi bi-arrow-right-short"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script>
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels | tojson }},
+                datasets: [{
+                    label: 'Score out of 10',
+                    data: {{ chart_scores | tojson }},
+                    borderColor: '#e74a3b',
+                    backgroundColor: 'rgba(78,115,223,0.2)',
+                    fill: true,
+                    tension: 0.5,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#4e73df'
+                }]
+            },
+            options: {
+                scales: {
+                    y: { min: 0, max: 10, ticks: { stepSize: 2 } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+
+    {% else %}
+    <div class="card shadow-sm p-5 text-center">
+        <i class="bi bi-clipboard2-x fs-1 text-muted mb-3"></i>
+        <h5 style="font-family:'Source Serif 4',serif;font-weight:700;">No Assessment Records Found</h5>
+        <p class="text-muted">Complete your first interview assessment to view your evaluation history here.</p>
+        <a href="/interview" class="btn btn-primary mt-2">Begin Assessment</a>
+    </div>
+    {% endif %}
+
+
+</div>
+</body>
+</html>

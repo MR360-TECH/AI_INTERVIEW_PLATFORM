@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Placement Evaluation Report — AI Recruitment Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #f0f3f9, #e6eaf3);
+            min-height: 100vh;
+            padding: 40px 0 60px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #1a2036;
+            background: #fff;
+            border: 1.5px solid #e3e7f0;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(26, 32, 54, 0.04);
+            transition: all 0.15s ease;
+        }
+        .back-btn:hover {
+            color: #fff;
+            border-color: #4e73df;
+            background: linear-gradient(135deg, #4e73df, #224abe);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(78, 115, 223, 0.30);
+        }
+
+        .panel {
+            background: #fff;
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(26,32,54,0.06);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            font-weight: 800;
+            color: #1a2036;
+            font-size: 1.25rem;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-title i { color: #4e73df; }
+
+        .avatar-circle {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #4e73df, #224abe);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(78, 115, 223, 0.18);
+        }
+
+        .candidate-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1a2036;
+        }
+
+        .meta-card {
+            background: #f8fafc;
+            border: 1px solid #eef2f6;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 100%;
+            transition: all 0.15s ease;
+        }
+
+        .meta-card:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(26, 32, 54, 0.04);
+        }
+
+        .meta-card-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        .gender-icon { background: rgba(28, 200, 138, 0.1); color: #1cc88a; }
+        .education-icon { background: rgba(78, 115, 223, 0.1); color: #4e73df; }
+        .course-icon { background: rgba(246, 194, 62, 0.1); color: #f6c23e; }
+        .semester-icon { background: rgba(231, 74, 59, 0.1); color: #e74a3b; }
+
+        .meta-card-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-card-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9aa2b5;
+            margin-bottom: 2px;
+        }
+
+        .meta-card-val {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #1a2036;
+        }
+
+        .auth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+        .auth-badge.google {
+            background: #f1f5ff;
+            color: #3c4043;
+            border: 1px solid #dbe4fb;
+        }
+        .auth-badge.guest {
+            background: #eef0f5;
+            color: #5a6478;
+            border: 1px solid #dfe3ea;
+        }
+        .google-g-icon { width: 13px; height: 13px; }
+
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .score-ring-wrap {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .score-ring {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Source Serif 4', serif;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1a2036;
+            background:
+                radial-gradient(closest-side, #fff 76%, transparent 77% 100%),
+                conic-gradient(var(--ring-color) var(--ring-pct), #eef0f5 0);
+            flex-shrink: 0;
+        }
+        .score-meta .score-label {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #1a2036;
+        }
+        .score-meta .score-date {
+            font-size: 0.85rem;
+            color: #9aa2b5;
+            font-weight: 600;
+        }
+
+        .verdict-pill {
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: #fff;
+        }
+        .verdict-pill.selected { background: linear-gradient(135deg, #17b978, #0c8054); }
+        .verdict-pill.rejected { background: linear-gradient(135deg, #f0685a, #c0392b); }
+
+        .summary-heading {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7488;
+            margin-bottom: 6px;
+        }
+        .summary-rule {
+            width: 36px;
+            height: 3px;
+            background: #4e73df;
+            border-radius: 3px;
+            margin-bottom: 18px;
+        }
+        .summary-text {
+            font-size: 1rem;
+            line-height: 1.85;
+            color: #333c50;
+        }
+        .summary-text p {
+            margin-bottom: 18px;
+        }
+
+        @media print {
+            body { background: #fff !important; padding: 0 !important; }
+            .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
+            .back-btn, .top-bar, .btn-pdf-download { display: none !important; }
+            .panel { box-shadow: none !important; border: 1px solid #e2e8f0 !important; padding: 24px !important; margin-bottom: 20px !important; page-break-inside: avoid; }
+            .score-ring { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .verdict-pill { -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #fff !important; }
+            .gender-icon, .education-icon, .course-icon, .semester-icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="d-flex justify-content-between align-items-center mb-3 top-bar">
+        <button onclick="window.print()" class="btn btn-pdf-download d-inline-flex align-items-center gap-2" style="background: linear-gradient(135deg, #4e73df, #224abe); color: white; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 0.88rem; box-shadow: 0 3px 10px rgba(78, 115, 223, 0.2); transition: all 0.15s ease; cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+            </svg>
+            Download PDF Report
+        </button>
+        <a href="/admin" class="back-btn mb-0"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+
+    <div class="panel candidate-profile-panel">
+        <div class="panel-title mb-4"><i class="bi bi-person-vcard-fill"></i> Candidate Profile</div>
+        
+        <div class="d-flex align-items-center gap-4 flex-wrap mb-4 pb-4 border-bottom border-light-subtle">
+            <div class="avatar-circle">
+                {{ candidate.full_name[:2] | upper }}
+            </div>
+            <div>
+                <h3 class="candidate-name mb-1"><a href="/admin/user/{{ candidate.id }}" style="text-decoration:none; color:inherit; border-bottom: 1.5px dashed rgba(78, 115, 223, 0.45);">{{ candidate.full_name }}</a></h3>
+                <div class="candidate-email-row d-flex align-items-center gap-2 flex-wrap">
+                    <span class="text-muted"><i class="bi bi-envelope-fill me-1"></i> {{ candidate.email }}</span>
+                    {% if candidate.auth_provider == "google" %}
+                    <span class="auth-badge google m-0">
+                        <svg class="google-g-icon" viewBox="0 0 48 48">
+                            <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                            <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                            <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                        </svg>
+                        Google
+                    </span>
+                    {% else %}
+                    <span class="auth-badge guest m-0"><i class="bi bi-person-fill"></i> Guest</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-sm-6 col-md-3">
+                <div class="meta-card">
+                    <div class="meta-card-icon gender-icon"><i class="bi bi-gender-ambiguous"></i></div>
+                    <div class="meta-card-content">
+                        <div class="meta-card-label">Gender</div>
+                        <div class="meta-card-val">{{ candidate.gender or "-" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="meta-card">
+                    <div class="meta-card-icon education-icon"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div class="meta-card-content">
+                        <div class="meta-card-label">Education</div>
+                        <div class="meta-card-val">{{ candidate.education or "-" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="meta-card">
+                    <div class="meta-card-icon course-icon"><i class="bi bi-book-half"></i></div>
+                    <div class="meta-card-content">
+                        <div class="meta-card-label">Course</div>
+                        <div class="meta-card-val">{{ candidate.course or "-" }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <div class="meta-card">
+                    <div class="meta-card-icon semester-icon"><i class="bi bi-calendar-event-fill"></i></div>
+                    <div class="meta-card-content">
+                        <div class="meta-card-label">Semester</div>
+                        <div class="meta-card-val">{{ candidate.semester or "-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title"><i class="bi bi-clipboard-data-fill"></i> Placement Evaluation Report</div>
+
+        <div class="report-header">
+            <div class="score-ring-wrap">
+                <div class="score-ring" style="--ring-color: {{ '#17b978' if result.status == 'Selected' else '#f0685a' }}; --ring-pct: {{ (result.score|float / 10 * 100)|round|int }}%;">
+                    {{ result.score }}
+                </div>
+                <div class="score-meta">
+                    <div class="score-label">{{ result.score }} / 10</div>
+                    <div class="score-date">{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</div>
+                </div>
+            </div>
+            <span class="verdict-pill {% if result.status == 'Selected' %}selected{% else %}rejected{% endif %}">
+                {% if result.status == 'Selected' %}Recommended{% else %}Not Recommended{% endif %}
+            </span>
+        </div>
+
+        <div class="summary-heading">Performance Summary</div>
+        <div class="summary-rule"></div>
+        <div class="summary-text">
+            {% for para in result.summary.split('\n') if para.strip() %}
+                <p>{{ para }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</body>
+</html>
