@@ -16,14 +16,14 @@
         --hairline: #e3e7f0;
         --paper: #fefeff;
         --verdict-color: {{ label_color }};
-        --aura-color: {{ '#1cc88a' if verdict == 'Selected' else '#e74a3b' }};
+        --aura-color: {% if is_practice %}{{ '#f6c23e' if verdict == 'WELL DONE' else '#8e44ad' }}{% else %}{{ '#1cc88a' if verdict == 'PASS' else '#e74a3b' }}{% endif %};
     }
 
     * { box-sizing: border-box; }
 
     body {
         font-family: 'Inter', sans-serif;
-        background: radial-gradient(circle at 50% 0%, {{ 'rgba(28,200,138,0.16)' if verdict == 'Selected' else 'rgba(231,74,59,0.14)' }}, #eef1f8 55%);
+        background: radial-gradient(circle at 50% 0%, {% if is_practice %}{{ 'rgba(246,194,62,0.14)' if verdict == 'WELL DONE' else 'rgba(142,68,173,0.14)' }}{% else %}{{ 'rgba(28,200,138,0.16)' if verdict == 'PASS' else 'rgba(231,74,59,0.14)' }}{% endif %}, #eef1f8 55%);
         color: var(--navy);
         padding: 56px 16px 90px;
     }
@@ -119,7 +119,7 @@
         line-height: 1.2;
     }
     .meta-item.score-item .meta-value {
-        color: {{ '#5be0a8' if verdict == 'Selected' else '#f0968c' }};
+        color: {% if is_practice %}{{ '#f6c23e' if verdict == 'WELL DONE' else '#c77dff' }}{% else %}{{ '#5be0a8' if verdict == 'PASS' else '#f0968c' }}{% endif %};
     }
 
     .stamp-badge {
@@ -343,28 +343,33 @@
     <div class="report-doc">
 
         <div class="verdict-banner">
-    {% if verdict == "Selected" %}
-        Assessment Result: <strong>Recommended</strong>
-    {% else %}
-        Assessment Result: <strong>Not Recommended</strong>
-    {% endif %}
-    <span class="sub">
-        {% if verdict == "Selected" %}
-            The candidate has met the required placement assessment criteria.
+    {% if is_practice %}
+        {% if verdict == "WELL DONE" %}
+            Practice Result: <strong>Well Done</strong>
+            <span class="sub">You are on the right track. Keep building on this momentum.</span>
         {% else %}
-            The candidate did not meet the selection threshold for this placement round.
+            Practice Result: <strong>Almost There</strong>
+            <span class="sub">A little more practice needed — you are making good progress.</span>
         {% endif %}
-    </span>
+    {% else %}
+        {% if verdict == "PASS" %}
+            Assessment Result: <strong>Recommended</strong>
+            <span class="sub">The candidate has met the required placement assessment criteria.</span>
+        {% else %}
+            Assessment Result: <strong>Not Recommended</strong>
+            <span class="sub">The candidate did not meet the selection threshold for this placement round.</span>
+        {% endif %}
+    {% endif %}
 </div>
 
         <div class="letterhead">
-            <div class="eyebrow">AI Recruitment &amp; Placement Platform &middot; Official Evaluation Record</div>
-            <h1>Placement Evaluation Report</h1>
+            <div class="eyebrow">{% if is_practice %}Practice Session Report &middot; For Personal Use Only{% else %}AI Recruitment &amp; Placement Platform &middot; Official Evaluation Record{% endif %}</div>
+            <h1>{% if is_practice %}Practice Session Report{% else %}Placement Evaluation Report{% endif %}</h1>
 
             <div class="meta-row">
-                <div class="meta-item">
+                <div class="meta-item" style="flex: 2;">
                     <div class="meta-label">Candidate</div>
-                    <div class="meta-value">{{ candidate_name }}</div>
+                    <div class="meta-value" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ candidate_name }}">{{ candidate_name }}</div>
                 </div>
                 {% if domain %}
                 <div class="meta-item">
@@ -382,7 +387,7 @@
                 </div>
             </div>
 
-            <div class="stamp-badge">{% if verdict == "Selected" %}PASS{% else %}FAIL{% endif %}</div>
+            <div class="stamp-badge">{% if is_practice %}{{ verdict }}{% else %}{{ verdict }}{% endif %}</div>
         </div>
 
         <div class="score-band">

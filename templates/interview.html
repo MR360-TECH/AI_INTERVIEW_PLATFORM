@@ -1,156 +1,243 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Placement Assessment — AI Recruitment Platform</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body>
-{% include 'navbar.html' %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-7">
-            <div class="card interview-card p-4">
-
-                <div class="top-row">
-                    <span class="hint-tag"><kbd>Insert</kbd> toggle mic &nbsp;·&nbsp; <kbd>Enter</kbd> submit</span>
-                    <a href="/dashboard" class="btn btn-quit" onclick="return confirm('Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.');">
-                        <i class="bi bi-x-lg"></i> Exit Assessment
-                    </a>
-                </div>
-
-                <h3 class="mb-4 question-text">{{ question }}</h3>
-
-                <form method="POST" id="answerForm" enctype="multipart/form-data">
-
-
-                    <div class="upload-box mb-3">
-                        <label class="upload-title"><i class="bi bi-file-earmark-text"></i> Upload your resume (optional — helps AI ask better questions)</label>
-                        <div class="upload-row">
-                            <label class="upload-icon-btn" title="Upload resume">
-                                <i class="bi bi-upload"></i>
-                                <input type="file" name="resume" id="resumeInput" accept="image/*,application/pdf" style="display:none;">
-                            </label>
-                            <span class="file-name-tag" id="resumeFileName" style="display:none;"></span>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeResumeBtn" style="display:none;">
-                                <i class="bi bi-trash"></i> Remove
-                            </button>
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="card interview-card p-4">
+                    <!-- Top bar: keyboard hints + action buttons -->
+                    <div class="top-row">
+                        <span class="hint-tag"><kbd>Insert</kbd> toggle mic &nbsp;·&nbsp; <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> submit code</span>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if is_practice %}
+                            <form method="POST" action="/finish-interview" id="finishForm" style="margin:0;">
+                                <button type="submit" class="btn btn-finish"
+                                    onclick="return confirm('Finish this practice session and view your results?');">
+                                    <i class="bi bi-check2-circle"></i> Finish Session
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="/dashboard" class="btn btn-quit"
+                                onclick="return confirm('{% if is_practice %}Quit this practice session? Your conversation will be discarded.{% else %}Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.{% endif %}")">
+                                <i class="bi bi-x-lg"></i> {% if is_practice %}Quit{% else %}Exit Assessment{% endif %}
+                            </a>
                         </div>
+                    </div>
+
+                    {% if is_practice %}
+                    <!-- Practice note: lives between top-bar and question for clear visual hierarchy -->
+                    <div class="practice-note">
+                        <i class="bi bi-check2-circle"></i>
+                        <span>When you're done, tap <strong>Finish Session</strong> to wrap up and see your results.</span>
                     </div>
                     {% endif %}
 
-                    <div class="upload-box">
-                        <label class="upload-title"><i class="bi bi-paperclip"></i> Attach a photo or file (optional)</label>
-                        <div class="upload-row">
-                            <label class="upload-icon-btn" title="Upload file">
-                                <i class="bi bi-upload"></i>
-                                <input type="file" name="attachment" id="attachmentInput" accept="image/*,application/pdf" style="display:none;">
-                            </label>
-                            <span class="file-name-tag" id="attachmentFileName" style="display:none;"></span>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn" style="display:none;">
-                                <i class="bi bi-trash"></i> Remove
+                    <!-- Question text -->
+                    <h3 class="question-text">{{ question }}</h3>
+
+
+
+                    <form method="POST" id="answerForm" enctype="multipart/form-data">
+
+
+                        {% if q_num == 1 and not is_practice %}
+                        <div class="upload-box mb-3">
+                            <label class="upload-title"><i class="bi bi-file-earmark-text"></i> Upload your resume
+                                (optional — helps AI ask better questions)</label>
+                            <div class="upload-row">
+                                <label class="upload-icon-btn" title="Upload resume">
+                                    <i class="bi bi-upload"></i>
+                                    <input type="file" name="resume" id="resumeInput" accept="image/*,application/pdf"
+                                        style="display:none;">
+                                </label>
+                                <span class="file-name-tag" id="resumeFileName" style="display:none;"></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeResumeBtn"
+                                    style="display:none;">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if question_type == 'file' %}
+                        <div class="upload-box mb-3">
+                            <label class="upload-title"><i class="bi bi-paperclip"></i> Attach a diagram, sketch, sheet, or file (optional)</label>
+                            <div class="upload-row">
+                                <label class="upload-icon-btn" title="Upload file">
+                                    <i class="bi bi-upload"></i>
+                                    <input type="file" name="attachment" id="attachmentInput"
+                                        accept="image/*,application/pdf" style="display:none;">
+                                </label>
+                                <span class="file-name-tag" id="attachmentFileName" style="display:none;"></span>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn"
+                                    style="display:none;">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if question_type == 'code' %}
+                        <div class="mb-3">
+                            <label class="upload-title mb-2"><i class="bi bi-code-slash"></i> Write your code below:</label>
+                            <div id="monacoEditorContainer" style="height: 200px; border: 1px solid #ccc; border-radius: 6px;"></div>
+                            <input type="hidden" name="code_answer" id="codeAnswerInput">
+                        </div>
+                        {% endif %}
+
+                        <div class="answer-input-group mb-1">
+                            <textarea name="answer" id="answerBox" class="form-control" rows="4"
+                                placeholder="Type your answer explanation, or click the mic to speak..."></textarea>
+                            <button type="button" class="mic-btn" id="micBtn"
+                                title="Click to speak your answer (or press Insert)">
+                                <i class="bi bi-mic-fill" id="micIcon"></i>
                             </button>
                         </div>
-                    </div>
+                        <span class="empty-warning" id="emptyWarning"><i class="bi bi-exclamation-circle"></i> Please
+                            enter something in the answer box or write code before submitting.</span>
+                        <span class="listening-tag mb-3 d-block" id="listeningTag">🎙️ Listening... speak now</span>
 
-                    <div class="answer-input-group mb-1">
-                        <textarea name="answer" id="answerBox" class="form-control" rows="4" required placeholder="Type your answer, or click the mic to speak..."></textarea>
-                        <button type="button" class="mic-btn" id="micBtn" title="Click to speak your answer (or press Insert)">
-                            <i class="bi bi-mic-fill" id="micIcon"></i>
-                        </button>
-                    </div>
-                    <span class="empty-warning" id="emptyWarning"><i class="bi bi-exclamation-circle"></i> Please enter something in the answer box before submitting.</span>
-                    <span class="listening-tag mb-3 d-block" id="listeningTag">🎙️ Listening... speak now</span>
-
-                    <button class="btn btn-submit btn-primary w-100 text-white mt-2">Submit Answer</button>
-                </form>
+                        <button class="btn btn-submit btn-primary w-100 text-white mt-2">Submit Answer</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='js/speech.js') }}"></script>
-<script>
-    const answerBox = document.getElementById('answerBox');
-    const emptyWarning = document.getElementById('emptyWarning');
-    const answerForm = document.getElementById('answerForm');
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
+    <script>
+        const answerBox = document.getElementById('answerBox');
+        const emptyWarning = document.getElementById('emptyWarning');
+        const answerForm = document.getElementById('answerForm');
+        const codeAnswerInput = document.getElementById('codeAnswerInput');
 
-    function trySubmit() {
-        if (answerBox.value.trim().length === 0) {
-            emptyWarning.classList.add('active');
-            answerBox.classList.add('input-error');
-            answerBox.focus();
-        } else {
-            emptyWarning.classList.remove('active');
-            answerBox.classList.remove('input-error');
-            answerForm.requestSubmit();
+        function isAnswerEmpty() {
+            const textVal = answerBox.value.trim();
+            let codeVal = "";
+            if (typeof editorInstance !== 'undefined') {
+                codeVal = editorInstance.getValue().replace("# Write your code/solution here...\n", "").trim();
+            }
+            return textVal.length === 0 && codeVal.length === 0;
         }
-    }
 
-    answerBox.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            trySubmit();
+        function trySubmit() {
+            if (typeof editorInstance !== 'undefined' && codeAnswerInput) {
+                codeAnswerInput.value = editorInstance.getValue();
+            }
+            if (isAnswerEmpty()) {
+                emptyWarning.classList.add('active');
+                answerBox.classList.add('input-error');
+                answerBox.focus();
+            } else {
+                emptyWarning.classList.remove('active');
+                answerBox.classList.remove('input-error');
+                answerForm.requestSubmit();
+            }
         }
-    });
 
-    answerBox.addEventListener('input', function() {
-        if (answerBox.value.trim().length > 0) {
-            emptyWarning.classList.remove('active');
-            answerBox.classList.remove('input-error');
-        }
-    });
-
-    answerForm.addEventListener('submit', function(e) {
-        if (answerBox.value.trim().length === 0) {
-            e.preventDefault();
-            emptyWarning.classList.add('active');
-            answerBox.classList.add('input-error');
-            answerBox.focus();
-        }
-    });
-
-    const resumeInput = document.getElementById('resumeInput');
-    const resumeFileName = document.getElementById('resumeFileName');
-    const removeResumeBtn = document.getElementById('removeResumeBtn');
-
-    if (resumeInput) {
-        resumeInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                resumeFileName.textContent = this.files[0].name;
-                resumeFileName.style.display = 'inline-block';
-                removeResumeBtn.style.display = 'inline-block';
+        answerBox.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                trySubmit();
             }
         });
 
-        removeResumeBtn.addEventListener('click', function() {
-            resumeInput.value = '';
-            resumeFileName.style.display = 'none';
-            removeResumeBtn.style.display = 'none';
+        answerBox.addEventListener('input', function () {
+            if (!isAnswerEmpty()) {
+                emptyWarning.classList.remove('active');
+                answerBox.classList.remove('input-error');
+            }
         });
-    }
 
-    const attachmentInput = document.getElementById('attachmentInput');
-    const attachmentFileName = document.getElementById('attachmentFileName');
-    const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
+        answerForm.addEventListener('submit', function (e) {
+            if (typeof editorInstance !== 'undefined' && codeAnswerInput) {
+                codeAnswerInput.value = editorInstance.getValue();
+            }
+            if (isAnswerEmpty()) {
+                e.preventDefault();
+                emptyWarning.classList.add('active');
+                answerBox.classList.add('input-error');
+                answerBox.focus();
+            }
+        });
 
-    attachmentInput.addEventListener('change', function() {
-        if (this.files.length > 0) {
-            attachmentFileName.textContent = this.files[0].name;
-            attachmentFileName.style.display = 'inline-block';
-            removeAttachmentBtn.style.display = 'inline-block';
+        const resumeInput = document.getElementById('resumeInput');
+        const resumeFileName = document.getElementById('resumeFileName');
+        const removeResumeBtn = document.getElementById('removeResumeBtn');
+
+        if (resumeInput) {
+            resumeInput.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    resumeFileName.textContent = this.files[0].name;
+                    resumeFileName.style.display = 'inline-block';
+                    removeResumeBtn.style.display = 'inline-block';
+                }
+            });
+
+            removeResumeBtn.addEventListener('click', function () {
+                resumeInput.value = '';
+                resumeFileName.style.display = 'none';
+                removeResumeBtn.style.display = 'none';
+            });
         }
-    });
 
-    removeAttachmentBtn.addEventListener('click', function() {
-        attachmentInput.value = '';
-        attachmentFileName.style.display = 'none';
-        removeAttachmentBtn.style.display = 'none';
-    });
-</script>
+        const attachmentInput = document.getElementById('attachmentInput');
+        const attachmentFileName = document.getElementById('attachmentFileName');
+        const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
+
+        if (attachmentInput) {
+            attachmentInput.addEventListener('change', function () {
+                if (this.files.length > 0) {
+                    attachmentFileName.textContent = this.files[0].name;
+                    attachmentFileName.style.display = 'inline-block';
+                    removeAttachmentBtn.style.display = 'inline-block';
+                }
+            });
+
+            removeAttachmentBtn.addEventListener('click', function () {
+                attachmentInput.value = '';
+                attachmentFileName.style.display = 'none';
+                removeAttachmentBtn.style.display = 'none';
+            });
+        }
+    </script>
+    {% if question_type == 'code' %}
+    <!-- Load Monaco Editor via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+        let editorInstance;
+        require(['vs/editor/editor.main'], function () {
+            editorInstance = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
+                value: "# Write your code/solution here...\n",
+                language: 'python',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false }
+            });
+
+            // Add Ctrl+Enter and Cmd+Enter support to submit
+            editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
+                trySubmit();
+            });
+        });
+    </script>
+    {% endif %}
 </body>
+
 </html>

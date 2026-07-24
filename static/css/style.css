@@ -334,6 +334,48 @@ a {
     box-shadow: 0 4px 12px rgba(240,104,90,0.22);
 }
 
+/* Finish Session button — green, distinct from quit */
+.btn-finish {
+    background: var(--surface);
+    border: 1.5px solid #28a745;
+    color: #28a745;
+    padding: 6px 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: all var(--t-fast);
+    box-shadow: 0 2px 8px rgba(40,167,69,0.10);
+}
+.btn-finish:hover {
+    background: #f0faf2;
+    color: #218838;
+    border-color: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40,167,69,0.22);
+}
+
+/* Practice mode info note — sits between top-bar and question with breathing room */
+.practice-note {
+    background: rgba(78,115,223,0.06);
+    border: 1px solid rgba(78,115,223,0.18);
+    border-left: 3px solid var(--brand-blue);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    margin-top: 18px;
+    margin-bottom: 22px;
+    font-size: 0.81rem;
+    color: var(--brand-blue);
+    font-weight: 500;
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    line-height: 1.5;
+}
+.practice-note i { flex-shrink: 0; font-size: 0.92rem; margin-top: 2px; }
+
+/* Question text spacing — tighter when there's no note, normal otherwise */
+.question-text { margin-top: 20px; margin-bottom: 20px; }
+
 .btn-outline-danger {
     border-radius: var(--radius-sm) !important;
     font-weight: 600;
