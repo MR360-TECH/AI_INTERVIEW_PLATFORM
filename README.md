@@ -22,14 +22,15 @@ In short: this isn't a system that *simulates* an interview using pre-set conten
 
 ## 🚀 Features
 
-- 🔐 Secure User Registration & Login with encrypted passwords
-- 🤖 AI-powered Adaptive Mock Interviews (5–8 dynamically generated questions)
-- 📊 Automated Score, Strengths, Improvement Feedback & Selection Verdict
-- 🗄️ MySQL Database Integration with relational data modeling
-- 🔒 Password Hashing (Werkzeug) & Session-based Authentication
-- 👨‍💼 Admin Dashboard with candidate insights, filtering, and record management
-- 🎓 Candidate Profiling — education level, course, and semester captured at registration
-- 📱 Responsive, Bootstrap-based User Interface
+- 🔐 **Dual Authentication Methods**: Local user registration with hashed passwords (using Werkzeug) and single-click **Google OAuth integration** for verified logins.
+- 🎙️ **Voice-to-Text Input**: Built-in speech recognition during assessments allowing candidates to dictate responses using their microphone.
+- 🤖 **Adaptive Mock Interviews**: Realistic interview sessions where Gemini AI analyzes previous responses to generate subsequent questions dynamically (between 5 and 8 rounds).
+- 📝 **Resume Assessment Progress**: Automated tracking of active sessions allowing candidates to resume their interview from where they left off.
+- 📊 **AI-Generated Evaluations**: Detailed feedback containing an overall score, selection verdict, strengths, improvements, and a comprehensive summary.
+- 📄 **Printable PDF Reports**: Premium candidate reports formatted for printing and download directly from the results interface.
+- 👨‍💼 **Recruitment Operations Dashboard**: Clean admin interface showing analytics, real-time candidate search/filtering, candidate details, settings management, and records pruning.
+- ⚙️ **Configurable Assessment Parameters**: Admin options to customize passing scores, question thresholds, and default academic level difficulty.
+- 🎨 **Premium Modern Design System**: Responsive CSS with dynamic hover effects, smooth transitions, and modern cards layout.
 
 ---
 
@@ -107,12 +108,16 @@ Every candidate action flows through Flask, which coordinates between the MySQL 
 ## 🗄️ Database Overview
 
 **`users`**
-Stores each candidate's registration profile: full name, email (unique), hashed password, gender, education level, course, semester, and registration timestamp.
+Stores candidate registration details: ID, full name, email, hashed password, gender, education level, course, semester, registration method (`auth_provider` e.g., local or google), Google OAuth ID (`google_id`), and registration timestamp.
 
 **`interview_results`**
-Stores every completed interview attempt: score, verdict, AI-generated strengths and improvements (stored as text), and the exact date/time of the interview. Connected to `users` via a foreign key (`user_id`), meaning one candidate can have multiple interview records — a complete, traceable history rather than just a single snapshot.
+Stores completed interview metrics and feedback: candidate ID reference, score, evaluation verdict (Selected/Rejected), AI-generated strengths, areas for improvement, executive summary, domain/job description, and execution timestamp.
 
-This relational structure is what powers the Admin Dashboard's ability to join candidate profile data with their interview performance in a single view.
+**`interview_progress`**
+Maintains the state of ongoing candidate assessment sessions: candidate ID reference, serialized chat history, current question count, and update timestamp. This allows candidates to seamlessly resume active assessments if disconnected.
+
+**`admin_settings`**
+Maintains global application configurations for assessments: minimum and maximum question thresholds, passing score cutoff, and default candidate difficulty settings.
 
 ---
 
@@ -120,32 +125,53 @@ This relational structure is what powers the Admin Dashboard's ability to join c
 
 ```mermaid
 erDiagram
-    USERS ||--o{ INTERVIEW_RESULTS : "has many"
+    users ||--o{ interview_results : "has many"
+    users ||--o| interview_progress : "maintains active"
 
-    USERS {
+    users {
         int id PK
         varchar full_name
         varchar email UK
-        varchar password
+        varchar password "nullable"
         varchar gender
         varchar education
         varchar course
         varchar semester
+        varchar auth_provider
+        varchar google_id UK "nullable"
         datetime registered_at
     }
 
-    INTERVIEW_RESULTS {
+    interview_results {
         int id PK
         int user_id FK
         decimal score
         varchar status
         text strengths
         text improvements
+        text summary
+        varchar domain
         datetime interview_datetime
+    }
+
+    interview_progress {
+        int id PK
+        int user_id FK "UK"
+        text chat_history
+        int q_count
+        datetime updated_at
+    }
+
+    admin_settings {
+        int id PK
+        int min_questions
+        int max_questions
+        int pass_score
+        varchar default_difficulty
     }
 ```
 
-Each user can have multiple interview results (one-to-many relationship), with every result traceable back to exactly one candidate through the `user_id` foreign key.
+Each user can have multiple interview results (one-to-many relationship) and a single active progress tracker (one-to-one relationship). All result and progress records are linked back to a user through foreign keys.
 
 ---
 
@@ -180,11 +206,10 @@ To provide students and job seekers with an AI-powered interview preparation pla
 
 ## 🔮 Future Enhancements
 
-- Voice-based interview mode
-- Downloadable PDF candidate reports
-- Public cloud deployment
-- Multi-language question support
-- Role-specific interview templates (Technical, HR, Managerial)
+- 🎙️ Text-to-speech audio playback for AI examiner questions.
+- ☁️ Public cloud deployment and automated scaling.
+- 🌐 Multi-language support for international candidates.
+- 📁 Physical resume parser to auto-fill profiles and customize interview tracks.
 
 ---
 
