@@ -1,87 +1,266 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Edit Profile</title>
+    <title>Edit Profile — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body { background: linear-gradient(135deg, #eef2f7, #e4e9f2); }
-        .card { border: none; border-radius: 16px; }
+        :root {
+            --accent: #4f46e5;
+            --accent2: #818cf8;
+            --success-glow: #10b981;
+            --card-bg: rgba(255,255,255,0.08);
+            --border-glow: rgba(129,140,248,0.35);
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1040 40%, #111827 100%);
+            font-family: 'Inter', sans-serif;
+            color: #f1f5f9;
+        }
+
+        /* ── Glass card ── */
+        .reg-glass {
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(36px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Header ── */
+        .reg-header {
+            background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+            padding: 2.2rem 2rem 1.8rem;
+            text-align: center;
+            position: relative;
+        }
+        .reg-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 40px;
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.03));
+        }
+        .reg-header .icon-ring {
+            width: 68px; height: 68px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #fff;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 0 0 8px rgba(255,255,255,0.07);
+        }
+        .reg-header h2 { color: #fff; font-weight: 800; font-size: 1.5rem; margin-bottom: 0.3rem; }
+        .reg-header p  { color: rgba(255,255,255,0.75); font-size: 0.9rem; margin: 0; }
+
+        /* ── Body ── */
+        .reg-body { padding: 2rem 2.2rem 2.2rem; }
+
+        /* ── Form controls ── */
+        .form-label {
+            color: rgba(255,255,255,0.75);
+            font-weight: 600; font-size: 0.82rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+        .form-label i { margin-right: 5px; opacity: 0.7; }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1px solid rgba(255,255,255,0.12) !important;
+            border-radius: 10px !important;
+            color: #f1f5f9 !important;
+            font-size: 0.92rem;
+            padding: 0.65rem 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.3) !important; }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent2) !important;
+            box-shadow: 0 0 0 3px rgba(129,140,248,0.2) !important;
+            outline: none;
+        }
+        .form-select option { background: #1e1b4b; color: #f1f5f9; }
+
+        /* locked field */
+        .locked-field {
+            background: rgba(255,255,255,0.04) !important;
+            border-style: dashed !important;
+            color: rgba(255,255,255,0.45) !important;
+            cursor: not-allowed;
+        }
+
+        /* ── Education radio pills ── */
+        .edu-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+        .edu-pills input[type="radio"] { display: none; }
+        .edu-pills label {
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.5);
+            font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            background: rgba(255,255,255,0.04);
+        }
+        .edu-pills input:checked + label {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(79,70,229,0.35);
+        }
+
+        /* ── Submit button ── */
+        .btn-reg-submit {
+            background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 700; font-size: 1rem;
+            padding: 0.85rem 2rem;
+            width: 100%;
+            margin-top: 1.4rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 20px rgba(79,70,229,0.4);
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .btn-reg-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(79,70,229,0.55);
+        }
+        .btn-reg-submit:active { transform: translateY(0); }
+
+        /* ── Success Alert ── */
+        .success-note {
+            display: flex; gap: 0.7rem; align-items: flex-start;
+            background: rgba(16,185,129,0.08);
+            border: 1px solid rgba(16,185,129,0.25);
+            border-radius: 10px; padding: 0.75rem 1rem;
+            color: #a7f3d0; font-size: 0.88rem;
+            margin-bottom: 1.5rem;
+        }
+        .success-note i { color: var(--success-glow); font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
     </style>
 </head>
 <body>
+
 {% include 'navbar.html' %}
-<div class="container mt-5">
+
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="mb-0">Edit Profile</h3>
-                    <a href="/dashboard" class="back-btn-global">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </a>
+        <div class="col-lg-7 col-md-9">
+
+            <!-- Back button -->
+            <div class="mb-3">
+                <a href="/dashboard" class="back-btn-global">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <div class="reg-glass">
+
+                <!-- Header -->
+                <div class="reg-header">
+                    <div class="icon-ring"><i class="bi bi-pencil-square"></i></div>
+                    <h2>Edit Your Profile</h2>
+                    <p>Keep your profile details up-to-date for accurate evaluations</p>
                 </div>
 
-                {% if success %}
-                <div class="alert alert-success">{{ success }}</div>
-                {% endif %}
+                <!-- Body -->
+                <div class="reg-body">
 
-                <form method="POST">
-                    <div class="mb-3">
-                        <label>Full Name</label>
-                        <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+                    {% if success %}
+                    <div class="success-note">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <div>{{ success }}</div>
                     </div>
+                    {% endif %}
 
-                    <div class="mb-3">
-                        <label>Email (cannot be changed)</label>
-                        <input type="email" class="form-control" value="{{ user.email }}" disabled>
-                    </div>
+                    <form method="POST">
 
-                    <div class="mb-3">
-                        <label>Gender</label>
-                        <select name="gender" class="form-select">
-                            <option value="Male" {% if user.gender == "Male" %}selected{% endif %}>Male</option>
-                            <option value="Female" {% if user.gender == "Female" %}selected{% endif %}>Female</option>
-                            <option value="Other" {% if user.gender == "Other" %}selected{% endif %}>Other</option>
-                        </select>
-                    </div>
+                        <!-- Full name -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-person"></i> Full Name</label>
+                            <input type="text" name="full_name" class="form-control"
+                                   placeholder="e.g. Pavan Kumar" value="{{ user.full_name }}" required
+                                   autocomplete="name">
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label d-block">Education Level</label>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="education" value="School" id="edu1" {% if user.education == "School" %}checked{% endif %}>
-                            <label class="form-check-label" for="edu1">School</label>
+                        <!-- Email: locked -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-envelope"></i> Email Address</label>
+                            <input type="email" class="form-control locked-field"
+                                   value="{{ user.email }}" readonly
+                                   title="Email is locked and cannot be changed">
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2" {% if user.education == "PU/12th" %}checked{% endif %}>
-                            <label class="form-check-label" for="edu2">PU / 12th</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3" {% if user.education == "Degree" %}checked{% endif %}>
-                            <label class="form-check-label" for="edu3">Degree</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if user.education == "Post Graduate" %}checked{% endif %}>
-                            <label class="form-check-label" for="edu4">Post Graduate</label>
-                        </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label>Course</label>
-                            <input type="text" name="course" class="form-control" value="{{ user.course }}">
+                        <!-- Gender -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-gender-ambiguous"></i> Gender</label>
+                            <select name="gender" class="form-select">
+                                <option value="">— Select —</option>
+                                <option value="Male" {% if user.gender == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if user.gender == "Female" %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if user.gender == "Other" %}selected{% endif %}>Other / Prefer not to say</option>
+                            </select>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label>Semester</label>
-                            <input type="text" name="semester" class="form-control" value="{{ user.semester }}">
-                        </div>
-                    </div>
 
-                    <button class="btn btn-primary w-100 mt-2">Save Changes</button>
-                </form>
-            </div>
+                        <!-- Education Level -->
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-mortarboard"></i> Education Level</label>
+                            <div class="edu-pills">
+                                <input class="form-check-input" type="radio" name="education" value="School" id="edu1" {% if user.education == "School" %}checked{% endif %}>
+                                <label for="edu1">School</label>
+                                <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2" {% if user.education == "PU/12th" %}checked{% endif %}>
+                                <label for="edu2">PU / 12th</label>
+                                <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3" {% if user.education == "Degree" %}checked{% endif %}>
+                                <label for="edu3">Degree</label>
+                                <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if user.education == "Post Graduate" %}checked{% endif %}>
+                                <label for="edu4">Post Graduate</label>
+                            </div>
+                        </div>
+
+                        <!-- Course and Semester -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="bi bi-book"></i> Course / Branch</label>
+                                <input type="text" name="course" class="form-control"
+                                       value="{{ user.course or '' }}" placeholder="e.g. BCA, B.Tech CSE">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label"><i class="bi bi-calendar3"></i> Semester / Year</label>
+                                <input type="text" name="semester" class="form-control"
+                                       value="{{ user.semester or '' }}" placeholder="e.g. 6th Sem, 3rd Year">
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn-reg-submit">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </form>
+
+                </div><!-- /reg-body -->
+            </div><!-- /reg-glass5 -->
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -13,6 +13,9 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
+            <div class="mb-3">
+                <a href="/" class="back-btn-global"><i class="bi bi-arrow-left"></i> Back to Home</a>
+            </div>
             <div class="card login-card shadow-lg">
 
                 <div class="login-header">
@@ -26,14 +29,14 @@
                     <div class="alert alert-danger">{{ error }}</div>
                     {% endif %}
 
-                    {% if has_google_oauth %}
-                    <a href="/auth/google" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2">
-                        <img src="https://www.google.com/favicon.ico" width="18" height="18" alt="Google">
-                        Sign in with Google
-                    </a>
+                    <div class="mb-3">
+                        <a href="/auth/otp/send" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2 py-2" style="font-weight:600; font-size:1.02rem; border-radius:8px;">
+                            <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="Google">
+                            Sign in with Gmail (OTP Verification)
+                        </a>
+                    </div>
 
-                    <div class="divider">or</div>
-                    {% endif %}
+                    <div class="divider">or login with credentials</div>
 
                     <form method="POST" id="loginForm">
                         <div class="mb-3">
@@ -56,7 +59,9 @@
                     </form>
 
                     <p class="text-center mt-4 mb-0 text-muted">
-                        Don't have a placement account? Enter your email &amp; password above and click <strong>Continue as Guest</strong> to register your candidate profile.
+                        Don't have an account?
+                        <a href="/register" style="color:#4f46e5; font-weight:600;">Create one here</a>
+                        &nbsp;or enter your email &amp; password above and click <strong>Continue as Guest</strong>.
                     </p>
 
                     <div class="recommend-note">

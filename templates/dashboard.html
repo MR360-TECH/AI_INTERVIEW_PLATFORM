@@ -2,143 +2,713 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard — AI Recruitment &amp; Assessment Platform</title>
+    <title>Candidate Dashboard — AI Recruitment Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(at top left, #f4f7ff 0%, #ffffff 50%, #faf5ff 100%);
+            min-height: 100vh;
+            color: #1e293b;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient colored lighting blobs in background */
+        .ambient-glow {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .glow-1 {
+            top: -10%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.15);
+        }
+        .glow-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(236, 72, 153, 0.1);
+        }
+
+        /* ── Header Welcome Card (Highly Flashy SaaS Gradient) ── */
+        .dashboard-welcome-banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 40%, #db2777 100%);
+            border-radius: 28px;
+            padding: 44px;
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.4s ease;
+        }
+
+        /* Cyber mesh decoration inside banner */
+        .dashboard-welcome-banner::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px);
+            background-size: 20px 20px;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        .dashboard-welcome-banner::after {
+            content: '';
+            position: absolute;
+            right: -10%;
+            top: -20%;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .avatar-circle {
+            width: 68px;
+            height: 68px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ── Metric Card ── */
+        .metric-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 24px;
+            padding: 26px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.02);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .metric-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.08);
+        }
+        .metric-icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            transition: all 0.3s;
+        }
+        .metric-card:hover .metric-icon-box {
+            transform: scale(1.1) rotate(2deg);
+        }
+        .icon-blue { background: #eff6ff; color: #3b82f6; border: 1px solid #dbeafe; }
+        .icon-green { background: #ecfdf5; color: #10b981; border: 1px solid #d1fae5; }
+        .icon-purple { background: #faf5ff; color: #8b5cf6; border: 1px solid #f3e8ff; }
+        .icon-amber { background: #fffbeb; color: #f59e0b; border: 1px solid #fef3c7; }
+
+        /* ── Action Deck Card (Flashy and enthusiastic) ── */
+        .action-card {
+            border-radius: 28px;
+            padding: 38px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+            z-index: 1;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 28px;
+            padding: 2.5px;
+            background: linear-gradient(135deg, #ffffff, rgba(255,255,255,0.4) 50%, var(--theme-color) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 2;
+        }
+
+        .action-card:hover {
+            transform: translateY(-8px);
+            border-color: transparent;
+        }
+
+        .assessment-hero-card {
+            --theme-color: #6366f1;
+            --theme-glow: rgba(99, 102, 241, 0.25);
+        }
+        .assessment-hero-card:hover {
+            box-shadow: 0 20px 45px -10px rgba(99, 102, 241, 0.15), 0 0 25px var(--theme-glow);
+        }
+
+        .practice-deck-card {
+            --theme-color: #10b981;
+            --theme-glow: rgba(16, 185, 129, 0.25);
+        }
+        .practice-deck-card:hover {
+            box-shadow: 0 20px 45px -10px rgba(16, 185, 129, 0.15), 0 0 25px var(--theme-glow);
+        }
+
+        .card-corner-aura {
+            position: absolute;
+            top: -10%; right: -10%;
+            width: 180px; height: 180px;
+            background: radial-gradient(circle, var(--theme-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+        .action-card:hover .card-corner-aura {
+            transform: scale(1.2);
+            background: radial-gradient(circle, var(--theme-color) 25%, transparent 70%);
+            opacity: 0.18;
+        }
+
+        .btn-launch-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 15px 28px;
+            font-weight: 700;
+            font-size: 0.98rem;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            text-decoration: none;
+            z-index: 2;
+        }
+        .btn-launch-primary:hover {
+            background: linear-gradient(135deg, #4338ca, #6d28d9);
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-launch-practice {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            padding: 15px 28px;
+            font-weight: 700;
+            font-size: 0.98rem;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            text-decoration: none;
+            z-index: 2;
+        }
+        .btn-launch-practice:hover {
+            background: linear-gradient(135deg, #0d9488, #047857);
+            color: #fff;
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .status-badge-active {
+            background: #ecfdf5;
+            color: #059669;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #d1fae5;
+        }
+
+        /* ── Recent History Card ── */
+        .recent-card {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 34px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+            transition: all 0.4s ease;
+        }
+        .recent-card:hover {
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.04);
+            border-color: #cbd5e1;
+        }
+
+        .score-pill {
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .score-high { background: #ecfdf5; color: #059669; border: 1px solid #d1fae5; }
+        .score-mid { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+        .score-low { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+
+        .btn-reset-assessment {
+            background: transparent;
+            color: #ef4444;
+            border: 1.5px solid rgba(239, 68, 68, 0.25);
+            border-radius: 14px;
+            padding: 12px 24px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            z-index: 2;
+        }
+        .btn-reset-assessment:hover {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        /* ── Custom Button Overrides ── */
+        .btn-outline-light-custom {
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+        .btn-outline-light-custom:hover {
+            background: #ffffff;
+            color: #4f46e5;
+            border-color: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .btn-danger-custom {
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
+        }
+        .btn-danger-custom:hover {
+            background: #dc2626;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Practice pills */
+        .practice-pill-box {
+            background: #faf8ff;
+            border: 1.5px solid #f1f0fb;
+            border-radius: 16px;
+            padding: 14px 8px;
+            transition: all 0.3s ease;
+        }
+        .practice-pill-box:hover {
+            border-color: #10b981;
+            box-shadow: 0 8px 18px rgba(16, 185, 129, 0.08);
+            transform: translateY(-3px);
+            background: #ffffff;
+        }
+
+        /* Modal styling premium glass */
+        .modal-content {
+            border-radius: 28px !important;
+            border: 1px solid rgba(255, 255, 255, 0.8) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        /* Staggered loading keyframe animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-item {
+            animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+    </style>
 </head>
 <body>
-<div class="container">
 
-    <div class="topbar">
-        <div>
-            <h4 class="mb-0">Welcome, <span>{{ name }}</span> 👋</h4>
-            <p class="mb-0 text-muted" style="font-size:0.83rem;margin-top:2px;">AI Recruitment &amp; Assessment Platform &middot; Candidate Portal</p>
-        </div>
-        <div class="d-flex gap-2 align-items-center">
-            <button class="icon-btn" title="How it Works" data-bs-toggle="modal" data-bs-target="#howItWorksModal" style="color:#4e73df;">
-                <i class="bi bi-info-circle-fill"></i>
-            </button>
-            <a href="/edit-profile" class="icon-btn" title="Edit Profile">
-                <i class="bi bi-person-gear"></i>
-            </a>
-            <a href="/logout" class="icon-btn" title="Logout" style="color:#e74a3b;">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
+<!-- Ambient Colored Background Blur -->
+<div class="ambient-glow glow-1"></div>
+<div class="ambient-glow glow-2"></div>
+
+<div class="container py-4" style="position: relative; z-index: 10;">
+
+    <!-- Top Flashy Welcoming Header Card -->
+    <div class="dashboard-welcome-banner mb-4 animate-item">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-circle">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div>
+                    <h3 class="mb-1 fw-bold text-white" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.01em;">Welcome back, {{ name }}! 👋</h3>
+                    <p class="mb-0 text-white-50 fs-6" style="font-family: 'Outfit', sans-serif; font-weight: 300;">
+                        {% if user and user.course %}{{ user.course }} &bull; {{ user.education }}{% else %}Candidate Evaluation Portal{% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-outline-light-custom btn-sm rounded-pill px-3 py-2" data-bs-toggle="modal" data-bs-target="#howItWorksModal" style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.01em;">
+                    <i class="bi bi-info-circle-fill me-1"></i> How It Works
+                </button>
+                <a href="/edit-profile" class="btn btn-outline-light-custom btn-sm rounded-pill px-3 py-2" title="Edit Profile" style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.01em;">
+                    <i class="bi bi-person-gear me-1"></i> Profile
+                </a>
+                <a href="/logout" class="btn btn-danger-custom btn-sm rounded-pill px-3 py-2" title="Logout" style="font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 0.85rem; letter-spacing: 0.01em;">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="row justify-content-center mt-4">
-        <div class="col-lg-7">
-            {% if error %}
-            <div class="alert alert-danger mb-4 shadow-sm" style="border-radius:12px; font-weight:500;">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
-            </div>
-            {% endif %}
+    <!-- Alert Messages if any -->
+    {% if error %}
+    <div class="alert alert-danger mb-4 shadow-sm rounded-4 border-0">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+    </div>
+    {% endif %}
 
-            <div class="card hero-card">
-                {% if has_progress %}
-                    <h2>Placement Assessment In Progress</h2>
-                    <p>You have an active official assessment session. Resume your placement evaluation or reset to start fresh.</p>
-                {% else %}
-                    <h2>Begin Recruitment Assessment</h2>
-                    <p>Start your formal recruitment evaluation. The AI examiner will conduct an adaptive, domain-specific interview session and compile a certified evaluation report upon completion.</p>
-                {% endif %}
+    <!-- Key Candidate Analytics Bar -->
+    <div class="row g-3 mb-4 animate-item" style="animation-delay: 0.05s;">
+        <div class="col-md-8 col-sm-12">
+            <a href="/tech-questions" class="text-decoration-none">
+                <div class="metric-card d-flex align-items-center justify-content-between h-100" style="border: 1.5px solid rgba(99, 102, 241, 0.18); cursor: pointer;">
+                    <div>
+                        <span class="badge mb-2 text-primary" style="background: rgba(99, 102, 241, 0.08); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Inter', sans-serif; font-weight: 700;">Interview Prep Hub</span>
+                        <h4 class="fw-bold mb-1 text-dark" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.02em;">Top Company Tech Questions <i class="bi bi-arrow-right-short text-primary"></i></h4>
+                        <p class="mb-0 fs-7 text-muted" style="font-family: 'Inter', sans-serif; font-weight: 400;">Master actual coding, system design, and behavioral questions asked by Google, Microsoft, Amazon, Meta, Netflix, and TCS.</p>
+                    </div>
+                    <div class="d-none d-md-flex align-items-center gap-2 ms-4">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 44px; height: 44px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.15);">
+                            <i class="bi bi-arrow-right-circle-fill text-primary fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
 
-                <div class="d-grid gap-3 mt-3">
-                    <a href="/interview" class="btn btn-main">
-                        {% if has_progress %}Resume Assessment &rarr;{% else %}Start Recruitment Assessment &rarr;{% endif %}
-                    </a>
-
-                    <a href="/practice-setup" class="btn btn-history" style="background: linear-gradient(135deg, #17b978, #0fa870); color: #fff; border: none; box-shadow: 0 4px 14px rgba(23,185,120,0.25);">
-                        <i class="bi bi-mortarboard-fill"></i> Enter Practice Mode &rarr;
-                    </a>
-
+        <div class="col-md-4 col-sm-12">
+            <div class="metric-card d-flex align-items-center justify-content-between h-100">
+                <div>
+                    <span class="text-muted fw-semibold fs-7 d-block mb-1" style="font-family: 'Outfit', sans-serif;">Assessment State</span>
                     {% if has_progress %}
-                    <a href="/interview?restart=1" class="btn btn-outline-danger" onclick="return confirm('This will discard your current assessment session and start a fresh recruitment evaluation. Are you sure?');">
-                        <i class="bi bi-arrow-clockwise"></i> Reset Assessment Session
-                    </a>
+                    <span class="status-badge-active" id="assessmentStateBadge" style="font-family: 'Outfit', sans-serif;"><i class="bi bi-record-fill fs-8"></i> Session In Progress</span>
+                    {% else %}
+                    <span class="badge bg-light text-secondary px-3 py-2 rounded-pill fs-7" id="assessmentStateBadge" style="font-family: 'Outfit', sans-serif; font-weight: 600; border: 1px solid #e2e8f0;">Ready to Start</span>
                     {% endif %}
-
-                    {% if has_result %}
-                    <a href="/latest-result" class="btn btn-history">
-                        <i class="bi bi-file-earmark-text"></i> View Latest Evaluation Report
-                    </a>
-                    {% endif %}
-
-                    <a href="/my-history" class="btn btn-history">
-                        <i class="bi bi-clock-history"></i> Placement Assessment Records
-                    </a>
+                </div>
+                <div class="metric-icon-box icon-purple">
+                    <i class="bi bi-lightning-charge-fill"></i>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Main Action Deck -->
+    <div class="row g-4 mb-4 animate-item" style="animation-delay: 0.1s;">
+
+        <!-- Formal Recruitment Assessment -->
+        <div class="col-lg-6">
+            <div class="action-card assessment-hero-card">
+                <div class="card-corner-aura"></div>
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3" style="position: relative; z-index: 10;">
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold" style="background:#4f46e5 !important; font-family: 'Outfit', sans-serif; font-size: 0.8rem; letter-spacing: 0.02em;">
+                            <i class="bi bi-shield-check me-1"></i> Formal Evaluation
+                        </span>
+                        {% if has_progress %}
+                        <span class="text-primary fw-bold fs-7" id="activeSessionTag" style="font-family: 'Outfit', sans-serif;"><i class="bi bi-clock-history me-1"></i> Active Session</span>
+                        {% endif %}
+                    </div>
+
+                    <h4 class="fw-bold mb-2 text-gradient-primary" id="assessmentCardTitle" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; position: relative; z-index: 10;">
+                        {% if has_progress %}Resume Recruitment Assessment{% else %}Start Recruitment Assessment{% endif %}
+                    </h4>
+                    <p class="text-muted fs-6 mb-4" style="line-height:1.6; font-family: 'Outfit', sans-serif; font-weight: 300; position: relative; z-index: 10;">
+                        Adaptive AI-driven assessment tailored to your target domain. Evaluates technical depth, problem-solving, and domain fundamentals to generate a formal evaluation report.
+                    </p>
+                </div>
+
+                <div class="assessment-btn-row" id="assessmentBtnRow" style="position: relative; z-index: 10;">
+                    <a href="/interview" class="btn-launch-primary" id="assessmentMainBtn" style="font-family: 'Outfit', sans-serif;">
+                        {% if has_progress %}
+                            <i class="bi bi-play-circle-fill me-2"></i> Resume Assessment &rarr;
+                        {% else %}
+                            <i class="bi bi-rocket-takeoff-fill me-2"></i> Begin Assessment &rarr;
+                        {% endif %}
+                    </a>
+
+                    {% if has_progress %}
+                    <button type="button" class="btn-reset-assessment" id="resetAssessmentBtn" title="Reset & Start New Assessment" style="font-family: 'Outfit', sans-serif;">
+                        <i class="bi bi-arrow-clockwise me-1" style="font-size:1.1rem;"></i> Reset & Start New Assessment
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice & Skill Development Lab -->
+        <div class="col-lg-6">
+            <div class="action-card practice-deck-card">
+                <div class="card-corner-aura"></div>
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3" style="position: relative; z-index: 10;">
+                        <span class="badge px-3 py-2 rounded-pill fw-bold" style="background:#10b981; color:#fff; font-family: 'Outfit', sans-serif; font-size: 0.8rem; letter-spacing: 0.02em;">
+                            <i class="bi bi-mortarboard-fill me-1"></i> Practice Mode
+                        </span>
+                        <span class="text-success fw-bold fs-7" style="font-family: 'Outfit', sans-serif;"><i class="bi bi-shield-lock me-1"></i> Private &amp; Ungraded</span>
+                    </div>
+
+                    <h4 class="fw-bold mb-2 text-gradient-accent" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.02em; background: linear-gradient(135deg, #10b981 0%, #047857 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; z-index: 10;">Skill Development &amp; Practice Lab</h4>
+                    <p class="text-muted fs-6 mb-3" style="line-height:1.6; font-family: 'Outfit', sans-serif; font-weight: 300; position: relative; z-index: 10;">
+                        Practice in a low-pressure environment with zero evaluation penalties. Prepare for exams, practice foreign languages, or drill specific subjects.
+                    </p>
+
+                    <div class="row g-2 mb-4" style="font-family: 'Outfit', sans-serif; position: relative; z-index: 10;">
+                        <div class="col-3">
+                            <div class="practice-pill-box text-center shadow-2xs">
+                                <i class="bi bi-journal-bookmark-fill text-success fs-5 d-block mb-1"></i>
+                                <span class="fw-bold fs-8 d-block text-dark" style="font-size:0.75rem;">Academic Viva</span>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="practice-pill-box text-center shadow-2xs">
+                                <i class="bi bi-translate text-primary fs-5 d-block mb-1"></i>
+                                <span class="fw-bold fs-8 d-block text-dark" style="font-size:0.75rem;">FluentFlow</span>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="practice-pill-box text-center shadow-2xs">
+                                <i class="bi bi-lightning-charge text-danger fs-5 d-block mb-1"></i>
+                                <span class="fw-bold fs-8 d-block text-dark" style="font-size:0.75rem;">Debate AI</span>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="practice-pill-box text-center shadow-2xs">
+                                <i class="bi bi-chat-left-heart-fill text-info fs-5 d-block mb-1"></i>
+                                <span class="fw-bold fs-8 d-block text-dark" style="font-size:0.75rem;">Healthy Convo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="position: relative; z-index: 10;">
+                        <a href="/practice-setup" class="btn-launch-practice w-100" style="font-family: 'Outfit', sans-serif;">
+                            <i class="bi bi-mortarboard-fill me-2"></i> Enter Practice Lab &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Recent History Section -->
+    <div class="recent-card animate-item" style="animation-delay: 0.15s;">
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div>
+                <h5 class="fw-bold mb-1 text-gradient-primary" style="font-family: 'Outfit', sans-serif; letter-spacing: -0.01em;">Assessment Performance History</h5>
+                <p class="text-muted fs-7 mb-0" style="font-family: 'Outfit', sans-serif; font-weight: 300;">View certified evaluation reports and domain feedback</p>
+            </div>
+            {% if has_result %}
+            <a href="/my-history" class="btn btn-outline-primary btn-sm rounded-pill px-3" style="font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 600;">
+                View All Records &rarr;
+            </a>
+            {% endif %}
+        </div>
+
+        {% if has_result and recent_results %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="font-family: 'Outfit', sans-serif;">
+                <thead class="table-light">
+                    <tr>
+                        <th class="border-0 text-muted fs-7 fw-bold" style="letter-spacing: 0.03em;">DOMAIN / ROLE</th>
+                        <th class="border-0 text-muted fs-7 fw-bold text-center" style="letter-spacing: 0.03em;">SCORE</th>
+                        <th class="border-0 text-muted fs-7 fw-bold" style="letter-spacing: 0.03em;">DATE</th>
+                        <th class="border-0 text-muted fs-7 fw-bold text-end" style="letter-spacing: 0.03em;">ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_results %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-dark fs-6" style="font-weight: 600 !important;">{{ item.domain or 'General Assessment' }}</div>
+                        </td>
+                        <td class="text-center">
+                            {% set s = item.score|float if item.score else 0 %}
+                            <span class="score-pill {% if s >= 8 %}score-high{% elif s >= 5 %}score-mid{% else %}score-low{% endif %}">
+                                {{ item.score or 'N/A' }} / 10
+                            </span>
+                        </td>
+                        <td class="text-muted fs-7" style="font-weight: 300;">
+                            {{ item.interview_datetime.strftime('%b %d, %Y') if item.interview_datetime else 'N/A' }}
+                        </td>
+                        <td class="text-end">
+                            <a href="/my-history/{{ item.id }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-semibold" style="font-size: 0.85rem; border-color:#e2e8f0 !important;">
+                                View Report &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted" style="font-family: 'Outfit', sans-serif;">
+            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary" style="opacity: 0.7;"></i>
+            <p class="mb-2 fw-semibold">No assessment records found yet.</p>
+            <p class="fs-7 text-secondary mb-3" style="font-weight: 300;">Complete your first formal recruitment assessment to view detailed feedback here.</p>
+            <a href="/interview" class="btn btn-primary btn-sm rounded-pill px-4" style="font-weight: 600;">Start Assessment Now</a>
+        </div>
+        {% endif %}
+    </div>
+
 </div>
+
+<!-- Reset Assessment Confirmation Modal -->
+{% if has_progress %}
+<div class="modal fade" id="resetAssessmentModal" tabindex="-1" aria-labelledby="resetAssessmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header border-0 p-4 pb-2 d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="modal-title fw-bold text-danger" id="resetAssessmentModalLabel">
+            <i class="bi bi-arrow-clockwise me-2"></i>Reset Assessment?
+          </h5>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 pt-2">
+        <div class="d-flex align-items-start gap-3">
+          <div style="background:#fff3f0; border-radius:12px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+          </div>
+          <div>
+            <p class="fw-semibold mb-1" style="color:#1a2036;">This will start a brand new assessment.</p>
+            <p class="text-muted fs-7 mb-0">All answers and progress from your current session will be permanently discarded. A fresh interview session will begin from Question 1.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="confirmResetBtn" style="background:#ef4444; border:none;">
+          <i class="bi bi-arrow-clockwise me-1"></i> Yes, Reset & Start New
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <!-- How it Works Modal -->
 <div class="modal fade" id="howItWorksModal" tabindex="-1" aria-labelledby="howItWorksLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content" style="border-radius:18px; border:none; overflow:hidden; box-shadow:0 20px 60px rgba(26,32,54,0.18);">
+    <div class="modal-content">
 
-      <div class="modal-header" style="background:linear-gradient(135deg,#1a2036,#262e4d); border:none; padding:28px 32px 20px;">
+      <div class="modal-header border-0 p-4 pb-2 d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="modal-title fw-bold" id="howItWorksLabel" style="color:#fff; font-family:'Source Serif 4',serif; font-size:1.35rem;">
-            <i class="bi bi-info-circle me-2"></i>How This Platform Works
+          <h5 class="modal-title fw-bold text-dark" id="howItWorksLabel">
+            <i class="bi bi-info-circle me-2"></i>How the Assessment Platform Works
           </h5>
-          <p class="mb-0" style="color:#8f9bc4; font-size:0.85rem; margin-top:4px;">Everything you need to know about using this platform.</p>
         </div>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <div class="modal-body" style="padding:32px; background:#fefeff;">
+      <div class="modal-body p-4 pt-2">
 
         <div class="mb-4">
           <div class="d-flex align-items-center gap-2 mb-2">
             <span style="background:#4e73df;border-radius:8px;padding:6px 10px;"><i class="bi bi-briefcase-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:#1a2036; font-size:1rem;">Recruitment Assessment</h6>
+            <h6 class="mb-0 fw-bold" style="color:#1a2036;">Recruitment Assessment Mode</h6>
           </div>
-          <p class="text-muted mb-0" style="font-size:0.93rem; line-height:1.7; padding-left:42px;">
-            This is a formal AI-conducted interview session tailored to your profile and the domain you choose. The AI examiner asks adaptive questions based on your responses, just like a real recruiter would. At the end of your session, a detailed evaluation report is generated and saved to your records. Results from this mode are visible to administrators.
+          <p class="text-muted mb-0 fs-7" style="line-height:1.7; padding-left:42px;">
+            A formal AI-conducted interview session tailored to your specified domain. The AI examiner evaluates your answers adaptively and generates a certified evaluation report upon completion. Results are recorded in your profile history.
           </p>
         </div>
 
-        <hr style="border-color:#e3e7f0; margin:20px 0;">
+        <hr style="border-color:#eef2f7; margin:20px 0;">
 
         <div class="mb-4">
           <div class="d-flex align-items-center gap-2 mb-2">
             <span style="background:#17b978;border-radius:8px;padding:6px 10px;"><i class="bi bi-mortarboard-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:#1a2036; font-size:1rem;">Practice Mode</h6>
+            <h6 class="mb-0 fw-bold" style="color:#1a2036;">Practice Mode (Ungraded)</h6>
           </div>
-          <p class="text-muted mb-2" style="font-size:0.93rem; line-height:1.7; padding-left:42px;">
-            A private, low-pressure space to sharpen your skills before the real thing. Practice results are never reported to administrators — they are for your personal growth only. You can choose from three practice formats:
+          <p class="text-muted mb-2 fs-7" style="line-height:1.7; padding-left:42px;">
+            A private environment to prepare without evaluation pressure. Includes:
           </p>
-          <ul class="text-muted mb-0" style="font-size:0.91rem; line-height:1.9; padding-left:58px;">
-            <li><strong style="color:#1a2036;">Academic Viva Voce</strong> — Simulates an oral exam environment. Ideal for university students preparing for subject-specific viva sessions.</li>
-            <li><strong style="color:#1a2036;">FluentFlow</strong> — Improve speaking and communication skills in any language (English, Spanish, French, German, Japanese, Hindi, and more) with custom practice focus categories like grammar, conversation, or fundamentals.</li>
-            <li><strong style="color:#1a2036;">General Concept Drill</strong> — A focused Q&amp;A session on any topic you choose. Great for revising concepts, theory, or technical knowledge at your own pace.</li>
+          <ul class="text-muted mb-0 fs-7" style="line-height:1.8; padding-left:58px;">
+            <li><strong>Academic Viva Voce</strong> — Subject-specific oral exam simulation.</li>
+            <li><strong>FluentFlow</strong> — Conversational practice in English, Spanish, French, German, Japanese, Hindi, and more.</li>
+            <li><strong>Debate with AI</strong> — Sharp, language-sensitive AI debates in 2 lines per response.</li>
+            <li><strong>Healthy Conversation</strong> — Warm, balanced discussions on any topic you choose.</li>
           </ul>
         </div>
 
-        <hr style="border-color:#e3e7f0; margin:20px 0;">
+        <hr style="border-color:#eef2f7; margin:20px 0;">
 
         <div>
           <div class="d-flex align-items-center gap-2 mb-2">
-            <span style="background:#f6c23e;border-radius:8px;padding:6px 10px;"><i class="bi bi-cpu-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:#1a2036; font-size:1rem;">How the AI Examiner Works</h6>
+            <span style="background:#f6c23e;border-radius:8px;padding:6px 10px;"><i class="bi bi-shield-lock-fill text-white"></i></span>
+            <h6 class="mb-0 fw-bold" style="color:#1a2036;">Google &amp; Email OTP Authentication</h6>
           </div>
-          <p class="text-muted mb-0" style="font-size:0.93rem; line-height:1.7; padding-left:42px;">
-            The AI interviewer adapts its questions based on your previous answers, keeping the conversation natural and relevant. It asks follow-ups when needed, clarifies questions if you are unsure, and adjusts its depth based on the mode you are in. At the end of each session, it evaluates your overall performance and generates a personalised summary report.
+          <p class="text-muted mb-0 fs-7" style="line-height:1.7; padding-left:42px;">
+            All candidates authenticate securely via Google Sign-In or Email OTP. Verification codes ensure candidate authenticity for placement reports.
           </p>
         </div>
 
       </div>
 
-      <div class="modal-footer" style="border:none; padding:16px 32px 24px; background:#fefeff;">
-        <button type="button" class="btn" data-bs-dismiss="modal" style="background:linear-gradient(135deg,#4e73df,#224abe);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-weight:600;">
+      <div class="modal-footer border-0 p-4 pt-0">
+        <button type="button" class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">
           Got it &rarr;
         </button>
       </div>
@@ -148,5 +718,46 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+{% if has_progress %}
+<script>
+  (function() {
+    var resetBtn = document.getElementById('resetAssessmentBtn');
+    var confirmBtn = document.getElementById('confirmResetBtn');
+    var resetModal = new bootstrap.Modal(document.getElementById('resetAssessmentModal'));
+
+    resetBtn.addEventListener('click', function () {
+      resetModal.show();
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      confirmBtn.disabled = true;
+      confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Resetting...';
+
+      fetch('/reset-assessment', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.status === 'ok') {
+          // Redirect to dashboard so user sees the fresh state (no stale session)
+          window.location.href = '/dashboard';
+        } else {
+          throw new Error('Reset response was not ok');
+        }
+      })
+      .catch(function(err) {
+        console.error('Reset failed:', err);
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Yes, Reset & Start New';
+        alert('Failed to reset assessment. Please try again.');
+      });
+    });
+  })();
+</script>
+{% endif %}
+
 </body>
 </html>

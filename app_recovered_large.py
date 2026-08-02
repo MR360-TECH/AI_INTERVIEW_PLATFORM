@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
@@ -62,15 +62,10 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
-ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def allowed_resume_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
@@ -204,76 +199,61 @@ def register():
     is_guest = request.args.get("guest") == "1"
 
     if request.method == "POST":
-        full_name = request.form.get("full_name", "").strip()
+        full_name = request.form["full_name"]
         gender = request.form.get("gender")
         education = request.form.get("education")
         course = request.form.get("course")
         semester = request.form.get("semester")
 
-        if not full_name:
-            return render_template("register.html", error="Full name is required.",
-                                   is_google=is_google, is_guest=is_guest,
-                                   prefill_name="", prefill_email="")
-
         if session.get("pending_google_email"):
-            # ── Google OAuth flow ──
-            email = session.pop("pending_google_email")
-            google_id = session.pop("pending_google_id", None)
-            session.pop("pending_google_name", None)
+            email = session.get("pending_google_email")
             new_user = User(
-                full_name=full_name, email=email, password=None,
-                gender=gender, education=education, course=course, semester=semester,
-                auth_provider="google", google_id=google_id
+                full_name=full_name,
+                email=email,
+                password=None,
+                gender=gender,
+                education=education,
+                course=course,
+                semester=semester,
+                auth_provider="google",
+                google_id=session.get("pending_google_id")
             )
+            session.pop("pending_google_email", None)
+            session.pop("pending_google_name", None)
+            session.pop("pending_google_id", None)
 
         elif session.get("pending_guest_email"):
-            # ── Guest / direct signup flow ──
-            email = session.pop("pending_guest_email")
-            hashed_pw = session.pop("pending_guest_password", None)
+            email = session.get("pending_guest_email")
             new_user = User(
-                full_name=full_name, email=email, password=hashed_pw,
-                gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest"
+                full_name=full_name,
+                email=email,
+                password=session.get("pending_guest_password"),
+                gender=gender,
+                education=education,
+                course=course,
+                semester=semester,
+                auth_provider="local"
             )
+            session.pop("pending_guest_email", None)
+            session.pop("pending_guest_password", None)
 
         else:
-            # ── Standalone register (email + password in the form) ──
-            email = request.form.get("email", "").strip().lower()
-            password = request.form.get("password", "").strip()
-
-            if not email or "@" not in email:
-                return render_template("register.html", error="Please enter a valid email address.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if not password or len(password) < 6:
-                return render_template("register.html", error="Password must be at least 6 characters.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if email == ADMIN_EMAIL:
-                return render_template("register.html", error="This email is reserved.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if User.query.filter_by(email=email).first():
-                return render_template("register.html", error="An account with this email already exists. Please login.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            new_user = User(
-                full_name=full_name, email=email,
-                password=generate_password_hash(password),
-                gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest"
-            )
+            return redirect("/login")
 
         db.session.add(new_user)
         db.session.commit()
+
         session["user_id"] = new_user.id
         session["user_name"] = new_user.full_name
-        session["user_email"] = new_user.email
         return redirect("/dashboard")
 
-    # ── GET ─────────────────────────────────────────────────────────────────
-    # Allow direct access to /register (standalone signup page)
+    if not session.get("pending_google_email") and not session.get("pending_guest_email"):
+        return redirect("/login")
+
     prefill_name = session.get("pending_google_name", "")
     prefill_email = session.get("pending_google_email") or session.get("pending_guest_email", "")
 
-    return render_template("register.html", is_google=is_google, is_guest=is_guest,
-                           prefill_name=prefill_name, prefill_email=prefill_email, error=None)
+    return render_template("register.html", is_google=is_google, is_guest=is_guest, prefill_name=prefill_name, prefill_email=prefill_email)
 
 @app.route("/guest-signup", methods=["POST"])
 def guest_signup():
@@ -317,7 +297,8 @@ def login():
             session.clear()
             session["user_id"] = user.id
             session["user_name"] = user.full_name
-            session["user_email"] = user.email
+            if not profile_is_complete(user):
+                return redirect("/register")
             return redirect("/dashboard")
         else:
             return render_template("login.html", error="Invalid email or password", has_google_oauth=has_google_oauth)
@@ -396,11 +377,7 @@ def dashboard():
     progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
     has_progress = bool(progress and progress.q_count > 0)
 
-    recent_results = InterviewResult.query.filter(
-        InterviewResult.user_id == session["user_id"],
-        ~InterviewResult.status.like('%Practice%')
-    ).order_by(InterviewResult.interview_datetime.desc()).limit(5).all()
-    has_result = len(recent_results) > 0
+    has_result = InterviewResult.query.filter_by(user_id=session["user_id"]).first() is not None
 
     error_msg = None
     err_code = request.args.get("error")
@@ -409,9 +386,7 @@ def dashboard():
     elif err_code == "api_key_missing":
         error_msg = "AI Placement evaluation is not configured. Please set the GEMINI_API_KEY environment variable."
 
-    return render_template("dashboard.html", name=session["user_name"], user=current_user,
-                           has_progress=has_progress, has_result=has_result,
-                           recent_results=recent_results, error=error_msg)
+    return render_template("dashboard.html", name=session["user_name"], has_progress=has_progress, has_result=has_result, error=error_msg)
 
 
 @app.route("/edit-profile", methods=["GET", "POST"])
@@ -671,7 +646,7 @@ def interview():
         attachment = request.files.get("attachment")
         resume_file = request.files.get("resume")
 
-        if session["q_count"] == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+        if session["q_count"] == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_file(resume_file.filename):
             file_bytes = resume_file.read()
             mime_type = resume_file.mimetype
             resume_analysis = analyze_attachment(
@@ -824,12 +799,12 @@ def interview():
                 elif difficulty == "senior":
                     difficulty_instruction = (
                         "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
-                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar.explore different categories of questions within the domain and output only question and not anything els. Do not offer any conversational filler or praise."
+                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar. Do not offer any conversational filler or praise."
                     )
                 else:
                     difficulty_instruction = (
                         "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
-                        "Adjust difficulty adaptively based on their performance. explore different categories of questions within the domain and output only question and not anything els. Keep feedback professional and minimal."
+                        "Adjust difficulty adaptively based on their performance. Keep feedback professional and minimal."
                     )
 
             completion_option = ""
@@ -851,7 +826,7 @@ def interview():
                 "1. Output ONLY the raw next question (or INTERVIEW_COMPLETE). Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.\n"
                 "2. Even if previous answer is not up to mark and if candidate is trying to answer his best, show some mercy and ask him simpler and fundamental question.\n"
                 "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios.\n"
-                "4. Explore explore different categories of questions within the domain and output only question and not anything else. Do not repeat similar questions.\n"
+                "4. Explore diverse categories WITHIN their field (e.g. practical scenarios, fundamentals, safety/client handling, background experience). Do not repeat similar questions.\n"
                 "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
                 "6. INPUT TYPE TAGGING RULE: You must tag the next response according to the input type you expect. Add the tag at the very end of your response:\n"
                 "   - If the question requires the candidate to write, fix, or analyze code, append exactly `[TYPE: CODE]` to the very end of your question text.\n"
@@ -1155,449 +1130,13 @@ def view_past_result(result_id):
     )
 
 
-@app.route("/quit-interview")
-def quit_interview():
-    """Quit a practice session — clears practice keys and returns to dashboard."""
-    if "user_id" not in session:
-        return redirect("/login")
-    # Clear only practice-related session keys, keep user login
-    session.pop("chat_history", None)
-    session.pop("q_count", None)
-    session.pop("interview_mode", None)
-    session.pop("practice_topic", None)
-    session.pop("lang_target", None)
-    session.pop("lang_focus", None)
-    session.pop("lang_level", None)
-    session.pop("interview_domain", None)
-    session.pop("interview_difficulty", None)
-    session.pop("resume_summary", None)
-    clear_progress(session["user_id"])
-    return redirect("/dashboard")
-
-
-@app.route("/reset-assessment", methods=["POST"])
-def reset_assessment():
-    """AJAX endpoint: clears all assessment progress so user can start fresh."""
-    if "user_id" not in session:
-        return jsonify({"status": "error", "reason": "not_logged_in"}), 401
-    user_id = session["user_id"]
-    # Clear all assessment-related session keys
-    session.pop("chat_history", None)
-    session.pop("q_count", None)
-    session.pop("interview_mode", None)
-    session.pop("practice_topic", None)
-    session.pop("lang_target", None)
-    session.pop("lang_focus", None)
-    session.pop("lang_level", None)
-    session.pop("interview_domain", None)
-    session.pop("interview_difficulty", None)
-    session.pop("resume_summary", None)
-    session.pop("resume_choice", None)
-    session.modified = True
-    # Also delete persisted DB progress
-    clear_progress(user_id)
-    return jsonify({"status": "ok"})
-
-
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# INTERVIEW SUBMIT  –  AJAX endpoint (no full page reload between questions)
-# ─────────────────────────────────────────────────────────────────────────────
-@app.route("/interview/submit", methods=["POST"])
-def interview_submit():
-    """AJAX endpoint: accepts an answer, calls Gemini, returns the next question as JSON."""
-    if session.get("is_admin"):
-        return jsonify({"redirect": "/admin"})
-    if "user_id" not in session:
-        return jsonify({"redirect": "/login"})
-    if not os.environ.get("GEMINI_API_KEY"):
-        return jsonify({"redirect": "/dashboard?error=api_key_missing"})
-
-    user_id = session["user_id"]
-    settings = get_settings()
-    MIN_QUESTIONS = settings.min_questions
-    MAX_QUESTIONS = settings.max_questions
-
-    answer = (request.form.get("answer") or "").strip()
-    code_answer = (request.form.get("code_answer") or "").strip()
-    is_practice = bool(session.get("interview_mode"))  # any of: 'viva', 'drill', 'lang'
-
-    if not answer and not code_answer:
-        return jsonify({"error": "empty_answer"})
-
-    full_answer = answer
-    if code_answer:
-        if full_answer:
-            full_answer += "\n\n[Candidate Code]:\n" + code_answer
-        else:
-            full_answer = "[Candidate Code]:\n" + code_answer
-
-    session["chat_history"].append({"role": "answer", "text": full_answer})
-    session["q_count"] = session.get("q_count", 0) + 1
-    session.modified = True
-
-    # Check if interview is complete
-    if session["q_count"] >= MAX_QUESTIONS:
-        save_progress(user_id, session["chat_history"], session["q_count"])
-        return jsonify({"done": True, "redirect": "/finish-interview"})
-
-    # Generate next question
-    history = session["chat_history"]
-    domain = session.get("interview_domain", "Software Engineering")
-    difficulty = session.get("interview_difficulty", "student")
-    resume_summary = session.get("resume_summary", "")
-
-    prompt_parts = [
-        f"You are a senior {domain} interviewer. Difficulty: {difficulty}.",
-        f"Resume summary: {resume_summary}" if resume_summary else "",
-        "Continue the interview. Based on the candidate's last answer, ask the next question.dont stick on same concept , instead explore different categories of questions and output only question and not anything else.",
-        "Keep it concise.stay wuthin the same domain and  output only raw questions and not anythign else . Do NOT repeat previous questions.",
-        f"Question {session['q_count'] + 1} of {MAX_QUESTIONS}.",
-    ]
-    system_prompt = " ".join(p for p in prompt_parts if p)
-
-    chat_turns = []
-    for msg in history:
-        role = "user" if msg["role"] == "answer" else "model"
-        chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
-
-    try:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        client = genai.Client(api_key=api_key)
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=chat_turns,
-            config=types.GenerateContentConfig(system_instruction=system_prompt, max_output_tokens=300),
-        )
-        question_text = response.text.strip() if response.text else "Tell me about yourself."
-    except Exception as e:
-        question_text = "Can you walk me through a challenging technical problem you solved recently?"
-
-    question_type = "text"
-    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
-    if match:
-        tag = match.group(1).lower()
-        if tag in ["code", "file", "text"]:
-            question_type = tag
-        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
-
-    session["chat_history"].append({"role": "question", "text": question_text, "type": question_type})
-    session.modified = True
-    save_progress(user_id, session["chat_history"], session["q_count"])
-
-    return jsonify({
-        "question": question_text,
-        "q_num": session["q_count"] + 1,
-        "total": MAX_QUESTIONS,
-        "question_type": question_type,
-        "done": False,
-    })
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# OTP LOGIN  –  /auth/otp/send  and  /auth/otp/verify
-# ─────────────────────────────────────────────────────────────────────────────
-import random
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
-
-def send_otp_email(to_email, otp):
-    """Send OTP via Gmail SMTP. Reads MAIL_USERNAME / MAIL_PASSWORD from .env"""
-    mail_user = os.environ.get("MAIL_USERNAME")   # matches .env key
-    mail_pass = os.environ.get("MAIL_PASSWORD")   # matches .env key
-    if not mail_user or not mail_pass:
-        print(f"[OTP] SMTP not configured — OTP for {to_email} is: {otp}")
-        return True  # still returns True so flow continues (dev fallback)
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Your AI Interview Platform Login OTP"
-        msg["From"] = f"AI Interview Platform <{mail_user}>"
-        msg["To"] = to_email
-
-        # Plain text fallback
-        text_body = f"Your OTP is: {otp}\n\nThis code is valid for 10 minutes. Do not share it with anyone."
-
-        # HTML body
-        html_body = f"""
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;
-                    background:#f7f9fc;border-radius:12px;border:1px solid #e3e7f0;">
-          <h2 style="color:#1a2036;margin-bottom:6px;">Your Login OTP</h2>
-          <p style="color:#5a6a85;font-size:15px;margin-bottom:24px;">
-            Use the code below to log in to the AI Interview Platform.
-          </p>
-          <div style="background:#ffffff;border:1.5px solid #d0e1fd;border-radius:10px;
-                      text-align:center;padding:24px 0;margin-bottom:24px;">
-            <span style="font-size:38px;font-weight:800;letter-spacing:10px;color:#4e73df;">{otp}</span>
-          </div>
-          <p style="color:#8a96b0;font-size:13px;margin:0;">
-            This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.
-          </p>
-        </div>
-        """
-
-        msg.attach(MIMEText(text_body, "plain"))
-        msg.attach(MIMEText(html_body, "html"))
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(mail_user, mail_pass)
-            server.sendmail(mail_user, [to_email], msg.as_string())
-        print(f"[OTP] Sent to {to_email} successfully.")
-        return True
-    except Exception as e:
-        print(f"[OTP] SMTP error: {e}")
-        return False
-
-
-@app.route("/auth/otp/send", methods=["GET", "POST"])
-def send_otp():
-    if request.method == "GET":
-        return render_template("send_otp.html", error=None)
-
-    email = (request.form.get("email") or "").strip().lower()
-    if not email or "@" not in email:
-        return render_template("send_otp.html", error="Please enter a valid email address.")
-
-    # Check user exists
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return render_template("send_otp.html", error="No account found with that email.")
-
-    otp = str(random.randint(100000, 999999))
-    session["otp_code"] = otp
-    session["otp_email"] = email
-
-    if send_otp_email(email, otp):
-        return redirect("/auth/otp/verify")
-    else:
-        return render_template("send_otp.html", error="Failed to send OTP. Please try again.")
-
-
-@app.route("/auth/otp/verify", methods=["GET", "POST"])
-def verify_otp():
-    if "otp_code" not in session:
-        return redirect("/auth/otp/send")
-
-    if request.method == "GET":
-        return render_template("verify_otp.html", error=None, email=session.get("otp_email", ""))
-
-    entered = (request.form.get("otp") or "").strip()
-    if entered == session.get("otp_code"):
-        email = session.pop("otp_email", None)
-        session.pop("otp_code", None)
-        user = User.query.filter_by(email=email).first()
-        if user:
-            session["user_id"] = user.id
-            session["user_name"] = user.full_name
-            session["user_email"] = user.email
-            return redirect("/dashboard")
-    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=session.get("otp_email", ""))
-
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# COMPANY QUESTIONS  –  legacy routes redirect to tech-questions hub
-# ─────────────────────────────────────────────────────────────────────────────
-@app.route("/company-questions")
-def company_questions_home():
-    if "user_id" not in session:
-        return redirect("/login")
-    return redirect("/tech-questions")
-
-
-@app.route("/company-questions/<company_key>")
-def company_questions_detail(company_key):
-    if "user_id" not in session:
-        return redirect("/login")
-    return redirect(f"/tech-questions/{company_key}")
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# TECH QUESTIONS  –  Company Interview Prep Hub (curated external links only)
-# ─────────────────────────────────────────────────────────────────────────────
-
-COMPANY_HUB = [
-    {
-        "key": "google",
-        "name": "Google",
-        "color": "#4285F4",
-        "description": "Data Structures, Algorithms, System Design, and Behavioral questions frequently asked at Google interviews.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "LeetCode",      "label": "Google Tagged Problems",       "desc": "Filter and solve coding problems tagged specifically for Google — sorted by frequency and difficulty.",          "url": "https://leetcode.com/company/google/",                           "icon": "bi-code-slash"},
-            {"site": "GeeksForGeeks", "label": "Google Interview Questions",   "desc": "Topic-wise DSA prep, system design guides, and real interview experiences shared by Google candidates.",        "url": "https://www.geeksforgeeks.org/google-interview-preparation/",    "icon": "bi-mortarboard-fill"},
-            {"site": "PrepInsta",     "label": "Google Placement Papers",      "desc": "Aptitude rounds, coding tests, and placement paper patterns based on past Google recruitment drives.",          "url": "https://prepinsta.com/google/",                                  "icon": "bi-file-earmark-text-fill"},
-            {"site": "InterviewBit",  "label": "Google Interview Prep",        "desc": "Structured mock interviews, real Q&A from candidates, and company-specific preparation guides.",               "url": "https://www.interviewbit.com/google-interview-questions/",       "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "microsoft",
-        "name": "Microsoft",
-        "color": "#00A4EF",
-        "description": "OOP, OS, Networking, and problem-solving questions asked across SDE and SDET roles at Microsoft.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "LeetCode",      "label": "Microsoft Tagged Problems",     "desc": "Practice the most frequently asked coding problems tagged for Microsoft SDE and SDET roles.",                  "url": "https://leetcode.com/company/microsoft/",                        "icon": "bi-code-slash"},
-            {"site": "GeeksForGeeks", "label": "Microsoft Interview Questions", "desc": "Round-wise preparation guide, interview experiences, and topic coverage for Microsoft placements.",            "url": "https://www.geeksforgeeks.org/microsoft-interview-preparation/", "icon": "bi-mortarboard-fill"},
-            {"site": "PrepInsta",     "label": "Microsoft Placement Papers",    "desc": "Aptitude test patterns, coding round formats, and previous year placement papers from Microsoft.",             "url": "https://prepinsta.com/microsoft/",                               "icon": "bi-file-earmark-text-fill"},
-            {"site": "InterviewBit",  "label": "Microsoft Interview Prep",      "desc": "Real interview experiences, mock tests, and structured question sets for Microsoft roles.",                    "url": "https://www.interviewbit.com/microsoft-interview-questions/",    "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "amazon",
-        "name": "Amazon",
-        "color": "#FF9900",
-        "description": "Leadership Principles, problem-solving, system design, and behavioral rounds for Amazon SDE roles.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "LeetCode",      "label": "Amazon Tagged Problems",        "desc": "Solve the most frequently asked Amazon SDE problems, filtered by topic and difficulty level.",                 "url": "https://leetcode.com/company/amazon/",                           "icon": "bi-code-slash"},
-            {"site": "GeeksForGeeks", "label": "Amazon Interview Questions",    "desc": "Comprehensive preparation covering DSA, Leadership Principles, system design, and past experiences.",          "url": "https://www.geeksforgeeks.org/amazon-interview-preparation/",    "icon": "bi-mortarboard-fill"},
-            {"site": "PrepInsta",     "label": "Amazon Placement Papers",       "desc": "Amazon online assessment patterns, aptitude questions, and coding test formats from recent drives.",           "url": "https://prepinsta.com/amazon/",                                  "icon": "bi-file-earmark-text-fill"},
-            {"site": "InterviewBit",  "label": "Amazon Interview Prep",         "desc": "Behavioral question bank aligned to Amazon Leadership Principles plus technical DSA prep.",                    "url": "https://www.interviewbit.com/amazon-interview-questions/",       "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "meta",
-        "name": "Meta (Facebook)",
-        "color": "#1877F2",
-        "description": "Graphs, Dynamic Programming, system design at scale, and product sense questions asked at Meta.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "LeetCode",      "label": "Meta Tagged Problems",          "desc": "Top Meta/Facebook-tagged coding problems covering graphs, DP, and array manipulations.",                       "url": "https://leetcode.com/company/facebook/",                         "icon": "bi-code-slash"},
-            {"site": "GeeksForGeeks", "label": "Meta Interview Questions",      "desc": "Interview experiences, system design at scale concepts, and topic-wise guides for Meta.",                      "url": "https://www.geeksforgeeks.org/facebook-interview-preparation/",  "icon": "bi-mortarboard-fill"},
-            {"site": "PrepInsta",     "label": "Meta Placement Papers",         "desc": "Aptitude and coding round patterns from Meta campus and off-campus recruitment drives.",                       "url": "https://prepinsta.com/facebook/",                                "icon": "bi-file-earmark-text-fill"},
-            {"site": "InterviewBit",  "label": "Meta Interview Prep",           "desc": "Real Meta interview Q&A, mock assessments, and tips from candidates who cracked the process.",                "url": "https://www.interviewbit.com/facebook-interview-questions/",     "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "netflix",
-        "name": "Netflix",
-        "color": "#E50914",
-        "description": "Distributed systems, microservices, system design, and culture-fit questions asked at Netflix.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "LeetCode",      "label": "Netflix Tagged Problems",       "desc": "Netflix-tagged coding problems focusing on system design and complex algorithmic challenges.",                  "url": "https://leetcode.com/company/netflix/",                          "icon": "bi-code-slash"},
-            {"site": "GeeksForGeeks", "label": "Netflix Interview Questions",   "desc": "Distributed systems, microservices architecture concepts, and interview experience guides.",                   "url": "https://www.geeksforgeeks.org/netflix-interview-questions/",     "icon": "bi-mortarboard-fill"},
-            {"site": "PrepInsta",     "label": "Netflix Placement Papers",      "desc": "Placement test formats, aptitude rounds, and coding assessment patterns from Netflix drives.",                 "url": "https://prepinsta.com/netflix/",                                 "icon": "bi-file-earmark-text-fill"},
-            {"site": "InterviewBit",  "label": "Netflix Interview Prep",        "desc": "System design deep dives, culture-fit Q&A, and mock interview practice for Netflix roles.",                   "url": "https://www.interviewbit.com/netflix-interview-questions/",      "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "tcs",
-        "name": "TCS",
-        "color": "#00579C",
-        "description": "Aptitude, verbal, logical reasoning, and coding questions for TCS NQT and campus drives.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "TCS NQT Placement Papers",      "desc": "Full TCS NQT mock tests, aptitude papers, verbal ability, and coding round preparation.",                     "url": "https://prepinsta.com/tcs/",                                     "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "TCS Interview Questions",       "desc": "Topic-wise preparation guide, HR round questions, and technical interview experiences for TCS.",               "url": "https://www.geeksforgeeks.org/tcs-interview-experience/",        "icon": "bi-mortarboard-fill"},
-            {"site": "IndiaBix",      "label": "TCS Aptitude Practice",         "desc": "Quantitative aptitude, logical reasoning, and verbal practice sets matched to TCS NQT patterns.",             "url": "https://www.indiabix.com/",                                      "icon": "bi-calculator-fill"},
-            {"site": "InterviewBit",  "label": "TCS Interview Prep",            "desc": "TCS-specific mock tests, real interview Q&A, and structured coding practice for campus drives.",              "url": "https://www.interviewbit.com/tcs-interview-questions/",          "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "infosys",
-        "name": "Infosys",
-        "color": "#007CC3",
-        "description": "Aptitude, reasoning, verbal, and coding questions for Infosys InfyTQ and Springboard assessments.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "Infosys Placement Papers",      "desc": "Mock tests for Infosys online aptitude rounds, verbal sections, and coding challenges.",                      "url": "https://prepinsta.com/infosys/",                                 "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "Infosys Interview Questions",   "desc": "Interview experiences, HR round preparation, and topic-wise technical prep for Infosys roles.",               "url": "https://www.geeksforgeeks.org/infosys-interview-experience/",    "icon": "bi-mortarboard-fill"},
-            {"site": "InfyTQ",        "label": "Infosys InfyTQ Platform",       "desc": "Official Infosys learning and certification platform — complete courses and mock assessments.",               "url": "https://www.infytq.com/",                                        "icon": "bi-award-fill"},
-            {"site": "InterviewBit",  "label": "Infosys Interview Prep",        "desc": "Real interview Q&A from Infosys candidates, aptitude practice, and placement preparation tips.",              "url": "https://www.interviewbit.com/infosys-interview-questions/",      "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "wipro",
-        "name": "Wipro",
-        "color": "#4CAF50",
-        "description": "Aptitude, reasoning, verbal ability, and coding assessments for Wipro NLTH and campus placements.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "Wipro NLTH Placement Papers",   "desc": "Wipro NLTH mock tests, aptitude patterns, written communication, and coding round prep.",                    "url": "https://prepinsta.com/wipro/",                                   "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "Wipro Interview Questions",     "desc": "Interview experiences, technical Q&A, and preparation guides for Wipro placement rounds.",                    "url": "https://www.geeksforgeeks.org/wipro-interview-experience/",      "icon": "bi-mortarboard-fill"},
-            {"site": "IndiaBix",      "label": "Wipro Aptitude Practice",       "desc": "Quantitative aptitude, logical reasoning, and verbal ability practice aligned to Wipro patterns.",           "url": "https://www.indiabix.com/",                                      "icon": "bi-calculator-fill"},
-            {"site": "InterviewBit",  "label": "Wipro Interview Prep",          "desc": "Wipro-specific mock interviews, HR round tips, and structured technical preparation.",                        "url": "https://www.interviewbit.com/wipro-interview-questions/",        "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "accenture",
-        "name": "Accenture",
-        "color": "#A100FF",
-        "description": "Cognitive ability, verbal, logical, and communication-focused questions for Accenture campus drives.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "Accenture Placement Papers",    "desc": "Accenture mock tests covering cognitive ability, verbal reasoning, and communication rounds.",                 "url": "https://prepinsta.com/accenture/",                               "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "Accenture Interview Questions", "desc": "Interview experiences, HR round Q&A, and technical preparation guides for Accenture placements.",             "url": "https://www.geeksforgeeks.org/accenture-interview-experience/",  "icon": "bi-mortarboard-fill"},
-            {"site": "IndiaBix",      "label": "Accenture Aptitude Practice",   "desc": "Quantitative aptitude and logical reasoning practice sets matched to Accenture test patterns.",              "url": "https://www.indiabix.com/",                                      "icon": "bi-calculator-fill"},
-            {"site": "InterviewBit",  "label": "Accenture Interview Prep",      "desc": "Real Accenture interview Q&A, placement tips, and mock rounds from recent campus candidates.",               "url": "https://www.interviewbit.com/accenture-interview-questions/",    "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "cognizant",
-        "name": "Cognizant",
-        "color": "#1565C0",
-        "description": "Aptitude, coding, verbal, and HR round questions for Cognizant GenC, GenC Next, and campus drives.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "Cognizant Placement Papers",    "desc": "Cognizant GenC and GenC Next mock tests, aptitude papers, and coding challenge preparation.",                "url": "https://prepinsta.com/cognizant/",                               "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "Cognizant Interview Questions", "desc": "Interview experiences, topic-wise prep, and HR round guidance for Cognizant campus placements.",              "url": "https://www.geeksforgeeks.org/cognizant-interview-experience/",  "icon": "bi-mortarboard-fill"},
-            {"site": "IndiaBix",      "label": "Cognizant Aptitude Practice",   "desc": "Quantitative aptitude, verbal, and logical reasoning practice for Cognizant assessment rounds.",             "url": "https://www.indiabix.com/",                                      "icon": "bi-calculator-fill"},
-            {"site": "InterviewBit",  "label": "Cognizant Interview Prep",      "desc": "Real interview Q&A and mock rounds specifically tailored for Cognizant placement preparation.",               "url": "https://www.interviewbit.com/cognizant-interview-questions/",    "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-    {
-        "key": "capgemini",
-        "name": "Capgemini",
-        "color": "#0070AD",
-        "description": "Aptitude, pseudocode, essay writing, and behavioral questions for Capgemini recruitment assessments.",
-        "total_questions": 4,
-        "resources": [
-            {"site": "PrepInsta",     "label": "Capgemini Placement Papers",    "desc": "Capgemini mock tests covering aptitude, pseudocode, essay writing, and behavioral assessment rounds.",        "url": "https://prepinsta.com/capgemini/",                               "icon": "bi-file-earmark-text-fill"},
-            {"site": "GeeksForGeeks", "label": "Capgemini Interview Questions", "desc": "Interview preparation guide, HR round Q&A, and technical experiences for Capgemini placements.",             "url": "https://www.geeksforgeeks.org/capgemini-interview-experience/",  "icon": "bi-mortarboard-fill"},
-            {"site": "IndiaBix",      "label": "Capgemini Aptitude Practice",   "desc": "Aptitude, logical reasoning, and verbal practice sets matching Capgemini assessment patterns.",              "url": "https://www.indiabix.com/",                                      "icon": "bi-calculator-fill"},
-            {"site": "InterviewBit",  "label": "Capgemini Interview Prep",      "desc": "Real Capgemini interview Q&A, placement tips, and structured mock preparation resources.",                   "url": "https://www.interviewbit.com/capgemini-interview-questions/",    "icon": "bi-chat-left-dots-fill"},
-        ],
-    },
-]
-
-# Quick lookup by key
-COMPANY_HUB_MAP = {c["key"]: c for c in COMPANY_HUB}
-
-
-@app.route("/tech-questions")
-def tech_questions():
-    if "user_id" not in session:
-        return redirect("/login")
-    companies = [
-        {"key": c["key"], "name": c["name"], "color": c["color"],
-         "description": c["description"], "total_questions": c["total_questions"]}
-        for c in COMPANY_HUB
-    ]
-    return render_template("tech_questions.html", companies=companies)
-
-
-@app.route("/tech-questions/<company_key>")
-def tech_questions_detail(company_key):
-    if "user_id" not in session:
-        return redirect("/login")
-    company = COMPANY_HUB_MAP.get(company_key.lower())
-    if not company:
-        return redirect("/tech-questions")
-    return render_template("company_questions.html", company=company, company_key=company_key.lower())
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Initialize tables dynamically on load for WSGI servers like Gunicorn
-# ─────────────────────────────────────────────────────────────────────────────
 with app.app_context():
     try:
         db.create_all()

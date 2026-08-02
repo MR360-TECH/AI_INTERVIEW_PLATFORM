@@ -29,6 +29,8 @@
         .viva-theme { color: #17b978; }
         .lang-theme { color: #8e44ad; }
         .gen-theme  { color: #f6c23e; }
+        .debate-theme { color: #e74a3b; }
+        .convo-theme { color: #36b9cc; }
         .selected-card {
             border: 2px solid var(--brand-blue) !important;
             background-color: var(--brand-glow-soft);
@@ -100,25 +102,32 @@
 
                     <!-- Mode cards -->
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3 col-sm-6">
                             <div class="card practice-card p-3 h-100 selected-card" id="card-viva" onclick="selectMode('viva')">
                                 <div class="practice-icon viva-theme"><i class="bi bi-person-workspace"></i></div>
-                                <h5 class="mb-1" style="font-size:1rem;">Academic Viva Voce</h5>
-                                <p class="small text-muted mb-0">Simulates an oral university exam. Practises technical questions, core syllabus fundamentals, and direct answers.</p>
+                                <h5 class="mb-1" style="font-size:0.95rem;">Academic Viva Voce</h5>
+                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Simulates an oral university exam. Practises technical questions and definitions.</p>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3 col-sm-6">
                             <div class="card practice-card p-3 h-100" id="card-lang" onclick="selectMode('lang')">
                                 <div class="practice-icon lang-theme"><i class="bi bi-translate"></i></div>
-                                <h5 class="mb-1" style="font-size:1rem;">FluentFlow</h5>
-                                <p class="small text-muted mb-0">Improve spoken fluency in any language. Practice everyday conversation, vocabulary usage, and natural expression.</p>
+                                <h5 class="mb-1" style="font-size:0.95rem;">FluentFlow</h5>
+                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Improve spoken fluency in any language. Practice everyday conversation.</p>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card practice-card p-3 h-100" id="card-drill" onclick="selectMode('drill')">
-                                <div class="practice-icon gen-theme"><i class="bi bi-patch-question"></i></div>
-                                <h5 class="mb-1" style="font-size:1rem;">General Concept Drill</h5>
-                                <p class="small text-muted mb-0">Open-ended session to quiz your reasoning, logic, and general knowledge on any topic you choose.</p>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card practice-card p-3 h-100" id="card-debate" onclick="selectMode('debate')">
+                                <div class="practice-icon debate-theme"><i class="bi bi-lightning-charge"></i></div>
+                                <h5 class="mb-1" style="font-size:0.95rem;">Debate with AI</h5>
+                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Sharp counter-arguments and language-sensitive debates limited to 2 lines.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card practice-card p-3 h-100" id="card-convo" onclick="selectMode('convo')">
+                                <div class="practice-icon convo-theme"><i class="bi bi-chat-left-heart"></i></div>
+                                <h5 class="mb-1" style="font-size:0.95rem;">Healthy Convo</h5>
+                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Engage in warm, meaningful, and healthy discussions with moderate friendliness.</p>
                             </div>
                         </div>
                     </div>
@@ -160,11 +169,14 @@
                             <div class="form-text mt-2">The AI will conduct the session based on these preferences in a language-sensitive manner.</div>
                         </div>
 
-                        <div id="drill-details" style="display:none;">
-                            <h6 class="mb-2 gen-theme"><i class="bi bi-sliders"></i> Concept Drill Settings</h6>
-                            <label class="form-label fw-semibold mb-1" style="font-size:0.88rem;">Drill Topic</label>
-                            <input type="text" name="drill_subject" id="drillSubjectInput" class="form-control" placeholder="e.g., Renewable Energy, Machine Learning, World History">
-                            <div class="form-text mt-1">Type any general topic or skill area you want to practice discussing.</div>
+                        <div id="debate-details" style="display:none;">
+                            <h6 class="mb-2 debate-theme"><i class="bi bi-sliders"></i> Debate Settings</h6>
+                            <div class="form-text mt-1">No upfront settings required! The AI will ask you for your chosen debate topic and stance once the session starts.</div>
+                        </div>
+
+                        <div id="convo-details" style="display:none;">
+                            <h6 class="mb-2 convo-theme"><i class="bi bi-sliders"></i> Healthy Conversation Settings</h6>
+                            <div class="form-text mt-1">No upfront settings required! The AI will ask you what you would like to discuss once the session starts.</div>
                         </div>
 
                     </div>
@@ -213,18 +225,16 @@
 
             document.getElementById('viva-details').style.display  = (mode === 'viva')   ? 'block' : 'none';
             document.getElementById('lang-details').style.display  = (mode === 'lang')   ? 'block' : 'none';
-            document.getElementById('drill-details').style.display = (mode === 'drill')  ? 'block' : 'none';
+            document.getElementById('debate-details').style.display = (mode === 'debate') ? 'block' : 'none';
+            document.getElementById('convo-details').style.display = (mode === 'convo')  ? 'block' : 'none';
 
             const vivaInput  = document.querySelector('input[name="viva_subject"]');
-            const drillInput = document.querySelector('input[name="drill_subject"]');
             const langInput  = document.getElementById('langTargetInput');
 
             vivaInput.removeAttribute('required');
-            drillInput.removeAttribute('required');
             langInput.removeAttribute('required');
 
             if (mode === 'viva')  vivaInput.setAttribute('required','required');
-            if (mode === 'drill') drillInput.setAttribute('required','required');
             if (mode === 'lang')  langInput.setAttribute('required','required');
         }
     </script>

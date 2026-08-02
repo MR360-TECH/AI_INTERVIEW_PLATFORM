@@ -103,7 +103,7 @@
                             <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
                             <div>
                                 <div class="search-name">{{ user.full_name }}</div>
-                                {% if user.auth_provider == "google" %}
+                                {% if user.auth_provider == "google" or user.auth_provider == "otp" %}
                                 <span class="auth-badge google">
                                     <svg class="google-g-icon" viewBox="0 0 48 48">
                                         <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
@@ -113,8 +113,10 @@
                                     </svg>
                                     Google
                                 </span>
-                                {% else %}
+                                {% elif user.auth_provider == "guest" or user.auth_provider == "local" %}
                                 <span class="auth-badge guest"><i class="bi bi-person-fill"></i> Guest</span>
+                                {% else %}
+                                <span class="auth-badge" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.35);"><i class="bi bi-envelope-check-fill"></i> Email OTP</span>
                                 {% endif %}
                                 <span class="search-email d-none">{{ user.email }}</span>
                             </div>

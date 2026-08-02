@@ -79,5 +79,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 toggleMic();
             }
         });
+
+        // Expose a global method to stop mic from other scripts
+        window.stopSpeechRecognition = function() {
+            if (isListening && recognition) {
+                recognition.stop();
+            }
+        };
     }
 });

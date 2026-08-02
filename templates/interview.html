@@ -10,9 +10,54 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Loading overlay — shown instantly on submit so user isn't staring at a frozen page */
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(4px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        #loadingOverlay.active { display: flex; }
+
+        .loader-spinner {
+            width: 56px; height: 56px;
+            border: 5px solid #e0e7ff;
+            border-top-color: #4e73df;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1a2036;
+            margin-bottom: 6px;
+        }
+        .loader-sub {
+            font-size: 0.88rem;
+            color: #6b7280;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Instant loading overlay — appears the moment submit is clicked -->
+    <div id="loadingOverlay">
+        <div class="loader-spinner"></div>
+        <div class="loader-title">AI Examiner is evaluating…</div>
+        <div class="loader-sub">Analysing your response and preparing the next question</div>
+    </div>
+
     {% include 'navbar.html' %}
     <div class="container mt-5">
         <div class="row justify-content-center">
@@ -30,15 +75,14 @@
                                 </button>
                             </form>
                             {% endif %}
-                            <a href="/dashboard" class="btn btn-quit"
-                                onclick="return confirm('{% if is_practice %}Quit this practice session? Your conversation will be discarded.{% else %}Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.{% endif %}")">
+                            <a href="{% if is_practice %}/quit-interview{% else %}/dashboard{% endif %}" class="btn btn-quit"
+                                onclick="return confirm('{% if is_practice %}Quit this practice session? Your conversation will be discarded.{% else %}Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.{% endif %}')">
                                 <i class="bi bi-x-lg"></i> {% if is_practice %}Quit{% else %}Exit Assessment{% endif %}
                             </a>
                         </div>
                     </div>
 
                     {% if is_practice %}
-                    <!-- Practice note: lives between top-bar and question for clear visual hierarchy -->
                     <div class="practice-note">
                         <i class="bi bi-check2-circle"></i>
                         <span>When you're done, tap <strong>Finish Session</strong> to wrap up and see your results.</span>
@@ -48,10 +92,7 @@
                     <!-- Question text -->
                     <h3 class="question-text">{{ question }}</h3>
 
-
-
                     <form method="POST" id="answerForm" enctype="multipart/form-data">
-
 
                         {% if q_num == 1 and not is_practice %}
                         <div class="upload-box mb-3">
@@ -60,7 +101,8 @@
                             <div class="upload-row">
                                 <label class="upload-icon-btn" title="Upload resume">
                                     <i class="bi bi-upload"></i>
-                                    <input type="file" name="resume" id="resumeInput" accept="image/*,application/pdf"
+                                    <input type="file" name="resume" id="resumeInput"
+                                        accept=".pdf,.doc,.docx"
                                         style="display:none;">
                                 </label>
                                 <span class="file-name-tag" id="resumeFileName" style="display:none;"></span>
@@ -100,7 +142,7 @@
 
                         <div class="answer-input-group mb-1">
                             <textarea name="answer" id="answerBox" class="form-control" rows="4"
-                                placeholder="Type your answer explanation, or click the mic to speak..."></textarea>
+                                placeholder="Type your answer explanation, or click the mic to speak..." autocomplete="off"></textarea>
                             <button type="button" class="mic-btn" id="micBtn"
                                 title="Click to speak your answer (or press Insert)">
                                 <i class="bi bi-mic-fill" id="micIcon"></i>
@@ -110,7 +152,7 @@
                             enter something in the answer box or write code before submitting.</span>
                         <span class="listening-tag mb-3 d-block" id="listeningTag">🎙️ Listening... speak now</span>
 
-                        <button class="btn btn-submit btn-primary w-100 text-white mt-2">Submit Answer</button>
+                        <button class="btn btn-submit btn-primary w-100 text-white mt-2" id="submitBtn">Submit Answer</button>
                     </form>
                 </div>
             </div>
@@ -120,33 +162,41 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
     <script>
-        const answerBox = document.getElementById('answerBox');
-        const emptyWarning = document.getElementById('emptyWarning');
-        const answerForm = document.getElementById('answerForm');
+        const answerBox       = document.getElementById('answerBox');
+        const emptyWarning    = document.getElementById('emptyWarning');
+        const answerForm      = document.getElementById('answerForm');
         const codeAnswerInput = document.getElementById('codeAnswerInput');
+        const loadingOverlay  = document.getElementById('loadingOverlay');
 
         function isAnswerEmpty() {
             const textVal = answerBox.value.trim();
             let codeVal = "";
-            if (typeof editorInstance !== 'undefined') {
+            if (typeof editorInstance !== 'undefined' && editorInstance) {
                 codeVal = editorInstance.getValue().replace("# Write your code/solution here...\n", "").trim();
             }
             return textVal.length === 0 && codeVal.length === 0;
         }
 
         function trySubmit() {
-            if (typeof editorInstance !== 'undefined' && codeAnswerInput) {
+            if (typeof editorInstance !== 'undefined' && editorInstance && codeAnswerInput) {
                 codeAnswerInput.value = editorInstance.getValue();
             }
             if (isAnswerEmpty()) {
                 emptyWarning.classList.add('active');
                 answerBox.classList.add('input-error');
                 answerBox.focus();
-            } else {
-                emptyWarning.classList.remove('active');
-                answerBox.classList.remove('input-error');
-                answerForm.requestSubmit();
+                return;
             }
+            emptyWarning.classList.remove('active');
+            answerBox.classList.remove('input-error');
+
+            // Stop mic if active
+            if (window.stopSpeechRecognition) window.stopSpeechRecognition();
+
+            // Show loading overlay IMMEDIATELY before form submits
+            loadingOverlay.classList.add('active');
+
+            answerForm.submit();
         }
 
         answerBox.addEventListener('keydown', function (e) {
@@ -164,30 +214,32 @@
         });
 
         answerForm.addEventListener('submit', function (e) {
-            if (typeof editorInstance !== 'undefined' && codeAnswerInput) {
-                codeAnswerInput.value = editorInstance.getValue();
-            }
-            if (isAnswerEmpty()) {
-                e.preventDefault();
-                emptyWarning.classList.add('active');
-                answerBox.classList.add('input-error');
-                answerBox.focus();
-            }
+            e.preventDefault(); // always go through trySubmit so overlay fires
+            trySubmit();
         });
 
-        const resumeInput = document.getElementById('resumeInput');
-        const resumeFileName = document.getElementById('resumeFileName');
+        // ── Resume file input ────────────────────────────────────────────────────
+        const resumeInput     = document.getElementById('resumeInput');
+        const resumeFileName  = document.getElementById('resumeFileName');
         const removeResumeBtn = document.getElementById('removeResumeBtn');
 
         if (resumeInput) {
             resumeInput.addEventListener('change', function () {
                 if (this.files.length > 0) {
+                    const file = this.files[0];
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    if (extension !== 'pdf' && extension !== 'doc' && extension !== 'docx') {
+                        alert('Resume must be in PDF, DOC, or DOCX format.');
+                        this.value = '';
+                        resumeFileName.style.display = 'none';
+                        removeResumeBtn.style.display = 'none';
+                        return;
+                    }
                     resumeFileName.textContent = this.files[0].name;
                     resumeFileName.style.display = 'inline-block';
                     removeResumeBtn.style.display = 'inline-block';
                 }
             });
-
             removeResumeBtn.addEventListener('click', function () {
                 resumeInput.value = '';
                 resumeFileName.style.display = 'none';
@@ -195,8 +247,9 @@
             });
         }
 
-        const attachmentInput = document.getElementById('attachmentInput');
-        const attachmentFileName = document.getElementById('attachmentFileName');
+        // ── Attachment file input ────────────────────────────────────────────────
+        const attachmentInput     = document.getElementById('attachmentInput');
+        const attachmentFileName  = document.getElementById('attachmentFileName');
         const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
 
         if (attachmentInput) {
@@ -207,16 +260,21 @@
                     removeAttachmentBtn.style.display = 'inline-block';
                 }
             });
-
             removeAttachmentBtn.addEventListener('click', function () {
                 attachmentInput.value = '';
                 attachmentFileName.style.display = 'none';
                 removeAttachmentBtn.style.display = 'none';
             });
         }
+
+        // Hide overlay if user navigates back (browser back button)
+        window.addEventListener('pageshow', function () {
+            loadingOverlay.classList.remove('active');
+        });
     </script>
+
     {% if question_type == 'code' %}
-    <!-- Load Monaco Editor via CDN -->
+    <!-- Load Monaco Editor via CDN — only when a code question is active -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
     <script>
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
@@ -230,8 +288,6 @@
                 fontSize: 14,
                 minimap: { enabled: false }
             });
-
-            // Add Ctrl+Enter and Cmd+Enter support to submit
             editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
                 trySubmit();
             });

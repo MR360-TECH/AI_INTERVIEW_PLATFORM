@@ -1,70 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Assessment Settings — AI Recruitment Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body { background: linear-gradient(135deg, #eef2f7, #e4e9f2); }
-        .settings-card { border: none; border-radius: 14px; }
-        .form-label { font-weight: 600; color: #333; }
-        .form-text { font-size: 0.85rem; }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+        .settings-card {
+            border: none;
+            border-radius: 16px;
+            background: #ffffff;
+            box-shadow: 0 10px 30px rgba(166, 179, 194, 0.25);
+        }
+        .settings-header {
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .settings-header h3 {
+            font-weight: 700;
+            color: #1a202c;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .form-control, .form-select {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            color: #2d3748;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+            outline: none;
+        }
+        .form-text {
+            font-size: 0.82rem;
+            color: #718096;
+            margin-top: 0.4rem;
+        }
+        .btn-save-settings {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 600;
+            padding: 0.8rem 2rem;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+        .btn-save-settings:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+            color: #fff;
+        }
+        .btn-save-settings:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
-<div class="container mt-5 mb-5" style="max-width: 640px;">
-    <div class="d-flex justify-content-end mb-4">
+<div class="container py-5" style="max-width: 640px;">
+    
+    <!-- Back button -->
+    <div class="mb-4">
         <a href="/admin" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> Back
+            <i class="bi bi-arrow-left"></i> Back to Admin Panel
         </a>
     </div>
 
-    <div class="card settings-card shadow-sm p-4">
-        <h3 class="mb-1">Assessment Settings</h3>
-        <p class="text-muted mb-4">These parameters control candidate recruitment assessments.</p>
+    <div class="card settings-card p-4 p-md-5">
+        
+        <div class="settings-header">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-light text-primary" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-sliders"></i>
+                </div>
+                <div>
+                    <h3 class="m-0">Assessment Settings</h3>
+                    <p class="text-muted m-0 fs-7">Control recruitment assessments and candidate evaluation rules.</p>
+                </div>
+            </div>
+        </div>
 
         {% if saved %}
-        <div class="alert alert-success">Settings updated successfully.</div>
+        <div class="alert alert-success d-flex align-items-center gap-2 mb-4" style="border-radius: 10px;">
+            <i class="bi bi-check-circle-fill"></i>
+            <div>Settings updated successfully.</div>
+        </div>
         {% endif %}
 
         <form method="POST">
-            <div class="mb-3">
-                <label class="form-label">Minimum Questions</label>
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-dash-circle me-1"></i> Minimum Questions</label>
                 <input type="number" name="min_questions" class="form-control" min="1" max="20" value="{{ settings.min_questions }}" required>
-                <div class="form-text">The AI cannot end the assessment session before this many questions are asked.</div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Maximum Questions</label>
-                <input type="number" name="max_questions" class="form-control" min="1" max="20" value="{{ settings.max_questions }}" required>
-                <div class="form-text">The assessment session is force-ended after this many questions, regardless of the AI's judgment.</div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Passing Score (out of 10)</label>
-                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="0.5" value="{{ settings.pass_score }}" required>
-                <div class="form-text">Candidates scoring at or above this are marked "Recommended".</div>
+                <div class="form-text">The minimum number of questions before the assessment completion rule is evaluated.</div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label">Default Assessment Level</label>
-                <select name="default_difficulty" class="form-select">
-                    <option value="student" {% if settings.default_difficulty == 'student' or not settings.default_difficulty %}selected{% endif %}>
-                        Student / Entry-Level — Fundamental questions, standard evaluation
-                    </option>
-                    <option value="mid" {% if settings.default_difficulty == 'mid' %}selected{% endif %}>
-                        Mid-Level — Professional placement evaluation
-                    </option>
-                    <option value="senior" {% if settings.default_difficulty == 'senior' %}selected{% endif %}>
-                        Senior / Professional — Complex scenarios, rigorous evaluation
-                    </option>
-                </select>
-                <div class="form-text">All new assessments will use this difficulty level. Candidates cannot change it.</div>
+                <label class="form-label"><i class="bi bi-plus-circle me-1"></i> Maximum Questions</label>
+                <input type="number" name="max_questions" class="form-control" min="1" max="20" value="{{ settings.max_questions }}" required>
+                <div class="form-text">The maximum cap. The interview session automatically concludes when this limit is reached.</div>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Save Settings</button>
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-award me-1"></i> Passing Score (out of 10)</label>
+                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="0.5" value="{{ settings.pass_score }}" required>
+                <div class="form-text">Candidates with an overall evaluation score at or above this threshold will pass the round.</div>
+            </div>
 
+            <div class="mb-4">
+                <label class="form-label"><i class="bi bi-bar-chart-steps me-1"></i> Default Assessment Level</label>
+                <select name="default_difficulty" class="form-select">
+                    <option value="student" {% if settings.default_difficulty == 'student' or not settings.default_difficulty %}selected{% endif %}>
+                        Student / Entry-Level — Fundamental concept evaluation
+                    </option>
+                    <option value="mid" {% if settings.default_difficulty == 'mid' %}selected{% endif %}>
+                        Mid-Level — Professional placement scenarios
+                    </option>
+                    <option value="senior" {% if settings.default_difficulty == 'senior' %}selected{% endif %}>
+                        Senior / Professional — Architectural and deep technical drills
+                    </option>
+                </select>
+                <div class="form-text">The default level for newly initialized interviews. Candidates have no choice to override this.</div>
+            </div>
+
+            <button type="submit" class="btn btn-save-settings">
+                <i class="bi bi-check-lg me-1"></i> Save Parameters
+            </button>
         </form>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
