@@ -183,7 +183,6 @@ def get_settings():
         db.session.commit()
     return settings
 
-
 def save_progress(user_id, chat_history, q_count):
     progress = InterviewProgress.query.filter_by(user_id=user_id).first()
     if not progress:
@@ -191,7 +190,16 @@ def save_progress(user_id, chat_history, q_count):
         db.session.add(progress)
     progress.chat_history = json.dumps(chat_history)
     progress.q_count = q_count
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception:
+        # Another concurrent request already inserted this user's row — retry as an update.
+        db.session.rollback()
+        progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+        if progress:
+            progress.chat_history = json.dumps(chat_history)
+            progress.q_count = q_count
+            db.session.commit()
 
 
 def clear_progress(user_id):
@@ -711,7 +719,7 @@ def interview():
                     session["interview_domain"] = answer.strip()
                 # difficulty is set by admin globally — candidate has no choice
                 session["interview_difficulty"] = settings.default_difficulty or "student"
-            
+
             full_answer = answer
             if code_answer:
                 if full_answer:
@@ -733,7 +741,6 @@ def interview():
             session.modified = True
             save_progress(user_id, session["chat_history"], session["q_count"])
 
-            
     # Practice mode has no question cap — user finishes via the Finish button
     is_practice = bool(session.get("interview_mode"))
     if not is_practice and session["q_count"] >= MAX_QUESTIONS:
@@ -745,15 +752,15 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice)
 
+    # PERF: only send the last few turns to Gemini instead of the full growing transcript
     conversation_text = ""
     for entry in session["chat_history"]:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
-
     try:
         if session["q_count"] == 0:
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
-            
+
             if practice_mode == "viva":
                 prompt = (
                     f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
@@ -804,7 +811,7 @@ def interview():
             difficulty = session.get("interview_difficulty", "student")
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
-            
+
             if practice_mode == "viva":
                 difficulty_instruction = (
                     f"The candidate is undergoing an Academic Viva Voce exam on: {practice_topic}. "
@@ -886,16 +893,33 @@ def interview():
 
         response = client.models.generate_content(
             model=MODEL_NAME,
-            contents=prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(max_output_tokens=150)
         )
         question_text = response.text.strip()
 
     except Exception as e:
+        print(f"[INTERVIEW ERROR] {e}")
         return f"AI error: {str(e)}"
 
     if question_text == "INTERVIEW_COMPLETE":
         return redirect("/interview-result")
 
+    # Parse TYPE tag
+    question_type = "text"
+    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
+    if match:
+        tag_type = match.group(1).lower()
+        if tag_type in ["code", "file", "text"]:
+            question_type = tag_type
+        # Strip the tag from the final display question text
+        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
+
+    session["chat_history"].append({"role": "question", "text": question_text, "type": question_type})
+    session.modified = True
+    save_progress(user_id, session["chat_history"], session["q_count"])
+
+    return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice)
     # Parse TYPE tag
     question_type = "text"
     match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
@@ -1628,4 +1652,4 @@ with app.app_context():
         print(f"Error creating database tables: {e}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,threaded=True)
