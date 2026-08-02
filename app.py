@@ -132,6 +132,12 @@ class User(db.Model):
     auth_provider = db.Column(db.String(20), default='local')
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     registered_at = db.Column(db.DateTime, server_default=db.func.now())
+    user_type = db.Column(db.String(20), default='student')
+    github_url = db.Column(db.String(200))
+    linkedin_url = db.Column(db.String(200))
+    skills = db.Column(db.Text)
+    years_of_experience = db.Column(db.String(20))
+    current_designation = db.Column(db.String(100))
 
 
 class InterviewResult(db.Model):
@@ -209,6 +215,13 @@ def register():
         education = request.form.get("education")
         course = request.form.get("course")
         semester = request.form.get("semester")
+        
+        user_type = request.form.get("user_type", "student")
+        github_url = request.form.get("github_url", "").strip() or None
+        linkedin_url = request.form.get("linkedin_url", "").strip() or None
+        skills = request.form.get("skills", "").strip() or None
+        years_of_experience = request.form.get("years_of_experience", "").strip() or None
+        current_designation = request.form.get("current_designation", "").strip() or None
 
         if not full_name:
             return render_template("register.html", error="Full name is required.",
@@ -223,7 +236,10 @@ def register():
             new_user = User(
                 full_name=full_name, email=email, password=None,
                 gender=gender, education=education, course=course, semester=semester,
-                auth_provider="google", google_id=google_id
+                auth_provider="google", google_id=google_id,
+                user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
+                skills=skills, years_of_experience=years_of_experience,
+                current_designation=current_designation
             )
 
         elif session.get("pending_guest_email"):
@@ -233,7 +249,10 @@ def register():
             new_user = User(
                 full_name=full_name, email=email, password=hashed_pw,
                 gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest"
+                auth_provider="guest",
+                user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
+                skills=skills, years_of_experience=years_of_experience,
+                current_designation=current_designation
             )
 
         else:
@@ -257,7 +276,10 @@ def register():
                 full_name=full_name, email=email,
                 password=generate_password_hash(password),
                 gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest"
+                auth_provider="guest",
+                user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
+                skills=skills, years_of_experience=years_of_experience,
+                current_designation=current_designation
             )
 
         db.session.add(new_user)

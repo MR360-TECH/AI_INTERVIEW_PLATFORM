@@ -1,75 +1,540 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Recruitment Operations Dashboard — AI Recruitment Platform</title>
+    <title>Recruitment Operations — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin panel for managing all candidate recruitment assessments and evaluations.">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+
     <style>
-        .stat-month {
-            background: linear-gradient(135deg, #7f00ff 0%, #e100ff 100%);
+        :root {
+            --surface:  #ffffff;
+            --bg:       #f0f4ff;
+            --border2:  #e2e8f0;
+            --text-1:   #1e293b;
+            --text-2:   #64748b;
+            --row-hover:#f8faff;
         }
-        .active-filter {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.1) !important;
-            border: 2.5px solid rgba(255, 255, 255, 0.65) !important;
+
+        body.dark-theme {
+            --surface:  #0f172a;
+            --bg:       #020617;
+            --border2:  #334155;
+            --text-1:   #f8fafc;
+            --text-2:   #cbd5e1;
+            --row-hover:#1e293b;
+        }
+
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text-1);
+            overflow-x: hidden;
+            transition: background 0.25s ease, color 0.25s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(ellipse 70% 50% at 0% 0%, rgba(99,102,241,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.07) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body.dark-theme::before {
+            background-image:
+                radial-gradient(ellipse 70% 50% at 0% 0%, rgba(99,102,241,0.16) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.11) 0%, transparent 60%);
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 36px 24px 60px;
+        }
+
+        /* ── Top header ── */
+        .admin-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .admin-brand-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(79,70,229,0.35);
+            flex-shrink: 0;
+        }
+
+        .admin-brand-text h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: var(--text-1);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .admin-brand-text p {
+            font-size: 0.83rem;
+            color: var(--text-2);
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .admin-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1.5px solid var(--border2);
+            color: var(--text-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .header-icon-btn:hover {
+            background: #eef2ff;
+            border-color: #a5b4fc;
+            color: #4f46e5;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.15);
+        }
+        .header-icon-btn.danger:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #ef4444;
+        }
+        body.dark-theme .header-icon-btn:hover {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: #6366f1;
+            color: #a5b4fc;
+            box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+        }
+        body.dark-theme .header-icon-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #f87171;
+            color: #f87171;
+        }
+
+        /* ── Stat cards grid ── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 992px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .stat-card {
+            background: var(--surface);
+            border: 2px solid var(--border2);
+            border-radius: 18px;
+            padding: 20px 18px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent-color);
+            border-radius: 0 0 16px 16px;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+        }
+        .stat-card:hover::after { opacity: 1; }
+
+        .stat-card.active-filter {
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+        .stat-card.active-filter::after { opacity: 1; }
+
+        .sc-total   { --accent-color: #4f46e5; }
+        .sc-month   { --accent-color: #8b5cf6; }
+        .sc-today   { --accent-color: #06b6d4; }
+        .sc-selected { --accent-color: #10b981; }
+        .sc-rejected { --accent-color: #ef4444; }
+
+        .stat-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--accent-color);
+            background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+            margin-bottom: 14px;
+        }
+
+        .stat-label {
+            font-size: 0.71rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--text-1);
+            line-height: 1;
+        }
+
+        /* ── Filter bar ── */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .filter-label {
+            font-size: 0.86rem;
+            color: var(--text-2);
+            font-weight: 500;
+        }
+        .filter-label strong {
+            color: var(--text-1);
+            font-weight: 700;
+        }
+
+        #searchInput {
+            background: var(--surface);
+            border: 1.5px solid var(--border2);
+            color: var(--text-1);
+            border-radius: 10px;
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            width: 280px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        #searchInput::placeholder { color: #94a3b8; }
+        #searchInput:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+
+        /* ── Results table ── */
+        .results-panel {
+            background: var(--surface);
+            border: 1.5px solid var(--border2);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table thead tr {
+            background: var(--surface);
+            border-bottom: 2px solid var(--border2);
+        }
+
+        .results-table thead th {
+            padding: 14px 20px;
+            font-size: 0.69rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: #94a3b8;
+        }
+
+        .results-table tbody tr {
+            border-bottom: 1px solid var(--border2);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .results-table tbody tr:last-child { border-bottom: none; }
+
+        .results-table tbody tr:hover {
+            background: var(--row-hover);
+        }
+
+        .results-table tbody td {
+            padding: 16px 20px;
+            vertical-align: middle;
+        }
+
+        /* ── Candidate cell ── */
+        .candidate-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.25);
+        }
+
+        /* Bold + Caps name style */
+        .cand-name {
+            font-weight: 800;
+            font-size: 0.88rem;
+            color: var(--text-1);
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Auth badges ── */
+        .auth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.64rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        .auth-badge.google {
+            background: #eff6ff;
+            color: #3b82f6;
+            border: 1.5px solid #bfdbfe;
+        }
+        .auth-badge.guest {
+            background: #fffbeb;
+            color: #d97706;
+            border: 1.5px solid #fde68a;
+        }
+        .google-g-icon { width: 13px; height: 13px; }
+
+        /* ── Score bar ── */
+        .score-wrap { font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
+        .score-bar-track {
+            height: 5px;
+            background: var(--border2);
+            border-radius: 99px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+        }
+
+        /* ── Verdict pills ── */
+        .verdict-recommended {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1.5px solid #a7f3d0;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .verdict-rejected {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ── Date cell ── */
+        .date-cell { font-size: 0.82rem; color: var(--text-2); font-weight: 500; }
+
+        /* ── Action btn ── */
+        .btn-delete {
+            background: transparent;
+            border: 1.5px solid #fecaca;
+            color: #ef4444;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        .btn-delete:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.5; }
+        .empty-state p { margin: 0; font-size: 0.9rem; }
+
+        body.dark-theme .verdict-recommended { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+        body.dark-theme .verdict-rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
+        body.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
+        body.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
+        body.dark-theme .btn-delete { border-color: rgba(239, 68, 68, 0.3); color: #f87171; }
+        body.dark-theme .btn-delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: #ef4444; }
+
+        /* ── Dark theme: table row hover fix ── */
+        body.dark-theme .results-table tbody tr:hover {
+            background: rgba(99, 102, 241, 0.08) !important;
+        }
+        body.dark-theme .results-table thead tr {
+            background: rgba(30, 41, 59, 0.6);
+        }
+        body.dark-theme .results-table thead th {
+            color: #64748b;
+        }
+        body.dark-theme .results-table tbody td {
+            color: var(--text-1);
+        }
+        body.dark-theme .score-wrap {
+            color: var(--text-1);
+        }
+        body.dark-theme .cand-name {
+            color: var(--text-1);
         }
     </style>
 </head>
 <body>
-<div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4 page-header">
-        <div>
-            <h2 class="mb-0">Recruitment Operations</h2>
-            <p class="mb-0">Overview of all candidate placement assessments</p>
+<div class="page-shell">
+
+    <!-- Header -->
+    <div class="admin-header anim">
+        <div class="admin-brand">
+            <div class="admin-brand-icon"><i class="bi bi-speedometer2"></i></div>
+            <div class="admin-brand-text">
+                <h1>Recruitment Operations</h1>
+                <p>Candidate placement assessments overview</p>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="/admin/settings" class="icon-btn" title="Settings"><i class="bi bi-gear-fill"></i></a>
-            <a href="/logout" class="icon-btn danger" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+        <div class="admin-header-actions">
+            <button class="header-icon-btn me-1" id="themeToggle" title="Toggle Theme">
+                <i class="bi bi-moon-fill" id="themeToggleIcon" style="transition: transform 0.2s ease;"></i>
+            </button>
+            <a href="/admin/settings" class="header-icon-btn" title="Settings"><i class="bi bi-gear-fill"></i></a>
+            <a href="/logout" class="header-icon-btn danger" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>
 
-    <div class="row mb-4 g-3">
-        <div class="col-6 col-md-4 col-lg">
-            <a href="/admin?filter=all" class="stat-card stat-total {% if filter_type == 'all' or filter_type == '' or not filter_type %}active-filter{% endif %}">
-                <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-                <h6>Total Assessments</h6>
-                <h2>{{ total_count }}</h2>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg">
-            <a href="/admin?filter=month" class="stat-card stat-month {% if filter_type == 'month' %}active-filter{% endif %}">
-                <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
-                <h6>This Month</h6>
-                <h2>{{ month_count }}</h2>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg">
-            <a href="/admin?filter=today" class="stat-card stat-today {% if filter_type == 'today' %}active-filter{% endif %}">
-                <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
-                <h6>Today's Assessments</h6>
-                <h2>{{ today_count }}</h2>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg">
-            <a href="/admin?filter=selected" class="stat-card stat-selected {% if filter_type == 'selected' %}active-filter{% endif %}">
-                <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
-                <h6>Recommended</h6>
-                <h2>{{ selected_count }}</h2>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg">
-            <a href="/admin?filter=rejected" class="stat-card stat-rejected {% if filter_type == 'rejected' %}active-filter{% endif %}">
-                <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
-                <h6>Not Recommended</h6>
-                <h2>{{ rejected_count }}</h2>
-            </a>
-        </div>
+    <!-- Stat Cards -->
+    <div class="stat-grid anim anim-1">
+        <a href="/admin?filter=all" class="stat-card sc-total {% if filter_type == 'all' or not filter_type %}active-filter{% endif %}">
+            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-label">Total Assessments</div>
+            <div class="stat-number">{{ total_count }}</div>
+        </a>
+        <a href="/admin?filter=month" class="stat-card sc-month {% if filter_type == 'month' %}active-filter{% endif %}">
+            <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-label">This Month</div>
+            <div class="stat-number">{{ month_count }}</div>
+        </a>
+        <a href="/admin?filter=today" class="stat-card sc-today {% if filter_type == 'today' %}active-filter{% endif %}">
+            <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+            <div class="stat-label">Today</div>
+            <div class="stat-number">{{ today_count }}</div>
+        </a>
+        <a href="/admin?filter=selected" class="stat-card sc-selected {% if filter_type == 'selected' %}active-filter{% endif %}">
+            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="stat-label">Recommended</div>
+            <div class="stat-number">{{ selected_count }}</div>
+        </a>
+        <a href="/admin?filter=rejected" class="stat-card sc-rejected {% if filter_type == 'rejected' %}active-filter{% endif %}">
+            <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="stat-label">Not Recommended</div>
+            <div class="stat-number">{{ rejected_count }}</div>
+        </a>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <!-- Filter bar -->
+    <div class="filter-bar anim anim-2">
         <p class="filter-label mb-0">
             Showing:
             <strong>
@@ -80,29 +545,30 @@
                 {% else %}All Assessments{% endif %}
             </strong>
         </p>
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by name or email...">
+        <input type="text" id="searchInput" placeholder="&#xF52A;  Search by name or email…" autocomplete="off">
     </div>
 
-    <div class="card table-card p-3">
+    <!-- Results table -->
+    <div class="results-panel anim anim-3">
         <div class="table-responsive">
-        <table class="table table-hover align-middle" id="resultsTable">
+        <table class="results-table" id="resultsTable">
             <thead>
                 <tr>
                     <th>Candidate</th>
                     <th>Score</th>
                     <th>Recommendation</th>
-                    <th>Date & Time</th>
+                    <th>Date &amp; Time</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for result, user in results %}
-                <tr class="searchable-row" onclick="window.location='/admin/interview/{{ result.id }}'" style="cursor: pointer;">
+                <tr class="searchable-row" onclick="window.location='/admin/interview/{{ result.id }}'">
                     <td>
                         <div class="candidate-cell">
                             <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
                             <div>
-                                <div class="search-name">{{ user.full_name }}</div>
+                                <div class="cand-name search-name">{{ user.full_name }}</div>
                                 {% if user.auth_provider == "google" or user.auth_provider == "otp" %}
                                 <span class="auth-badge google">
                                     <svg class="google-g-icon" viewBox="0 0 48 48">
@@ -116,58 +582,98 @@
                                 {% elif user.auth_provider == "guest" or user.auth_provider == "local" %}
                                 <span class="auth-badge guest"><i class="bi bi-person-fill"></i> Guest</span>
                                 {% else %}
-                                <span class="auth-badge" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.35);"><i class="bi bi-envelope-check-fill"></i> Email OTP</span>
+                                <span class="auth-badge" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;">
+                                    <i class="bi bi-envelope-check-fill"></i> Email OTP
+                                </span>
                                 {% endif %}
                                 <span class="search-email d-none">{{ user.email }}</span>
                             </div>
                         </div>
                     </td>
                     <td>
-                        {{ result.score }} / 10
-                        <div class="score-bar-wrap">
-                            <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#17b978{% elif result.score|float >= 4 %}#f6c23e{% else %}#f0685a{% endif %};"></div>
+                        <div class="score-wrap">{{ result.score }} / 10</div>
+                        <div class="score-bar-track">
+                            <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981{% elif result.score|float >= 4 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
                         </div>
                     </td>
                     <td>
                         {% if result.status == "Selected" %}
-                        <span class="badge bg-success">Recommended</span>
+                        <span class="verdict-recommended"><i class="bi bi-check-circle-fill"></i>Recommended</span>
                         {% else %}
-                        <span class="badge bg-danger">Not Recommended</span>
+                        <span class="verdict-rejected"><i class="bi bi-x-circle-fill"></i>Not Recommended</span>
                         {% endif %}
                     </td>
-                    <td>{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
+                    <td class="date-cell">{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
                     <td onclick="event.stopPropagation();">
-                        <a href="/admin/delete/{{ result.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this record permanently?');">
+                        <a href="/admin/delete/{{ result.id }}" class="btn-delete" onclick="return confirm('Delete this record permanently?');">
                             <i class="bi bi-trash"></i>
                         </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No interviews recorded yet.</td>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No interview records found.</p>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         </div>
     </div>
+
 </div>
 
 <script>
     const searchInput = document.getElementById('searchInput');
     searchInput.addEventListener('input', function() {
         const query = this.value.toLowerCase();
-        const rows = document.querySelectorAll('.searchable-row');
-        rows.forEach(row => {
+        document.querySelectorAll('.searchable-row').forEach(row => {
             const name = row.querySelector('.search-name').textContent.toLowerCase();
             const email = row.querySelector('.search-email').textContent.toLowerCase();
-            if (name.includes(query) || email.includes(query)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
         });
     });
+
+    /* ── Theme Toggler ── */
+    (function() {
+        var toggleBtn = document.getElementById('themeToggle');
+        var toggleIcon = document.getElementById('themeToggleIcon');
+
+        function updateIcon(theme) {
+            if (theme === 'dark') {
+                toggleIcon.className = 'bi bi-sun-fill';
+                toggleIcon.style.color = '#fbbf24';
+            } else {
+                toggleIcon.className = 'bi bi-moon-fill';
+                toggleIcon.style.color = '';
+            }
+        }
+
+        var currentTheme = localStorage.getItem('theme') || 'light';
+        updateIcon(currentTheme);
+        if (currentTheme === 'dark') {
+            document.documentElement.classList.add('dark-theme');
+            document.body.classList.add('dark-theme');
+        }
+
+        toggleBtn.addEventListener('click', function() {
+            var theme = localStorage.getItem('theme') || 'light';
+            var newTheme = theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+            if (newTheme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                document.body.classList.add('dark-theme');
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                document.body.classList.remove('dark-theme');
+            }
+        });
+    })();
 </script>
 </body>
 </html>

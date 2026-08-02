@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Placement Evaluation Report</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+<script>
+(function() {
+    var saved = localStorage.getItem('theme') || 'light';
+    if (saved === 'dark') {
+        document.documentElement.classList.add('dark-theme');
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+})();
+</script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <style>
     :root {
@@ -26,6 +36,7 @@
         background: radial-gradient(circle at 50% 0%, {% if is_practice %}{{ 'rgba(246,194,62,0.14)' if verdict == 'WELL DONE' else 'rgba(142,68,173,0.14)' }}{% else %}{{ 'rgba(28,200,138,0.16)' if verdict == 'PASS' else 'rgba(231,74,59,0.14)' }}{% endif %}, #eef1f8 55%);
         color: var(--navy);
         padding: 56px 16px 90px;
+        transition: background-color 0.25s ease, color 0.25s ease;
     }
 
     .report-shell {
@@ -51,7 +62,7 @@
         color: #fff;
         text-align: center;
         padding: 26px 28px;
-        font-family: 'Source Serif 4', serif;
+        font-family: 'Outfit', sans-serif;
         font-weight: 700;
         font-size: 1.45rem;
         letter-spacing: 0.01em;
@@ -73,6 +84,7 @@
         position: relative;
     }
     .letterhead .eyebrow {
+        font-family: 'Outfit', sans-serif;
         font-size: 0.72rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
@@ -81,8 +93,8 @@
         margin-bottom: 12px;
     }
     .letterhead h1 {
-        font-family: 'Source Serif 4', serif;
-        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
         font-size: 2.15rem;
         margin: 0 0 30px;
         letter-spacing: -0.01em;
@@ -103,6 +115,7 @@
         border-left: 1px solid rgba(255,255,255,0.14);
     }
     .meta-item .meta-label {
+        font-family: 'Outfit', sans-serif;
         font-size: 0.68rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
@@ -111,7 +124,7 @@
         margin-bottom: 8px;
     }
     .meta-item .meta-value {
-        font-family: 'Source Serif 4', serif;
+        font-family: 'Outfit', sans-serif;
         color: #fff;
         font-weight: 700;
         font-size: 1.28rem;
@@ -131,7 +144,7 @@
         background: rgba(255,255,255,0.04);
         padding: 11px 24px;
         border-radius: 8px;
-        font-family: 'Source Serif 4', serif;
+        font-family: 'Outfit', sans-serif;
         font-weight: 700;
         font-size: 1.08rem;
         letter-spacing: 0.09em;
@@ -164,8 +177,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Source Serif 4', serif;
-        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
         font-size: 1.75rem;
         color: var(--navy);
         background:
@@ -174,8 +187,8 @@
         box-shadow: 0 4px 14px rgba(26,32,54,0.06);
     }
     .score-copy .label {
-        font-family: 'Source Serif 4', serif;
-        font-weight: 600;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
         font-size: 1.4rem;
         color: var(--verdict-color);
         margin-bottom: 6px;
@@ -192,8 +205,8 @@
         padding: 48px 52px 56px;
     }
     .section-heading {
-        font-family: 'Source Serif 4', serif;
-        font-weight: 600;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
         font-size: 1.1rem;
         color: var(--navy);
         text-transform: uppercase;
@@ -216,8 +229,8 @@
         margin-bottom: 22px;
     }
     .summary-text p:first-of-type::first-letter {
-        font-family: 'Source Serif 4', serif;
-        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
         font-size: 2.8rem;
         line-height: 0.75;
         float: left;
@@ -233,7 +246,8 @@
         flex-wrap: wrap;
     }
     .btn-report {
-        font-weight: 600;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
         padding: 13px 32px;
         border-radius: 10px;
         font-size: 0.96rem;
@@ -269,6 +283,7 @@
         border: none;
         padding: 8px 18px;
         border-radius: 8px;
+        font-family: 'Outfit', sans-serif;
         font-size: 0.88rem;
         font-weight: 600;
         cursor: pointer;
@@ -289,6 +304,7 @@
         padding: 8px 18px;
         border-radius: 8px;
         text-decoration: none;
+        font-family: 'Outfit', sans-serif;
         font-size: 0.88rem;
         font-weight: 600;
         transition: all 0.15s ease;
@@ -300,6 +316,58 @@
         border-color: var(--blue);
         transform: translateY(-1px);
         box-shadow: 0 4px 14px rgba(78, 115, 223, 0.30);
+    }
+
+    /* Dark Theme overrides */
+    html.dark-theme body {
+        background: radial-gradient(circle at 50% 0%, {% if is_practice %}{{ 'rgba(246,194,62,0.18)' if verdict == 'WELL DONE' else 'rgba(142,68,173,0.18)' }}{% else %}{{ 'rgba(52,211,153,0.20)' if verdict == 'PASS' else 'rgba(239,68,68,0.16)' }}{% endif %}, #060d1f 55%) !important;
+        color: #c0d4f0 !important;
+    }
+    html.dark-theme .report-doc {
+        background: #0f1e3a !important;
+        border-color: #1e3a5f !important;
+    }
+    html.dark-theme .letterhead {
+        background: linear-gradient(150deg, #0a1628, #162040 65%) !important;
+    }
+    html.dark-theme .score-band {
+        background: #162040 !important;
+        border-bottom-color: #1e3a5f !important;
+    }
+    html.dark-theme .score-ring {
+        background: radial-gradient(closest-side, #162040 78%, transparent 79% 100%),
+                    conic-gradient(var(--verdict-color) {{ score_percent }}%, #1e3a5f 0) !important;
+        color: #f0f6ff !important;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    html.dark-theme .summary-text {
+        color: #c0d4f0 !important;
+    }
+    html.dark-theme .summary-text p:first-of-type::first-letter {
+        color: var(--brand-blue) !important;
+    }
+    html.dark-theme .btn-back-top {
+        background: rgba(15, 30, 58, 0.7) !important;
+        border-color: rgba(30, 58, 95, 0.8) !important;
+        color: #c0d4f0 !important;
+    }
+    html.dark-theme .btn-back-top:hover {
+        background: #162040 !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+    html.dark-theme .btn-report-secondary {
+        background: rgba(15, 30, 58, 0.7) !important;
+        border-color: rgba(30, 58, 95, 0.8) !important;
+        color: #c0d4f0 !important;
+    }
+    html.dark-theme .btn-report-secondary:hover {
+        background: #162040 !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+    html.dark-theme .stamp-badge {
+        background: rgba(10,22,40,0.3) !important;
     }
 
     @media print {

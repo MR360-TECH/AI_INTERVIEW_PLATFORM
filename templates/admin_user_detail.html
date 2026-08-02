@@ -13,20 +13,22 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 9px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
         .auth-google {
-            background: #eef4ff;
-            border: 1px solid #cddcfa;
-            color: #224abe;
+            background: rgba(66, 133, 244, 0.1);
+            border: 1.5px solid #4285f4;
+            color: #1a73e8;
         }
         .auth-guest {
-            background: #f3f0fa;
-            border: 1px solid #d9cdf0;
-            color: #6b3fa0;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1.5px solid #f59e0b;
+            color: #d97706;
         }
     </style>
 </head>
@@ -86,6 +88,24 @@
                 <div class="info-label">Registered On</div>
                 <div class="info-value">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p') }}</div>
             </div>
+            {% if user.github_url %}
+            <div class="col-md-6">
+                <div class="info-label">GitHub</div>
+                <div class="info-value"><a href="{{ user.github_url }}" target="_blank" style="color:#1a73e8;">{{ user.github_url }}</a></div>
+            </div>
+            {% endif %}
+            {% if user.linkedin_url %}
+            <div class="col-md-6">
+                <div class="info-label">LinkedIn</div>
+                <div class="info-value"><a href="{{ user.linkedin_url }}" target="_blank" style="color:#1a73e8;">{{ user.linkedin_url }}</a></div>
+            </div>
+            {% endif %}
+            {% if user.skills %}
+            <div class="col-12">
+                <div class="info-label">Skills</div>
+                <div class="info-value">{{ user.skills }}</div>
+            </div>
+            {% endif %}
         </div>
     </div>
 
