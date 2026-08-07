@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
@@ -20,7 +20,11 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 # Database URL configuration and fallback
 db_url = os.environ.get("DATABASE_URL")
-if not db_url:
+if db_url:
+    # Resolve PostgreSQL connection scheme issue common on production environments like Render/Heroku
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+else:
     db_user = os.environ.get("DB_USER", "root")
     db_pass = os.environ.get("DB_PASSWORD", "1817")
     db_host = os.environ.get("DB_HOST", "localhost")
@@ -62,7 +66,7 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
-ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx'}
+ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'}
 
 
 def allowed_file(filename):
@@ -138,6 +142,8 @@ class User(db.Model):
     skills = db.Column(db.Text)
     years_of_experience = db.Column(db.String(20))
     current_designation = db.Column(db.String(100))
+    resume_text = db.Column(db.Text)
+    resume_filename = db.Column(db.String(255))
 
 
 class InterviewResult(db.Model):
@@ -444,6 +450,77 @@ def dashboard():
                            recent_results=recent_results, error=error_msg)
 
 
+@app.route("/dashboard/update-resume", methods=["POST"])
+def dashboard_update_resume():
+    if "user_id" not in session:
+        return redirect("/login")
+    
+    user = User.query.get(session["user_id"])
+    if not user:
+        return redirect("/dashboard")
+        
+    resume_file = request.files.get("resume_file")
+    
+    if resume_file and resume_file.filename:
+        filename = resume_file.filename
+        if allowed_resume_file(filename):
+            try:
+                # Save original file to uploads directory
+                ext = filename.rsplit('.', 1)[1].lower()
+                saved_filename = f"user_{user.id}_resume.{ext}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
+                
+                # Save file contents
+                resume_file.seek(0)
+                file_bytes = resume_file.read()
+                with open(file_path, "wb") as f:
+                    f.write(file_bytes)
+                
+                user.resume_filename = saved_filename
+
+                # Call Gemini client to extract clean text from the uploaded PDF/Word/Image doc
+                resume_file.seek(0)
+                extracted_text = analyze_attachment(
+                    file_bytes, resume_file.mimetype,
+                    context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+                )
+                user.resume_text = extracted_text
+                db.session.commit()
+            except Exception as e:
+                print(f"Error extracting text from uploaded resume: {e}")
+                return redirect("/dashboard?error=resume_extraction_failed")
+        else:
+            return redirect("/dashboard?error=invalid_file_type")
+            
+    return redirect("/dashboard")
+
+
+@app.route("/dashboard/remove-resume", methods=["GET", "POST"])
+def dashboard_remove_resume():
+    if "user_id" not in session:
+        return redirect("/login")
+    user = User.query.get(session["user_id"])
+    if user:
+        if user.resume_filename:
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], user.resume_filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception as e:
+                    print(f"Error removing resume file: {e}")
+            user.resume_filename = None
+        user.resume_text = None
+        db.session.commit()
+    return redirect("/dashboard")
+
+
+@app.route("/uploads/resumes/<filename>")
+def view_original_resume(filename):
+    if not session.get("is_admin") and "user_id" not in session:
+        return redirect("/login")
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 @app.route("/edit-profile", methods=["GET", "POST"])
 def edit_profile():
     if session.get("is_admin"):
@@ -702,14 +779,37 @@ def interview():
         resume_file = request.files.get("resume")
 
         if session["q_count"] == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
-            file_bytes = resume_file.read()
-            mime_type = resume_file.mimetype
-            resume_analysis = analyze_attachment(
-                file_bytes, mime_type,
-                context_hint="This is supposed to be the candidate's resume. First, verify it genuinely looks like a resume/CV (has sections like experience, education, or skills). If it does NOT look like a real resume, respond with exactly: NOT_A_RESUME. If it IS a resume, summarize their role, key skills, and experience level in 3-4 sentences."
-            )
-            if "NOT_A_RESUME" not in resume_analysis:
-                session["resume_summary"] = resume_analysis
+            try:
+                filename = resume_file.filename
+                ext = filename.rsplit('.', 1)[1].lower()
+                user = User.query.get(user_id)
+                saved_filename = f"user_{user.id}_resume.{ext}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
+                
+                resume_file.seek(0)
+                file_bytes = resume_file.read()
+                with open(file_path, "wb") as f:
+                    f.write(file_bytes)
+                
+                if user:
+                    user.resume_filename = saved_filename
+                    resume_file.seek(0)
+                    extracted_text = analyze_attachment(
+                        file_bytes, resume_file.mimetype,
+                        context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+                    )
+                    user.resume_text = extracted_text
+                    db.session.commit()
+
+                resume_file.seek(0)
+                resume_analysis = analyze_attachment(
+                    file_bytes, resume_file.mimetype,
+                    context_hint="This is supposed to be the candidate's resume. First, verify it genuinely looks like a resume/CV (has sections like experience, education, or skills). If it does NOT look like a real resume, respond with exactly: NOT_A_RESUME. If it IS a resume, summarize their role, key skills, and experience level in 3-4 sentences."
+                )
+                if "NOT_A_RESUME" not in resume_analysis:
+                    session["resume_summary"] = resume_analysis
+            except Exception as e:
+                print(f"Error handling interview resume upload: {e}")
 
         if answer or code_answer:
             if session["q_count"] == 0:
@@ -1647,9 +1747,24 @@ def tech_questions_detail(company_key):
 with app.app_context():
     try:
         db.create_all()
+        # Verify or add resume_text column dynamic schema update
+        engine = db.engine
+        with engine.connect() as conn:
+            from sqlalchemy import inspect
+            inspector = inspect(engine)
+            columns = [c['name'] for c in inspector.get_columns('users')]
+            if 'resume_text' not in columns:
+                conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_text TEXT"))
+                conn.commit()
+                print("Added column 'resume_text' dynamically to users table.")
+            if 'resume_filename' not in columns:
+                conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
+                conn.commit()
+                print("Added column 'resume_filename' dynamically to users table.")
         print("Database tables verified/created successfully.")
     except Exception as e:
-        print(f"Error creating database tables: {e}")
+        print(f"Error creating/verifying database tables: {e}")
 
 if __name__ == "__main__":
-    app.run(debug=True,threaded=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True, threaded=True)
