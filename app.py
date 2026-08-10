@@ -175,18 +175,46 @@ class AdminSettings(db.Model):
     max_questions = db.Column(db.Integer, default=8)
     pass_score = db.Column(db.Integer, default=3)
     default_difficulty = db.Column(db.String(20), default='student')
+    question_timer_seconds = db.Column(db.Integer, default=90)
 
 
 def get_settings():
-    settings = AdminSettings.query.first()
+    try:
+        settings = AdminSettings.query.first()
+    except Exception:
+        db.session.rollback()
+        # Auto-migrate missing columns for pre-existing MySQL / SQLite tables
+        try:
+            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN question_timer_seconds INT DEFAULT 90"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        try:
+            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN default_difficulty VARCHAR(20) DEFAULT 'student'"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        settings = AdminSettings.query.first()
+
     if not settings:
-        settings = AdminSettings(min_questions=3, max_questions=8, pass_score=3, default_difficulty='student')
+        settings = AdminSettings(min_questions=3, max_questions=8, pass_score=3, default_difficulty='student', question_timer_seconds=90)
         db.session.add(settings)
         db.session.commit()
-    # backfill for existing rows that predate this column
+
+    if getattr(settings, 'question_timer_seconds', None) is None:
+        settings.question_timer_seconds = 90
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     if not settings.default_difficulty:
         settings.default_difficulty = 'student'
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     return settings
 
 def save_progress(user_id, chat_history, q_count):
@@ -624,10 +652,24 @@ def admin_settings():
     settings = get_settings()
 
     if request.method == "POST":
-        settings.min_questions = int(request.form["min_questions"])
-        settings.max_questions = int(request.form["max_questions"])
-        settings.pass_score = int(request.form["pass_score"])
+        try:
+            settings.min_questions = int(float(request.form.get("min_questions", 3)))
+        except (ValueError, TypeError):
+            pass
+        try:
+            settings.max_questions = int(float(request.form.get("max_questions", 8)))
+        except (ValueError, TypeError):
+            pass
+        try:
+            settings.pass_score = int(float(request.form.get("pass_score", 3)))
+        except (ValueError, TypeError):
+            pass
         settings.default_difficulty = request.form.get("default_difficulty", "student")
+        if "question_timer_seconds" in request.form:
+            try:
+                settings.question_timer_seconds = int(float(request.form["question_timer_seconds"]))
+            except (ValueError, TypeError):
+                pass
         db.session.commit()
         return redirect("/admin/settings?saved=1")
 
@@ -850,7 +892,8 @@ def interview():
         last_question_entry = session["chat_history"][-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
-        return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice)
+        timer_seconds = getattr(get_settings(), 'question_timer_seconds', 90) or 90
+        return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     # PERF: only send the last few turns to Gemini instead of the full growing transcript
     conversation_text = ""
@@ -1019,22 +1062,8 @@ def interview():
     session.modified = True
     save_progress(user_id, session["chat_history"], session["q_count"])
 
-    return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice)
-    # Parse TYPE tag
-    question_type = "text"
-    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
-    if match:
-        tag_type = match.group(1).lower()
-        if tag_type in ["code", "file", "text"]:
-            question_type = tag_type
-        # Strip the tag from the final display question text
-        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
-
-    session["chat_history"].append({"role": "question", "text": question_text, "type": question_type})
-    session.modified = True
-    save_progress(user_id, session["chat_history"], session["q_count"])
-
-    return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice)
+    timer_seconds = getattr(get_settings(), 'question_timer_seconds', 90) or 90
+    return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
 
 @app.route("/finish-interview", methods=["POST"])

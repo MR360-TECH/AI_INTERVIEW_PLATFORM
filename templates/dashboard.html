@@ -250,27 +250,31 @@
             flex-shrink: 0; position: relative; z-index: 1;
         }
 
+        /* ── THEME TOGGLE ROW — theme-aware (no hardcoded dark rgba) ── */
         .theme-toggle-row {
             display: flex; align-items: center; justify-content: space-between;
             padding: 9px 12px; border-radius: 9px; margin-bottom: 8px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--sidebar-bg2);
+            border: 1px solid var(--border);
         }
         .theme-toggle-label {
             font-size: 0.79rem; font-weight: 600;
-            color: rgba(148,186,255,0.70);
+            color: var(--sidebar-text);
             display: flex; align-items: center; gap: 7px;
         }
-        .theme-toggle-label i { font-size: 0.88rem; color: rgba(148,186,255,0.55); }
+        .theme-toggle-label i { font-size: 0.88rem; color: var(--sidebar-icon-color); }
+        html.dark-theme .theme-toggle-label { color: rgba(148,186,255,0.70); }
+        html.dark-theme .theme-toggle-label i { color: rgba(148,186,255,0.55); }
 
         .toggle-switch { position: relative; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .toggle-track {
             position: absolute; inset: 0;
-            background: rgba(255,255,255,0.13);
+            background: var(--border);
             border-radius: 99px; transition: background 0.22s ease;
-            border: 1px solid rgba(255,255,255,0.10);
+            border: 1px solid var(--border-hover);
         }
+        html.dark-theme .toggle-track { background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.10); }
         .toggle-switch input:checked + .toggle-track { background: #1d4ed8; border-color: #1d4ed8; }
         .toggle-knob {
             position: absolute; top: 3px; left: 3px;
@@ -280,20 +284,24 @@
         }
         .toggle-switch input:checked ~ .toggle-knob { transform: translateX(18px); }
 
+        /* ── SIDEBAR USER CHIP — theme-aware ── */
         .sidebar-user-chip {
             display: flex; align-items: center; gap: 9px;
             padding: 8px 10px; border-radius: 9px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--sidebar-bg2);
+            border: 1px solid var(--border);
         }
+        html.dark-theme .sidebar-user-chip { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); }
         .sidebar-avatar {
             width: 30px; height: 30px; border-radius: 7px;
             background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
             display: flex; align-items: center; justify-content: center;
             font-size: 0.85rem; color: #fff; flex-shrink: 0;
         }
-        .sidebar-username { font-size: 0.78rem; font-weight: 600; color: rgba(200,220,255,0.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
-        .sidebar-role    { font-size: 0.62rem; color: rgba(148,186,255,0.35); white-space: nowrap; }
+        .sidebar-username { font-size: 0.78rem; font-weight: 600; color: var(--sidebar-active-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+        html.dark-theme .sidebar-username { color: rgba(200,220,255,0.85); }
+        .sidebar-role    { font-size: 0.62rem; color: var(--text-light); white-space: nowrap; }
+        html.dark-theme .sidebar-role { color: rgba(148,186,255,0.35); }
 
         .sidebar-overlay {
             display: none; position: fixed; inset: 0;
@@ -488,6 +496,7 @@
             .top-features-grid { grid-template-columns: 1fr; }
         }
 
+        /* ── TOP CARDS — clickable with inner button independence ── */
         .top-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -500,11 +509,16 @@
             transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
         .top-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-4px);
             box-shadow: var(--card-hover-shadow);
             border-color: var(--border-strong);
+        }
+        .top-card:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         .card-glow {
@@ -658,14 +672,16 @@
             .middle-grid { grid-template-columns: 1fr; }
         }
 
+        /* ── PRACTICE CARD — clickable ── */
         .practice-card {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--radius-xl); padding: 26px 28px;
             display: flex; flex-direction: column; justify-content: space-between;
             box-shadow: var(--card-shadow); transition: all 0.24s cubic-bezier(0.16,1,0.3,1);
-            position: relative; overflow: hidden;
+            position: relative; overflow: hidden; cursor: pointer;
         }
-        .practice-card:hover { transform: translateY(-3px); box-shadow: var(--card-hover-shadow); border-color: var(--border-strong); }
+        .practice-card:hover { transform: translateY(-4px); box-shadow: var(--card-hover-shadow); border-color: var(--border-strong); }
+        .practice-card:focus-visible { outline: 2px solid var(--emerald); outline-offset: 2px; }
         .practice-card::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
             height: 3px; background: linear-gradient(90deg, var(--emerald), #06b6d4);
@@ -683,15 +699,17 @@
         .mode-chip:hover { background: var(--primary-light); border-color: var(--border-strong); transform: translateY(-1px); }
 
         .stats-column { display: flex; flex-direction: column; gap: 12px; }
+        /* ── STAT CARDS — fully clickable ── */
         .stat-card {
             background: var(--surface); border: 1px solid var(--border);
             border-radius: var(--radius-lg); padding: 16px 18px;
             display: flex; align-items: center; gap: 14px;
             box-shadow: var(--card-shadow); flex: 1;
             transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-            text-decoration: none; color: var(--text-main);
+            text-decoration: none; color: var(--text-main); cursor: pointer;
         }
-        .stat-card.clickable:hover { border-color: var(--border-strong); box-shadow: var(--card-hover-shadow); transform: translateY(-2px); }
+        .stat-card:hover { border-color: var(--border-strong); box-shadow: var(--card-hover-shadow); transform: translateY(-3px); }
+        .stat-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
         .stat-icon { width: 42px; height: 42px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
         .si-blue   { background: rgba(29,78,216,0.09);  color: var(--primary); border: 1px solid rgba(29,78,216,0.16); }
         .si-sky    { background: rgba(14,165,233,0.09); color: var(--sky);     border: 1px solid rgba(14,165,233,0.16); }
@@ -707,7 +725,12 @@
         /* ═══════════════════════════
            HISTORY PANEL
         ═══════════════════════════ */
+        /* ── HISTORY PANEL — header row clickable to navigate ── */
         .history-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 26px 30px; box-shadow: var(--card-shadow); }
+        /* Mode chips — clickable */
+        .mode-chip { cursor: pointer; }
+        .mode-chip:hover i { transform: scale(1.18); }
+        .mode-chip i { transition: transform 0.18s ease; display: block; font-size: 1.1rem; margin-bottom: 3px; }
         .section-heading { font-family: 'Outfit', sans-serif; font-size: 1.08rem; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em; }
         .section-sub     { font-size: 0.79rem; color: var(--text-desc); margin-top: 3px; }
 
@@ -930,13 +953,13 @@
                         </p>
                     </div>
                     <div>
-                        <a href="/interview" class="btn-primary-grad" id="assessmentMainBtn">
+                        <button type="button" class="btn-primary-grad" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
                             {% if has_progress %}
                             <i class="bi bi-play-circle-fill"></i> Resume Assessment &rarr;
                             {% else %}
                             <i class="bi bi-rocket-takeoff-fill"></i> Begin Assessment &rarr;
                             {% endif %}
-                        </a>
+                        </button>
                         {% if has_progress %}
                         <button type="button" class="btn-reset-ghost" id="resetAssessmentBtn">
                             <i class="bi bi-arrow-clockwise"></i> Reset Assessment
@@ -970,9 +993,9 @@
                             <button class="btn-resume-change-sm" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="changeResumeBtn">
                                 <i class="bi bi-arrow-repeat"></i> Update
                             </button>
-                            <a href="/dashboard/remove-resume" class="btn-resume-remove-sm" onclick="return confirm('Remove your profile resume? Recruiters will no longer see it.')" id="removeResumeBtn">
+                            <button type="button" class="btn-resume-remove-sm" data-bs-toggle="modal" data-bs-target="#confirmRemoveResumeModal" id="removeResumeBtn" title="Remove Resume">
                                 <i class="bi bi-trash3"></i>
-                            </a>
+                            </button>
                         </div>
                         {% else %}
                         <button class="btn-emerald-grad w-100" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="uploadResumeBtn">
@@ -1131,9 +1154,9 @@
                     <div class="empty-icon"><i class="bi bi-inbox"></i></div>
                     <p class="fw-semibold" style="font-size:0.95rem;margin-bottom:6px;color:var(--text-muted);">No assessment records yet.</p>
                     <p>Complete your first formal recruitment assessment to view detailed feedback here.</p>
-                    <a href="/interview" class="btn-primary-grad d-inline-flex" style="padding:11px 26px;font-size:0.88rem;">
+                    <button type="button" class="btn-primary-grad d-inline-flex" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" style="padding:11px 26px;font-size:0.88rem;">
                         <i class="bi bi-rocket-takeoff-fill"></i> Start Assessment Now
-                    </a>
+                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -1176,70 +1199,209 @@
 </div>
 {% endif %}
 
-<!-- ══ HOW IT WORKS / FAQ MODAL ══ -->
-<div class="modal fade" id="howItWorksModal" tabindex="-1" aria-labelledby="howItWorksLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
+<!-- ══ START ASSESSMENT CONFIRMATION MODAL ══ -->
+<div class="modal fade" id="confirmStartAssessmentModal" tabindex="-1" aria-labelledby="confirmStartAssessmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
       <div class="modal-header border-0 p-4 pb-2">
-        <h5 class="modal-title fw-bold" id="howItWorksLabel" style="color:var(--text-main);font-family:'Outfit',sans-serif;">
-          <i class="bi bi-question-circle-fill me-2" style="color:var(--primary);"></i>Help &amp; Frequently Asked Questions
+        <h5 class="modal-title fw-bold" id="confirmStartAssessmentModalLabel" style="color:var(--primary);font-family:'Outfit',sans-serif;">
+          <i class="bi bi-shield-check me-2"></i>{% if has_progress %}Resume Recruitment Assessment?{% else %}Start Recruitment Assessment?{% endif %}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4 pt-2" style="max-height:70vh;overflow-y:auto;">
-        <div class="mb-4">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span style="background:var(--primary);border-radius:8px;padding:7px 10px;"><i class="bi bi-briefcase-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Recruitment Assessment Mode</h6>
+      <div class="modal-body p-4 pt-2">
+        <div class="d-flex align-items-start gap-3">
+          <div style="background:var(--primary-light);border-radius:12px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border-strong);">
+            <i class="bi bi-rocket-takeoff-fill text-primary fs-4"></i>
           </div>
-          <p style="color:var(--text-desc);margin:0 0 10px 0;font-size:0.88rem;line-height:1.75;padding-left:42px;">
-            This is a formal, graded AI-driven assessment designed to evaluate your fitness for recruitment in a specific domain. The AI examiner adaptively prompts you with customized technical and fundamental questions.
-          </p>
-          <ul style="color:var(--text-desc);margin:0;font-size:0.85rem;line-height:1.75;padding-left:58px;">
-            <li><strong>Domain Customization:</strong> Select from diverse roles (e.g., Software Engineer, Data Scientist, HR Specialist).</li>
-            <li><strong>AI Scoring:</strong> The AI scores each response on logical structure, technical depth, and professional terminology.</li>
-            <li><strong>Placement Reports:</strong> A Placement Evaluation Report is auto-generated upon completion with detailed feedback.</li>
-          </ul>
-        </div>
-        <hr style="border-color:var(--border);margin:18px 0;">
-        <div class="mb-4">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span style="background:var(--emerald-hover);border-radius:8px;padding:7px 10px;"><i class="bi bi-mortarboard-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Practice Mode &amp; Specialized Labs</h6>
+          <div>
+            <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:0.98rem;">
+              {% if has_progress %}Continue your saved recruitment assessment session{% else %}Begin formal AI evaluation session{% endif %}
+            </p>
+            <p style="color:var(--text-desc);font-size:0.88rem;margin:0;line-height:1.6;">
+              {% if has_progress %}
+              You will be re-connected to your current evaluation where you left off.
+              {% else %}
+              You are about to start a formal, adaptive AI-driven technical assessment. Ensure you are in a quiet environment and your microphone is ready.
+              {% endif %}
+            </p>
           </div>
-          <p style="color:var(--text-desc);margin:0 0 10px 0;font-size:0.88rem;line-height:1.75;padding-left:42px;">
-            A private, ungraded space to build confidence and sharpen skills without scoring penalties.
-          </p>
-          <ul style="color:var(--text-desc);margin:0;font-size:0.85rem;line-height:1.75;padding-left:58px;">
-            <li><strong>Academic Viva:</strong> Oral exam simulation for core academic and theoretical subjects.</li>
-            <li><strong>FluentFlow:</strong> Multi-language conversational practice — English, French, Spanish, German, Japanese, Hindi, and more.</li>
-            <li><strong>Debate AI:</strong> Sharp 2-line reasoning debates with the AI on user-defined topics.</li>
-            <li><strong>Healthy Conversation:</strong> Relaxed, friendly chat about hobbies, general topics, or day-to-day concepts.</li>
-          </ul>
-        </div>
-        <hr style="border-color:var(--border);margin:18px 0;">
-        <div class="mb-4">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span style="background:#f59e0b;border-radius:8px;padding:7px 10px;"><i class="bi bi-shield-lock-fill text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Authentication &amp; Profile Integrity</h6>
-          </div>
-          <p style="color:var(--text-desc);margin:0;font-size:0.88rem;line-height:1.75;padding-left:42px;">
-            Secure sign-in is required via Google Sign-In or Email OTP. Recruiters rely on verified details. Update your skills, course, GitHub, and LinkedIn anytime in <strong>Edit Profile</strong>.
-          </p>
-        </div>
-        <hr style="border-color:var(--border);margin:18px 0;">
-        <div class="mb-2">
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span style="background:#6366f1;border-radius:8px;padding:7px 10px;"><i class="bi bi-clock-history text-white"></i></span>
-            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Assessment Results &amp; Resets</h6>
-          </div>
-          <p style="color:var(--text-desc);margin:0;font-size:0.88rem;line-height:1.75;padding-left:42px;">
-            Your certified evaluation history is permanently stored under "Assessment Performance History". Use <strong>Reset &amp; Start New Assessment</strong> to discard current progress and begin a fresh evaluation.
-          </p>
         </div>
       </div>
-      <div class="modal-footer border-0 p-4 pt-0">
-        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Got it &rarr;</button>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+        <a href="/interview" class="btn btn-primary-grad rounded-pill px-4 fw-bold text-white text-decoration-none">
+          {% if has_progress %}<i class="bi bi-play-circle-fill me-1"></i> Resume Assessment{% else %}<i class="bi bi-rocket-takeoff-fill me-1"></i> Begin Assessment Now{% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM REMOVE RESUME MODAL ══ -->
+<div class="modal fade" id="confirmRemoveResumeModal" tabindex="-1" aria-labelledby="confirmRemoveResumeLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
+      <div class="modal-header border-0 p-4 pb-2">
+        <h5 class="modal-title fw-bold" id="confirmRemoveResumeLabel" style="color:#ef4444;font-family:'Outfit',sans-serif;">
+          <i class="bi bi-trash3-fill me-2"></i>Remove Profile Resume?
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 pt-2">
+        <div class="d-flex align-items-start gap-3">
+          <div style="background:rgba(239,68,68,0.10);border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="bi bi-file-earmark-x-fill text-danger fs-5"></i>
+          </div>
+          <div>
+            <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Remove saved CV file from your candidate profile?</p>
+            <p style="color:var(--text-desc);font-size:0.88rem;margin:0;">Recruiters will no longer be able to view your resume text when screening your application profile.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Keep Resume</button>
+        <a href="/dashboard/remove-resume" class="btn btn-danger rounded-pill px-4 fw-bold">
+          <i class="bi bi-trash3 me-1"></i> Yes, Remove Resume
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HOW IT WORKS / HELP & FAQ MODAL ══ -->
+<div class="modal fade" id="howItWorksModal" tabindex="-1" aria-labelledby="howItWorksLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
+      <div class="modal-header border-0 p-4 pb-2 d-flex align-items-center justify-content-between">
+        <h5 class="modal-title fw-bold" id="howItWorksLabel" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:1.15rem;">
+          <i class="bi bi-question-circle-fill me-2" style="color:var(--primary);"></i>Help &amp; Frequently Asked Questions
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="cursor:pointer;"></button>
+      </div>
+      <div class="modal-body p-4 pt-2" style="max-height:72vh;overflow-y:auto;">
+        
+        <!-- Quick System Highlights -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:20px;">
+          <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--primary);letter-spacing:0.06em;font-family:'Outfit',sans-serif;margin-bottom:4px;">
+              <i class="bi bi-shield-check me-1"></i>Formal Assessment
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-desc);line-height:1.5;">Adaptive AI evaluation tailored to candidate domain &amp; experience level.</div>
+          </div>
+          <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:var(--emerald-hover);letter-spacing:0.06em;font-family:'Outfit',sans-serif;margin-bottom:4px;">
+              <i class="bi bi-mortarboard-fill me-1"></i>Practice Labs
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-desc);line-height:1.5;">Private, ungraded labs: Academic Viva, FluentFlow, Debate AI, &amp; Healthy Convo.</div>
+          </div>
+          <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;">
+            <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#f59e0b;letter-spacing:0.06em;font-family:'Outfit',sans-serif;margin-bottom:4px;">
+              <i class="bi bi-file-earmark-pdf-fill me-1"></i>Official PDF Reports
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-desc);line-height:1.5;">Letterhead-style evaluation summaries with detailed domain feedback.</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span style="background:var(--primary);border-radius:8px;padding:6px 9px;display:inline-flex;align-items:center;justify-content:center;"><i class="bi bi-briefcase-fill text-white"></i></span>
+            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:0.98rem;">1. Formal Recruitment Assessment Mode</h6>
+          </div>
+          <p style="color:var(--text-desc);margin:0 0 10px 0;font-size:0.88rem;line-height:1.7;padding-left:38px;">
+            Designed for formal placement evaluation. The AI examiner adaptively asks structured technical, domain, and logic questions.
+          </p>
+          <ul style="color:var(--text-desc);margin:0;font-size:0.85rem;line-height:1.75;padding-left:54px;">
+            <li><strong>Domain Selection:</strong> Software Engineering, Data Science, System Design, Academic Subjects, HR Fundamentals, etc.</li>
+            <li><strong>AI Voice &amp; Code Input:</strong> Use the interactive mic (or press <kbd>Insert</kbd>) to speak your answers or write code in the embedded Monaco editor.</li>
+            <li><strong>Scoring &amp; Feedback:</strong> Evaluated on technical correctness, clarity of reasoning, and domain vocabulary.</li>
+          </ul>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0;">
+
+        <div class="mb-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span style="background:var(--emerald-hover);border-radius:8px;padding:6px 9px;display:inline-flex;align-items:center;justify-content:center;"><i class="bi bi-mortarboard-fill text-white"></i></span>
+            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:0.98rem;">2. Skill Development &amp; Practice Labs</h6>
+          </div>
+          <p style="color:var(--text-desc);margin:0 0 10px 0;font-size:0.88rem;line-height:1.7;padding-left:38px;">
+            Zero evaluation penalty space to practice spoken communication, exam preparation, and multi-language fluency.
+          </p>
+          <ul style="color:var(--text-desc);margin:0;font-size:0.85rem;line-height:1.75;padding-left:54px;">
+            <li><strong>Academic Viva:</strong> Oral exam drills for engineering, science, and college viva preparation.</li>
+            <li><strong>FluentFlow:</strong> Practice conversational fluency in English, French, Spanish, German, Japanese, and Hindi.</li>
+            <li><strong>Debate AI:</strong> Engage in sharp reasoning exchanges on user-selected topics.</li>
+            <li><strong>Healthy Convo:</strong> Low-pressure friendly chat to boost confidence and public speaking skills.</li>
+          </ul>
+        </div>
+        <hr style="border-color:var(--border);margin:16px 0;">
+
+        <!-- FAQ Accordion -->
+        <div class="mb-2">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span style="background:#8b5cf6;border-radius:8px;padding:6px 9px;display:inline-flex;align-items:center;justify-content:center;"><i class="bi bi-patch-question-fill text-white"></i></span>
+            <h6 class="mb-0 fw-bold" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:0.98rem;">3. Frequently Asked Questions (FAQ)</h6>
+          </div>
+
+          <div class="accordion" id="faqAccordion">
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseOne" aria-expanded="false" aria-controls="faqCollapseOne" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-question-circle me-2 text-primary"></i> Can I pause and resume my assessment later?
+                </button>
+              </h2>
+              <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Yes! Your recruitment assessment progress is automatically saved question by question. If you navigate away or click <strong>Exit Assessment</strong>, you can return to your dashboard anytime and click <strong>Resume Assessment</strong>.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwo" aria-expanded="false" aria-controls="faqCollapseTwo" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-mic me-2 text-primary"></i> How does Voice Speech Recognition work?
+                </button>
+              </h2>
+              <div id="faqCollapseTwo" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwo" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Click the microphone button (or press the <kbd>Insert</kbd> key) during an interview session to dictate your answer naturally. Your spoken words are transcribed directly into the answer box in real-time.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThree" aria-expanded="false" aria-controls="faqCollapseThree" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-file-earmark-person me-2 text-primary"></i> How is my resume used by the AI?
+                </button>
+              </h2>
+              <div id="faqCollapseThree" class="accordion-collapse collapse" aria-labelledby="faqHeadingThree" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  When you upload your CV in PDF, DOC, or DOCX format, the system extracts your listed skills, project experience, and technical tools. The AI examiner then customizes evaluation questions specifically tailored to your background.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingFour">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-arrow-clockwise me-2 text-primary"></i> How do I reset an assessment?
+                </button>
+              </h2>
+              <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  If you wish to discard your active assessment session and start fresh from Question 1, click <strong>Reset Assessment</strong> on the main assessment card. A confirmation dialog will verify your request before resetting.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+        <span style="font-size:0.75rem;color:var(--text-light);"><i class="bi bi-shield-check"></i> Enterprise AI Platform Help System</span>
+        <button type="button" class="btn btn-primary-grad rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Got it, Close &rarr;</button>
       </div>
     </div>
   </div>
@@ -1407,6 +1569,101 @@
     sidebar.querySelectorAll('a.nav-item').forEach(function(el) {
         el.addEventListener('click', function() { if (window.innerWidth < 768) closeSidebar(); });
     });
+})();
+</script>
+
+<!-- ══ CARD CLICKABILITY — all cards are clickable, inner buttons still work ══ -->
+<script>
+(function() {
+    /**
+     * makeCardClickable: Makes a card element clickable.
+     * Clicking anywhere on the card triggers the action,
+     * EXCEPT when clicking on an inner <a>, <button>, <input>, or [data-bs-toggle] element.
+     */
+    function makeCardClickable(card, action) {
+        if (!card) return;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.addEventListener('click', function(e) {
+            // If click originated from an interactive child, let it handle itself
+            if (e.target.closest('a, button, input, select, textarea, [data-bs-toggle], [onclick]')) return;
+            action(e);
+        });
+        // Keyboard: Enter/Space to activate
+        card.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (e.target.closest('a, button, input, select, textarea, [data-bs-toggle], [onclick]')) return;
+                action(e);
+            }
+        });
+    }
+
+    // 1. Assessment card → open confirmation modal
+    var assessCard = document.querySelector('.card-assess');
+    var startAssessmentModal = document.getElementById('confirmStartAssessmentModal');
+    if (assessCard && startAssessmentModal) {
+        makeCardClickable(assessCard, function() {
+            var modal = new bootstrap.Modal(startAssessmentModal);
+            modal.show();
+        });
+    }
+
+    // 2. Resume card → open resume upload modal
+    var resumeCard = document.querySelector('.card-resume');
+    var resumeModal = document.getElementById('resumeUploadModal');
+    if (resumeCard && resumeModal) {
+        makeCardClickable(resumeCard, function() {
+            var modal = new bootstrap.Modal(resumeModal);
+            modal.show();
+        });
+    }
+
+    // 3. Tech Questions card → navigate to /tech-questions
+    var techCard = document.querySelector('.card-tech-q');
+    makeCardClickable(techCard, function() { window.location.href = '/tech-questions'; });
+
+    // 4. Practice Lab card → navigate to /practice-setup
+    var practiceCard = document.querySelector('.practice-card');
+    makeCardClickable(practiceCard, function() { window.location.href = '/practice-setup'; });
+
+    // 5. Assessment Status stat card → open confirmation modal
+    var statCards = document.querySelectorAll('.stats-column .stat-card');
+    if (statCards[0] && startAssessmentModal) {
+        makeCardClickable(statCards[0], function() {
+            var modal = new bootstrap.Modal(startAssessmentModal);
+            modal.show();
+        });
+    }
+
+    // 6. Resume Status stat card → open resume modal
+    if (statCards[1] && resumeModal) {
+        makeCardClickable(statCards[1], function() {
+            var modal = new bootstrap.Modal(resumeModal);
+            modal.show();
+        });
+    }
+
+    // 7. Mode chips → all navigate to /practice-setup
+    document.querySelectorAll('.mode-chip').forEach(function(chip) {
+        chip.setAttribute('role', 'button');
+        chip.setAttribute('tabindex', '0');
+        chip.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent practice card click from firing too
+            window.location.href = '/practice-setup';
+        });
+        chip.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.href = '/practice-setup';
+            }
+        });
+    });
+
+    // 8. History panel → navigate to /my-history
+    var historyPanel = document.querySelector('.history-panel');
+    makeCardClickable(historyPanel, function() { window.location.href = '/my-history'; });
 })();
 </script>
 

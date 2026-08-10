@@ -10,7 +10,7 @@
 
 
 /* ------------------------------------------------------------
-   0a. Global Design Tokens
+   0a. Global Design Tokens — LIGHT MODE (default)
    ------------------------------------------------------------ */
 :root {
     --brand-blue:       #2563eb;
@@ -798,8 +798,8 @@ html.dark-theme .review-improve  { color: #fbbf24; }
    8. Admin Table
    ------------------------------------------------------------ */
 thead {
-    background: #f0f5ff;
-    border-bottom: 2px solid #dbeafe;
+    background: var(--bg-alt);
+    border-bottom: 2px solid var(--border-mid);
 }
 thead th {
     font-family: 'Outfit', sans-serif;
@@ -818,14 +818,14 @@ tbody td {
     font-size: 0.93rem;
     font-weight: 500;
     color: var(--ink);
-    border-color: #eff3ff !important;
+    border-color: var(--border-light) !important;
     padding: 16px 14px !important;
     transition: background var(--t-fast);
     font-family: 'Inter', sans-serif;
 }
 tbody tr { transition: background var(--t-fast), box-shadow var(--t-fast); }
-tbody tr:nth-child(even) td { background: #f8faff; }
-tbody tr:hover td { background: #eef4ff !important; }
+tbody tr:nth-child(even) td { background: var(--surface-soft); }
+tbody tr:hover td { background: rgba(37,99,235,0.05) !important; }
 tbody tr:hover { box-shadow: inset 3px 0 0 var(--brand-blue); }
 
 /* Dark-theme table fixes */
@@ -838,7 +838,7 @@ html.dark-theme tbody td { color: #c0d4f0; border-color: #1e3a5f !important; }
 
 .score-bar-wrap {
     width: 76px; height: 8px;
-    background: #dbeafe;
+    background: var(--bg-alt);
     border-radius: 12px;
     overflow: hidden;
     margin-top: 6px;
@@ -921,7 +921,7 @@ html.dark-theme #searchInput {
 
 
 /* ------------------------------------------------------------
-   9. Form Inputs
+   9. Form Inputs — Light & Dark Mode Fixed
    ------------------------------------------------------------ */
 .form-control,
 .form-select {
@@ -944,21 +944,30 @@ html.dark-theme #searchInput {
     background: var(--surface);
     outline: none;
 }
+
+/* ── Dark mode form fix — ensures inputs are NOT white, text IS visible ── */
 html.dark-theme .form-control,
 html.dark-theme .form-select {
-    background: #101e38;
-    border-color: #1e3a5f;
-    color: #93c5fd;
+    background: #101e38 !important;
+    border-color: #1e3a5f !important;
+    color: #e8f0ff !important;
+}
+html.dark-theme .form-control::placeholder {
+    color: #4a6a9a !important;
+    opacity: 1;
+}
+html.dark-theme .form-select option {
+    background: #0f1e3a;
+    color: #e8f0ff;
 }
 html.dark-theme .form-control:focus,
 html.dark-theme .form-select:focus {
-    background: #0f2244;
-    border-color: #3b82f6;
+    background: #0f2244 !important;
+    border-color: #3b82f6 !important;
     box-shadow: 0 0 14px rgba(59, 130, 246, 0.45), 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
     outline: none;
-    color: #a5f3fc;
+    color: #e8f0ff !important;
 }
-html.dark-theme .form-control::placeholder { color: #4a6a9a; }
 
 .form-label {
     font-family: 'Outfit', sans-serif;
@@ -969,8 +978,9 @@ html.dark-theme .form-control::placeholder { color: #4a6a9a; }
     letter-spacing: 0.01em;
     display: block;
 }
-html.dark-theme .form-label { color: #f8fafc; }
+html.dark-theme .form-label { color: #c0d4f0 !important; }
 
+/* ── Login / Register card ── */
 .login-card,
 .register-card {
     border: 1px solid var(--border-light) !important;
@@ -1029,8 +1039,20 @@ html.dark-theme .register-card {
     opacity: 0.95;
 }
 
-.form-body { padding: 32px 36px; }
-html.dark-theme .form-body { background: #0f1e3a; }
+.form-body {
+    padding: 32px 36px;
+    background: var(--surface);
+}
+html.dark-theme .form-body {
+    background: #0f1e3a;
+}
+
+/* ── Login page body background in dark mode ── */
+html.dark-theme body > .container,
+html.dark-theme body > .container .login-card,
+html.dark-theme body > .container .register-card {
+    background: #0f1e3a;
+}
 
 .divider {
     display: flex;
@@ -1046,6 +1068,9 @@ html.dark-theme .form-body { background: #0f1e3a; }
 }
 .divider::before,
 .divider::after { content: ''; flex: 1; height: 1px; background: var(--border-mid); }
+html.dark-theme .divider { color: #4a6a9a; }
+html.dark-theme .divider::before,
+html.dark-theme .divider::after { background: #1e3a5f; }
 
 .recommend-note {
     background: #fffbeb;
@@ -1065,6 +1090,26 @@ html.dark-theme .recommend-note {
     background: rgba(245,158,11,0.08);
     border-color: rgba(245,158,11,0.2);
     color: #fbbf24;
+}
+html.dark-theme .recommend-note i { color: #fbbf24; }
+
+/* ── Login text elements dark mode ── */
+html.dark-theme .text-center.mt-4,
+html.dark-theme .text-muted,
+html.dark-theme .text-muted a {
+    color: #8aa4cc !important;
+}
+html.dark-theme .text-center a[href="/register"],
+html.dark-theme .text-center a[href="/login"] {
+    color: #60a5fa !important;
+}
+html.dark-theme p.text-muted { color: #8aa4cc !important; }
+html.dark-theme .form-body p,
+html.dark-theme .form-body .text-muted {
+    color: #8aa4cc !important;
+}
+html.dark-theme .form-body a {
+    color: #60a5fa !important;
 }
 
 .account-badge {
@@ -1111,8 +1156,16 @@ html.dark-theme .edu-options .form-check:hover {
     background: rgba(37,99,235,0.1);
 }
 
-.locked-field { background: #f4f6fa; color: #555; cursor: not-allowed; opacity: 0.85; }
-html.dark-theme .locked-field { background: #162040; color: #4a6a9a; }
+.locked-field {
+    background: #f4f6fa !important;
+    color: #555 !important;
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+html.dark-theme .locked-field {
+    background: #162040 !important;
+    color: #4a6a9a !important;
+}
 
 
 /* ------------------------------------------------------------
@@ -1311,6 +1364,7 @@ html.dark-theme .file-name-tag {
     margin-bottom: 24px !important;
 }
 html.dark-theme .history-page-title {
+    color: #f0f6ff !important;
     border-bottom-color: #1e3a5f;
 }
 
@@ -1392,8 +1446,26 @@ html.dark-theme .modal-backdrop {
     opacity: 0.7 !important;
 }
 
+.btn-close {
+    opacity: 0.7;
+    transition: all var(--t-fast);
+    cursor: pointer;
+}
+.btn-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+.btn-close:focus {
+    box-shadow: 0 0 0 3px var(--brand-glow-soft);
+    outline: none;
+}
+
 html.dark-theme .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+html.dark-theme .btn-close:hover {
+    opacity: 1;
 }
 
 html.dark-theme .modal-header,

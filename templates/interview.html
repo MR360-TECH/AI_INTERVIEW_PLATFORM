@@ -2,7 +2,9 @@
 <html lang="en">
 
 <head>
-    <title>Placement Assessment — AI Recruitment Platform</title>
+    <title>Placement Assessment — AI Examination Studio</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,14 +21,42 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* Loading overlay — shown instantly on submit so user isn't staring at a frozen page */
+        /* ═══════════════════════════════════════════════════════
+           AI EXAMINATION STUDIO — NEXT-LEVEL VISUAL SYSTEM
+        ═══════════════════════════════════════════════════════ */
+        
+        body {
+            background: var(--bg-base);
+            min-height: 100vh;
+            color: var(--ink);
+            font-family: 'Inter', system-ui, sans-serif;
+            position: relative;
+        }
+
+        /* Ambient background glowing orbs */
+        .studio-glow-top {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 350px;
+            background: radial-gradient(ellipse, rgba(37,99,235,0.12) 0%, rgba(14,165,233,0.04) 50%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        html.dark-theme .studio-glow-top {
+            background: radial-gradient(ellipse, rgba(59,130,246,0.15) 0%, rgba(56,189,248,0.06) 50%, transparent 70%);
+        }
+
+        /* Loading overlay — shown instantly on submit */
         #loadingOverlay {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 9999;
             background: rgba(240,246,255,0.92);
-            backdrop-filter: blur(6px);
+            backdrop-filter: blur(8px);
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -39,94 +69,495 @@
         #loadingOverlay.active { display: flex; }
 
         .loader-spinner {
-            width: 56px; height: 56px;
+            width: 58px; height: 58px;
             border: 5px solid rgba(37,99,235,0.15);
-            border-top-color: #2563eb;
+            border-top-color: var(--brand-blue);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 20px;
-        }
-        html.dark-theme .loader-spinner {
-            border-color: rgba(59,130,246,0.15);
-            border-top-color: #3b82f6;
+            box-shadow: 0 0 20px var(--brand-glow);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .loader-title {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #0f172a;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--navy);
             margin-bottom: 6px;
+            letter-spacing: -0.02em;
         }
-        html.dark-theme .loader-title { color: #f0f6ff; }
         .loader-sub {
             font-size: 0.88rem;
-            color: #64748b;
+            color: var(--muted);
             font-family: 'Inter', sans-serif;
         }
-        html.dark-theme .loader-sub { color: #8aa4cc; }
+
+        /* ── STUDIO CARD CONTAINER ── */
+        .studio-card {
+            border: 1px solid var(--border-light) !important;
+            border-radius: var(--radius-xl) !important;
+            box-shadow: var(--shadow-lg) !important;
+            background: var(--surface);
+            padding: 32px 36px;
+            position: relative;
+            z-index: 1;
+            transition: border-color 0.25s ease, background 0.25s ease;
+        }
+        @media (max-width: 768px) {
+            .studio-card { padding: 22px 18px; }
+        }
+
+        /* ── HUD HEADER BAR ── */
+        .hud-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-bottom: 18px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .question-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 99px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            background: var(--primary-light, rgba(37,99,235,0.08));
+            color: var(--brand-blue);
+            border: 1px solid rgba(37,99,235,0.2);
+        }
+
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 11px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            background: var(--surface-soft);
+            color: var(--muted);
+            border: 1px solid var(--border-mid);
+        }
+
+        /* ── DYNAMIC COUNTDOWN TIMER BAR ── */
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--surface-soft);
+            border: 1.5px solid var(--border-mid);
+            border-radius: 99px;
+            padding: 5px 16px 5px 12px;
+            box-shadow: var(--shadow-xs);
+        }
+
+        .timer-icon {
+            font-size: 0.95rem;
+            color: var(--brand-blue);
+            display: flex;
+            align-items: center;
+        }
+
+        .timer-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: var(--navy);
+            min-width: 44px;
+            letter-spacing: 0.02em;
+        }
+
+        .timer-bar-wrap {
+            width: 90px;
+            height: 6px;
+            background: var(--border-mid);
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timer-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #2563eb, #0ea5e9);
+            border-radius: 99px;
+            transition: width 1s linear, background-color 0.4s ease;
+        }
+
+        .timer-container.warning .timer-bar-fill {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        .timer-container.warning .timer-icon,
+        .timer-container.warning .timer-text {
+            color: #d97706;
+        }
+
+        .timer-container.critical .timer-bar-fill {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            animation: pulseTimer 0.8s ease infinite alternate;
+        }
+        .timer-container.critical .timer-icon,
+        .timer-container.critical .timer-text {
+            color: #dc2626;
+            animation: pulseText 0.8s ease infinite alternate;
+        }
+
+        @keyframes pulseTimer {
+            from { opacity: 0.8; }
+            to   { opacity: 1; box-shadow: 0 0 10px rgba(239,68,68,0.8); }
+        }
+        @keyframes pulseText {
+            from { opacity: 0.8; transform: scale(1); }
+            to   { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* ── AI EXAMINER ORB & VISUALIZER ── */
+        .ai-examiner-strip {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--surface-soft);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            margin-bottom: 22px;
+        }
+
+        .ai-orb-wrap {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ai-orb {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.95rem;
+            box-shadow: 0 0 16px rgba(14,165,233,0.45);
+            position: relative;
+            z-index: 2;
+        }
+
+        .ai-orb-ring {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid rgba(14,165,233,0.35);
+            animation: orbPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes orbPulse {
+            0%, 100% { transform: scale(0.95); opacity: 0.4; }
+            50%      { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .ai-status-copy {
+            flex: 1;
+            min-width: 0;
+        }
+        .ai-status-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ai-status-sub {
+            font-size: 0.76rem;
+            color: var(--muted);
+        }
+
+        /* Audio Waveform Bars (animated during voice speech) */
+        .waveform-wrap {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 18px;
+        }
+        .wave-bar {
+            width: 3px;
+            height: 100%;
+            background: var(--brand-blue);
+            border-radius: 99px;
+            opacity: 0.4;
+            transition: height 0.15s ease, opacity 0.15s ease;
+        }
+        .waveform-wrap.active .wave-bar {
+            opacity: 1;
+            background: linear-gradient(180deg, #3b82f6, #0ea5e9);
+            animation: waveAnim 0.8s ease-in-out infinite alternate;
+        }
+        .waveform-wrap.active .wave-bar:nth-child(1) { animation-delay: 0.1s; }
+        .waveform-wrap.active .wave-bar:nth-child(2) { animation-delay: 0.3s; }
+        .waveform-wrap.active .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .waveform-wrap.active .wave-bar:nth-child(4) { animation-delay: 0.4s; }
+        .waveform-wrap.active .wave-bar:nth-child(5) { animation-delay: 0.15s; }
+        @keyframes waveAnim {
+            from { height: 4px; }
+            to   { height: 18px; }
+        }
+
+        /* ── QUESTION TEXT DISPLAY ── */
+        .question-text-box {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--navy);
+            line-height: 1.55;
+            letter-spacing: -0.015em;
+            margin-bottom: 24px;
+        }
+        html.dark-theme .question-text-box { color: #f0f6ff; }
+
+        /* ── MONACO CODE EDITOR CONTAINER ── */
+        .editor-frame {
+            border: 1.5px solid var(--border-mid);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 18px;
+            background: #1e1e1e;
+        }
+        .editor-topbar {
+            background: #252526;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            color: #cccccc;
+            font-size: 0.8rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+        .editor-lang-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #38bdf8;
+        }
+
+        /* ── RESPONSE INPUT & MIC ── */
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+        }
+        #answerBox {
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            padding: 14px 54px 14px 16px;
+            border: 1.5px solid var(--border-mid);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            background: var(--surface-soft);
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
+            color: var(--ink);
+            line-height: 1.6;
+        }
+        #answerBox:focus {
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 3.5px var(--brand-glow-soft);
+            outline: none;
+            background: var(--surface);
+        }
+        #answerBox.input-error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3.5px rgba(239,68,68,0.15);
+        }
+
+        .mic-btn-inside {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-deep));
+            color: #fff;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 10px var(--brand-glow);
+            cursor: pointer;
+        }
+        .mic-btn-inside:hover {
+            transform: scale(1.08);
+            box-shadow: 0 5px 16px var(--brand-glow);
+        }
+        .mic-btn-inside.listening {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 0 18px rgba(239,68,68,0.5);
+            animation: pulseMic 1.2s infinite;
+        }
+        @keyframes pulseMic {
+            0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            70%  { box-shadow: 0 0 0 12px rgba(239,68,68,0); }
+            100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        }
+
+        .listening-status-tag {
+            font-size: 0.82rem;
+            color: var(--danger);
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .listening-status-tag.active { display: flex; }
+
+        .time-up-warning {
+            font-size: 0.84rem;
+            color: #dc2626;
+            font-weight: 700;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            font-family: 'Outfit', sans-serif;
+        }
+        .time-up-warning.active { display: flex; }
     </style>
 </head>
 
 <body>
+    <div class="studio-glow-top"></div>
+
     <!-- Instant loading overlay — appears the moment submit is clicked -->
     <div id="loadingOverlay">
         <div class="loader-spinner"></div>
         <div class="loader-title">AI Examiner is evaluating…</div>
-        <div class="loader-sub">Analysing your response and preparing the next question</div>
+        <div class="loader-sub">Analyzing technical depth and structuring the next question</div>
     </div>
 
     {% include 'navbar.html' %}
-    <div class="container mt-5">
+    <div class="container py-4 my-2">
         <div class="row justify-content-center">
-            <div class="col-lg-7">
-                <div class="card interview-card p-4">
-                    <!-- Top bar: keyboard hints + action buttons -->
-                    <div class="top-row">
-                        <span class="hint-tag"><kbd>Insert</kbd> toggle mic &nbsp;·&nbsp; <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Ctrl+Enter</kbd> submit code</span>
-                        <div class="d-flex align-items-center gap-2">
-                            {% if is_practice %}
-                            <form method="POST" action="/finish-interview" id="finishForm" style="margin:0;">
-                                <button type="submit" class="btn btn-finish"
-                                    onclick="return confirm('Finish this practice session and view your results?');">
-                                    <i class="bi bi-check2-circle"></i> Finish Session
-                                </button>
-                            </form>
+            <div class="col-lg-8">
+
+                <!-- ══ MAIN EXAMINATION STUDIO CARD ══ -->
+                <div class="studio-card">
+
+                    <!-- ── HUD HEADER BAR ── -->
+                    <div class="hud-header">
+                        <div class="hud-left">
+                            <span class="session-badge" style="font-family:'Outfit',sans-serif;font-weight:700;font-size:0.82rem;color:var(--brand-blue);display:inline-flex;align-items:center;gap:6px;background:var(--primary-light,rgba(37,99,235,0.08));padding:6px 14px;border-radius:99px;border:1px solid rgba(37,99,235,0.2);">
+                                <i class="bi bi-shield-check"></i> Live Assessment Studio
+                            </span>
+                            {% if question_type == 'code' %}
+                            <span class="type-badge">
+                                <i class="bi bi-code-slash me-1"></i> Coding Challenge
+                            </span>
+                            {% elif question_type == 'file' %}
+                            <span class="type-badge">
+                                <i class="bi bi-paperclip me-1"></i> Attachment Task
+                            </span>
                             {% endif %}
-                            <a href="{% if is_practice %}/quit-interview{% else %}/dashboard{% endif %}" class="btn btn-quit"
-                                onclick="return confirm('{% if is_practice %}Quit this practice session? Your conversation will be discarded.{% else %}Exit this recruitment assessment? Your progress is saved and you can resume from your dashboard.{% endif %}')">
+                        </div>
+
+                        <!-- Action Buttons & Timer -->
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Dynamic Countdown Timer -->
+                            <div class="timer-container" id="timerContainer" title="Allocated time for this question">
+                                <span class="timer-icon"><i class="bi bi-clock-history"></i></span>
+                                <span class="timer-text" id="timerText">01:30</span>
+                                <div class="timer-bar-wrap">
+                                    <div class="timer-bar-fill" id="timerBarFill"></div>
+                                </div>
+                            </div>
+
+                            {% if is_practice %}
+                            <button type="button" class="btn btn-finish" data-bs-toggle="modal" data-bs-target="#confirmFinishModal">
+                                <i class="bi bi-check2-circle"></i> Finish Session
+                            </button>
+                            {% endif %}
+                            <button type="button" class="btn btn-quit" data-bs-toggle="modal" data-bs-target="#confirmExitModal">
                                 <i class="bi bi-x-lg"></i> {% if is_practice %}Quit{% else %}Exit Assessment{% endif %}
-                            </a>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ── AI EXAMINER ORB & VOICE VISUALIZER STRIP ── -->
+                    <div class="ai-examiner-strip">
+                        <div class="ai-orb-wrap">
+                            <div class="ai-orb-ring"></div>
+                            <div class="ai-orb"><i class="bi bi-cpu-fill"></i></div>
+                        </div>
+                        <div class="ai-status-copy">
+                            <div class="ai-status-title">
+                                AI Assessment Examiner
+                                <span class="badge bg-primary" style="font-size:0.6rem;padding:2px 6px;">Adaptive Model</span>
+                            </div>
+                            <div class="ai-status-sub">Listening and evaluating response logic in real-time</div>
+                        </div>
+                        <div class="waveform-wrap" id="waveformWrap">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
                         </div>
                     </div>
 
                     {% if is_practice %}
                     <div class="practice-note">
                         <i class="bi bi-check2-circle"></i>
-                        <span>When you're done, tap <strong>Finish Session</strong> to wrap up and see your results.</span>
+                        <span>Ungraded practice session. Tap <strong>Finish Session</strong> whenever you're ready to review your report.</span>
                     </div>
                     {% endif %}
 
-                    <!-- Question text -->
-                    <h3 class="question-text">{{ question }}</h3>
+                    <!-- ── QUESTION TEXT DISPLAY ── -->
+                    <div class="question-text-box">{{ question }}</div>
 
                     <form method="POST" id="answerForm" enctype="multipart/form-data">
 
                         {% if q_num == 1 and not is_practice %}
                         <div class="upload-box mb-3">
-                            <label class="upload-title"><i class="bi bi-file-earmark-text"></i> Upload your resume
-                                (optional — helps AI ask better questions)</label>
+                            <label class="upload-title"><i class="bi bi-file-earmark-person"></i> Candidate Profile Resume (Optional)</label>
                             <div class="upload-row">
                                 <label class="upload-icon-btn" title="Upload resume">
                                     <i class="bi bi-upload"></i>
-                                    <input type="file" name="resume" id="resumeInput"
-                                        accept=".pdf,.doc,.docx"
-                                        style="display:none;">
+                                    <input type="file" name="resume" id="resumeInput" accept=".pdf,.doc,.docx" style="display:none;">
                                 </label>
                                 <span class="file-name-tag" id="resumeFileName" style="display:none;"></span>
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeResumeBtn"
-                                    style="display:none;">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeResumeBtn" style="display:none;">
                                     <i class="bi bi-trash"></i> Remove
                                 </button>
                             </div>
@@ -135,16 +566,14 @@
 
                         {% if question_type == 'file' %}
                         <div class="upload-box mb-3">
-                            <label class="upload-title"><i class="bi bi-paperclip"></i> Attach a diagram, sketch, sheet, or file (optional)</label>
+                            <label class="upload-title"><i class="bi bi-paperclip"></i> Attach File / Diagram Solution (Optional)</label>
                             <div class="upload-row">
                                 <label class="upload-icon-btn" title="Upload file">
                                     <i class="bi bi-upload"></i>
-                                    <input type="file" name="attachment" id="attachmentInput"
-                                        accept="image/*,application/pdf" style="display:none;">
+                                    <input type="file" name="attachment" id="attachmentInput" accept="image/*,application/pdf" style="display:none;">
                                 </label>
                                 <span class="file-name-tag" id="attachmentFileName" style="display:none;"></span>
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn"
-                                    style="display:none;">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="removeAttachmentBtn" style="display:none;">
                                     <i class="bi bi-trash"></i> Remove
                                 </button>
                             </div>
@@ -153,30 +582,121 @@
 
                         {% if question_type == 'code' %}
                         <div class="mb-3">
-                            <label class="upload-title mb-2"><i class="bi bi-code-slash"></i> Write your code below:</label>
-                            <div id="monacoEditorContainer" style="height: 200px; border: 1px solid #ccc; border-radius: 6px;"></div>
+                            <div class="editor-frame">
+                                <div class="editor-topbar">
+                                    <span class="editor-lang-tag"><i class="bi bi-filetype-py"></i> Python 3 Solution</span>
+                                    <span><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to submit</span>
+                                </div>
+                                <div id="monacoEditorContainer" style="height: 220px;"></div>
+                            </div>
                             <input type="hidden" name="code_answer" id="codeAnswerInput">
                         </div>
                         {% endif %}
 
-                        <div class="answer-input-group mb-1">
+                        <!-- Answer input textarea with inside mic button -->
+                        <div class="input-wrapper">
                             <textarea name="answer" id="answerBox" class="form-control" rows="4"
-                                placeholder="Type your answer explanation, or click the mic to speak..." autocomplete="off"></textarea>
-                            <button type="button" class="mic-btn" id="micBtn"
-                                title="Click to speak your answer (or press Insert)">
+                                placeholder="Type your structured answer explanation, or click the mic button to dictate..." autocomplete="off"></textarea>
+                            <button type="button" class="mic-btn-inside" id="micBtn" title="Toggle voice microphone (or press Insert key)">
                                 <i class="bi bi-mic-fill" id="micIcon"></i>
                             </button>
                         </div>
-                        <span class="empty-warning" id="emptyWarning"><i class="bi bi-exclamation-circle"></i> Please
-                            enter something in the answer box or write code before submitting.</span>
-                        <span class="listening-tag mb-3 d-block" id="listeningTag">🎙️ Listening... speak now</span>
 
-                        <button class="btn btn-submit btn-primary w-100 text-white mt-2" id="submitBtn">Submit Answer</button>
+                        <div class="listening-status-tag" id="listeningTag">
+                            <i class="bi bi-record-fill text-danger fs-6"></i> Microphone active — speak your answer clearly...
+                        </div>
+
+                        <div class="time-up-warning" id="timeUpWarning">
+                            <i class="bi bi-exclamation-triangle-fill fs-6"></i> Time limit reached! Please submit your answer now.
+                        </div>
+
+                        <span class="empty-warning" id="emptyWarning">
+                            <i class="bi bi-exclamation-circle me-1"></i> Please enter an answer or write code before submitting.
+                        </span>
+
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                            <div style="font-size:0.75rem;color:var(--text-light);">
+                                Shortcut: <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Insert</kbd> mic toggle
+                            </div>
+                            <button type="submit" class="btn btn-primary-grad px-4 py-2" id="submitBtn" style="font-size:0.92rem;">
+                                Submit Answer &rarr;
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- ══ CONFIRM EXIT / QUIT MODAL ══ -->
+    <div class="modal fade" id="confirmExitModal" tabindex="-1" aria-labelledby="confirmExitModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold" id="confirmExitModalLabel" style="color:var(--danger);font-family:'Outfit',sans-serif;">
+              <i class="bi bi-exclamation-octagon-fill me-2"></i>{% if is_practice %}Quit Practice Session?{% else %}Exit Assessment?{% endif %}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 pt-2">
+            <div class="d-flex align-items-start gap-3">
+              <div style="background:rgba(239,68,68,0.10);border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="bi bi-door-open-fill text-danger fs-5"></i>
+              </div>
+              <div>
+                <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;">
+                  {% if is_practice %}Discard current practice session?{% else %}Return to dashboard?{% endif %}
+                </p>
+                <p style="color:var(--text-desc);font-size:0.88rem;margin:0;">
+                  {% if is_practice %}Your practice conversation will be reset and you will return to the practice setup.{% else %}Your progress is automatically saved. You can resume this assessment anytime from your workspace.{% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+            <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+            <a href="{% if is_practice %}/quit-interview{% else %}/dashboard{% endif %}" class="btn btn-danger rounded-pill px-4 fw-bold text-decoration-none">
+              <i class="bi bi-box-arrow-right me-1"></i> Yes, Exit Now
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CONFIRM FINISH SESSION MODAL (Practice Mode) ══ -->
+    {% if is_practice %}
+    <div class="modal fade" id="confirmFinishModal" tabindex="-1" aria-labelledby="confirmFinishModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold" id="confirmFinishModalLabel" style="color:var(--emerald-hover);font-family:'Outfit',sans-serif;">
+              <i class="bi bi-check-circle-fill me-2"></i>Finish Practice Session?
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4 pt-2">
+            <div class="d-flex align-items-start gap-3">
+              <div style="background:rgba(16,185,129,0.10);border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="bi bi-award-fill text-success fs-5"></i>
+              </div>
+              <div>
+                <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;">Ready to view your feedback summary?</p>
+                <p style="color:var(--text-desc);font-size:0.88rem;margin:0;">This will complete your practice run and generate your session insights.</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+            <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Continue Session</button>
+            <form method="POST" action="/finish-interview" style="margin:0;">
+              <button type="submit" class="btn btn-emerald-grad rounded-pill px-4 fw-bold text-white">
+                <i class="bi bi-check2-circle me-1"></i> Yes, Finish &amp; View Report
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
@@ -186,9 +706,53 @@
         const answerForm      = document.getElementById('answerForm');
         const codeAnswerInput = document.getElementById('codeAnswerInput');
         const loadingOverlay  = document.getElementById('loadingOverlay');
+        const waveformWrap    = document.getElementById('waveformWrap');
+
+        // ── DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) ──
+        const TOTAL_SECONDS = parseInt("{{ timer_seconds or 90 }}", 10) || 90;
+        let secondsLeft = TOTAL_SECONDS;
+        const timerText = document.getElementById('timerText');
+        const timerBarFill = document.getElementById('timerBarFill');
+        const timerContainer = document.getElementById('timerContainer');
+        const timeUpWarning = document.getElementById('timeUpWarning');
+
+        function formatTimer(secs) {
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+        }
+
+        function updateTimerDisplay() {
+            if (!timerText || !timerBarFill) return;
+            timerText.textContent = formatTimer(secondsLeft);
+            const pct = Math.max(0, (secondsLeft / TOTAL_SECONDS) * 100);
+            timerBarFill.style.width = pct + '%';
+
+            if (secondsLeft <= 10) {
+                timerContainer.className = 'timer-container critical';
+            } else if (secondsLeft <= 25) {
+                timerContainer.className = 'timer-container warning';
+            } else {
+                timerContainer.className = 'timer-container';
+            }
+        }
+
+        updateTimerDisplay();
+
+        const timerInterval = setInterval(function() {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                secondsLeft = 0;
+                updateTimerDisplay();
+                clearInterval(timerInterval);
+                if (timeUpWarning) timeUpWarning.classList.add('active');
+            } else {
+                updateTimerDisplay();
+            }
+        }, 1000);
 
         function isAnswerEmpty() {
-            const textVal = answerBox.value.trim();
+            const textVal = answerBox ? answerBox.value.trim() : "";
             let codeVal = "";
             if (typeof editorInstance !== 'undefined' && editorInstance) {
                 codeVal = editorInstance.getValue().replace("# Write your code/solution here...\n", "").trim();
@@ -201,41 +765,58 @@
                 codeAnswerInput.value = editorInstance.getValue();
             }
             if (isAnswerEmpty()) {
-                emptyWarning.classList.add('active');
-                answerBox.classList.add('input-error');
-                answerBox.focus();
+                if (emptyWarning) emptyWarning.classList.add('active');
+                if (answerBox) {
+                    answerBox.classList.add('input-error');
+                    answerBox.focus();
+                }
                 return;
             }
-            emptyWarning.classList.remove('active');
-            answerBox.classList.remove('input-error');
+            if (emptyWarning) emptyWarning.classList.remove('active');
+            if (answerBox) answerBox.classList.remove('input-error');
 
-            // Stop mic if active
             if (window.stopSpeechRecognition) window.stopSpeechRecognition();
-
-            // Show loading overlay IMMEDIATELY before form submits
-            loadingOverlay.classList.add('active');
+            if (loadingOverlay) loadingOverlay.classList.add('active');
+            clearInterval(timerInterval);
 
             answerForm.submit();
         }
 
-        answerBox.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
+        if (answerBox) {
+            answerBox.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    trySubmit();
+                }
+            });
+
+            answerBox.addEventListener('input', function () {
+                if (!isAnswerEmpty()) {
+                    if (emptyWarning) emptyWarning.classList.remove('active');
+                    answerBox.classList.remove('input-error');
+                }
+            });
+        }
+
+        if (answerForm) {
+            answerForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 trySubmit();
-            }
-        });
+            });
+        }
 
-        answerBox.addEventListener('input', function () {
-            if (!isAnswerEmpty()) {
-                emptyWarning.classList.remove('active');
-                answerBox.classList.remove('input-error');
-            }
-        });
-
-        answerForm.addEventListener('submit', function (e) {
-            e.preventDefault(); // always go through trySubmit so overlay fires
-            trySubmit();
-        });
+        // Toggle waveform animation when speech dictation is active
+        const listeningTag = document.getElementById('listeningTag');
+        if (listeningTag) {
+            const observer = new MutationObserver(function() {
+                if (listeningTag.classList.contains('active')) {
+                    waveformWrap.classList.add('active');
+                } else {
+                    waveformWrap.classList.remove('active');
+                }
+            });
+            observer.observe(listeningTag, { attributes: true, attributeFilter: ['class'] });
+        }
 
         // ── Resume file input ────────────────────────────────────────────────────
         const resumeInput     = document.getElementById('resumeInput');
@@ -259,11 +840,13 @@
                     removeResumeBtn.style.display = 'inline-block';
                 }
             });
-            removeResumeBtn.addEventListener('click', function () {
-                resumeInput.value = '';
-                resumeFileName.style.display = 'none';
-                removeResumeBtn.style.display = 'none';
-            });
+            if (removeResumeBtn) {
+                removeResumeBtn.addEventListener('click', function () {
+                    resumeInput.value = '';
+                    resumeFileName.style.display = 'none';
+                    removeResumeBtn.style.display = 'none';
+                });
+            }
         }
 
         // ── Attachment file input ────────────────────────────────────────────────
@@ -279,21 +862,21 @@
                     removeAttachmentBtn.style.display = 'inline-block';
                 }
             });
-            removeAttachmentBtn.addEventListener('click', function () {
-                attachmentInput.value = '';
-                attachmentFileName.style.display = 'none';
-                removeAttachmentBtn.style.display = 'none';
-            });
+            if (removeAttachmentBtn) {
+                removeAttachmentBtn.addEventListener('click', function () {
+                    attachmentInput.value = '';
+                    attachmentFileName.style.display = 'none';
+                    removeAttachmentBtn.style.display = 'none';
+                });
+            }
         }
 
-        // Hide overlay if user navigates back (browser back button)
         window.addEventListener('pageshow', function () {
-            loadingOverlay.classList.remove('active');
+            if (loadingOverlay) loadingOverlay.classList.remove('active');
         });
     </script>
 
     {% if question_type == 'code' %}
-    <!-- Load Monaco Editor via CDN — only when a code question is active -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
     <script>
         require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
@@ -302,7 +885,7 @@
             editorInstance = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
                 value: "# Write your code/solution here...\n",
                 language: 'python',
-                theme: 'vs-dark',
+                theme: document.documentElement.classList.contains('dark-theme') ? 'vs-dark' : 'vs',
                 automaticLayout: true,
                 fontSize: 14,
                 minimap: { enabled: false }

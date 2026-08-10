@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Login</title>
+    <title>Login — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to access the AI Interview Platform.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Dark mode applied before paint to prevent flicker -->
     <script>
         (function() {
             var saved = localStorage.getItem('theme') || 'light';
@@ -17,11 +20,69 @@
             }
         })();
     </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ── Login page specific overrides ── */
+        body {
+            min-height: 100vh;
+            background: var(--bg-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        html.dark-theme body {
+            background: #060d1f !important;
+        }
+
+        /* Ensure container doesn't add extra backgrounds */
+        .login-outer-wrap {
+            width: 100%;
+            padding: 2rem 1rem;
+        }
+
+        /* Dark mode body text in login wrapper */
+        html.dark-theme .text-muted {
+            color: #8aa4cc !important;
+        }
+        html.dark-theme a[href="/register"] {
+            color: #60a5fa !important;
+        }
+        html.dark-theme a[href="/login"] {
+            color: #60a5fa !important;
+        }
+
+        /* Ensure inputs are not white in dark mode on this page */
+        html.dark-theme .form-control,
+        html.dark-theme .form-select,
+        html.dark-theme input[type="email"],
+        html.dark-theme input[type="password"],
+        html.dark-theme input[type="text"] {
+            background: #101e38 !important;
+            border-color: #1e3a5f !important;
+            color: #e8f0ff !important;
+        }
+        html.dark-theme .form-control::placeholder {
+            color: #4a6a9a !important;
+        }
+        html.dark-theme .form-control:focus,
+        html.dark-theme input[type="email"]:focus,
+        html.dark-theme input[type="password"]:focus {
+            background: #0f2244 !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
+            color: #e8f0ff !important;
+            outline: none;
+        }
+        html.dark-theme .form-label {
+            color: #c0d4f0 !important;
+        }
+    </style>
 </head>
 <body>
-<div class="container py-5">
+<div class="login-outer-wrap">
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-5">
             <div class="mb-3">
                 <a href="/" class="back-btn-global"><i class="bi bi-arrow-left"></i> Back</a>
             </div>
@@ -49,13 +110,13 @@
 
                     <form method="POST" id="loginForm">
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="email" id="email" class="form-control" required>
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" name="email" id="email" class="form-control" required placeholder="your@email.com">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" id="password" class="form-control" required>
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" name="password" id="password" class="form-control" required placeholder="Enter your password">
                         </div>
 
                         <button type="submit" formaction="/login" class="btn btn-login w-100 text-white mb-2">
@@ -67,7 +128,7 @@
                         </button>
                     </form>
 
-                    <p class="text-center mt-4 mb-0 text-muted">
+                    <p class="text-center mt-4 mb-0 text-muted" style="font-size:0.9rem;">
                         Don't have an account?
                         <a href="/register" style="color:#2563eb; font-weight:700;">Create one here</a>
                         &nbsp;or enter your email &amp; password above and click <strong>Continue as Guest</strong>.
@@ -82,5 +143,7 @@
         </div>
     </div>
 </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
