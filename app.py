@@ -1551,10 +1551,24 @@ def send_otp():
     if not email or "@" not in email:
         return render_template("send_otp.html", error="Please enter a valid email address.")
 
-    # Check user exists
+    # Check user exists or auto-create account for seamless OTP login
     user = User.query.filter_by(email=email).first()
     if not user:
-        return render_template("send_otp.html", error="No account found with that email.")
+        # Create user account automatically on OTP request
+        user_name = email.split("@")[0].capitalize()
+        user = User(
+            full_name=user_name,
+            email=email,
+            password=generate_password_hash("OTPUser@2026"),
+            auth_provider="otp"
+        )
+        db.session.add(user)
+        try:
+            db.session.commit()
+            print(f"[OTP] Auto-created user account for {email}")
+        except Exception as e:
+            db.session.rollback()
+            print(f"[OTP] Error auto-creating user account: {e}")
 
     otp = str(random.randint(100000, 999999))
     session["otp_code"] = otp
@@ -1563,7 +1577,8 @@ def send_otp():
     if send_otp_email(email, otp):
         return redirect("/auth/otp/verify")
     else:
-        return render_template("send_otp.html", error="Failed to send OTP. Please try again.")
+        return render_template("send_otp.html", error="Failed to send OTP. Please check email/SMTP configuration.")
+
 
 
 @app.route("/auth/otp/verify", methods=["GET", "POST"])
