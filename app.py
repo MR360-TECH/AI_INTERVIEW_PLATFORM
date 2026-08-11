@@ -451,6 +451,14 @@ def request_entity_too_large(error):
     return redirect("/login?error=file_too_large")
 
 
+@app.errorhandler(500)
+def internal_server_error(error):
+    db.session.rollback()
+    print(f"[Internal Server Error]: {error}")
+    return render_template("index.html"), 500
+
+
+
 @app.route("/dashboard")
 def dashboard():
     if session.get("is_admin"):
