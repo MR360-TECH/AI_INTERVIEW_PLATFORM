@@ -77,8 +77,10 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 MODEL_NAME = "gemini-flash-lite-latest"
+
 
 
 from authlib.integrations.flask_client import OAuth
