@@ -564,6 +564,12 @@ def edit_profile():
         user.education = request.form.get("education")
         user.course = request.form.get("course")
         user.semester = request.form.get("semester")
+        user.user_type = request.form.get("user_type", "student")
+        user.github_url = request.form.get("github_url", "").strip() or None
+        user.linkedin_url = request.form.get("linkedin_url", "").strip() or None
+        user.skills = request.form.get("skills", "").strip() or None
+        user.years_of_experience = request.form.get("years_of_experience", "").strip() or None
+        user.current_designation = request.form.get("current_designation", "").strip() or None
         db.session.commit()
         session["user_name"] = user.full_name
         return render_template("edit_profile.html", user=user, success="Profile updated successfully.")
@@ -1018,11 +1024,11 @@ def interview():
                 "CRITICAL DOMAIN RULE:\n"
                 "Look at the candidate's VERY FIRST ANSWER in the conversation below. "
                 "Identify their specified domain/field (e.g., Fitness Coach, Software Engineer, Marketing). "
-                "You MUST stay 100% inside this domain for every question. NEVER switch or mix in unrelated fields.\n\n"
+                "You MUST stay strictly 100% within domain for every question. NEVER switch or mix in unrelated fields.\n\n"
                 "RULES FOR OUTPUT:\n"
-                "1. Output ONLY the raw next question (or INTERVIEW_COMPLETE). Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.\n"
+                "1. Output ONLY the raw next question (or INTERVIEW_COMPLETE). Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.only repeat question and nothing.\n"
                 "2. Even if previous answer is not up to mark and if candidate is trying to answer his best, show some mercy and ask him simpler and fundamental question.\n"
-                "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios.\n"
+                "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios and only ask question and no fillers with it.\n"
                 "4. Explore explore different categories of questions within the domain and output only question and not anything else. Do not repeat similar questions.\n"
                 "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
                 "6. INPUT TYPE TAGGING RULE: You must tag the next response according to the input type you expect. Add the tag at the very end of your response:\n"

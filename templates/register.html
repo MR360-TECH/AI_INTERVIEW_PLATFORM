@@ -25,27 +25,116 @@
             --accent: #4f46e5;
             --accent2: #818cf8;
             --success-glow: #10b981;
-            --card-bg: rgba(255,255,255,0.08);
-            --border-glow: rgba(129,140,248,0.35);
+            --bg: var(--bg-base);
+            --card-bg: var(--surface);
+            --border-glow: var(--brand-glow);
+            --border-color: var(--border-light);
+            --text-main: var(--ink);
+            --text-muted: var(--muted);
+            --text-desc: var(--subtle);
+            --glow-color: rgba(99, 102, 241, 0.03);
+            --auth-badge-bg: var(--primary-light);
+            --auth-badge-border: var(--primary-glow);
+            --auth-badge-text: var(--primary);
+            --input-bg: var(--surface);
+            --input-border: var(--border-mid);
+            --input-text: var(--ink);
+            --input-focus-bg: var(--surface);
+            --type-toggle-bg: var(--bg-alt);
+            --type-toggle-btn-color: var(--muted);
+            --info-note-bg: rgba(16, 185, 129, 0.08);
+            --info-note-border: rgba(16, 185, 129, 0.25);
+            --info-note-text: var(--muted);
+            --glass-border: var(--border-light);
+            --shadow-rgba: rgba(0, 0, 0, 0.08);
+            --edu-pill-bg: var(--bg-alt);
+            --edu-pill-border: var(--border-mid);
+            --edu-pill-color: var(--muted);
+            --sep-line: var(--border-mid);
+            --back-btn-bg: var(--surface);
+            --back-btn-border: var(--border-mid);
+            --back-btn-text: var(--muted);
+            --back-btn-hover-bg: var(--bg-alt);
+            --back-btn-hover-text: var(--ink);
+            --back-btn-hover-border: var(--brand-blue);
+        }
+
+        html.dark-theme {
+            --accent: #4f46e5;
+            --accent2: #818cf8;
+            --success-glow: #10b981;
+            --bg: linear-gradient(135deg, #0f0c29 0%, #1a1040 40%, #111827 100%);
+            --card-bg: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(129, 140, 248, 0.35);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f1f5f9;
+            --text-muted: #cbd5e1;
+            --text-desc: #94a3b8;
+            --glow-color: rgba(99, 102, 241, 0.06);
+            --auth-badge-bg: rgba(129, 140, 248, 0.12);
+            --auth-badge-border: rgba(129, 140, 248, 0.3);
+            --auth-badge-text: #818cf8;
+            --input-bg: rgba(255, 255, 255, 0.07);
+            --input-border: rgba(255, 255, 255, 0.12);
+            --input-text: #f1f5f9;
+            --input-focus-bg: rgba(255, 255, 255, 0.1);
+            --type-toggle-bg: rgba(255, 255, 255, 0.05);
+            --type-toggle-btn-color: rgba(255, 255, 255, 0.5);
+            --info-note-bg: rgba(16, 185, 129, 0.08);
+            --info-note-border: rgba(16, 185, 129, 0.25);
+            --info-note-text: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(129, 140, 248, 0.35);
+            --shadow-rgba: rgba(0, 0, 0, 0.45);
+            --edu-pill-bg: rgba(255, 255, 255, 0.04);
+            --edu-pill-border: rgba(255, 255, 255, 0.15);
+            --edu-pill-color: rgba(255, 255, 255, 0.5);
+            --sep-line: rgba(255, 255, 255, 0.1);
+            --back-btn-bg: rgba(255, 255, 255, 0.05);
+            --back-btn-border: rgba(255, 255, 255, 0.1);
+            --back-btn-text: #94a3b8;
+            --back-btn-hover-bg: rgba(255, 255, 255, 0.1);
+            --back-btn-hover-text: #ffffff;
+            --back-btn-hover-border: rgba(255, 255, 255, 0.2);
         }
 
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #0f0c29 0%, #1a1040 40%, #111827 100%);
+            background: var(--bg);
+            color: var(--text-main);
             font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
             padding: 2rem 0 4rem;
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
 
-        /* ── Glass card ── */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            right: -10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, var(--glow-color) 0%, transparent 70%);
+            z-index: -1;
+        }
+
         .reg-glass {
-            background: rgba(255,255,255,0.06);
+            background: var(--card-bg);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glow);
+            border: 1px solid var(--glass-border);
             border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            box-shadow: 0 25px 60px var(--shadow-rgba);
             animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
+            transition: border-color 0.3s, background-color 0.25s;
+        }
+
+        .reg-glass:hover {
+            border-color: var(--border-glow);
         }
 
         @keyframes slideUp {
@@ -53,20 +142,13 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── Header ── */
         .reg-header {
-            background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
             padding: 2.2rem 2rem 1.8rem;
             text-align: center;
             position: relative;
         }
-        .reg-header::after {
-            content: '';
-            position: absolute;
-            bottom: -1px; left: 0; right: 0;
-            height: 40px;
-            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.03));
-        }
+
         .reg-header .icon-ring {
             width: 68px; height: 68px;
             border-radius: 50%;
@@ -76,165 +158,190 @@
             margin-bottom: 0.9rem;
             box-shadow: 0 0 0 8px rgba(255,255,255,0.07);
         }
-        .reg-header h2 { color: #fff; font-weight: 800; font-size: 1.5rem; margin-bottom: 0.3rem; }
-        .reg-header p  { color: rgba(255,255,255,0.75); font-size: 0.9rem; margin: 0; }
+        .reg-header h2 { color: #fff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.7rem; margin-bottom: 0.35rem; letter-spacing: -0.02em; }
+        .reg-header p  { color: rgba(255,255,255,0.88); font-size: 0.93rem; margin: 0; font-family: 'Inter', sans-serif; }
 
-        /* ── Body ── */
-        .reg-body { padding: 2rem 2.2rem 2.2rem; }
+        .reg-body { padding: 2.2rem 2.5rem 2.5rem; }
 
-        /* ── Auth badge ── */
         .auth-badge {
             display: flex; align-items: center; gap: 0.6rem;
-            background: rgba(129,140,248,0.12);
-            border: 1px solid rgba(129,140,248,0.3);
+            background: var(--auth-badge-bg);
+            border: 1px solid var(--auth-badge-border);
             border-radius: 10px;
             padding: 0.6rem 1rem;
-            color: var(--accent2);
+            color: var(--auth-badge-text);
             font-size: 0.85rem; font-weight: 600;
             margin-bottom: 1.5rem;
         }
-        .auth-badge img { border-radius: 50%; }
 
-        /* ── Type toggle ── */
         .type-toggle {
             display: flex;
-            gap: 0.6rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
+            gap: 0.5rem;
+            background: var(--type-toggle-bg);
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
             padding: 5px;
             margin-bottom: 1.8rem;
         }
         .type-toggle button {
             flex: 1;
             border: none;
-            border-radius: 9px;
-            padding: 0.6rem 1rem;
-            font-weight: 600; font-size: 0.88rem;
+            border-radius: 10px;
+            padding: 0.65rem 1rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700; font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.25s;
-            color: rgba(255,255,255,0.5);
+            transition: all 0.22s;
+            color: var(--type-toggle-btn-color);
             background: transparent;
+            letter-spacing: 0.01em;
         }
         .type-toggle button.active {
             background: linear-gradient(135deg, var(--accent), #7c3aed);
             color: #fff;
-            box-shadow: 0 4px 14px rgba(79,70,229,0.4);
+            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
         }
-        .type-toggle button i { margin-right: 5px; }
+        .type-toggle button i { margin-right: 6px; font-size: 0.95rem; }
 
-        /* ── Form controls ── */
         .form-label {
-            color: rgba(255,255,255,0.75);
-            font-weight: 600; font-size: 0.82rem;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            margin-bottom: 0.4rem;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700; font-size: 0.78rem;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            margin-bottom: 0.45rem;
+            display: flex; align-items: center; gap: 5px;
         }
-        .form-label i { margin-right: 5px; opacity: 0.7; }
+        .form-label i { opacity: 0.65; font-size: 0.85rem; }
         .form-control, .form-select {
-            background: rgba(255,255,255,0.07) !important;
-            border: 1px solid rgba(255,255,255,0.12) !important;
-            border-radius: 10px !important;
-            color: #f1f5f9 !important;
-            font-size: 0.92rem;
-            padding: 0.65rem 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            background: var(--input-bg) !important;
+            border: 1.5px solid var(--input-border) !important;
+            border-radius: 11px !important;
+            color: var(--input-text) !important;
+            font-size: 0.96rem;
+            font-family: 'Inter', sans-serif;
+            padding: 0.72rem 1.1rem;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
         }
-        .form-control::placeholder { color: rgba(255,255,255,0.3) !important; }
+        .form-control::placeholder { color: var(--text-desc) !important; font-size: 0.88rem; }
         .form-control:focus, .form-select:focus {
-            border-color: var(--accent2) !important;
-            box-shadow: 0 0 0 3px rgba(129,140,248,0.2) !important;
+            background: var(--input-focus-bg) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.18) !important;
             outline: none;
         }
         .form-select option { background: #1e1b4b; color: #f1f5f9; }
 
-        /* locked field */
         .locked-field {
-            background: rgba(255,255,255,0.04) !important;
+            background: var(--input-bg) !important;
+            opacity: 0.6;
             border-style: dashed !important;
-            color: rgba(255,255,255,0.45) !important;
+            color: var(--text-desc) !important;
             cursor: not-allowed;
         }
 
-        /* ── Education radio pills ── */
-        .edu-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+        .edu-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.45rem; }
         .edu-pills input[type="radio"] { display: none; }
         .edu-pills label {
-            padding: 0.4rem 0.9rem;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.15);
-            color: rgba(255,255,255,0.5);
-            font-size: 0.82rem; font-weight: 600;
+            padding: 0.45rem 1rem;
+            border-radius: 99px;
+            border: 1.5px solid var(--edu-pill-border);
+            color: var(--edu-pill-color);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.83rem; font-weight: 700;
             cursor: pointer; transition: all 0.2s;
-            background: rgba(255,255,255,0.04);
+            background: var(--edu-pill-bg);
+            letter-spacing: 0.01em;
         }
+        .edu-pills label:hover { border-color: var(--accent); color: var(--accent); }
         .edu-pills input:checked + label {
             background: linear-gradient(135deg, var(--accent), #7c3aed);
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 10px rgba(79,70,229,0.35);
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
         }
 
-        /* ── Section separator ── */
         .section-sep {
-            display: flex; align-items: center; gap: 0.8rem;
-            margin: 1.6rem 0 1.2rem;
+            display: flex; align-items: center; gap: 0.9rem;
+            margin: 2rem 0 1.5rem;
         }
         .section-sep span {
-            color: rgba(255,255,255,0.35); font-size: 0.75rem;
-            font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-desc);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em;
             white-space: nowrap;
         }
         .section-sep::before, .section-sep::after {
             content: ''; flex: 1;
-            height: 1px; background: rgba(255,255,255,0.1);
+            height: 1.5px; background: var(--sep-line);
         }
 
-        /* ── Submit button ── */
         .btn-reg-submit {
             background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
             border: none;
             border-radius: 12px;
             color: #fff;
-            font-weight: 700; font-size: 1rem;
-            padding: 0.85rem 2rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800; font-size: 1.05rem;
+            letter-spacing: 0.01em;
+            padding: 0.9rem 2rem;
             width: 100%;
-            margin-top: 1.4rem;
+            margin-top: 1.6rem;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 6px 20px rgba(79,70,229,0.4);
-            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+            display: flex; align-items: center; justify-content: center; gap: 0.55rem;
         }
         .btn-reg-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 28px rgba(79,70,229,0.55);
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.55);
         }
         .btn-reg-submit:active { transform: translateY(0); }
 
-        /* ── Info note ── */
         .info-note {
             display: flex; gap: 0.7rem; align-items: flex-start;
-            background: rgba(16,185,129,0.08);
-            border: 1px solid rgba(16,185,129,0.25);
-            border-radius: 10px; padding: 0.75rem 1rem;
-            color: rgba(255,255,255,0.55); font-size: 0.82rem;
+            background: var(--info-note-bg);
+            border: 1px solid var(--info-note-border);
+            border-radius: 12px; padding: 12px 16px;
+            color: var(--info-note-text); font-size: 0.85rem;
             margin-top: 1.4rem;
         }
-        .info-note i { color: var(--success-glow); font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+        .info-note i { color: var(--success-glow); font-size: 1.1rem; flex-shrink: 0; }
 
-        /* ── Error alert ── */
         .reg-error {
-            background: rgba(239,68,68,0.12);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
             border-radius: 10px; padding: 0.7rem 1rem;
             color: #fca5a5; font-size: 0.88rem;
             margin-bottom: 1.2rem;
         }
 
-        /* ── Animate in conditional sections ── */
+        .back-btn-global {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--back-btn-text);
+            background: var(--back-btn-bg);
+            border: 1px solid var(--back-btn-border);
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn-global:hover {
+            color: var(--back-btn-hover-text);
+            background: var(--back-btn-hover-bg);
+            border-color: var(--back-btn-hover-border);
+            transform: translateY(-1px);
+        }
+
         .fade-section { transition: opacity 0.3s, max-height 0.4s; overflow: hidden; }
         .fade-section.hidden { opacity: 0; max-height: 0; pointer-events: none; }
-        .fade-section.visible { opacity: 1; max-height: 600px; }
+        .fade-section.visible { opacity: 1; max-height: 600px; } }
     </style>
 </head>
 <body>
@@ -413,12 +520,12 @@
 
                 </div>
                     {% if not is_google and not is_guest and not prefill_email %}
-                    <p class="text-center mt-3" style="color: rgba(255,255,255,0.45); font-size:0.85rem;">
-                        Already have an account? <a href="/login" style="color: #818cf8; font-weight:600;">Sign in</a>
+                    <p class="text-center mt-3" style="color: var(--text-muted); font-size:0.85rem;">
+                        Already have an account? <a href="/login" style="color: var(--accent2); font-weight:600; text-decoration:none;">Sign in</a>
                     </p>
                     {% else %}
-                    <p class="text-center mt-3" style="color: rgba(255,255,255,0.45); font-size:0.85rem;">
-                        Want to use a different account? <a href="/login" style="color: #818cf8; font-weight:600;">Go to Login</a>
+                    <p class="text-center mt-3" style="color: var(--text-muted); font-size:0.85rem;">
+                        Want to use a different account? <a href="/login" style="color: var(--accent2); font-weight:600; text-decoration:none;">Go to Login</a>
                     </p>
                     {% endif %}
 

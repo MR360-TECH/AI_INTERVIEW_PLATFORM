@@ -29,7 +29,7 @@
             --indigo:   #4f46e5;
         }
 
-        body.dark-theme {
+        html.dark-theme {
             --surface:  #0f172a;
             --bg:       #020617;
             --bg2:      #1e293b;
@@ -60,7 +60,7 @@
             pointer-events: none;
             z-index: 0;
         }
-        body.dark-theme::before {
+        html.dark-theme body::before {
             background-image:
                 radial-gradient(ellipse 70% 50% at 15% -5%, rgba(99,102,241,0.16) 0%, transparent 60%),
                 radial-gradient(ellipse 50% 40% at 85% 100%, rgba(139,92,246,0.11) 0%, transparent 60%);
@@ -433,14 +433,14 @@
             .summary-text { color: #333 !important; }
         }
 
-        body.dark-theme .verdict-pill.selected { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
-        body.dark-theme .verdict-pill.rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
-        body.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
-        body.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
-        body.dark-theme .gender-icon { background: rgba(16, 185, 129, 0.15); color: #34d399; }
-        body.dark-theme .education-icon { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
-        body.dark-theme .course-icon { background: rgba(217, 119, 6, 0.15); color: #fbbf24; }
-        body.dark-theme .semester-icon { background: rgba(220, 38, 38, 0.15); color: #f87171; }
+        html.dark-theme .verdict-pill.selected { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+        html.dark-theme .verdict-pill.rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
+        html.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
+        html.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
+        html.dark-theme .gender-icon { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        html.dark-theme .education-icon { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        html.dark-theme .course-icon { background: rgba(217, 119, 6, 0.15); color: #fbbf24; }
+        html.dark-theme .semester-icon { background: rgba(220, 38, 38, 0.15); color: #f87171; }
     </style>
 </head>
 <body>

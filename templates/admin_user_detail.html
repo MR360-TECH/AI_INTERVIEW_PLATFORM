@@ -1,107 +1,501 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Candidate Profile — AI Recruitment Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Detailed candidate profile and assessment history for admin review.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            var saved = localStorage.getItem('theme') || 'light';
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
     <style>
-        body { background: linear-gradient(135deg, #eef2f7, #e4e9f2); }
-        .info-card { border: none; border-radius: 14px; }
-        .info-label { font-weight: 600; color: #666; font-size: 0.85rem; }
-        .info-value { font-size: 1.05rem; font-weight: 600; color: #222; }
+        :root {
+            --surface: #ffffff;
+            --bg: #f0f4ff;
+            --border: #e0e7ff;
+            --text-1: #1e293b;
+            --text-2: #64748b;
+            --brand: #2563eb;
+        }
+        html.dark-theme {
+            --surface: #0f172a;
+            --bg: #020617;
+            --border: #1e293b;
+            --text-1: #f8fafc;
+            --text-2: #94a3b8;
+            --brand: #60a5fa;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-1);
+            min-height: 100vh;
+            padding: 0 0 60px;
+            transition: background 0.25s ease, color 0.25s ease;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(ellipse 70% 50% at 15% -5%, rgba(37,99,235,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 85% 100%, rgba(6,182,212,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        html.dark-theme body::before {
+            background-image:
+                radial-gradient(ellipse 70% 50% at 15% -5%, rgba(99,102,241,0.14) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 85% 100%, rgba(139,92,246,0.10) 0%, transparent 60%);
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 36px 24px;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--brand);
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+            transform: translateX(-2px);
+        }
+
+        .btn-del-user {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 10px;
+            background: transparent;
+            border: 1.5px solid #fca5a5;
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-del-user:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+            transform: translateY(-1px);
+        }
+        html.dark-theme .btn-del-user {
+            border-color: rgba(239,68,68,0.35);
+            color: #f87171;
+        }
+        html.dark-theme .btn-del-user:hover {
+            background: rgba(239,68,68,0.12);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        /* ── Profile hero card ── */
+        .profile-hero {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 40px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #06b6d4);
+        }
+        html.dark-theme .profile-hero {
+            background: #0f172a;
+            border-color: #1e293b;
+        }
+        html.dark-theme .profile-hero::before {
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        }
+
+        .profile-avatar {
+            width: 68px;
+            height: 68px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.6rem;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+            flex-shrink: 0;
+        }
+        html.dark-theme .profile-avatar {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+
+        .profile-name {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.45rem;
+            color: var(--text-1);
+            margin: 0 0 4px;
+            letter-spacing: -0.02em;
+        }
+
         .auth-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             padding: 4px 12px;
-            border-radius: 9px;
-            font-size: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.74rem;
             font-weight: 800;
             letter-spacing: 0.04em;
             text-transform: uppercase;
         }
         .auth-google {
-            background: rgba(66, 133, 244, 0.1);
-            border: 1.5px solid #4285f4;
-            color: #1a73e8;
+            background: rgba(66,133,244,0.1);
+            border: 1.5px solid #bfdbfe;
+            color: #2563eb;
         }
         .auth-guest {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1.5px solid #f59e0b;
+            background: rgba(245,158,11,0.1);
+            border: 1.5px solid #fde68a;
             color: #d97706;
+        }
+        .auth-otp {
+            background: rgba(16,185,129,0.1);
+            border: 1.5px solid #a7f3d0;
+            color: #10b981;
+        }
+        html.dark-theme .auth-google { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); color: #60a5fa; }
+        html.dark-theme .auth-guest  { background: rgba(217,119,6,0.12);  border-color: rgba(217,119,6,0.35);  color: #fbbf24; }
+        html.dark-theme .auth-otp    { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #34d399; }
+
+        /* ── Info grid ── */
+        .info-section {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 32px 40px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        }
+        html.dark-theme .info-section {
+            background: #0f172a;
+            border-color: #1e293b;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-2);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+
+        .info-item {}
+        .info-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-2);
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-1);
+            word-break: break-word;
+        }
+        .info-value a {
+            color: var(--brand);
+            text-decoration: none;
+        }
+        .info-value a:hover { text-decoration: underline; }
+
+        /* ── Social Link Badges ── */
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 14px;
+            border-radius: 99px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.83rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            max-width: 100%;
+            word-break: break-all;
+        }
+        .social-link-github {
+            background: rgba(36,41,47,0.08);
+            border: 1.5px solid rgba(36,41,47,0.2);
+            color: #24292f;
+        }
+        .social-link-github:hover {
+            background: rgba(36,41,47,0.15);
+            border-color: #24292f;
+            color: #24292f;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(36,41,47,0.15);
+        }
+        .social-link-linkedin {
+            background: rgba(10,102,194,0.08);
+            border: 1.5px solid rgba(10,102,194,0.25);
+            color: #0a66c2;
+        }
+        .social-link-linkedin:hover {
+            background: rgba(10,102,194,0.15);
+            border-color: #0a66c2;
+            color: #0a66c2;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(10,102,194,0.18);
+        }
+        html.dark-theme .social-link-github {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.18);
+            color: #e6edf3;
+        }
+        html.dark-theme .social-link-github:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.35);
+            color: #ffffff;
+        }
+        html.dark-theme .social-link-linkedin {
+            background: rgba(10,102,194,0.12);
+            border-color: rgba(10,102,194,0.35);
+            color: #60a5fa;
+        }
+        html.dark-theme .social-link-linkedin:hover {
+            background: rgba(10,102,194,0.22);
+            border-color: #60a5fa;
+            color: #93c5fd;
+        }
+        .social-link i { font-size: 1rem; flex-shrink: 0; }
+        .social-link-url {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 260px;
+        }
+
+        /* ── History table ── */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .history-table thead tr {
+            border-bottom: 2px solid var(--border);
+        }
+        .history-table thead th {
+            padding: 12px 16px;
+            font-size: 0.69rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            color: var(--text-2);
+            text-align: left;
+        }
+        .history-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+        .history-table tbody tr:last-child { border-bottom: none; }
+        .history-table tbody tr:hover { background: rgba(37,99,235,0.04); }
+        html.dark-theme .history-table tbody tr:hover { background: rgba(99,102,241,0.08); }
+        .history-table tbody td {
+            padding: 14px 16px;
+            font-size: 0.9rem;
+            color: var(--text-1);
+            vertical-align: middle;
+        }
+        .verdict-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 11px;
+            border-radius: 8px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .verdict-pill.selected {
+            background: #ecfdf5; color: #059669; border: 1.5px solid #a7f3d0;
+        }
+        .verdict-pill.rejected {
+            background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca;
+        }
+        html.dark-theme .verdict-pill.selected { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.35); }
+        html.dark-theme .verdict-pill.rejected { background: rgba(220,38,38,0.12); color: #f87171; border-color: rgba(220,38,38,0.35); }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-2);
+            font-size: 0.9rem;
+        }
+        .empty-state i { font-size: 2rem; display: block; margin-bottom: 10px; opacity: 0.5; }
+
+        @media (max-width: 640px) {
+            .profile-hero { padding: 24px 20px; }
+            .info-section { padding: 24px 20px; }
         }
     </style>
 </head>
 <body>
-<div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <a href="/admin/delete-user/{{ user.id }}" class="btn btn-outline-danger" onclick="return confirm('This will permanently delete this user AND all their interview history. Continue?');">
-            <i class="bi bi-trash"></i> Delete User
+<div class="page-shell">
+
+    <div class="top-bar">
+        <a href="/admin" class="back-btn">
+            <i class="bi bi-arrow-left"></i> Admin Console
         </a>
-        <a href="/admin" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> Back
+        <a href="/admin/delete-user/{{ user.id }}" class="btn-del-user"
+           onclick="return confirm('This will permanently delete this user AND all their interview history. Continue?');">
+            <i class="bi bi-trash"></i> Delete User
         </a>
     </div>
 
-    <div class="card info-card shadow-sm p-4 mb-4">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
-            <h3 class="mb-0">{{ user.full_name }}</h3>
-            {% if user.auth_provider == "google" or user.auth_provider == "otp" %}
-            <span class="auth-badge auth-google">
-                <img src="https://www.google.com/favicon.ico" width="14" height="14" alt="Google">
-                Google Account
-            </span>
-            {% elif user.auth_provider == "guest" or user.auth_provider == "local" %}
-            <span class="auth-badge auth-guest">
-                <i class="bi bi-person-badge"></i>
-                Guest Account
-            </span>
-            {% else %}
-            <span class="auth-badge" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.35);border-radius:20px;padding:4px 10px;font-size:0.78rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
-                <i class="bi bi-envelope-check-fill"></i>
-                Email OTP
-            </span>
-            {% endif %}
+    <!-- Profile Hero -->
+    <div class="profile-hero">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div class="profile-avatar">{{ user.full_name[0]|upper }}</div>
+            <div class="flex-grow-1">
+                <h1 class="profile-name">{{ user.full_name }}</h1>
+                <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                    <span class="info-value" style="font-size:0.9rem;">{{ user.email }}</span>
+                    {% if user.auth_provider == "google" or user.auth_provider == "otp" %}
+                    <span class="auth-badge auth-google">
+                        <img src="https://www.google.com/favicon.ico" width="12" height="12" alt="G"> Google Account
+                    </span>
+                    {% elif user.auth_provider == "guest" or user.auth_provider == "local" %}
+                    <span class="auth-badge auth-guest">
+                        <i class="bi bi-person-badge"></i> Guest Account
+                    </span>
+                    {% else %}
+                    <span class="auth-badge auth-otp">
+                        <i class="bi bi-envelope-check-fill"></i> Email OTP
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="row g-3">
-            <div class="col-md-6">
-                <div class="info-label">Email</div>
-                <div class="info-value">{{ user.email }}</div>
-            </div>
-            <div class="col-md-6">
+    </div>
+
+    <!-- Profile Info -->
+    <div class="info-section">
+        <div class="section-title"><i class="bi bi-person-lines-fill"></i> Candidate Details</div>
+        <div class="info-grid">
+            <div class="info-item">
                 <div class="info-label">Gender</div>
-                <div class="info-value">{{ user.gender or "-" }}</div>
+                <div class="info-value">{{ user.gender or '—' }}</div>
             </div>
-            <div class="col-md-6">
+            <div class="info-item">
                 <div class="info-label">Education Level</div>
-                <div class="info-value">{{ user.education or "-" }}</div>
+                <div class="info-value">{{ user.education or '—' }}</div>
             </div>
-            <div class="col-md-6">
-                <div class="info-label">Course</div>
-                <div class="info-value">{{ user.course or "-" }}</div>
+            <div class="info-item">
+                <div class="info-label">Course / Programme</div>
+                <div class="info-value">{{ user.course or '—' }}</div>
             </div>
-            <div class="col-md-6">
+            <div class="info-item">
                 <div class="info-label">Semester</div>
-                <div class="info-value">{{ user.semester or "-" }}</div>
+                <div class="info-value">{{ user.semester or '—' }}</div>
             </div>
-            <div class="col-md-6">
+            <div class="info-item">
                 <div class="info-label">Registered On</div>
                 <div class="info-value">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p') }}</div>
             </div>
             {% if user.github_url %}
-            <div class="col-md-6">
-                <div class="info-label">GitHub</div>
-                <div class="info-value"><a href="{{ user.github_url }}" target="_blank" style="color:#1a73e8;">{{ user.github_url }}</a></div>
+            <div class="info-item">
+                <div class="info-label">GitHub / Portfolio</div>
+                <div class="info-value">
+                    <a href="{{ user.github_url }}" target="_blank" rel="noopener" class="social-link social-link-github">
+                        <i class="bi bi-github"></i>
+                        <span class="social-link-url">{{ user.github_url }}</span>
+                        <i class="bi bi-box-arrow-up-right" style="font-size:0.72rem;opacity:0.6;"></i>
+                    </a>
+                </div>
             </div>
             {% endif %}
             {% if user.linkedin_url %}
-            <div class="col-md-6">
+            <div class="info-item">
                 <div class="info-label">LinkedIn</div>
-                <div class="info-value"><a href="{{ user.linkedin_url }}" target="_blank" style="color:#1a73e8;">{{ user.linkedin_url }}</a></div>
+                <div class="info-value">
+                    <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener" class="social-link social-link-linkedin">
+                        <i class="bi bi-linkedin"></i>
+                        <span class="social-link-url">{{ user.linkedin_url }}</span>
+                        <i class="bi bi-box-arrow-up-right" style="font-size:0.72rem;opacity:0.6;"></i>
+                    </a>
+                </div>
             </div>
             {% endif %}
             {% if user.skills %}
-            <div class="col-12">
+            <div class="info-item" style="grid-column: 1 / -1;">
                 <div class="info-label">Skills</div>
                 <div class="info-value">{{ user.skills }}</div>
             </div>
@@ -109,41 +503,50 @@
         </div>
     </div>
 
-    <div class="card info-card shadow-sm p-4">
-        <h5 class="mb-3">Placement Assessment History</h5>
+    <!-- Assessment History -->
+    <div class="info-section">
+        <div class="section-title"><i class="bi bi-clipboard2-data-fill"></i> Assessment History</div>
         {% if interviews %}
         <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Score</th>
-                    <th>Recommendation</th>
-                    <th>Date & Time</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for i in interviews %}
-                <tr>
-                    <td>{{ i.score }}</td>
-                    <td>
-                        {% if i.status == "Selected" %}
-                        <span class="badge bg-success">Recommended</span>
-                        {% else %}
-                        <span class="badge bg-danger">Not Recommended</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ i.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
-                    <td style="max-width:250px;">{{ i.summary }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Score</th>
+                        <th>Recommendation</th>
+                        <th>Date &amp; Time</th>
+                        <th>Summary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in interviews %}
+                    <tr>
+                        <td>
+                            <span style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.05rem;">{{ i.score }}</span>
+                            <span style="font-size:0.8rem;color:var(--text-2);">/10</span>
+                        </td>
+                        <td>
+                            {% if i.status == "Selected" %}
+                            <span class="verdict-pill selected"><i class="bi bi-check-circle-fill"></i> Recommended</span>
+                            {% else %}
+                            <span class="verdict-pill rejected"><i class="bi bi-x-circle-fill"></i> Not Recommended</span>
+                            {% endif %}
+                        </td>
+                        <td style="color:var(--text-2);font-size:0.84rem;">{{ i.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
+                        <td style="max-width:280px;font-size:0.84rem;color:var(--text-2);line-height:1.5;">{{ i.summary[:180] }}{% if i.summary|length > 180 %}…{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% else %}
-        <p class="text-muted">No placement assessments recorded yet.</p>
+        <div class="empty-state">
+            <i class="bi bi-clipboard2-x"></i>
+            No placement assessments recorded yet.
+        </div>
         {% endif %}
     </div>
+
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

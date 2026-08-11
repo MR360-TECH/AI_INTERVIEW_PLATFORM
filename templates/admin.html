@@ -29,7 +29,7 @@
             --row-hover:#f1f5f9;
         }
 
-        body.dark-theme {
+        html.dark-theme {
             --surface:  #0f172a;
             --bg:       #020617;
             --border2:  #1e293b;
@@ -58,7 +58,7 @@
             pointer-events: none;
             z-index: 0;
         }
-        body.dark-theme::before {
+        html.dark-theme body::before {
             background-image:
                 radial-gradient(ellipse 70% 50% at 0% 0%, rgba(99,102,241,0.16) 0%, transparent 60%),
                 radial-gradient(ellipse 50% 40% at 100% 100%, rgba(139,92,246,0.11) 0%, transparent 60%);
@@ -101,7 +101,7 @@
             box-shadow: 0 8px 24px rgba(37,99,235,0.25);
             flex-shrink: 0;
         }
-        body.dark-theme .admin-brand-icon {
+        html.dark-theme .admin-brand-icon {
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
             box-shadow: 0 8px 24px rgba(79,70,229,0.35);
         }
@@ -154,13 +154,13 @@
             border-color: #fca5a5;
             color: #ef4444;
         }
-        body.dark-theme .header-icon-btn:hover {
+        html.dark-theme .header-icon-btn:hover {
             background: rgba(79, 70, 229, 0.15);
             border-color: #6366f1;
             color: #a5b4fc;
             box-shadow: 0 4px 12px rgba(99,102,241,0.2);
         }
-        body.dark-theme .header-icon-btn.danger:hover {
+        html.dark-theme .header-icon-btn.danger:hover {
             background: rgba(239, 68, 68, 0.15);
             border-color: #f87171;
             color: #f87171;
@@ -215,8 +215,8 @@
 
         .sc-total   { --accent-color: #2563eb; }
         .sc-month   { --accent-color: #0284c7; }
-        body.dark-theme .sc-total { --accent-color: #4f46e5; }
-        body.dark-theme .sc-month { --accent-color: #8b5cf6; }
+        html.dark-theme .sc-total { --accent-color: #4f46e5; }
+        html.dark-theme .sc-month { --accent-color: #8b5cf6; }
         .sc-today   { --accent-color: #06b6d4; }
         .sc-selected { --accent-color: #10b981; }
         .sc-rejected { --accent-color: #ef4444; }
@@ -355,7 +355,7 @@
             flex-shrink: 0;
             box-shadow: 0 4px 12px rgba(37,99,235,0.2);
         }
-        body.dark-theme .avatar-circle {
+        html.dark-theme .avatar-circle {
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
             box-shadow: 0 4px 12px rgba(79,70,229,0.25);
         }
@@ -465,30 +465,30 @@
         .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.5; }
         .empty-state p { margin: 0; font-size: 0.9rem; }
 
-        body.dark-theme .verdict-recommended { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
-        body.dark-theme .verdict-rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
-        body.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
-        body.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
-        body.dark-theme .btn-delete { border-color: rgba(239, 68, 68, 0.3); color: #f87171; }
-        body.dark-theme .btn-delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: #ef4444; }
+        html.dark-theme .verdict-recommended { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+        html.dark-theme .verdict-rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
+        html.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
+        html.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
+        html.dark-theme .btn-delete { border-color: rgba(239, 68, 68, 0.3); color: #f87171; }
+        html.dark-theme .btn-delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: #ef4444; }
 
         /* ── Dark theme: table row hover fix ── */
-        body.dark-theme .results-table tbody tr:hover {
+        html.dark-theme .results-table tbody tr:hover {
             background: rgba(99, 102, 241, 0.08) !important;
         }
-        body.dark-theme .results-table thead tr {
+        html.dark-theme .results-table thead tr {
             background: rgba(30, 41, 59, 0.6);
         }
-        body.dark-theme .results-table thead th {
+        html.dark-theme .results-table thead th {
             color: #64748b;
         }
-        body.dark-theme .results-table tbody td {
+        html.dark-theme .results-table tbody td {
             color: var(--text-1);
         }
-        body.dark-theme .score-wrap {
+        html.dark-theme .score-wrap {
             color: var(--text-1);
         }
-        body.dark-theme .cand-name {
+        html.dark-theme .cand-name {
             color: var(--text-1);
         }
     </style>

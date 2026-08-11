@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Placement Assessment History — AI Recruitment Platform</title>
+    <title>Assessment History — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your complete AI placement assessment history with score trends and performance insights.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <script>
@@ -20,199 +23,424 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --navy: #1a2036;
-            --blue: #4e73df;
-            --blue-deep: #224abe;
-            --green: #1cc88a;
-            --red: #e74a3b;
-            --muted: #64708a;
-            --hairline: #e3e7f0;
+            --bg: #f0f4ff;
+            --surface: #ffffff;
+            --border: #e0e7ff;
+            --text-1: #1e293b;
+            --text-2: #64748b;
+            --brand: #2563eb;
+            --brand-glow: rgba(37,99,235,0.15);
         }
+        html.dark-theme {
+            --bg: #0b0f19;
+            --surface: rgba(30,41,59,0.55);
+            --border: rgba(255,255,255,0.08);
+            --text-1: #f1f5f9;
+            --text-2: #94a3b8;
+            --brand: #60a5fa;
+            --brand-glow: rgba(59,130,246,0.2);
+        }
+
+        * { box-sizing: border-box; }
 
         body {
+            background: var(--bg);
             font-family: 'Inter', sans-serif;
-            color: var(--ink);
-            background-color: var(--bg-base);
-            transition: background-color 0.25s ease, color 0.25s ease;
+            color: var(--text-1);
+            min-height: 100vh;
+            transition: background 0.25s ease, color 0.25s ease;
         }
 
-        .history-page-title {
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(ellipse 60% 45% at 10% -5%, rgba(37,99,235,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        html.dark-theme body::before {
+            background-image:
+                radial-gradient(ellipse 700px 350px at 50% -100px, rgba(59,130,246,0.15) 0%, rgba(6,182,212,0.05) 50%, transparent 70%);
+        }
+
+        .page-wrap {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        /* ── Page header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .page-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: var(--text-1);
+            margin: 0;
+            letter-spacing: -0.03em;
+        }
+        .page-subtitle {
+            font-size: 0.88rem;
+            color: var(--text-2);
+            margin: 4px 0 0;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--brand);
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            backdrop-filter: blur(12px);
+            transition: all 0.2s ease;
+        }
+        .back-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+            transform: translateX(-3px);
+        }
+
+        /* ── Glass card ── */
+        .glass-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 24px;
+            padding: 32px 36px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+            transition: border-color 0.25s ease;
+        }
+        html.dark-theme .glass-card {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        html.dark-theme .glass-card:hover {
+            border-color: rgba(59,130,246,0.25);
+        }
+
+        .card-title {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            color: var(--navy);
-            letter-spacing: -0.02em;
+            font-size: 1.05rem;
+            color: var(--text-1);
+            margin: 0 0 4px;
+            letter-spacing: -0.01em;
+        }
+        .card-sub {
+            font-size: 0.8rem;
+            color: var(--text-2);
+            margin: 0 0 24px;
         }
 
-        .attempt-row-card {
-            border: none;
-            border-radius: 12px;
-            background: #ffffff;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        /* ── Chart canvas wrapper ── */
+        .chart-wrap {
+            position: relative;
+            height: 160px;
         }
 
-        .attempt-row-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(26, 32, 54, 0.08) !important;
+        /* ── Attempt list ── */
+        .attempts-section-label {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-2);
+            margin-bottom: 16px;
+        }
+
+        .attempt-card {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 18px;
+            padding: 20px 24px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: default;
+        }
+        html.dark-theme .attempt-card { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+        .attempt-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(37,99,235,0.3);
+            box-shadow: 0 12px 32px rgba(37,99,235,0.1);
+        }
+        html.dark-theme .attempt-card:hover {
+            border-color: rgba(59,130,246,0.3);
+            box-shadow: 0 12px 32px rgba(59,130,246,0.12);
+        }
+
+        .attempt-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .attempt-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            box-shadow: 0 6px 16px rgba(37,99,235,0.22);
+        }
+        html.dark-theme .attempt-icon {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 6px 16px rgba(79,70,229,0.28);
         }
 
         .attempt-domain {
             font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: var(--navy);
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--text-1);
             margin: 0;
-            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
-
         .attempt-date {
+            font-size: 0.8rem;
+            color: var(--text-2);
+            margin-top: 2px;
+        }
+
+        .attempt-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .score-display {
+            display: flex;
+            align-items: baseline;
+            gap: 2px;
+        }
+        .score-num {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.35rem;
+            color: var(--text-1);
+        }
+        .score-denom {
             font-size: 0.82rem;
+            color: var(--text-2);
         }
 
-        .attempt-score-container {
-            font-size: 0.95rem;
+        /* mini score bar */
+        .score-bar-wrap {
+            width: 60px;
+            height: 5px;
+            background: var(--border);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 99px;
         }
 
-        .score-val {
-            color: var(--navy);
-        }
-
-        .badge-custom {
-            font-size: 0.78rem;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 20px;
-            letter-spacing: 0.02em;
+        .verdict-badge {
             display: inline-flex;
             align-items: center;
+            gap: 5px;
+            padding: 5px 13px;
+            border-radius: 9px;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
-
-        .badge-selected {
-            background-color: rgba(28, 200, 138, 0.1);
-            color: #17b978;
+        .verdict-badge.pass {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1.5px solid #a7f3d0;
         }
-
-        .badge-rejected {
-            background-color: rgba(231, 74, 59, 0.1);
-            color: #f0685a;
+        .verdict-badge.fail {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
         }
+        html.dark-theme .verdict-badge.pass { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.35); }
+        html.dark-theme .verdict-badge.fail { background: rgba(220,38,38,0.12); color: #f87171; border-color: rgba(220,38,38,0.35); }
 
         .btn-view-report {
-            background-color: #ffffff;
-            color: var(--blue);
-            border: 1.5px solid var(--blue);
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 6px 16px;
-            border-radius: 8px;
-            transition: all 0.15s ease;
-            text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 9px;
+            background: var(--surface);
+            border: 1.5px solid var(--brand);
+            color: var(--brand);
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-decoration: none;
+            transition: all 0.18s ease;
+            backdrop-filter: blur(8px);
         }
-
         .btn-view-report:hover {
-            background-color: var(--blue);
-            color: #ffffff;
-            border-color: var(--blue);
+            background: var(--brand);
+            color: #fff;
             transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(78, 115, 223, 0.15);
+            box-shadow: 0 4px 14px var(--brand-glow);
         }
 
-        /* Dark Theme overrides */
-        html.dark-theme body {
-            background-color: #060d1f !important;
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 64px 20px;
         }
-        html.dark-theme .history-page-title {
-            color: #f0f6ff !important;
+        .empty-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(6,182,212,0.08));
+            border: 1.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--brand);
+            margin: 0 auto 24px;
         }
-        html.dark-theme .card {
-            background: #0f1e3a !important;
-            border-color: #1e3a5f !important;
+        .empty-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--text-1);
+            margin-bottom: 8px;
         }
-        html.dark-theme .card h5 {
-            color: #f0f6ff !important;
+        .empty-sub {
+            font-size: 0.9rem;
+            color: var(--text-2);
+            margin-bottom: 24px;
         }
-        html.dark-theme .attempt-row-card {
-            background: #0f1e3a !important;
+        .btn-begin {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.95rem;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+            transition: all 0.2s ease;
         }
-        html.dark-theme .attempt-row-card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+        .btn-begin:hover {
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37,99,235,0.4);
         }
-        html.dark-theme .attempt-domain {
-            color: #f0f6ff !important;
-        }
-        html.dark-theme .avatar-circle-icon {
-            background: #162040 !important;
-            color: #f0f6ff !important;
-        }
-        html.dark-theme .score-val {
-            color: #f0f6ff !important;
-        }
-        html.dark-theme .btn-view-report {
-            background-color: #0f1e3a !important;
-            color: #60a5fa !important;
-            border-color: #1e3a5f !important;
-        }
-        html.dark-theme .btn-view-report:hover {
-            background-color: var(--brand-blue) !important;
-            color: #ffffff !important;
-            border-color: var(--brand-blue) !important;
-        }
-        html.dark-theme .chart-legend {
-            color: #c0d4f0;
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 20px 18px; }
+            .attempt-card { padding: 16px 18px; }
+            .page-title { font-size: 1.55rem; }
         }
     </style>
 </head>
 <body>
 {% include 'navbar.html' %}
-<div class="container mt-5 mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="history-page-title mb-0">Placement Assessment History</h2>
-        <a href="/dashboard" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> Back
+
+<div class="page-wrap">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Assessment History</h1>
+            <p class="page-subtitle">Your placement evaluation records and score progression</p>
+        </div>
+        <a href="/dashboard" class="back-btn">
+            <i class="bi bi-arrow-left"></i> Dashboard
         </a>
     </div>
 
     {% if attempts %}
-    <div class="card shadow-lg p-4 mb-4">
-        <h5 class="mb-1" style="font-family:'Outfit',sans-serif;font-weight:700;">Score Trend</h5>
-        <p class="text-muted mb-3" style="font-size:0.82rem;">Overall score across all assessment sessions</p>
-        <canvas id="scoreChart" height="100"></canvas>
+
+    <!-- Score Trend Chart -->
+    <div class="glass-card">
+        <div class="card-title">Score Trend</div>
+        <p class="card-sub">Overall score across all assessment sessions</p>
+        <div class="chart-wrap">
+            <canvas id="scoreChart"></canvas>
+        </div>
     </div>
 
-    <h5 class="mb-3" style="font-weight:700;color:var(--navy);">Assessment Records</h5>
+    <!-- Attempt Cards -->
+    <div class="attempts-section-label">Assessment Records — {{ attempts | length }} total</div>
 
     {% for a in attempts %}
-    <div class="card attempt-row-card shadow-sm mb-3">
-        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3 py-3 px-4">
-            <div class="d-flex align-items-center gap-3">
-                <div class="avatar-circle-icon bg-light rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
-                    <i class="bi bi-briefcase-fill fs-5 text-primary"></i>
-                </div>
-                <div>
-                    <h5 class="attempt-domain mb-1 text-uppercase">{{ a.domain or 'General' }}</h5>
-                    <span class="attempt-date text-muted"><i class="bi bi-calendar3 me-1"></i> {{ a.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</span>
+    <div class="attempt-card">
+        <div class="attempt-left">
+            <div class="attempt-icon">
+                <i class="bi bi-briefcase-fill"></i>
+            </div>
+            <div>
+                <p class="attempt-domain">{{ a.domain or 'General' }}</p>
+                <div class="attempt-date">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ a.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <div class="attempt-score-container me-2">
-                    <span class="score-label text-muted me-1">Score:</span>
-                    <span class="score-val fw-bold fs-6">{{ a.score }}/10</span>
+        </div>
+
+        <div class="attempt-right">
+            <div>
+                <div class="score-display">
+                    <span class="score-num">{{ a.score }}</span>
+                    <span class="score-denom">/10</span>
                 </div>
-                {% if a.status == "Selected" %}
-                <span class="badge-custom badge-selected">
-                    <i class="bi bi-check-circle-fill me-1"></i> Recommended
-                </span>
-                {% else %}
-                <span class="badge-custom badge-rejected">
-                    <i class="bi bi-x-circle-fill me-1"></i> Not Recommended
-                </span>
-                {% endif %}
-                <a href="/my-history/{{ a.id }}" class="btn-view-report">
-                    View Report <i class="bi bi-arrow-right-short"></i>
-                </a>
+                <div class="score-bar-wrap">
+                    <div class="score-bar-fill" style="width:{{ (a.score / 10 * 100)|int }}%; background: {% if a.score >= 6 %}linear-gradient(90deg,#10b981,#06b6d4){% elif a.score >= 4 %}linear-gradient(90deg,#f59e0b,#d97706){% else %}linear-gradient(90deg,#ef4444,#dc2626){% endif %};"></div>
+                </div>
             </div>
+
+            {% if a.status == "Selected" %}
+            <span class="verdict-badge pass">
+                <i class="bi bi-check-circle-fill"></i> Recommended
+            </span>
+            {% else %}
+            <span class="verdict-badge fail">
+                <i class="bi bi-x-circle-fill"></i> Not Recommended
+            </span>
+            {% endif %}
+
+            <a href="/my-history/{{ a.id }}" class="btn-view-report">
+                View Report <i class="bi bi-arrow-right-short"></i>
+            </a>
         </div>
     </div>
     {% endfor %}
@@ -220,6 +448,9 @@
     <script>
         const ctx = document.getElementById('scoreChart').getContext('2d');
         const isDark = document.documentElement.classList.contains('dark-theme');
+        const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+        const tickColor = isDark ? '#4a5568' : '#94a3b8';
+
         new Chart(ctx, {
             type: 'line',
             data: {
@@ -227,50 +458,62 @@
                 datasets: [{
                     label: 'Score out of 10',
                     data: {{ chart_scores | tojson }},
-                    borderColor: '#2563eb',
-                    backgroundColor: isDark ? 'rgba(59,130,246,0.15)' : 'rgba(37,99,235,0.15)',
+                    borderColor: isDark ? '#60a5fa' : '#2563eb',
+                    backgroundColor: isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
                     fill: true,
-                    tension: 0.4,
+                    tension: 0.45,
                     pointRadius: 5,
-                    pointBackgroundColor: '#2563eb'
+                    pointBackgroundColor: isDark ? '#60a5fa' : '#2563eb',
+                    pointBorderColor: isDark ? '#0b0f19' : '#ffffff',
+                    pointBorderWidth: 2,
+                    borderWidth: 2.5
                 }]
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 scales: {
-                    y: { 
-                        min: 0, 
-                        max: 10, 
-                        ticks: { 
-                            stepSize: 2,
-                            color: isDark ? '#8aa4cc' : '#64708a'
-                        },
-                        grid: {
-                            color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
-                        }
+                    y: {
+                        min: 0,
+                        max: 10,
+                        ticks: { stepSize: 2, color: tickColor, font: { family: 'Inter', size: 11 } },
+                        grid: { color: gridColor }
                     },
                     x: {
-                        ticks: {
-                            color: isDark ? '#8aa4cc' : '#64708a'
-                        },
-                        grid: {
-                            color: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)'
-                        }
+                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
+                        grid: { color: gridColor }
                     }
                 },
-                plugins: { legend: { display: false } }
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#0f172a',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#94a3b8',
+                        borderColor: isDark ? '#334155' : '#1e293b',
+                        borderWidth: 1,
+                        padding: 10,
+                        cornerRadius: 10
+                    }
+                }
             }
         });
     </script>
 
     {% else %}
-    <div class="card shadow-sm p-5 text-center">
-        <i class="bi bi-clipboard2-x fs-1 text-muted mb-3"></i>
-        <h5 style="font-family:'Source Serif 4',serif;font-weight:700;">No Assessment Records Found</h5>
-        <p class="text-muted">Complete your first interview assessment to view your evaluation history here.</p>
-        <a href="/interview" class="btn btn-primary mt-2">Begin Assessment</a>
-    </div>
-    {% endif %}
 
+    <div class="glass-card">
+        <div class="empty-state">
+            <div class="empty-icon"><i class="bi bi-clipboard2-x"></i></div>
+            <div class="empty-title">No Assessment Records Yet</div>
+            <p class="empty-sub">Complete your first interview assessment to view your evaluation history here.</p>
+            <a href="/interview" class="btn-begin">
+                <i class="bi bi-play-circle-fill"></i> Begin Assessment
+            </a>
+        </div>
+    </div>
+
+    {% endif %}
 
 </div>
 </body>

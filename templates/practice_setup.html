@@ -19,70 +19,189 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        .practice-card {
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-md);
-            background: var(--surface);
-            transition: transform var(--t-fast), box-shadow var(--t-fast);
-            cursor: pointer;
-        }
-        .practice-card:hover {
-            transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--brand-blue);
-        }
-        .practice-icon {
-            font-size: 1.9rem;
-            margin-bottom: 10px;
-        }
-        .viva-theme { color: #17b978; }
-        .lang-theme { color: #8e44ad; }
-        .gen-theme  { color: #f6c23e; }
-        .debate-theme { color: #e74a3b; }
-        .convo-theme { color: #36b9cc; }
-        .selected-card {
-            border: 2px solid var(--brand-blue) !important;
-            background-color: var(--brand-glow-soft);
+        /* ── Design Tokens ── */
+        :root {
+            --page-bg:          #f0f4ff;
+            --page-glow:        rgba(59, 130, 246, 0.07);
+            --card-bg:          #ffffff;
+            --card-border:      rgba(0, 0, 0, 0.07);
+            --text-main:        #0f172a;
+            --text-muted:       #475569;
+            --topbar-border:    rgba(0, 0, 0, 0.08);
+            --back-bg:          #ffffff;
+            --back-border:      rgba(0, 0, 0, 0.10);
+            --back-color:       #475569;
+            --back-hover-bg:    #f1f5f9;
+            --back-hover-color: #0f172a;
+            --highlights-bg:    rgba(241, 245, 255, 0.8);
+            --highlights-border: rgba(0, 0, 0, 0.07);
+            --highlight-color:  #475569;
+            --ph-divider-bg:    rgba(0, 0, 0, 0.08);
+            --settings-border:  rgba(0, 0, 0, 0.07);
         }
 
-        /* Highlights strip */
+        html.dark-theme {
+            --page-bg:          #0b0f19;
+            --page-glow:        rgba(59, 130, 246, 0.06);
+            --card-bg:          rgba(30, 41, 59, 0.45);
+            --card-border:      rgba(255, 255, 255, 0.08);
+            --text-main:        #f1f5f9;
+            --text-muted:       #94a3b8;
+            --topbar-border:    rgba(255, 255, 255, 0.08);
+            --back-bg:          rgba(255, 255, 255, 0.05);
+            --back-border:      rgba(255, 255, 255, 0.10);
+            --back-color:       #94a3b8;
+            --back-hover-bg:    rgba(255, 255, 255, 0.10);
+            --back-hover-color: #ffffff;
+            --highlights-bg:    rgba(30, 41, 59, 0.50);
+            --highlights-border: rgba(255, 255, 255, 0.08);
+            --highlight-color:  #cbd5e1;
+            --ph-divider-bg:    rgba(255, 255, 255, 0.10);
+            --settings-border:  rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--page-bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 40%;
+            height: 40%;
+            background: radial-gradient(circle, var(--page-glow) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .practice-card {
+            border: 1px solid var(--card-border) !important;
+            border-radius: 16px !important;
+            background: var(--card-bg) !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .practice-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.35) !important;
+        }
+
+        .practice-icon {
+            font-size: 1.9rem;
+            margin-bottom: 12px;
+        }
+
+        .viva-theme   { color: #10b981; }
+        .lang-theme   { color: #8b5cf6; }
+        .debate-theme { color: #ef4444; }
+        .convo-theme  { color: #0ea5e9; }
+
+        html.dark-theme .viva-theme   { color: #34d399; }
+        html.dark-theme .lang-theme   { color: #a78bfa; }
+        html.dark-theme .debate-theme { color: #f87171; }
+        html.dark-theme .convo-theme  { color: #38bdf8; }
+
+        .selected-card {
+            border: 2px solid #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.08) !important;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+        }
+
+        html.dark-theme .selected-card {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+
         .practice-highlights {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 22px;
-            background: linear-gradient(135deg, rgba(78,115,223,0.06), rgba(34,74,190,0.04));
-            border: 1px solid rgba(78,115,223,0.15);
-            border-radius: 10px;
-            padding: 10px 20px;
-            margin-top: 14px;
-            flex-wrap: nowrap;
+            background: var(--highlights-bg);
+            border: 1px solid var(--highlights-border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            transition: background-color 0.25s ease;
         }
+
         .practice-highlight-item {
             display: flex;
             align-items: center;
             gap: 7px;
-            font-size: 0.80rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            color: #3a5bbf;
+            color: var(--highlight-color);
             white-space: nowrap;
         }
-        .practice-highlight-item i { font-size: 0.95rem; }
+
         .ph-divider {
             width: 1px; height: 18px;
-            background: rgba(78,115,223,0.2);
+            background: var(--ph-divider-bg);
             flex-shrink: 0;
         }
+
         @keyframes pulse-dot {
             0%, 100% { transform: scale(1); opacity: 1; }
             50%       { transform: scale(1.5); opacity: 0.55; }
         }
+
         .pulse-dot {
             width: 8px; height: 8px;
             border-radius: 50%;
-            background: #28a745;
+            background: #10b981;
             animation: pulse-dot 1.8s ease-in-out infinite;
             flex-shrink: 0;
+        }
+
+        .topbar {
+            border-bottom: 1px solid var(--topbar-border);
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn-global {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--back-color);
+            background: var(--back-bg);
+            border: 1px solid var(--back-border);
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn-global:hover {
+            color: var(--back-hover-color);
+            background: var(--back-hover-bg);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        html.dark-theme .back-btn-global:hover {
+            border-color: rgba(255, 255, 255, 0.20);
+        }
+
+        .card.p-3.mt-3 {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--settings-border) !important;
+            border-radius: 16px !important;
         }
     </style>
 </head>

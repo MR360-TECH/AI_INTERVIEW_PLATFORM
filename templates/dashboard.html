@@ -28,56 +28,57 @@
            MY WORKSPACE — NAVY BLUE AURA DESIGN SYSTEM v5
         ═══════════════════════════════════════════════════════ */
 
-        /* ── LIGHT MODE TOKENS ── */
         :root {
-            --primary:          #1d4ed8;
-            --primary-hover:    #1e40af;
-            --primary-light:    rgba(29, 78, 216, 0.08);
-            --primary-glow:     rgba(29, 78, 216, 0.22);
-            --primary-glow-lg:  rgba(29, 78, 216, 0.38);
+            --primary:          #3b82f6;
+            --primary-hover:    #2563eb;
+            --primary-light:    rgba(59, 130, 246, 0.1);
+            --primary-glow:     rgba(59, 130, 246, 0.2);
+            --primary-glow-lg:  rgba(59, 130, 246, 0.35);
 
             --sky:              #0ea5e9;
-            --sky-light:        rgba(14, 165, 233, 0.09);
-            --sky-glow:         rgba(14, 165, 233, 0.20);
+            --sky-light:        rgba(14, 165, 233, 0.08);
+            --sky-glow:         rgba(14, 165, 233, 0.18);
 
             --emerald:          #10b981;
             --emerald-hover:    #059669;
-            --emerald-light:    rgba(16, 185, 129, 0.09);
-            --emerald-glow:     rgba(16, 185, 129, 0.22);
+            --emerald-light:    rgba(16, 185, 129, 0.08);
+            --emerald-glow:     rgba(16, 185, 129, 0.2);
 
             --amber:            #f59e0b;
-            --amber-light:      rgba(245, 158, 11, 0.09);
+            --amber-light:      rgba(245, 158, 11, 0.08);
 
             --purple:           #8b5cf6;
-            --purple-light:     rgba(139, 92, 246, 0.09);
+            --purple-light:     rgba(139, 92, 246, 0.08);
 
-            --bg:               #f0f6ff;
-            --bg-alt:           #e4effe;
+            --bg:               #f0f4ff;
+            --bg-alt:           #e4eeff;
             --surface:          #ffffff;
-            --surface-alt:      #f5f9ff;
+            --surface-alt:      rgba(240, 246, 255, 0.85);
             --surface-elevated: #ffffff;
 
-            /* Light theme sidebar styling */
             --sidebar-bg:       #ffffff;
-            --sidebar-bg2:      #f8fafc;
+            --sidebar-bg2:      #f8fbff;
             --sidebar-text:     #475569;
-            --sidebar-active-bg: #eff6ff;
-            --sidebar-active-text: #1d4ed8;
-            --sidebar-hover-bg: #f1f5f9;
-            --sidebar-icon-color: #64748b;
-            --sidebar-active-icon: #1d4ed8;
+            --sidebar-active-bg: rgba(59, 130, 246, 0.10);
+            --sidebar-active-text: #2563eb;
+            --sidebar-hover-bg: rgba(59, 130, 246, 0.05);
+            --sidebar-icon-color: #94a3b8;
+            --sidebar-active-icon: #2563eb;
 
-            --border:           #dbeafe;
-            --border-hover:     #bfdbfe;
-            --border-strong:    #93c5fd;
+            --border:           rgba(219, 234, 254, 0.8);
+            --border-hover:     rgba(59, 130, 246, 0.25);
+            --border-strong:    rgba(59, 130, 246, 0.35);
 
             --text-main:        #0f172a;
-            --text-muted:       #1e3a5f;
-            --text-desc:        #4b6a9b;
-            --text-light:       #7fa0cc;
+            --text-muted:       #475569;
+            --text-desc:        #64748b;
+            --text-light:       #94a3b8;
 
-            --card-shadow:      0 1px 3px rgba(29,78,216,0.05), 0 4px 16px rgba(29,78,216,0.07);
-            --card-hover-shadow: 0 8px 28px rgba(29,78,216,0.14), 0 0 0 1px rgba(29,78,216,0.14);
+            --card-shadow:      0 4px 20px rgba(37, 99, 235, 0.06);
+            --card-hover-shadow: 0 12px 30px rgba(37, 99, 235, 0.12), 0 0 0 1px rgba(37, 99, 235, 0.15);
+
+            --sidebar-glow-1:   rgba(29, 78, 216, 0.05);
+            --sidebar-glow-2:   rgba(14, 165, 233, 0.03);
 
             --radius-xl:        20px;
             --radius-lg:        16px;
@@ -88,11 +89,10 @@
             --topbar-height:    62px;
         }
 
-        /* ── DARK MODE TOKENS ── */
         html.dark-theme {
             --primary:          #3b82f6;
             --primary-hover:    #2563eb;
-            --primary-light:    rgba(59, 130, 246, 0.13);
+            --primary-light:    rgba(59, 130, 246, 0.15);
             --primary-glow:     rgba(59, 130, 246, 0.28);
             --primary-glow-lg:  rgba(59, 130, 246, 0.42);
 
@@ -111,32 +111,35 @@
             --purple:           #a78bfa;
             --purple-light:     rgba(167, 139, 250, 0.12);
 
-            --bg:               #060d1f;
-            --bg-alt:           #091428;
-            --surface:          #0d1a35;
-            --surface-alt:      #111f40;
-            --surface-elevated: #142244;
+            --bg:               #0b0f19;
+            --bg-alt:           #060d1f;
+            --surface:          rgba(30, 41, 59, 0.45);
+            --surface-alt:      rgba(15, 23, 42, 0.6);
+            --surface-elevated: rgba(30, 41, 59, 0.65);
 
             --sidebar-bg:       #060c1a;
             --sidebar-bg2:      #040913;
-            --sidebar-text:     rgba(148, 186, 255, 0.60);
+            --sidebar-text:     #94a3b8;
             --sidebar-active-bg: rgba(59, 130, 246, 0.18);
-            --sidebar-active-text: #93c5fd;
-            --sidebar-hover-bg: rgba(255,255,255,0.04);
-            --sidebar-icon-color: rgba(100, 150, 220, 0.45);
+            --sidebar-active-text: #60a5fa;
+            --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+            --sidebar-icon-color: #64748b;
             --sidebar-active-icon: #60a5fa;
 
-            --border:           #1e3a5f;
-            --border-hover:     #2d5490;
-            --border-strong:    #3b6fbf;
+            --border:           rgba(255, 255, 255, 0.08);
+            --border-hover:     rgba(59, 130, 246, 0.25);
+            --border-strong:    rgba(59, 130, 246, 0.4);
 
-            --text-main:        #e8f0ff;
-            --text-muted:       #b0ccf0;
-            --text-desc:        #6a90c0;
-            --text-light:       #3a5880;
+            --text-main:        #f8fafc;
+            --text-muted:       #cbd5e1;
+            --text-desc:        #94a3b8;
+            --text-light:       #64748b;
 
-            --card-shadow:      0 1px 4px rgba(0,0,0,0.50), 0 4px 20px rgba(0,0,0,0.40);
-            --card-hover-shadow: 0 8px 32px rgba(59,130,246,0.20), 0 0 0 1px rgba(59,130,246,0.22);
+            --card-shadow:      0 4px 20px rgba(0, 0, 0, 0.25);
+            --card-hover-shadow: 0 12px 30px rgba(59, 130, 246, 0.2), 0 0 0 1px rgba(59, 130, 246, 0.25);
+
+            --sidebar-glow-1:   rgba(29, 78, 216, 0.30);
+            --sidebar-glow-2:   rgba(14, 165, 233, 0.14);
         }
 
         /* ── BASE ── */
@@ -176,7 +179,7 @@
             position: absolute;
             top: -80px; left: -80px;
             width: 260px; height: 260px;
-            background: radial-gradient(ellipse, rgba(29,78,216,0.30) 0%, transparent 68%);
+            background: radial-gradient(ellipse, var(--sidebar-glow-1) 0%, transparent 68%);
             pointer-events: none; z-index: 0;
         }
         .sidebar::after {
@@ -184,7 +187,7 @@
             position: absolute;
             bottom: 40px; right: -60px;
             width: 220px; height: 220px;
-            background: radial-gradient(ellipse, rgba(14,165,233,0.14) 0%, transparent 68%);
+            background: radial-gradient(ellipse, var(--sidebar-glow-2) 0%, transparent 68%);
             pointer-events: none; z-index: 0;
         }
 
@@ -341,7 +344,7 @@
         .page-header {
             display: flex; align-items: flex-start; justify-content: space-between;
             margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
-            position: relative; z-index: 9999;
+            position: relative; z-index: 10;
         }
         .page-eyebrow {
             font-family: 'Outfit', sans-serif; font-size: 0.63rem; font-weight: 700;
@@ -407,7 +410,7 @@
             border-radius: var(--radius-md);
             box-shadow: 0 16px 40px rgba(0,0,0,0.22);
             padding: 8px;
-            z-index: 99999;
+            z-index: 1000;
             display: none;
         }
         .profile-dropdown-menu.show {
@@ -652,11 +655,44 @@
         }
         .btn-resume-remove-sm:hover { background: rgba(239,68,68,0.07); border-color: rgba(239,68,68,0.35); color: #ef4444; }
 
-        /* Company Tech Qs card tags */
+        /* Company Tech Qs card tags — company chips with logos */
         .tech-q-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; margin-bottom: 16px; }
         .tech-q-tag {
             font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 99px;
             background: var(--surface-alt); border: 1px solid var(--border); color: var(--text-muted);
+        }
+
+        /* Company logo chips */
+        .company-logo-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+        .company-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px 4px 7px;
+            border-radius: 99px;
+            background: var(--surface-alt);
+            border: 1px solid var(--border);
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.15s ease;
+            cursor: default;
+        }
+        .company-chip:hover {
+            background: var(--primary-light);
+            border-color: var(--border-strong);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+        .company-chip svg {
+            flex-shrink: 0;
         }
 
         /* ═══════════════════════════
@@ -941,29 +977,29 @@
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <span class="card-pill pill-blue"><i class="bi bi-shield-check"></i> Formal Evaluation</span>
-                            {% if has_progress %}
-                            <span style="font-size:0.72rem;font-weight:600;color:var(--text-light);"><i class="bi bi-clock-history"></i> Active</span>
-                            {% endif %}
+                            <span style="font-size:0.7rem;font-weight:700;color:var(--emerald);" class="d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> AI Examiner Ready
+                            </span>
                         </div>
-                        <h2 class="card-heading heading-blue">
-                            {% if has_progress %}Resume Recruitment Assessment{% else %}Start Recruitment Assessment{% endif %}
-                        </h2>
+                        <h2 class="card-heading heading-blue">AI Recruitment Assessment</h2>
                         <p class="card-body-text">
-                            Adaptive AI-driven assessment tailored to your domain. Evaluates technical depth, problem-solving, and logic for recruiters.
+                            Adaptive AI-driven assessment tailored to your target domain. Evaluates technical depth, problem-solving, and professional logic.
                         </p>
                     </div>
                     <div>
-                        <button type="button" class="btn-primary-grad" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
+                        <button type="button" class="btn-primary-grad w-100" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
                             {% if has_progress %}
-                            <i class="bi bi-play-circle-fill"></i> Resume Assessment &rarr;
+                            <i class="bi bi-play-circle-fill"></i> Resume Assessment Studio &rarr;
                             {% else %}
-                            <i class="bi bi-rocket-takeoff-fill"></i> Begin Assessment &rarr;
+                            <i class="bi bi-rocket-takeoff-fill"></i> Launch Assessment Studio &rarr;
                             {% endif %}
                         </button>
                         {% if has_progress %}
-                        <button type="button" class="btn-reset-ghost" id="resetAssessmentBtn">
-                            <i class="bi bi-arrow-clockwise"></i> Reset Assessment
-                        </button>
+                        <div class="text-center mt-2">
+                            <button type="button" class="btn p-0 border-0 text-muted" style="font-size:0.75rem;font-family:'Outfit',sans-serif;font-weight:600;" id="resetAssessmentBtn">
+                                <i class="bi bi-arrow-clockwise"></i> Start Fresh Session
+                            </button>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -973,35 +1009,27 @@
                     <div class="card-glow"></div>
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="card-pill pill-emerald"><i class="bi bi-file-earmark-person"></i> Candidate CV</span>
+                            <span class="card-pill pill-emerald"><i class="bi bi-file-earmark-person"></i> Profile Resume Matrix</span>
+                            {% if user.resume_text %}
+                            <span style="font-size:0.7rem;font-weight:700;color:var(--primary);"><i class="bi bi-shield-check me-1"></i>Verified</span>
+                            {% endif %}
                         </div>
-                        <h2 class="card-heading heading-emerald">My Profile Resume</h2>
+                        <h2 class="card-heading heading-emerald">Candidate Profile CV</h2>
 
-                        <div class="resume-status-box">
+                        <div class="resume-status-box" style="margin-bottom:14px;">
                             <div class="resume-icon-mini {% if user.resume_text %}icon-submitted{% else %}icon-empty{% endif %}">
                                 <i class="bi bi-{% if user.resume_text %}file-earmark-check-fill{% else %}file-earmark-arrow-up{% endif %}"></i>
                             </div>
                             <div style="min-width:0;flex:1;">
-                                <div class="resume-status-title">{% if user.resume_text %}Resume On File{% else %}No Resume Uploaded{% endif %}</div>
-                                <div class="resume-status-sub">{% if user.resume_text %}Visible to recruiters{% else %}Upload to boost profile{% endif %}</div>
+                                <div class="resume-status-title">{% if user.resume_text %}CV Synced &amp; Profile Active{% else %}No Resume Attached{% endif %}</div>
+                                <div class="resume-status-sub">{% if user.resume_text %}ATS Optimized &amp; Tailored for AI evaluation{% else %}Attach PDF/DOCX to personalize assessment{% endif %}</div>
                             </div>
                         </div>
                     </div>
                     <div>
-                        {% if user.resume_text %}
-                        <div class="d-flex gap-2">
-                            <button class="btn-resume-change-sm" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="changeResumeBtn">
-                                <i class="bi bi-arrow-repeat"></i> Update
-                            </button>
-                            <button type="button" class="btn-resume-remove-sm" data-bs-toggle="modal" data-bs-target="#confirmRemoveResumeModal" id="removeResumeBtn" title="Remove Resume">
-                                <i class="bi bi-trash3"></i>
-                            </button>
-                        </div>
-                        {% else %}
                         <button class="btn-emerald-grad w-100" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="uploadResumeBtn">
-                            <i class="bi bi-cloud-upload-fill"></i> Upload Resume &rarr;
+                            <i class="bi bi-cloud-upload-fill"></i> {% if user.resume_text %}Sync / Update Profile CV{% else %}Upload Profile CV{% endif %} &rarr;
                         </button>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -1010,22 +1038,48 @@
                     <div class="card-glow"></div>
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <span class="card-pill pill-purple"><i class="bi bi-lightbulb-fill"></i> Resource Bank</span>
+                            <span class="card-pill pill-purple"><i class="bi bi-lightbulb-fill"></i> Company Q&amp;A Bank</span>
                         </div>
-                        <h2 class="card-heading heading-purple">Company Tech Questions</h2>
+                        <h2 class="card-heading heading-purple">Top Company Questions</h2>
                         <p class="card-body-text">
-                            Explore real interview questions &amp; domain prep guides curated for top tech companies.
+                            Curated real interview questions from top tech companies — SWE, DSA, system design &amp; behavioral rounds all in one place.
                         </p>
-                        <div class="tech-q-tags">
-                            <span class="tech-q-tag">Software Eng</span>
-                            <span class="tech-q-tag">Data Science</span>
-                            <span class="tech-q-tag">System Design</span>
-                            <span class="tech-q-tag">HR Round</span>
+                        <div class="company-logo-chips">
+                            <!-- Google -->
+                            <div class="company-chip" title="Google">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                                <span>Google</span>
+                            </div>
+                            <!-- Microsoft -->
+                            <div class="company-chip" title="Microsoft">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M11.4 11.4H0V0h11.4z" fill="#F25022"/><path d="M24 11.4H12.6V0H24z" fill="#7FBA00"/><path d="M11.4 24H0V12.6h11.4z" fill="#00A4EF"/><path d="M24 24H12.6V12.6H24z" fill="#FFB900"/></svg>
+                                <span>Microsoft</span>
+                            </div>
+                            <!-- Amazon -->
+                            <div class="company-chip" title="Amazon">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M13.958 10.09c0 1.232.029 2.256-.591 3.351-.502.891-1.301 1.438-2.186 1.438-1.214 0-1.922-.924-1.922-2.292 0-2.692 2.415-3.182 4.7-3.182v.685zm3.186 7.705a.661.661 0 0 1-.75.074c-1.052-.873-1.24-1.279-1.814-2.113-1.734 1.766-2.962 2.294-5.209 2.294-2.66 0-4.731-1.641-4.731-4.925 0-2.565 1.391-4.309 3.37-5.164 1.715-.754 4.11-.891 5.942-1.099v-.41c0-.753.06-1.642-.384-2.294-.385-.581-1.124-.822-1.775-.822-1.205 0-2.277.618-2.54 1.897-.054.285-.261.566-.549.58l-3.064-.333c-.259-.058-.548-.266-.472-.661C5.933 2.494 8.524 1.5 10.88 1.5c1.197 0 2.76.319 3.706 1.225 1.197 1.119 1.081 2.609 1.081 4.231v3.831c0 1.152.478 1.656.928 2.277.158.221.192.487-.008.651-.504.421-1.399 1.198-1.892 1.634l-.551-.554zM21.542 19.738C19.148 21.661 15.689 22.685 12.709 22.685c-4.124 0-7.842-1.524-10.651-4.059-.221-.2-.024-.473.242-.317 3.031 1.764 6.778 2.825 10.645 2.825 2.61 0 5.482-.542 8.12-1.666.398-.17.73.26.477.27z" fill="#FF9900"/><path d="M22.326 18.88c-.302-.388-1.998-.184-2.762-.092-.232.027-.268-.174-.059-.322 1.352-.951 3.568-.676 3.824-.358.26.321-.067 2.544-1.336 3.605-.194.163-.38.076-.294-.14.286-.713.928-2.305.627-2.693z" fill="#FF9900"/></svg>
+                                <span>Amazon</span>
+                            </div>
+                            <!-- Meta -->
+                            <div class="company-chip" title="Meta">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96C18.34 21.21 22 17.06 22 12.06C22 6.53 17.5 2.04 12 2.04Z" fill="#1877F2"/></svg>
+                                <span>Meta</span>
+                            </div>
+                            <!-- Apple -->
+                            <div class="company-chip" title="Apple">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="currentColor"/></svg>
+                                <span>Apple</span>
+                            </div>
+                            <!-- Netflix -->
+                            <div class="company-chip" title="Netflix">
+                                <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M5.398 0v.006c3.028 8.556 5.37 15.175 8.348 23.596 2.344.058 4.85.398 4.854.398-2.8-7.924-5.923-16.747-8.487-24zm8.489 0v9.63L18.6 23.98c-.813-.05-2.574-.398-3.656-.398L10.515 13.527v-2.52l-1.049-2.96V0zm-7.527 0v13.334L10.005 24H5.398V0z" fill="#E50914"/></svg>
+                                <span>Netflix</span>
+                            </div>
                         </div>
                     </div>
                     <div>
                         <a href="/tech-questions" class="btn-purple-grad w-100">
-                            <i class="bi bi-journal-code"></i> Explore Q&amp;A Bank &rarr;
+                            <i class="bi bi-compass-fill"></i> Explore &rarr;
                         </a>
                     </div>
                 </div>

@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Send OTP</title>
+    <title>Email OTP Login — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in with your Gmail via OTP verification.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,19 +20,248 @@
     })();
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ── Design Tokens ── */
+        :root {
+            --page-bg:           #f0f4ff;
+            --page-glow:         rgba(59, 130, 246, 0.07);
+            --card-bg:           #ffffff;
+            --card-border:       rgba(0, 0, 0, 0.07);
+            --card-shadow:       0 20px 50px rgba(37, 99, 235, 0.08);
+            --card-hover-border: rgba(59, 130, 246, 0.28);
+            --label-color:       #1e293b;
+            --input-bg:          #f8fafc;
+            --input-border:      rgba(0, 0, 0, 0.10);
+            --input-color:       #0f172a;
+            --input-focus-bg:    #ffffff;
+            --back-bg:           #ffffff;
+            --back-border:       rgba(0, 0, 0, 0.10);
+            --back-color:        #475569;
+            --back-hover-bg:     #f1f5f9;
+            --back-hover-color:  #0f172a;
+            --link-color:        #2563eb;
+        }
+
+        html.dark-theme {
+            --page-bg:           #0b0f19;
+            --page-glow:         rgba(59, 130, 246, 0.06);
+            --card-bg:           rgba(30, 41, 59, 0.45);
+            --card-border:       rgba(255, 255, 255, 0.08);
+            --card-shadow:       0 20px 50px rgba(0, 0, 0, 0.30);
+            --card-hover-border: rgba(59, 130, 246, 0.28);
+            --label-color:       #cbd5e1;
+            --input-bg:          rgba(15, 23, 42, 0.60);
+            --input-border:      rgba(255, 255, 255, 0.10);
+            --input-color:       #f8fafc;
+            --input-focus-bg:    rgba(15, 23, 42, 0.80);
+            --back-bg:           rgba(255, 255, 255, 0.05);
+            --back-border:       rgba(255, 255, 255, 0.10);
+            --back-color:        #94a3b8;
+            --back-hover-bg:     rgba(255, 255, 255, 0.10);
+            --back-hover-color:  #ffffff;
+            --link-color:        #60a5fa;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--page-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 40%; height: 40%;
+            background: radial-gradient(circle, var(--page-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -10%; right: -10%;
+            width: 35%; height: 35%;
+            background: radial-gradient(circle, var(--page-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .login-outer-wrap {
+            width: 100%;
+            padding: 2.5rem 1rem;
+            z-index: 10;
+        }
+
+        .login-card {
+            border: 1px solid var(--card-border) !important;
+            border-radius: 24px !important;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            overflow: hidden;
+            box-shadow: var(--card-shadow) !important;
+            transition: border-color 0.3s, background-color 0.25s;
+        }
+
+        .login-card:hover {
+            border-color: var(--card-hover-border) !important;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+        }
+
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -20px; left: 50%;
+            transform: translateX(-50%);
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+            pointer-events: none;
+        }
+
+        .login-header i {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 12px;
+            display: inline-block;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .form-body {
+            padding: 36px 40px;
+            background: var(--card-bg);
+            transition: background-color 0.25s ease;
+        }
+
+        .form-label {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--label-color);
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+        }
+
+        .form-control {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            color: var(--input-color) !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            font-size: 0.95rem;
+            transition: all 0.2s ease !important;
+        }
+
+        .form-control::placeholder { opacity: 0.5; }
+
+        .form-control:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+            background: var(--input-focus-bg) !important;
+            outline: none;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+            border: none !important;
+            padding: 14px !important;
+            border-radius: 12px !important;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3) !important;
+            transition: all 0.2s ease !important;
+            color: #fff;
+        }
+
+        .btn-login:hover {
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .text-link {
+            color: var(--link-color);
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+        .text-link:hover { opacity: 0.8; }
+
+        .back-btn-global {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--back-color);
+            background: var(--back-bg);
+            border: 1px solid var(--back-border);
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn-global:hover {
+            color: var(--back-hover-color);
+            background: var(--back-hover-bg);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        html.dark-theme .back-btn-global:hover {
+            border-color: rgba(255, 255, 255, 0.20);
+        }
+
+        @media (max-width: 576px) {
+            .form-body { padding: 28px 22px; }
+            .login-header { padding: 28px 22px; }
+        }
+    </style>
 </head>
 <body>
-<div class="container py-5">
+<div class="login-outer-wrap">
+<div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-6 col-lg-5">
             <a href="/login" class="back-btn-global mb-3">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
             <div class="card login-card shadow-lg">
                 <div class="login-header">
-                    <i class="bi bi-envelope-at-fill fs-1" style="color: #4e73df;"></i>
-                    <h2>Gmail / Email OTP Login</h2>
-                    <p>Enter your Gmail address below to receive a secure 6-digit OTP verification code</p>
+                    <i class="bi bi-envelope-at"></i>
+                    <h2>Email OTP Login</h2>
+                    <p>Enter your email address below to receive a secure 6-digit OTP verification code</p>
                 </div>
 
                 <div class="form-body">
@@ -39,17 +271,17 @@
 
                     <form method="POST" action="/auth/otp/send">
                         <div class="mb-3">
-                            <label class="form-label">Email Address</label>
+                            <label class="form-label" for="email">Email Address</label>
                             <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
                         </div>
 
                         <button type="submit" class="btn btn-login w-100 text-white mb-3">
                             Send OTP
                         </button>
-                        
+
                         <div class="text-center">
-                            <a href="/login" class="text-decoration-none" style="color: #4e73df; font-weight: 500;">
-                                <i class="bi bi-arrow-left"></i> Back
+                            <a href="/login" class="text-link">
+                                <i class="bi bi-arrow-left"></i> Back to Login
                             </a>
                         </div>
                     </form>
@@ -57,6 +289,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 </body>
 </html>

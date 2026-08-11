@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <!-- Dark mode applied before paint to prevent flicker -->
     <script>
         (function() {
             var saved = localStorage.getItem('theme') || 'light';
@@ -22,59 +21,346 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* ── Login page specific overrides ── */
+        /* ── Design Tokens ── */
+        :root {
+            --page-bg:        #f0f4ff;
+            --page-glow:      rgba(59, 130, 246, 0.07);
+            --card-bg:        #ffffff;
+            --card-border:    rgba(0, 0, 0, 0.07);
+            --card-shadow:    0 20px 50px rgba(37, 99, 235, 0.08);
+            --card-hover-border: rgba(59, 130, 246, 0.28);
+            --label-color:    #1e293b;
+            --input-bg:       #f8fafc;
+            --input-border:   rgba(0, 0, 0, 0.10);
+            --input-color:    #0f172a;
+            --input-focus-bg: #ffffff;
+            --divider-color:  #94a3b8;
+            --divider-line:   rgba(0, 0, 0, 0.08);
+            --back-bg:        #ffffff;
+            --back-border:    rgba(0, 0, 0, 0.10);
+            --back-color:     #475569;
+            --back-hover-bg:  #f1f5f9;
+            --back-hover-color: #0f172a;
+            --link-color:     #2563eb;
+            --note-bg:        #fffbeb;
+            --note-border:    #fde68a;
+            --note-color:     #6b5a1f;
+        }
+
+        html.dark-theme {
+            --page-bg:        #0b0f19;
+            --page-glow:      rgba(59, 130, 246, 0.06);
+            --card-bg:        rgba(30, 41, 59, 0.45);
+            --card-border:    rgba(255, 255, 255, 0.08);
+            --card-shadow:    0 20px 50px rgba(0, 0, 0, 0.30);
+            --card-hover-border: rgba(59, 130, 246, 0.28);
+            --label-color:    #cbd5e1;
+            --input-bg:       rgba(15, 23, 42, 0.60);
+            --input-border:   rgba(255, 255, 255, 0.10);
+            --input-color:    #f8fafc;
+            --input-focus-bg: rgba(15, 23, 42, 0.80);
+            --divider-color:  #64748b;
+            --divider-line:   rgba(255, 255, 255, 0.08);
+            --back-bg:        rgba(255, 255, 255, 0.05);
+            --back-border:    rgba(255, 255, 255, 0.10);
+            --back-color:     #94a3b8;
+            --back-hover-bg:  rgba(255, 255, 255, 0.10);
+            --back-hover-color: #ffffff;
+            --link-color:     #60a5fa;
+            --note-bg:        rgba(245, 158, 11, 0.06);
+            --note-border:    rgba(245, 158, 11, 0.20);
+            --note-color:     #fbd58d;
+        }
+
         body {
             min-height: 100vh;
-            background: var(--bg-base);
+            background: var(--page-bg);
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        html.dark-theme body {
-            background: #060d1f !important;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
 
-        /* Ensure container doesn't add extra backgrounds */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -10%; left: -10%;
+            width: 40%; height: 40%;
+            background: radial-gradient(circle, var(--page-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -10%; right: -10%;
+            width: 35%; height: 35%;
+            background: radial-gradient(circle, var(--page-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
         .login-outer-wrap {
             width: 100%;
-            padding: 2rem 1rem;
+            padding: 2.5rem 1rem;
+            z-index: 10;
         }
 
-        /* Dark mode body text in login wrapper */
-        html.dark-theme .text-muted {
-            color: #8aa4cc !important;
-        }
-        html.dark-theme a[href="/register"] {
-            color: #60a5fa !important;
-        }
-        html.dark-theme a[href="/login"] {
-            color: #60a5fa !important;
+        .login-card {
+            border: 1px solid var(--card-border) !important;
+            border-radius: 24px !important;
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            overflow: hidden;
+            box-shadow: var(--card-shadow) !important;
+            transition: border-color 0.3s, background-color 0.25s;
         }
 
-        /* Ensure inputs are not white in dark mode on this page */
-        html.dark-theme .form-control,
-        html.dark-theme .form-select,
-        html.dark-theme input[type="email"],
-        html.dark-theme input[type="password"],
-        html.dark-theme input[type="text"] {
-            background: #101e38 !important;
-            border-color: #1e3a5f !important;
-            color: #e8f0ff !important;
+        .login-card:hover {
+            border-color: var(--card-hover-border) !important;
         }
-        html.dark-theme .form-control::placeholder {
-            color: #4a6a9a !important;
+
+        .login-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
         }
-        html.dark-theme .form-control:focus,
-        html.dark-theme input[type="email"]:focus,
-        html.dark-theme input[type="password"]:focus {
-            background: #0f2244 !important;
+
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -20px; left: 50%;
+            transform: translateX(-50%);
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.07);
+            pointer-events: none;
+        }
+
+        .login-header i {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 12px;
+            display: inline-block;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .login-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .form-body {
+            padding: 36px 40px;
+            background: var(--card-bg);
+            transition: background-color 0.25s ease;
+        }
+
+        .form-label {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--label-color);
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+        }
+
+        .form-control {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            color: var(--input-color) !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            font-size: 0.95rem;
+            transition: all 0.2s ease !important;
+        }
+
+        .form-control::placeholder { opacity: 0.5; }
+
+        .form-control:focus {
             border-color: #3b82f6 !important;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2) !important;
-            color: #e8f0ff !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+            background: var(--input-focus-bg) !important;
             outline: none;
         }
-        html.dark-theme .form-label {
-            color: #c0d4f0 !important;
+
+        .btn-login {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+            border: none !important;
+            padding: 14px !important;
+            border-radius: 12px !important;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3) !important;
+            transition: all 0.2s ease !important;
+            color: #fff;
+        }
+
+        .btn-login:hover {
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .btn-google {
+            background: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            color: var(--input-color) !important;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-radius: 12px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-google:hover {
+            border-color: rgba(59, 130, 246, 0.4) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.10) !important;
+        }
+
+        html.dark-theme .btn-google {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            color: #f1f5f9 !important;
+        }
+
+        html.dark-theme .btn-google:hover {
+            background: rgba(255, 255, 255, 0.10) !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        .btn-guest {
+            border: 1.5px solid #3b82f6 !important;
+            color: #2563eb !important;
+            background: rgba(37, 99, 235, 0.05) !important;
+            border-radius: 12px !important;
+            padding: 12px !important;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            transition: all 0.2s ease !important;
+        }
+
+        .btn-guest:hover {
+            background: rgba(37, 99, 235, 0.10) !important;
+            color: #1d4ed8 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15) !important;
+        }
+
+        html.dark-theme .btn-guest {
+            border-color: #3b82f6 !important;
+            color: #60a5fa !important;
+            background: transparent !important;
+        }
+
+        html.dark-theme .btn-guest:hover {
+            background: rgba(59, 130, 246, 0.10) !important;
+            color: #fff !important;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--divider-color);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 24px 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--divider-line);
+        }
+
+        .text-link {
+            color: var(--link-color);
+            font-weight: 700;
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+        .text-link:hover { opacity: 0.8; }
+
+        /* Override text-muted to use themed color */
+        .form-body .text-muted {
+            color: var(--label-color) !important;
+            opacity: 0.65;
+        }
+
+        .recommend-note {
+            background: var(--note-bg);
+            border: 1px solid var(--note-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 0.85rem;
+            color: var(--note-color);
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .recommend-note i {
+            color: #d97706;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        html.dark-theme .recommend-note i { color: #fbbf24; }
+
+        .back-btn-global {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--back-color);
+            background: var(--back-bg);
+            border: 1px solid var(--back-border);
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn-global:hover {
+            color: var(--back-hover-color);
+            background: var(--back-hover-bg);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        html.dark-theme .back-btn-global:hover {
+            border-color: rgba(255, 255, 255, 0.20);
+        }
+
+        @media (max-width: 576px) {
+            .form-body { padding: 28px 22px; }
+            .login-header { padding: 28px 22px; }
         }
     </style>
 </head>
@@ -89,7 +375,7 @@
             <div class="card login-card shadow-lg">
 
                 <div class="login-header">
-                    <i class="bi bi-box-arrow-in-right fs-1"></i>
+                    <i class="bi bi-shield-lock"></i>
                     <h2>Interview Portal</h2>
                     <p>Authenticate to access the recruitment assessment dashboard</p>
                 </div>
@@ -100,7 +386,7 @@
                     {% endif %}
 
                     <div class="mb-3">
-                        <a href="/auth/otp/send" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2 py-2" style="font-weight:600; font-size:1.02rem; border-radius:8px;">
+                        <a href="/auth/otp/send" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2 py-2">
                             <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="Google">
                             Sign in with Gmail (OTP Verification)
                         </a>
@@ -130,12 +416,12 @@
 
                     <p class="text-center mt-4 mb-0 text-muted" style="font-size:0.9rem;">
                         Don't have an account?
-                        <a href="/register" style="color:#2563eb; font-weight:700;">Create one here</a>
+                        <a href="/register" class="text-link">Create one here</a>
                         &nbsp;or enter your email &amp; password above and click <strong>Continue as Guest</strong>.
                     </p>
 
                     <div class="recommend-note">
-                        <i class="bi bi-info-circle-fill"></i>
+                        <i class="bi bi-info-circle"></i>
                         <div>We recommend signing in with Google for official verification, or use a guest account to conduct mock assessments.</div>
                     </div>
                 </div>
