@@ -1505,11 +1505,12 @@ from email.mime.text import MIMEText
 
 def send_otp_email(to_email, otp):
     """Send OTP via Gmail SMTP. Reads MAIL_USERNAME / MAIL_PASSWORD from .env"""
-    mail_user = os.environ.get("MAIL_USERNAME")   # matches .env key
-    mail_pass = os.environ.get("MAIL_PASSWORD")   # matches .env key
+    mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
+    mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
     if not mail_user or not mail_pass:
         print(f"[OTP] SMTP not configured — OTP for {to_email} is: {otp}")
         return True  # still returns True so flow continues (dev fallback)
+
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = "Your AI Interview Platform Login OTP"
