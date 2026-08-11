@@ -14,9 +14,10 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# Real-time configurable credentials with environment variables
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+# Real-time configurable credentials with environment variables & defaults
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@gmail.com")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+
 
 # Database URL configuration and fallback
 db_url = os.environ.get("DATABASE_URL")
