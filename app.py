@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = os.environ.get("SECRET_KEY", "supersecretkey_production_fallback_key_2026")
+
 
 # Real-time configurable credentials with environment variables & defaults
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@gmail.com")
