@@ -1803,22 +1803,27 @@ with app.app_context():
     try:
         db.create_all()
         # Verify or add resume_text column dynamic schema update
-        engine = db.engine
-        with engine.connect() as conn:
-            from sqlalchemy import inspect
-            inspector = inspect(engine)
-            columns = [c['name'] for c in inspector.get_columns('users')]
-            if 'resume_text' not in columns:
-                conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_text TEXT"))
-                conn.commit()
-                print("Added column 'resume_text' dynamically to users table.")
-            if 'resume_filename' not in columns:
-                conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
-                conn.commit()
-                print("Added column 'resume_filename' dynamically to users table.")
+        try:
+            engine = db.engine
+            with engine.connect() as conn:
+                from sqlalchemy import inspect
+                inspector = inspect(engine)
+                if inspector.has_table('users'):
+                    columns = [c['name'] for c in inspector.get_columns('users')]
+                    if 'resume_text' not in columns:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_text TEXT"))
+                        conn.commit()
+                        print("Added column 'resume_text' dynamically to users table.")
+                    if 'resume_filename' not in columns:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
+                        conn.commit()
+                        print("Added column 'resume_filename' dynamically to users table.")
+        except Exception as schema_err:
+            print(f"Schema check notice: {schema_err}")
         print("Database tables verified/created successfully.")
     except Exception as e:
         print(f"Error creating/verifying database tables: {e}")
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
