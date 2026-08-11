@@ -367,17 +367,18 @@ def guest_signup():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "").strip()
 
         if not is_valid_email(email):
             return render_template("login.html", error="Please enter a valid email address.", has_google_oauth=has_google_oauth)
 
-        if email == ADMIN_EMAIL and password == ADMIN_PASSWORD:
+        if ADMIN_EMAIL and email == ADMIN_EMAIL.strip().lower() and password == ADMIN_PASSWORD.strip():
             session.clear()
             session["is_admin"] = True
             session["user_name"] = "Admin"
             return redirect("/admin")
+
 
         user = User.query.filter_by(email=email).first()
 
