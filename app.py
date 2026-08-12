@@ -836,6 +836,7 @@ def interview():
     settings = get_settings()
     MIN_QUESTIONS = settings.min_questions
     MAX_QUESTIONS = settings.max_questions
+    timer_seconds = settings.question_timer_seconds or 90
 
     if request.args.get("restart") == "1":
         clear_progress(user_id)
@@ -933,7 +934,6 @@ def interview():
         last_question_entry = session["chat_history"][-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
-        timer_seconds = settings.question_timer_seconds or 90
         return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     # PERF: only send the last few turns to Gemini instead of the full growing transcript
@@ -1103,7 +1103,6 @@ def interview():
     session.modified = True
     save_progress(user_id, session["chat_history"], session["q_count"])
 
-    timer_seconds = settings.question_timer_seconds or 90
     return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
 
