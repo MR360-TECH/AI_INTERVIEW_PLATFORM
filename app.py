@@ -136,6 +136,7 @@ class User(db.Model):
     course = db.Column(db.String(100))
     semester = db.Column(db.String(20))
     auth_provider = db.Column(db.String(20), default='local')
+    email_verified = db.Column(db.Boolean, default=False)
     google_id = db.Column(db.String(100), unique=True, nullable=True)
     registered_at = db.Column(db.DateTime, server_default=db.func.now())
     user_type = db.Column(db.String(20), default='student')
@@ -248,10 +249,141 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+
+        if not email or "@" not in email:
+            return render_template("signup.html", error="Please enter a valid email address.", has_google_oauth=has_google_oauth)
+
+        if User.query.filter_by(email=email).first():
+            return render_template("signup.html", error="An account with this email already exists. Please login.", has_google_oauth=has_google_oauth)
+
+        otp = str(random.randint(100000, 999999))
+        session["reg_otp"] = otp
+        session["pending_signup_email"] = email
+
+        if send_otp_email(email, otp):
+            return redirect("/auth/register/verify-otp")
+        else:
+            return render_template("signup.html", error="Failed to send OTP email. Please try again.", has_google_oauth=has_google_oauth)
+
+    return render_template("signup.html", has_google_oauth=has_google_oauth, error=None)
+
+
+@app.route("/auth/register/verify-otp", methods=["GET", "POST"])
+def verify_register_otp():
+    if "reg_otp" not in session or "pending_signup_email" not in session:
+        return redirect("/signup")
+
+    email = session["pending_signup_email"]
+    if request.method == "GET":
+        return render_template("verify_otp.html", error=None, email=email, next_step="set_password")
+
+    entered = (request.form.get("otp") or "").strip()
+    if entered == session.get("reg_otp"):
+        session.pop("reg_otp", None)
+        session["email_otp_verified"] = email
+        session.pop("pending_signup_email", None)
+        return redirect("/signup/set-password")
+
+    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=email, next_step="set_password")
+
+
+@app.route("/signup/set-password", methods=["GET", "POST"])
+def signup_set_password():
+    email = session.get("email_otp_verified")
+    if not email:
+        return redirect("/signup")
+
+    if request.method == "POST":
+        password = request.form.get("password", "").strip()
+        confirm = request.form.get("confirm_password", "").strip()
+
+        if not password or len(password) < 6:
+            return render_template("set_password.html", error="Password must be at least 6 characters.", email=email)
+        if password != confirm:
+            return render_template("set_password.html", error="Passwords do not match.", email=email)
+
+        session["verified_signup_email"] = email
+        session["verified_signup_password"] = generate_password_hash(password)
+        session.pop("email_otp_verified", None)
+        return redirect("/register")
+
+    return render_template("set_password.html", error=None, email=email)
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+
+        if not email or "@" not in email:
+            return render_template("forgot_password.html", error="Please enter a valid email address.")
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return render_template("forgot_password.html", error="No account found with this email address.")
+
+        otp = str(random.randint(100000, 999999))
+        session["fp_otp"] = otp
+        session["fp_email"] = email
+
+        if send_otp_email(email, otp):
+            return redirect("/forgot-password/verify")
+        else:
+            return render_template("forgot_password.html", error="Failed to send OTP. Please try again.")
+
+    return render_template("forgot_password.html", error=None)
+
+
+@app.route("/forgot-password/verify", methods=["GET", "POST"])
+def forgot_password_verify():
+    if "fp_otp" not in session or "fp_email" not in session:
+        return redirect("/forgot-password")
+
+    email = session["fp_email"]
+    if request.method == "GET":
+        return render_template("verify_otp.html", error=None, email=email, next_step="reset_password")
+
+    entered = (request.form.get("otp") or "").strip()
+    if entered == session.get("fp_otp"):
+        session.pop("fp_otp", None)
+        session["fp_verified_email"] = email
+        session.pop("fp_email", None)
+        return redirect("/forgot-password/reset")
+
+    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=email, next_step="reset_password")
+
+
+@app.route("/forgot-password/reset", methods=["GET", "POST"])
+def forgot_password_reset():
+    email = session.get("fp_verified_email")
+    if not email:
+        return redirect("/forgot-password")
+
+    if request.method == "POST":
+        password = request.form.get("password", "").strip()
+        confirm = request.form.get("confirm_password", "").strip()
+
+        if not password or len(password) < 6:
+            return render_template("set_password.html", error="Password must be at least 6 characters.", email=email, is_reset=True)
+        if password != confirm:
+            return render_template("set_password.html", error="Passwords do not match.", email=email, is_reset=True)
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.password = generate_password_hash(password)
+            db.session.commit()
+        session.pop("fp_verified_email", None)
+        return redirect("/login?msg=password_reset")
+
+    return render_template("set_password.html", error=None, email=email, is_reset=True)
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     is_google = request.args.get("google") == "1"
-    is_guest = request.args.get("guest") == "1"
 
     if request.method == "POST":
         full_name = request.form.get("full_name", "").strip()
@@ -259,7 +391,6 @@ def register():
         education = request.form.get("education")
         course = request.form.get("course")
         semester = request.form.get("semester")
-        
         user_type = request.form.get("user_type", "student")
         github_url = request.form.get("github_url", "").strip() or None
         linkedin_url = request.form.get("linkedin_url", "").strip() or None
@@ -267,13 +398,27 @@ def register():
         years_of_experience = request.form.get("years_of_experience", "").strip() or None
         current_designation = request.form.get("current_designation", "").strip() or None
 
-        if not full_name:
-            return render_template("register.html", error="Full name is required.",
-                                   is_google=is_google, is_guest=is_guest,
-                                   prefill_name="", prefill_email="")
+        email = session.get("pending_google_email") or session.get("verified_signup_email")
+        password = session.get("verified_signup_password")
 
+        def render_register_error(error_msg):
+            return render_template("register.html", error=error_msg,
+                                   is_google=is_google, prefill_name=full_name, prefill_email=email or "",
+                                   prefill_gender=gender, prefill_education=education, prefill_course=course,
+                                   prefill_semester=semester, prefill_user_type=user_type,
+                                   prefill_github_url=github_url, prefill_linkedin_url=linkedin_url,
+                                   prefill_skills=skills, prefill_years_of_experience=years_of_experience,
+                                   prefill_current_designation=current_designation)
+
+        if not full_name:
+            return render_register_error("Full name is required.")
+
+        existing_name = User.query.filter(User.full_name.ilike(full_name)).first()
+        if existing_name and ("user_id" not in session or session.get("user_id") != existing_name.id):
+            return render_register_error("This name is already taken. Please use a different name.")
+
+        # Logged-in user updating their profile
         if "user_id" in session:
-            # ── Profile Completion for already logged-in users (OTP or OAuth) ──
             user = db.session.get(User, session["user_id"])
             if user:
                 user.full_name = full_name
@@ -291,99 +436,60 @@ def register():
                 session["user_name"] = user.full_name
                 return redirect("/dashboard")
 
+        # Google OAuth new user
         if session.get("pending_google_email"):
-            # ── Google OAuth flow ──
-            email = session.pop("pending_google_email")
+            g_email = session.pop("pending_google_email")
             google_id = session.pop("pending_google_id", None)
             session.pop("pending_google_name", None)
             new_user = User(
-                full_name=full_name, email=email, password=None,
+                full_name=full_name, email=g_email, password=None,
                 gender=gender, education=education, course=course, semester=semester,
-                auth_provider="google", google_id=google_id,
+                auth_provider="google", google_id=google_id, email_verified=True,
                 user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
                 skills=skills, years_of_experience=years_of_experience,
                 current_designation=current_designation
             )
+            db.session.add(new_user)
+            db.session.commit()
+            session["user_id"] = new_user.id
+            session["user_name"] = new_user.full_name
+            session["user_email"] = new_user.email
+            return redirect("/dashboard")
 
-        elif session.get("pending_guest_email"):
-            # ── Guest / direct signup flow ──
-            email = session.pop("pending_guest_email")
-            hashed_pw = session.pop("pending_guest_password", None)
+        # Local signup (email verified via OTP, password already set)
+        if session.get("verified_signup_email"):
             new_user = User(
-                full_name=full_name, email=email, password=hashed_pw,
+                full_name=full_name, email=email, password=password,
                 gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest",
+                auth_provider="local", email_verified=True,
                 user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
                 skills=skills, years_of_experience=years_of_experience,
                 current_designation=current_designation
             )
+            db.session.add(new_user)
+            db.session.commit()
+            session.pop("verified_signup_email", None)
+            session.pop("verified_signup_password", None)
+            session["user_id"] = new_user.id
+            session["user_name"] = new_user.full_name
+            session["user_email"] = new_user.email
+            return redirect("/dashboard")
 
-        else:
-            # ── Standalone register (email + password in the form) ──
-            email = request.form.get("email", "").strip().lower()
-            password = request.form.get("password", "").strip()
+        return redirect("/login")
 
-            if not email or "@" not in email:
-                return render_template("register.html", error="Please enter a valid email address.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if not password or len(password) < 6:
-                return render_template("register.html", error="Password must be at least 6 characters.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if email == ADMIN_EMAIL:
-                return render_template("register.html", error="This email is reserved.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            if User.query.filter_by(email=email).first():
-                return render_template("register.html", error="An account with this email already exists. Please login.",
-                                       is_google=False, is_guest=False, prefill_name=full_name, prefill_email=email)
-            new_user = User(
-                full_name=full_name, email=email,
-                password=generate_password_hash(password),
-                gender=gender, education=education, course=course, semester=semester,
-                auth_provider="guest",
-                user_type=user_type, github_url=github_url, linkedin_url=linkedin_url,
-                skills=skills, years_of_experience=years_of_experience,
-                current_designation=current_designation
-            )
-
-        db.session.add(new_user)
-        db.session.commit()
-        session["user_id"] = new_user.id
-        session["user_name"] = new_user.full_name
-        session["user_email"] = new_user.email
-        return redirect("/dashboard")
-
-    # ── GET ─────────────────────────────────────────────────────────────────
-    # Allow direct access to /register (standalone signup page)
+    # GET
     if "user_id" in session:
         user = db.session.get(User, session["user_id"])
         prefill_name = user.full_name if user else ""
         prefill_email = user.email if user else ""
     else:
         prefill_name = session.get("pending_google_name", "")
-        prefill_email = session.get("pending_google_email") or session.get("pending_guest_email", "")
+        prefill_email = session.get("pending_google_email") or session.get("verified_signup_email", "")
+        if not prefill_email:
+            return redirect("/login")
 
-    return render_template("register.html", is_google=is_google, is_guest=is_guest,
+    return render_template("register.html", is_google=is_google,
                            prefill_name=prefill_name, prefill_email=prefill_email, error=None)
-
-@app.route("/guest-signup", methods=["POST"])
-def guest_signup():
-    email = request.form["email"]
-    password = request.form["password"]
-
-    if not is_valid_email(email):
-        return render_template("login.html", error="Please enter a valid email address.")
-
-    if email == ADMIN_EMAIL:
-        return render_template("login.html", error="This email is reserved. Please use a different email.")
-
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        return render_template("login.html", error="This email is already registered. Please login instead.")
-
-    session["pending_guest_email"] = email
-    session["pending_guest_password"] = generate_password_hash(password)
-
-    return redirect("/register?guest=1")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -395,12 +501,12 @@ def login():
         if not is_valid_email(email):
             return render_template("login.html", error="Please enter a valid email address.", has_google_oauth=has_google_oauth)
 
+        # Admin check
         if ADMIN_EMAIL and email == ADMIN_EMAIL.strip().lower() and password == ADMIN_PASSWORD.strip():
             session.clear()
             session["is_admin"] = True
             session["user_name"] = "Admin"
             return redirect("/admin")
-
 
         user = User.query.filter_by(email=email).first()
 
@@ -411,7 +517,7 @@ def login():
             session["user_email"] = user.email
             return redirect("/dashboard")
         else:
-            return render_template("login.html", error="Invalid email or password", has_google_oauth=has_google_oauth)
+            return render_template("login.html", error="Invalid email or password.", has_google_oauth=has_google_oauth)
 
     error_msg = None
     err_code = request.args.get("error")
@@ -420,6 +526,7 @@ def login():
     elif err_code == "google_not_configured":
         error_msg = "Google Sign-in is not configured on this server."
     return render_template("login.html", error=error_msg, has_google_oauth=has_google_oauth)
+
 
 @app.route("/auth/google")
 def auth_google():
@@ -430,6 +537,7 @@ def auth_google():
 
 
 @app.route("/auth/google/callback")
+
 def auth_google_callback():
     if not has_google_oauth:
         return redirect("/login")
@@ -450,6 +558,7 @@ def auth_google_callback():
         if user:
             user.google_id = google_id
             user.auth_provider = "google"
+            user.email_verified = True
             db.session.commit()
 
     if user:

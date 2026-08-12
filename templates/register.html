@@ -379,11 +379,6 @@
                         <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google">
                         Signed in with Google — email is pre-verified
                     </div>
-                    {% elif is_guest %}
-                    <div class="auth-badge">
-                        <i class="bi bi-person-badge"></i>
-                        Guest account — complete your profile to get started
-                    </div>
                     {% endif %}
 
                     <form action="/register" method="POST" id="regForm">
@@ -420,24 +415,16 @@
                             {% endif %}
                         </div>
 
-                        <!-- Password: only for standalone signup -->
-                        {% if not prefill_email %}
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-lock"></i> Password</label>
-                            <input type="password" name="password" class="form-control"
-                                   placeholder="Min. 6 characters" required autocomplete="new-password"
-                                   minlength="6">
-                        </div>
-                        {% endif %}
+                        
 
                         <!-- Gender -->
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-gender-ambiguous"></i> Gender</label>
                             <select name="gender" class="form-select">
                                 <option value="">— Select —</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other / Prefer not to say</option>
+                                <option value="Male" {% if prefill_gender == "Male" %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if prefill_gender == "Female" %}selected{% endif %}>Female</option>
+                                <option value="Other" {% if prefill_gender == "Other" %}selected{% endif %}>Other / Prefer not to say</option>
                             </select>
                         </div>
 
@@ -446,13 +433,13 @@
                             <div class="mb-3">
                                 <label class="form-label"><i class="bi bi-mortarboard"></i> Education Level</label>
                                 <div class="edu-pills">
-                                    <input class="form-check-input" type="radio" name="education" value="School" id="edu1">
+                                    <input class="form-check-input" type="radio" name="education" value="School" id="edu1" {% if prefill_education == "School" %}checked{% endif %}>
                                     <label for="edu1">School</label>
-                                    <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2">
+                                    <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2" {% if prefill_education == "PU/12th" %}checked{% endif %}>
                                     <label for="edu2">PU / 12th</label>
-                                    <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3">
+                                    <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3" {% if prefill_education == "Degree" %}checked{% endif %}>
                                     <label for="edu3">Degree</label>
-                                    <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4">
+                                    <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if prefill_education == "Post Graduate" %}checked{% endif %}>
                                     <label for="edu4">Post Graduate</label>
                                 </div>
                             </div>
@@ -461,12 +448,12 @@
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label"><i class="bi bi-book"></i> Course / Branch</label>
                                     <input type="text" name="course" class="form-control"
-                                           placeholder="e.g. BCA, B.Tech CSE">
+                                           placeholder="e.g. BCA, B.Tech CSE" value="{{ prefill_course or '' }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label"><i class="bi bi-calendar3"></i> Semester / Year</label>
                                     <input type="text" name="semester" class="form-control"
-                                           placeholder="e.g. 6th Sem, 3rd Year">
+                                           placeholder="e.g. 6th Sem, 3rd Year" value="{{ prefill_semester or '' }}">
                                 </div>
                             </div>
                         </div>
@@ -476,12 +463,12 @@
                             <div class="mb-3">
                                 <label class="form-label"><i class="bi bi-building"></i> Current Designation</label>
                                 <input type="text" name="current_designation" class="form-control"
-                                       id="designationInput" placeholder="e.g. Software Engineer, Product Manager">
+                                       id="designationInput" placeholder="e.g. Software Engineer, Product Manager" value="{{ prefill_current_designation or '' }}">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label"><i class="bi bi-clock-history"></i> Years of Experience</label>
                                 <input type="number" name="years_of_experience" class="form-control"
-                                       id="expInput" placeholder="e.g. 3" min="0" max="50" step="0.5">
+                                       id="expInput" placeholder="e.g. 3" min="0" max="50" step="0.5" value="{{ prefill_years_of_experience or '' }}">
                             </div>
                         </div>
 
@@ -491,19 +478,19 @@
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-tools"></i> Primary Skills</label>
                             <input type="text" name="skills" class="form-control"
-                                   placeholder="e.g. Python, React, Machine Learning (comma separated)">
+                                   placeholder="e.g. Python, React, Machine Learning (comma separated)" value="{{ prefill_skills or '' }}">
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label"><i class="bi bi-github"></i> GitHub / Portfolio URL</label>
                                 <input type="url" name="github_url" class="form-control"
-                                       placeholder="https://github.com/username">
+                                       placeholder="https://github.com/username" value="{{ prefill_github_url or '' }}">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label"><i class="bi bi-linkedin"></i> LinkedIn URL</label>
                                 <input type="url" name="linkedin_url" class="form-control"
-                                       placeholder="https://linkedin.com/in/username">
+                                       placeholder="https://linkedin.com/in/username" value="{{ prefill_linkedin_url or '' }}">
                             </div>
                         </div>
 
@@ -560,6 +547,14 @@
             btnProf.classList.add('active');
         }
     }
+
+    // Apply prefilled user type
+    {% if prefill_user_type == "professional" %}
+        setType("professional");
+    {% else %}
+        setType("student");
+    {% endif %}
+
 </script>
 </body>
 </html>

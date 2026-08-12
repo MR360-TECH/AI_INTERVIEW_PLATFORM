@@ -375,55 +375,58 @@
             <div class="card login-card shadow-lg">
 
                 <div class="login-header">
-                    <i class="bi bi-shield-lock"></i>
-                    <h2>Interview Portal</h2>
-                    <p>Authenticate to access the recruitment assessment dashboard</p>
+                    <i class="bi bi-person-circle"></i>
+                    <h2>Sign In</h2>
+                    <p>Welcome back! Enter your credentials to continue</p>
                 </div>
 
                 <div class="form-body">
                     {% if error %}
-                    <div class="alert alert-danger">{{ error }}</div>
+                    <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
+                    </div>
                     {% endif %}
 
+                    {% if request.args.get('msg') == 'password_reset' %}
+                    <div class="alert alert-success d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-check-circle-fill"></i> Password reset successfully! You can now sign in.
+                    </div>
+                    {% endif %}
+
+                    {% if has_google_oauth %}
                     <div class="mb-3">
-                        <a href="/auth/otp/send" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2 py-2">
+                        <a href="/auth/google" class="btn btn-google w-100 d-flex align-items-center justify-content-center gap-2 py-2">
                             <img src="https://www.google.com/favicon.ico" width="20" height="20" alt="Google">
-                            Sign in with Gmail (OTP Verification)
+                            Sign in with Google
                         </a>
                     </div>
+                    <div class="divider">or sign in with email</div>
+                    {% endif %}
 
-                    <div class="divider">or login with credentials</div>
-
-                    <form method="POST" id="loginForm">
+                    <form method="POST" id="loginForm" action="/login">
                         <div class="mb-3">
-                            <label class="form-label" for="email">Email</label>
-                            <input type="email" name="email" id="email" class="form-control" required placeholder="your@email.com">
+                            <label class="form-label" for="email">Email Address</label>
+                            <input type="email" name="email" id="email" class="form-control" required
+                                   placeholder="your@email.com" autocomplete="email">
                         </div>
-
-                        <div class="mb-3">
+                        <div class="mb-1">
                             <label class="form-label" for="password">Password</label>
-                            <input type="password" name="password" id="password" class="form-control" required placeholder="Enter your password">
+                            <input type="password" name="password" id="password" class="form-control" required
+                                   placeholder="Enter your password" autocomplete="current-password">
                         </div>
-
-                        <button type="submit" formaction="/login" class="btn btn-login w-100 text-white mb-2">
-                            Login
-                        </button>
-
-                        <button type="submit" formaction="/guest-signup" class="btn btn-guest w-100">
-                            <i class="bi bi-person-badge"></i> Continue as Guest
+                        <div class="text-end mb-3">
+                            <a href="/forgot-password" class="text-link" style="font-size:0.83rem;">
+                                <i class="bi bi-key"></i> Forgot password?
+                            </a>
+                        </div>
+                        <button type="submit" class="btn btn-login w-100 text-white mb-2">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
                         </button>
                     </form>
 
                     <p class="text-center mt-4 mb-0 text-muted" style="font-size:0.9rem;">
-                        Don't have an account?
-                        <a href="/register" class="text-link">Create one here</a>
-                        &nbsp;or enter your email &amp; password above and click <strong>Continue as Guest</strong>.
+                        No account? <a href="/signup" class="text-link">Create one</a>
                     </p>
-
-                    <div class="recommend-note">
-                        <i class="bi bi-info-circle"></i>
-                        <div>We recommend signing in with Google for official verification, or use a guest account to conduct mock assessments.</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -432,4 +435,4 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html>
