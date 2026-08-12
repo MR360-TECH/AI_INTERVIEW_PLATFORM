@@ -398,7 +398,7 @@
                         <div class="mb-3">
                             <label class="form-label"><i class="bi bi-person"></i> Full Name</label>
                             <input type="text" name="full_name" class="form-control"
-                                   placeholder="e.g. Pavan Kumar" value="{{ prefill_name }}" required
+                                   placeholder="e.g. Pavan Kumar" value="{{ prefill_name or '' }}" required
                                    autocomplete="name">
                         </div>
 
@@ -426,6 +426,9 @@
                                 <option value="Female" {% if prefill_gender == "Female" %}selected{% endif %}>Female</option>
                                 <option value="Other" {% if prefill_gender == "Other" %}selected{% endif %}>Other / Prefer not to say</option>
                             </select>
+                            {% if error and 'gender' in error|lower %}
+                            <small class="text-danger" style="font-size:0.8rem;">{{ error }}</small>
+                            {% endif %}
                         </div>
 
                         <!-- Education (Students only) -->
@@ -442,6 +445,9 @@
                                     <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if prefill_education == "Post Graduate" %}checked{% endif %}>
                                     <label for="edu4">Post Graduate</label>
                                 </div>
+                                {% if error and 'education' in error|lower %}
+                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                {% endif %}
                             </div>
 
                             <div class="row">
@@ -449,11 +455,17 @@
                                     <label class="form-label"><i class="bi bi-book"></i> Course / Branch</label>
                                     <input type="text" name="course" class="form-control"
                                            placeholder="e.g. BCA, B.Tech CSE" value="{{ prefill_course or '' }}">
+                                    {% if error and 'course' in error|lower %}
+                                    <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label"><i class="bi bi-calendar3"></i> Semester / Year</label>
                                     <input type="text" name="semester" class="form-control"
                                            placeholder="e.g. 6th Sem, 3rd Year" value="{{ prefill_semester or '' }}">
+                                    {% if error and 'semester' in error|lower %}
+                                    <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -464,11 +476,17 @@
                                 <label class="form-label"><i class="bi bi-building"></i> Current Designation</label>
                                 <input type="text" name="current_designation" class="form-control"
                                        id="designationInput" placeholder="e.g. Software Engineer, Product Manager" value="{{ prefill_current_designation or '' }}">
+                                {% if error and 'designation' in error|lower %}
+                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                {% endif %}
                             </div>
-                            <div class="mb-3">
+                             <div class="mb-3">
                                 <label class="form-label"><i class="bi bi-clock-history"></i> Years of Experience</label>
                                 <input type="number" name="years_of_experience" class="form-control"
                                        id="expInput" placeholder="e.g. 3" min="0" max="50" step="0.5" value="{{ prefill_years_of_experience or '' }}">
+                                {% if error and 'experience' in error|lower %}
+                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                {% endif %}
                             </div>
                         </div>
 

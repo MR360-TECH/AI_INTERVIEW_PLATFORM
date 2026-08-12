@@ -6,6 +6,7 @@ from google.genai import types
 import os
 import re
 import json
+import random
 from authlib.integrations.flask_client import OAuth
 from datetime import datetime
 from dotenv import load_dotenv
@@ -411,11 +412,27 @@ def register():
                                    prefill_current_designation=current_designation)
 
         if not full_name:
-            return render_register_error("Full name is required.")
+            return render_register_error("Please fill in your full name.")
+
+        if not gender:
+            return render_register_error("Please select your gender.")
 
         existing_name = User.query.filter(User.full_name.ilike(full_name)).first()
         if existing_name and ("user_id" not in session or session.get("user_id") != existing_name.id):
             return render_register_error("This name is already taken. Please use a different name.")
+
+        if user_type == "student":
+            if not education:
+                return render_register_error("Please select your education level.")
+            if not course:
+                return render_register_error("Please enter your course/branch.")
+            if not semester:
+                return render_register_error("Please enter your semester/year.")
+        elif user_type == "professional":
+            if not current_designation:
+                return render_register_error("Please enter your current designation.")
+            if not years_of_experience:
+                return render_register_error("Please enter your years of experience.")
 
         # Logged-in user updating their profile
         if "user_id" in session:
@@ -1629,7 +1646,6 @@ def interview_submit():
 # ─────────────────────────────────────────────────────────────────────────────
 # OTP LOGIN  –  /auth/otp/send  and  /auth/otp/verify
 # ─────────────────────────────────────────────────────────────────────────────
-import random
 import smtplib
 import threading
 import urllib.request
