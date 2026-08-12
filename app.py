@@ -15,6 +15,21 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "supersecretkey_production_fallback_key_2026")
 
+IS_PRODUCTION = bool(
+    os.environ.get("DATABASE_URL")
+    or os.environ.get("RENDER")
+    or os.environ.get("RAILWAY_ENVIRONMENT")
+    or os.environ.get("FLASK_ENV") == "production"
+)
+
+if IS_PRODUCTION:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+    app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["PREFERRED_URL_SCHEME"] = "https"
+
 
 # Real-time configurable credentials with environment variables & defaults
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@gmail.com")
@@ -57,7 +72,10 @@ if db_url.startswith("mysql"):
         else:
             raise ValueError("Invalid MySQL URI format")
     except Exception as e:
-        print(f"MySQL database connection failed ({e}). Falling back to local SQLite database.")
+        print(f"MySQL database connection failed ({e}).")
+        if IS_PRODUCTION:
+            raise RuntimeError(f"MySQL connection failed in production: {e}") from e
+        print("Falling back to local SQLite database.")
         db_url = "sqlite:///ai_interview_platform.db"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
@@ -1211,7 +1229,7 @@ def interview():
 
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
-        return f"AI error: {str(e)}"
+        return redirect("/dashboard?error=ai_error")
 
     if question_text == "INTERVIEW_COMPLETE":
         return redirect("/interview-result")

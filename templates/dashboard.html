@@ -611,7 +611,13 @@
             font-size: 0.8rem; display: flex; align-items: center; justify-content: center;
             gap: 7px; width: 100%; transition: all 0.16s ease; cursor: pointer; margin-top: 8px;
         }
-        .btn-reset-ghost:hover { background: rgba(239,68,68,0.07); border-color: #ef4444; }
+        .btn-reset-ghost:hover {
+            background: rgba(239,68,68,0.12);
+            border-color: #ef4444;
+            color: #ef4444;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(239,68,68,0.30);
+        }
 
         /* Specific Resume status elements inside Resume top card */
         .resume-status-box {
@@ -995,11 +1001,9 @@
                             {% endif %}
                         </button>
                         {% if has_progress %}
-                        <div class="text-center mt-2">
-                            <button type="button" class="btn p-0 border-0 text-muted" style="font-size:0.75rem;font-family:'Outfit',sans-serif;font-weight:600;" id="resetAssessmentBtn">
-                                <i class="bi bi-arrow-clockwise"></i> Start Fresh Session
-                            </button>
-                        </div>
+                        <button type="button" class="btn-reset-ghost" id="resetAssessmentBtn">
+                            <i class="bi bi-arrow-clockwise"></i> Start Fresh Session
+                        </button>
                         {% endif %}
                     </div>
                 </div>

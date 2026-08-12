@@ -47,6 +47,14 @@
             --type-badge-border: rgba(37, 99, 235, 0.20);
             --q-text-color:      #0f172a;
             --overlay-bg:        rgba(240, 244, 255, 0.96);
+
+            /* Modal tokens (solid backgrounds — no transparency bleed-through) */
+            --surface-elevated:  #ffffff;
+            --border:            rgba(219, 234, 254, 0.8);
+            --text-main:         #0f172a;
+            --text-desc:         #64748b;
+            --emerald-hover:     #059669;
+            --radius-lg:         16px;
         }
 
         html.dark-theme {
@@ -70,6 +78,22 @@
             --type-badge-border: rgba(255, 255, 255, 0.10);
             --q-text-color:      #f0f6ff;
             --overlay-bg:        rgba(11, 15, 25, 0.95);
+
+            --surface-elevated:  #1e293b;
+            --border:            rgba(255, 255, 255, 0.12);
+            --text-main:         #f1f5f9;
+            --text-desc:         #94a3b8;
+            --emerald-hover:     #10b981;
+        }
+
+        .modal-content {
+            background: var(--surface-elevated) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            color: var(--text-main) !important;
+        }
+        html.dark-theme .modal-content {
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6) !important;
         }
 
         body {
