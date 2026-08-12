@@ -272,6 +272,25 @@ def register():
                                    is_google=is_google, is_guest=is_guest,
                                    prefill_name="", prefill_email="")
 
+        if "user_id" in session:
+            # ── Profile Completion for already logged-in users (OTP or OAuth) ──
+            user = db.session.get(User, session["user_id"])
+            if user:
+                user.full_name = full_name
+                user.gender = gender
+                user.education = education
+                user.course = course
+                user.semester = semester
+                user.user_type = user_type
+                user.github_url = github_url
+                user.linkedin_url = linkedin_url
+                user.skills = skills
+                user.years_of_experience = years_of_experience
+                user.current_designation = current_designation
+                db.session.commit()
+                session["user_name"] = user.full_name
+                return redirect("/dashboard")
+
         if session.get("pending_google_email"):
             # ── Google OAuth flow ──
             email = session.pop("pending_google_email")
@@ -335,8 +354,13 @@ def register():
 
     # ── GET ─────────────────────────────────────────────────────────────────
     # Allow direct access to /register (standalone signup page)
-    prefill_name = session.get("pending_google_name", "")
-    prefill_email = session.get("pending_google_email") or session.get("pending_guest_email", "")
+    if "user_id" in session:
+        user = db.session.get(User, session["user_id"])
+        prefill_name = user.full_name if user else ""
+        prefill_email = user.email if user else ""
+    else:
+        prefill_name = session.get("pending_google_name", "")
+        prefill_email = session.get("pending_google_email") or session.get("pending_guest_email", "")
 
     return render_template("register.html", is_google=is_google, is_guest=is_guest,
                            prefill_name=prefill_name, prefill_email=prefill_email, error=None)
