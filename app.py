@@ -72,10 +72,7 @@ if db_url.startswith("mysql"):
         else:
             raise ValueError("Invalid MySQL URI format")
     except Exception as e:
-        print(f"MySQL database connection failed ({e}).")
-        if IS_PRODUCTION:
-            raise RuntimeError(f"MySQL connection failed in production: {e}") from e
-        print("Falling back to local SQLite database.")
+        print(f"MySQL database connection failed ({e}). Falling back to SQLite.")
         db_url = "sqlite:///ai_interview_platform.db"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
@@ -991,14 +988,12 @@ def interview():
             session.pop("interview_mode", None)
             session.pop("practice_topic", None)
 
-    if "chat_history" not in session:
-        progress = InterviewProgress.query.filter_by(user_id=user_id).first()
-        if progress:
-            session["chat_history"] = json.loads(progress.chat_history)
-            session["q_count"] = progress.q_count
-        else:
-            session["chat_history"] = []
-            session["q_count"] = 0
+    # Always load chat history from DB — avoids session cookie size limits in production
+    _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
+    if "q_count" not in session:
+        session["q_count"] = _db_progress.q_count if _db_progress else 0
+    q_count = session.get("q_count", 0)
 
     if request.method == "POST":
         answer = request.form.get("answer", "").strip()
@@ -1006,7 +1001,7 @@ def interview():
         attachment = request.files.get("attachment")
         resume_file = request.files.get("resume")
 
-        if session["q_count"] == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+        if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
             try:
                 filename = resume_file.filename
                 ext = filename.rsplit('.', 1)[1].lower()
@@ -1040,7 +1035,7 @@ def interview():
                 print(f"Error handling interview resume upload: {e}")
 
         if answer or code_answer:
-            if session["q_count"] == 0:
+            if q_count == 0:
                 if session.get("interview_mode"):
                     session["interview_domain"] = session.get("practice_topic", "Practice")
                 else:
@@ -1064,28 +1059,29 @@ def interview():
                 )
                 full_answer += " [Attached file analysis: " + analysis + "]"
 
-            session["chat_history"].append({"role": "answer", "text": full_answer})
-            session["q_count"] += 1
+            chat_history.append({"role": "answer", "text": full_answer})
+            q_count += 1
+            session["q_count"] = q_count
             session.modified = True
-            save_progress(user_id, session["chat_history"], session["q_count"])
+            save_progress(user_id, chat_history, q_count)
 
     # Practice mode has no question cap — user finishes via the Finish button
     is_practice = bool(session.get("interview_mode"))
-    if not is_practice and session["q_count"] >= MAX_QUESTIONS:
+    if not is_practice and q_count >= MAX_QUESTIONS:
         return redirect("/interview-result")
 
-    if session["chat_history"] and session["chat_history"][-1]["role"] == "question":
-        last_question_entry = session["chat_history"][-1]
+    if chat_history and chat_history[-1]["role"] == "question":
+        last_question_entry = chat_history[-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
-        return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+        return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # PERF: only send the last few turns to Gemini instead of the full growing transcript
+    # Build conversation text for Gemini prompt
     conversation_text = ""
-    for entry in session["chat_history"]:
+    for entry in chat_history:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
     try:
-        if session["q_count"] == 0:
+        if q_count == 0:
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
 
@@ -1191,8 +1187,8 @@ def interview():
                     )
 
             completion_option = ""
-            if session["q_count"] >= MIN_QUESTIONS:
-                if difficulty != "student" or session["q_count"] >= 5:
+            if q_count >= MIN_QUESTIONS:
+                if difficulty != "student" or q_count >= 5:
                     completion_option = (
                         f"\n7. You have asked at least {MIN_QUESTIONS} questions. If you feel you have gathered "
                         "enough evaluation data, you MAY choose to end the interview by responding with EXACTLY 'INTERVIEW_COMPLETE'.\n"
@@ -1244,11 +1240,11 @@ def interview():
         # Strip the tag from the final display question text
         question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
 
-    session["chat_history"].append({"role": "question", "text": question_text, "type": question_type})
+    chat_history.append({"role": "question", "text": question_text, "type": question_type})
     session.modified = True
-    save_progress(user_id, session["chat_history"], session["q_count"])
+    save_progress(user_id, chat_history, q_count)
 
-    return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+    return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
 
 @app.route("/finish-interview", methods=["GET", "POST"])
@@ -1270,7 +1266,9 @@ def interview_result():
     PASS_SCORE = settings.pass_score
 
     conversation_text = ""
-    for entry in session.get("chat_history", []):
+    _result_progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
+    _result_history = json.loads(_result_progress.chat_history or '[]') if _result_progress else []
+    for entry in _result_history:
         conversation_text += entry["role"] + ": " + entry["text"] + "\n"
 
     try:
@@ -1599,17 +1597,21 @@ def interview_submit():
         else:
             full_answer = "[Candidate Code]:\n" + code_answer
 
-    session["chat_history"].append({"role": "answer", "text": full_answer})
-    session["q_count"] = session.get("q_count", 0) + 1
+    # Load chat history from DB — avoids session cookie size limits in production
+    _submit_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    submit_history = json.loads(_submit_progress.chat_history or '[]') if _submit_progress else []
+    submit_q_count = session.get("q_count", 0) + 1
+
+    submit_history.append({"role": "answer", "text": full_answer})
+    session["q_count"] = submit_q_count
     session.modified = True
 
     # Check if interview is complete
-    if session["q_count"] >= MAX_QUESTIONS:
-        save_progress(user_id, session["chat_history"], session["q_count"])
+    if not is_practice and submit_q_count >= MAX_QUESTIONS:
+        save_progress(user_id, submit_history, submit_q_count)
         return jsonify({"done": True, "redirect": "/interview-result"})
 
     # Generate next question
-    history = session["chat_history"]
     domain = session.get("interview_domain", "Software Engineering")
     difficulty = session.get("interview_difficulty", "student")
     resume_summary = session.get("resume_summary", "")
@@ -1617,20 +1619,18 @@ def interview_submit():
     prompt_parts = [
         f"You are a senior {domain} interviewer. Difficulty: {difficulty}.",
         f"Resume summary: {resume_summary}" if resume_summary else "",
-        "Continue the interview. Based on the candidate's last answer, ask the next question.dont stick on same concept , instead explore different categories of questions and output only question and not anything else.",
-        "Keep it concise.stay wuthin the same domain and  output only raw questions and not anythign else . Do NOT repeat previous questions.",
-        f"Question {session['q_count'] + 1} of {MAX_QUESTIONS}.",
+        "Continue the interview. Based on the candidate's last answer, ask the next question. Don't stick on same concept, instead explore different categories of questions and output only question and nothing else.",
+        "Keep it concise. Stay within the same domain and output only raw questions. Do NOT repeat previous questions.",
+        f"Question {submit_q_count + 1} of {MAX_QUESTIONS}.",
     ]
     system_prompt = " ".join(p for p in prompt_parts if p)
 
     chat_turns = []
-    for msg in history:
+    for msg in submit_history:
         role = "user" if msg["role"] == "answer" else "model"
         chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
 
     try:
-        api_key = os.environ.get("GEMINI_API_KEY")
-        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=chat_turns,
@@ -1638,6 +1638,7 @@ def interview_submit():
         )
         question_text = response.text.strip() if response.text else "Tell me about yourself."
     except Exception as e:
+        print(f"[SUBMIT ERROR] {e}")
         question_text = "Can you walk me through a challenging technical problem you solved recently?"
 
     question_type = "text"
@@ -1648,13 +1649,12 @@ def interview_submit():
             question_type = tag
         question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
 
-    session["chat_history"].append({"role": "question", "text": question_text, "type": question_type})
-    session.modified = True
-    save_progress(user_id, session["chat_history"], session["q_count"])
+    submit_history.append({"role": "question", "text": question_text, "type": question_type})
+    save_progress(user_id, submit_history, submit_q_count)
 
     return jsonify({
         "question": question_text,
-        "q_num": session["q_count"] + 1,
+        "q_num": submit_q_count + 1,
         "total": MAX_QUESTIONS,
         "question_type": question_type,
         "done": False,
