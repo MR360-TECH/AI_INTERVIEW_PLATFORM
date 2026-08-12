@@ -85,8 +85,6 @@ MODEL_NAME = "gemini-flash-lite-latest"
 
 
 
-from authlib.integrations.flask_client import OAuth
-
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
@@ -466,7 +464,7 @@ def dashboard():
     if "user_id" not in session:
         return redirect("/login")
 
-    current_user = User.query.get(session["user_id"])
+    current_user = db.session.get(User, session["user_id"])
     if current_user and not profile_is_complete(current_user):
         return redirect("/register")
 
@@ -496,7 +494,7 @@ def dashboard_update_resume():
     if "user_id" not in session:
         return redirect("/login")
     
-    user = User.query.get(session["user_id"])
+    user = db.session.get(User, session["user_id"])
     if not user:
         return redirect("/dashboard")
         
@@ -540,7 +538,7 @@ def dashboard_update_resume():
 def dashboard_remove_resume():
     if "user_id" not in session:
         return redirect("/login")
-    user = User.query.get(session["user_id"])
+    user = db.session.get(User, session["user_id"])
     if user:
         if user.resume_filename:
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], user.resume_filename)
@@ -569,7 +567,7 @@ def edit_profile():
     if "user_id" not in session:
         return redirect("/login")
 
-    user = User.query.get(session["user_id"])
+    user = db.session.get(User, session["user_id"])
 
     if request.method == "POST":
         user.full_name = request.form.get("full_name")
@@ -700,7 +698,7 @@ def delete_result(result_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
-    record = InterviewResult.query.get(result_id)
+    record = db.session.get(InterviewResult, result_id)
     if record:
         db.session.delete(record)
         db.session.commit()
@@ -716,7 +714,7 @@ def delete_user(user_id):
     InterviewResult.query.filter_by(user_id=user_id).delete()
     InterviewProgress.query.filter_by(user_id=user_id).delete()
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if user:
         db.session.delete(user)
 
@@ -730,7 +728,7 @@ def admin_user_detail(user_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return redirect("/admin")
 
@@ -747,11 +745,11 @@ def admin_interview_detail(result_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
-    result = InterviewResult.query.get(result_id)
+    result = db.session.get(InterviewResult, result_id)
     if not result:
         return redirect("/admin")
 
-    candidate = User.query.get(result.user_id)
+    candidate = db.session.get(User, result.user_id)
 
     try:
         score_percent = min(int((float(result.score) / 10) * 100), 100)
@@ -843,7 +841,7 @@ def interview():
             try:
                 filename = resume_file.filename
                 ext = filename.rsplit('.', 1)[1].lower()
-                user = User.query.get(user_id)
+                user = db.session.get(User, user_id)
                 saved_filename = f"user_{user.id}_resume.{ext}"
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
                 
@@ -911,7 +909,7 @@ def interview():
         last_question_entry = session["chat_history"][-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
-        timer_seconds = getattr(get_settings(), 'question_timer_seconds', 90) or 90
+        timer_seconds = settings.question_timer_seconds or 90
         return render_template("interview.html", question=last_question, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     # PERF: only send the last few turns to Gemini instead of the full growing transcript
@@ -1081,11 +1079,11 @@ def interview():
     session.modified = True
     save_progress(user_id, session["chat_history"], session["q_count"])
 
-    timer_seconds = getattr(get_settings(), 'question_timer_seconds', 90) or 90
+    timer_seconds = settings.question_timer_seconds or 90
     return render_template("interview.html", question=question_text, q_num=session["q_count"] + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
 
-@app.route("/finish-interview", methods=["POST"])
+@app.route("/finish-interview", methods=["GET", "POST"])
 def finish_interview():
     """Allows practice mode users to end their session early and go to results."""
     if "user_id" not in session:
@@ -1257,6 +1255,7 @@ def interview_result():
     except Exception as e:
         return "AI error: " + str(e)
 
+    user_id = session["user_id"]
     session.pop("chat_history", None)
     session.pop("q_count", None)
     session.pop("resume_choice", None)
@@ -1265,7 +1264,7 @@ def interview_result():
     session.pop("interview_difficulty", None)
     session.pop("interview_mode", None)
     session.pop("practice_topic", None)
-    clear_progress(session["user_id"])
+    clear_progress(user_id)
 
     return render_template(
         "interview_result.html",
@@ -1439,7 +1438,7 @@ def interview_submit():
     # Check if interview is complete
     if session["q_count"] >= MAX_QUESTIONS:
         save_progress(user_id, session["chat_history"], session["q_count"])
-        return jsonify({"done": True, "redirect": "/finish-interview"})
+        return jsonify({"done": True, "redirect": "/interview-result"})
 
     # Generate next question
     history = session["chat_history"]
@@ -1499,6 +1498,7 @@ def interview_submit():
 # ─────────────────────────────────────────────────────────────────────────────
 import random
 import smtplib
+import threading
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -1541,11 +1541,30 @@ def send_otp_email(to_email, otp):
         msg.attach(MIMEText(text_body, "plain"))
         msg.attach(MIMEText(html_body, "html"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(mail_user, mail_pass)
-            server.sendmail(mail_user, [to_email], msg.as_string())
-        print(f"[OTP] Sent to {to_email} successfully.")
-        return True
+        import socket
+        result = {"ok": False}
+
+        def _send():
+            try:
+                old_timeout = socket.getdefaulttimeout()
+                socket.setdefaulttimeout(15)
+                with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    server.login(mail_user, mail_pass)
+                    server.sendmail(mail_user, [to_email], msg.as_string())
+                result["ok"] = True
+                print(f"[OTP] Sent to {to_email} successfully.")
+            except Exception as exc:
+                print(f"[OTP] SMTP error: {exc}")
+            finally:
+                socket.setdefaulttimeout(old_timeout if 'old_timeout' in dir() else None)
+
+        t = threading.Thread(target=_send, daemon=True)
+        t.start()
+        t.join(timeout=20)  # wait up to 20 s — well within gunicorn's 30 s limit
+        return result["ok"]
     except Exception as e:
         print(f"[OTP] SMTP error: {e}")
         return False
@@ -1556,37 +1575,42 @@ def send_otp():
     if request.method == "GET":
         return render_template("send_otp.html", error=None)
 
-    email = (request.form.get("email") or "").strip().lower()
-    if not email or "@" not in email:
-        return render_template("send_otp.html", error="Please enter a valid email address.")
+    try:
+        email = (request.form.get("email") or "").strip().lower()
+        if not email or "@" not in email:
+            return render_template("send_otp.html", error="Please enter a valid email address.")
 
-    # Check user exists or auto-create account for seamless OTP login
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        # Create user account automatically on OTP request
-        user_name = email.split("@")[0].capitalize()
-        user = User(
-            full_name=user_name,
-            email=email,
-            password=generate_password_hash("OTPUser@2026"),
-            auth_provider="otp"
-        )
-        db.session.add(user)
-        try:
-            db.session.commit()
-            print(f"[OTP] Auto-created user account for {email}")
-        except Exception as e:
-            db.session.rollback()
-            print(f"[OTP] Error auto-creating user account: {e}")
+        # Check user exists or auto-create account for seamless OTP login
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user_name = email.split("@")[0].capitalize()
+            user = User(
+                full_name=user_name,
+                email=email,
+                password=generate_password_hash(os.urandom(24).hex()),
+                auth_provider="otp"
+            )
+            db.session.add(user)
+            try:
+                db.session.commit()
+                print(f"[OTP] Auto-created user account for {email}")
+            except Exception as e:
+                db.session.rollback()
+                print(f"[OTP] Error auto-creating user account: {e}")
 
-    otp = str(random.randint(100000, 999999))
-    session["otp_code"] = otp
-    session["otp_email"] = email
+        otp = str(random.randint(100000, 999999))
+        session["otp_code"] = otp
+        session["otp_email"] = email
 
-    if send_otp_email(email, otp):
-        return redirect("/auth/otp/verify")
-    else:
-        return render_template("send_otp.html", error="Failed to send OTP. Please check email/SMTP configuration.")
+        if send_otp_email(email, otp):
+            return redirect("/auth/otp/verify")
+        else:
+            return render_template("send_otp.html", error="Failed to send OTP email. Please try again or use password login.")
+
+    except Exception as e:
+        print(f"[send_otp] Unexpected error: {e}")
+        db.session.rollback()
+        return render_template("send_otp.html", error="Something went wrong. Please try again.")
 
 
 
@@ -1607,6 +1631,8 @@ def verify_otp():
             session["user_id"] = user.id
             session["user_name"] = user.full_name
             session["user_email"] = user.email
+            if not profile_is_complete(user):
+                return redirect("/register")
             return redirect("/dashboard")
     return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=session.get("otp_email", ""))
 
