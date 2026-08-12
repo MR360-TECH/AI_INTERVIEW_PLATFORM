@@ -1030,9 +1030,10 @@ def interview():
                 if difficulty == "student":
                     difficulty_instruction = (
                         "The candidate is a Student/Beginner. Keep questions friendly and focused on core fundamentals. "
+                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?'). "
                         "Do NOT ask highly complex technical engineering or design scenario questions. If they answer incorrectly or struggle, "
                         "ask a simpler follow-up or guide them gently. Do not end early unless you have asked at least 5 questions. "
-                        "Keep praise and conversational feedback minimal and professional (avoid informal expressions like 'Wow', 'Keep it up', or 'Great job')."
+                        "Keep praise and conversational feedback minimal and professional."
                     )
                 elif difficulty == "senior":
                     difficulty_instruction = (
@@ -1042,15 +1043,15 @@ def interview():
                 else:
                     difficulty_instruction = (
                         "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
-                        "Adjust difficulty adaptively based on their performance. explore different categories of questions within the domain and output only question and not anything els. Keep feedback professional and minimal."
+                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
                     )
 
             completion_option = ""
             if session["q_count"] >= MIN_QUESTIONS:
                 if difficulty != "student" or session["q_count"] >= 5:
                     completion_option = (
-                        f"\n6. You have asked at least {MIN_QUESTIONS} questions. If you feel you have gathered "
-                        "enough evaluation data, respond with EXACTLY 'INTERVIEW_COMPLETE'.\n"
+                        f"\n7. You have asked at least {MIN_QUESTIONS} questions. If you feel you have gathered "
+                        "enough evaluation data, you MAY choose to end the interview by responding with EXACTLY 'INTERVIEW_COMPLETE'.\n"
                     )
 
             prompt = (
@@ -1061,10 +1062,10 @@ def interview():
                 "Identify their specified domain/field (e.g., Fitness Coach, Software Engineer, Marketing). "
                 "You MUST stay strictly 100% within domain for every question. NEVER switch or mix in unrelated fields.\n\n"
                 "RULES FOR OUTPUT:\n"
-                "1. Output ONLY the raw next question (or INTERVIEW_COMPLETE). Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.only repeat question and nothing.\n"
+                "1. Output ONLY the raw next question. Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.\n"
                 "2. Even if previous answer is not up to mark and if candidate is trying to answer his best, show some mercy and ask him simpler and fundamental question.\n"
                 "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios and only ask question and no fillers with it.\n"
-                "4. Explore explore different categories of questions within the domain and output only question and not anything else. Do not repeat similar questions.\n"
+                "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
                 "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
                 "6. INPUT TYPE TAGGING RULE: You must tag the next response according to the input type you expect. Add the tag at the very end of your response:\n"
                 "   - If the question requires the candidate to write, fix, or analyze code, append exactly `[TYPE: CODE]` to the very end of your question text.\n"
