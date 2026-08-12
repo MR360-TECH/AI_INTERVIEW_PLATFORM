@@ -961,6 +961,289 @@ def practice_start():
     return redirect(url_for("interview", restart="1", practice="1"))
 
 
+
+    if session.get("is_admin"):
+        return redirect("/admin")
+    if "user_id" not in session:
+        return redirect("/login")
+
+    # Guard against missing Gemini API Key in production
+    if not os.environ.get("GEMINI_API_KEY"):
+        return redirect("/dashboard?error=api_key_missing")
+
+    user_id = session["user_id"]
+
+    settings = get_settings()
+    MIN_QUESTIONS = settings.min_questions
+    MAX_QUESTIONS = settings.max_questions
+    timer_seconds = settings.question_timer_seconds or 90
+
+    if request.args.get("restart") == "1":
+        clear_progress(user_id)
+        session.pop("chat_history", None)
+        session.pop("q_count", None)
+        session.pop("resume_summary", None)
+        if request.args.get("practice") != "1":
+            session.pop("interview_mode", None)
+            session.pop("practice_topic", None)
+
+    # Always load chat history from DB — avoids session cookie size limits in production
+    _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
+    if "q_count" not in session:
+        session["q_count"] = _db_progress.q_count if _db_progress else 0
+    q_count = session.get("q_count", 0)
+
+    if request.method == "POST":
+        answer = request.form.get("answer", "").strip()
+        code_answer = request.form.get("code_answer", "").strip()
+        attachment = request.files.get("attachment")
+        resume_file = request.files.get("resume")
+
+        if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+            try:
+                filename = resume_file.filename
+                ext = filename.rsplit('.', 1)[1].lower()
+                user = db.session.get(User, user_id)
+                saved_filename = f"user_{user.id}_resume.{ext}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
+                
+                resume_file.seek(0)
+                file_bytes = resume_file.read()
+                with open(file_path, "wb") as f:
+                    f.write(file_bytes)
+                
+                if user:
+                    user.resume_filename = saved_filename
+                    resume_file.seek(0)
+                    extracted_text = analyze_attachment(
+                        file_bytes, resume_file.mimetype,
+                        context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+                    )
+                    user.resume_text = extracted_text
+                    db.session.commit()
+
+                resume_file.seek(0)
+                resume_analysis = analyze_attachment(
+                    file_bytes, resume_file.mimetype,
+                    context_hint="This is supposed to be the candidate's resume. First, verify it genuinely looks like a resume/CV (has sections like experience, education, or skills). If it does NOT look like a real resume, respond with exactly: NOT_A_RESUME. If it IS a resume, summarize their role, key skills, and experience level in 3-4 sentences."
+                )
+                if "NOT_A_RESUME" not in resume_analysis:
+                    session["resume_summary"] = resume_analysis
+            except Exception as e:
+                print(f"Error handling interview resume upload: {e}")
+
+        if answer or code_answer:
+            if q_count == 0:
+                if session.get("interview_mode"):
+                    session["interview_domain"] = session.get("practice_topic", "Practice")
+                else:
+                    session["interview_domain"] = answer.strip()
+                # difficulty is set by admin globally — candidate has no choice
+                session["interview_difficulty"] = settings.default_difficulty or "student"
+
+            full_answer = answer
+            if code_answer:
+                if full_answer:
+                    full_answer += "\n\n[Candidate Code Input]:\n" + code_answer
+                else:
+                    full_answer = "[Candidate Code Input]:\n" + code_answer
+
+            if attachment and attachment.filename and allowed_file(attachment.filename):
+                file_bytes = attachment.read()
+                mime_type = attachment.mimetype
+                analysis = analyze_attachment(
+                    file_bytes, mime_type,
+                    context_hint="This was attached by the candidate alongside their answer during a job interview."
+                )
+                full_answer += " [Attached file analysis: " + analysis + "]"
+
+            chat_history.append({"role": "answer", "text": full_answer})
+            q_count += 1
+            session["q_count"] = q_count
+            session.modified = True
+            save_progress(user_id, chat_history, q_count)
+
+    # Practice mode has no question cap — user finishes via the Finish button
+    is_practice = bool(session.get("interview_mode"))
+    if not is_practice and q_count >= MAX_QUESTIONS:
+        return redirect("/interview-result")
+
+    if chat_history and chat_history[-1]["role"] == "question":
+        last_question_entry = chat_history[-1]
+        last_question = last_question_entry["text"]
+        question_type = last_question_entry.get("type", "text")
+        return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+
+    # Build conversation text for Gemini prompt
+    conversation_text = ""
+    for entry in chat_history:
+        conversation_text += f"{entry['role']}: {entry['text']}\n"
+    try:
+        if q_count == 0:
+            practice_mode = session.get("interview_mode")
+            practice_topic = session.get("practice_topic", "General")
+
+            if practice_mode == "viva":
+                prompt = (
+                    f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
+                    "Briefly introduce the exam and ask the candidate your very first conceptual question about this subject. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
+            elif practice_mode == "lang":
+                target_lang = session.get("lang_target", "English")
+                focus_cat = session.get("lang_focus", "conversation")
+                level = session.get("lang_level", "intermediate")
+                is_english_target = target_lang.strip().lower() == "english"
+                translation_rule_q1 = (
+                    ""
+                    if is_english_target
+                    else f"Format the question STRICTLY as follows: first write the question in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Do NOT skip the English translation. "
+                )
+                prompt = (
+                    f"You are a language validator and native tutor. First, analyze the string: '{target_lang}'. "
+                    "Is this a legitimate language name (e.g. English, French, Spanish, Hindi, Telugu, Sindhi, Japanese, Arabic, Russian, etc.)? "
+                    "If it is NOT a legitimate or real language, respond with exactly: "
+                    "'ERROR: Language not found. Please start a new session and specify a valid language. [TYPE: TEXT]' "
+                    "If it IS a legitimate language, start a language speaking practice session. "
+                    f"The target language is: {target_lang}. The candidate's level is: {level.capitalize()}. "
+                    f"The focus category is: {focus_cat.capitalize()}. "
+                    "Briefly introduce the session with a warm and slightly friendly tone, then ask the first practice question or prompt. "
+                    f"{translation_rule_q1}"
+                    "The user can answer in any language they prefer. "
+                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble, no extra commentary."
+                )
+            elif practice_mode == "drill":
+                prompt = (
+                    f"You are a friendly mentor starting a concept drill session on the topic: {practice_topic}. "
+                    "State the topic and ask the candidate their first open conceptual question. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
+            else:
+                resume_context = ""
+                if session.get("resume_summary"):
+                    resume_context = "The candidate uploaded their resume, summarized as: " + session["resume_summary"] + " Use this context when useful, but still ask them to confirm their role/domain first. "
+
+                prompt = (
+                    "You are an interviewer starting an interview. "
+                    + resume_context +
+                    "Ask the candidate which specific role or domain they are interviewing for. "
+                    "Output ONLY the question text itself followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
+        else:
+            difficulty = session.get("interview_difficulty", "student")
+            practice_mode = session.get("interview_mode")
+            practice_topic = session.get("practice_topic", "General")
+
+            if practice_mode == "viva":
+                difficulty_instruction = (
+                    f"The candidate is undergoing an Academic Viva Voce exam on: {practice_topic}. "
+                    "Keep questions clear, technical, and strictly focused on academic course concepts. "
+                    "Evaluate their understanding of theory, equations, algorithms, or definitions."
+                )
+            elif practice_mode == "lang":
+                target_lang = session.get("lang_target", "English")
+                focus_cat = session.get("lang_focus", "conversation")
+                level = session.get("lang_level", "intermediate")
+                is_english_target = target_lang.strip().lower() == "english"
+                translation_rule = (
+                    ""
+                    if is_english_target
+                    else f"IMPORTANT FORMAT RULE: Always write each question first in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Never skip the English translation. "
+                )
+                difficulty_instruction = (
+                    f"This is a FluentFlow language practice session in {target_lang}. The candidate's level is {level.capitalize()}. "
+                    f"Focus Category: {focus_cat.capitalize()}. "
+                    "Maintain a warm, polite, and professional but encouraging tone. Keep any conversational remarks extremely short (under 2 sentences). "
+                    "If the candidate's last response contained any clear grammatical, vocabulary, or structural mistakes, "
+                    "provide a single, polite, direct correction sentence (e.g., 'Correction: Instead of ..., it is better to say ...'), then immediately ask the next question. "
+                    f"{translation_rule}"
+                    "The candidate can answer in any language they prefer — do not restrict or comment on the language of their answer."
+                )
+            elif practice_mode == "drill":
+                difficulty_instruction = (
+                    f"The candidate is doing a Concept Drill on: {practice_topic}. "
+                    "Ask helpful conceptual questions that challenge their logic and reasoning on this topic."
+                )
+            else:
+                if difficulty == "student":
+                    difficulty_instruction = (
+                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
+                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
+                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle,change the topic and ask different question withtin the same domain "
+                        "ask a simpler follow-up or guide them gently.if previous answer was notupto the mark or wrong , change the concept of question. Do not end early unless you have asked at least 5 questions. "
+                        "Keep conversational feedback minimal and professional."
+                    )
+                elif difficulty == "senior":
+                    difficulty_instruction = (
+                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
+                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar.explore different categories of questions within the domain and output only question and not anything els. Do not offer any conversational filler or praise."
+                    )
+                else:
+                    difficulty_instruction = (
+                        "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
+                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
+                    )
+
+            completion_option = ""
+            if q_count >= MIN_QUESTIONS:
+                if difficulty != "student" or q_count >= 5:
+                    completion_option = (
+                        f"\n7. You have asked at least {MIN_QUESTIONS} questions. If you feel you have gathered "
+                        "enough evaluation data, you MAY choose to end the interview by responding with EXACTLY 'INTERVIEW_COMPLETE'.\n"
+                    )
+
+            prompt = (
+                "You are an interviewer conducting a real job interview.\n\n"
+                f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
+                "CRITICAL DOMAIN RULE:\n"
+                "Identify their specified domain from their first answer. You MUST stay strictly 100% within this domain. NEVER switch to unrelated fields.stay strictly within the domain and output only questions and nothing else .\n\n"
+                "RULES FOR OUTPUT:\n"
+                "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
+                "2. If they struggle or answer 'I don't know', DO NOT give them the answer and DO NOT say 'No problem' or acknowledge it. change the topic  of question within the domain and Just output the next question immediately.\n"
+                "3. If their answer is strong, challenge them with deeper scenarios, but if they give.\n"
+                "4. Explore different topics within the domain. Do not repeat similar questions.\n"
+                "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
+                "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
+                
+                "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
+                "   - `[TYPE: CODE]` if they need to write or fix code.\n"
+                "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
+                "   - `[TYPE: TEXT]` for all other standard questions.\n"
+                f"{completion_option}\n"
+                f"Conversation so far:\n{conversation_text}\n"
+                "Output ONLY the raw question text with its tag below:"
+            )
+
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt,
+            config=types.GenerateContentConfig(max_output_tokens=150)
+        )
+        question_text = response.text.strip()
+
+    except Exception as e:
+        print(f"[INTERVIEW ERROR] {e}")
+        return redirect("/dashboard?error=ai_error")
+
+    if question_text == "INTERVIEW_COMPLETE":
+        return redirect("/interview-result")
+
+    # Parse TYPE tag
+    question_type = "text"
+    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
+    if match:
+        tag_type = match.group(1).lower()
+        if tag_type in ["code", "file", "text"]:
+            question_type = tag_type
+        # Strip the tag from the final display question text
+        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
+
+    chat_history.append({"role": "question", "text": question_text, "type": question_type})
+    session.modified = True
+    save_progress(user_id, chat_history, q_count)
+
+    return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 @app.route("/interview", methods=["GET", "POST"])
 def interview():
     if session.get("is_admin"):
@@ -1169,11 +1452,11 @@ def interview():
             else:
                 if difficulty == "student":
                     difficulty_instruction = (
-                        "The candidate is a Student/Beginner. Keep questions friendly and focused on core fundamentals. "
-                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?'). "
-                        "Do NOT ask highly complex technical engineering or design scenario questions. If they answer incorrectly or struggle, "
-                        "ask a simpler follow-up or guide them gently. Do not end early unless you have asked at least 5 questions. "
-                        "Keep praise and conversational feedback minimal and professional."
+                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
+                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
+                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle,change the topic and ask different question withtin the same domain "
+                        "ask a simpler follow-up or guide them gently.if previous answer was notupto the mark or wrong , change the concept of question. Do not end early unless you have asked at least 5 questions. "
+                        "Keep conversational feedback minimal and professional."
                     )
                 elif difficulty == "senior":
                     difficulty_instruction = (
@@ -1198,19 +1481,19 @@ def interview():
                 "You are an interviewer conducting a real job interview.\n\n"
                 f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
                 "CRITICAL DOMAIN RULE:\n"
-                "Look at the candidate's VERY FIRST ANSWER in the conversation below. "
-                "Identify their specified domain/field (e.g., Fitness Coach, Software Engineer, Marketing). "
-                "You MUST stay strictly 100% within domain for every question. NEVER switch or mix in unrelated fields.\n\n"
+                "Identify their specified domain from their first answer. You MUST stay strictly 100% within this domain. NEVER switch to unrelated fields.stay strictly within the domain and output only questions and nothing else .\n\n"
                 "RULES FOR OUTPUT:\n"
-                "1. Output ONLY the raw next question. Keep it extremely concise, direct, and short (under 2 sentences). ZERO preamble. No conversational filler, praise, or validation commentary (e.g., do NOT say 'Wow, keep it up!', 'Great', 'Nice answer', 'Moving on', or 'Since you are in...'). Start directly with the question.\n"
-                "2. Even if previous answer is not up to mark and if candidate is trying to answer his best, show some mercy and ask him simpler and fundamental question.\n"
-                "3. Adapt to their performance: if their previous answer was weak, step back to fundamental supportive questions. If strong, challenge them with deeper scenarios and only ask question and no fillers with it.\n"
+                "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
+                "2. If they struggle or answer 'I don't know', DO NOT give them the answer and DO NOT say 'No problem' or acknowledge it. change the topic  of question within the domain and Just output the next question immediately.\n"
+                "3. If their answer is strong, challenge them with deeper scenarios, but if they give.\n"
+                "4. Explore different topics within the domain. Do not repeat similar questions.\n"
                 "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
                 "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
-                "6. INPUT TYPE TAGGING RULE: You must tag the next response according to the input type you expect. Add the tag at the very end of your response:\n"
-                "   - If the question requires the candidate to write, fix, or analyze code, append exactly `[TYPE: CODE]` to the very end of your question text.\n"
-                "   - If the question requires the candidate to upload a diagram, draw a sketch, solve an equation on paper, or attach an image/file, append exactly `[TYPE: FILE]` to the very end of your question text.\n"
-                "   - For all other standard verbal/conversational/conceptual/general questions, append exactly `[TYPE: TEXT]` to the very end of your question text.\n"
+                
+                "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
+                "   - `[TYPE: CODE]` if they need to write or fix code.\n"
+                "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
+                "   - `[TYPE: TEXT]` for all other standard questions.\n"
                 f"{completion_option}\n"
                 f"Conversation so far:\n{conversation_text}\n"
                 "Output ONLY the raw question text with its tag below:"
@@ -1245,6 +1528,7 @@ def interview():
     save_progress(user_id, chat_history, q_count)
 
     return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+
 
 
 @app.route("/finish-interview", methods=["GET", "POST"])
@@ -1332,7 +1616,7 @@ def interview_result():
           "Write in formal, precise business-evaluation language, the way a hiring committee's official written report reads. No casual phrasing, no filler praise, no hedging. "
           "Calibrate the score honestly: 9-10 is reserved for exceptional, hire-immediately performance; 7-8 is solid and competent; 5-6 is mixed with real gaps; below 5 means significant weaknesses outweighed strengths. "
           "Respond in EXACTLY this format, nothing else, no markdown symbols like ** or #:\n"
-          "SCORE: [a number out of 10]\n"
+          " output SCORE: [a number out of 10]\n"
           "SUMMARY:\n"
           "[A formal, multi-paragraph evaluation of at least 180 words, written as a real hiring panel report. Structure it as flowing paragraphs (not bullet points or labeled sections) covering: overall impression and field-appropriate competence; concrete strengths grounded in specific answers; concrete weaknesses or gaps grounded in specific answers; how they performed under increasing difficulty; and a closing paragraph with a clear, actionable recommendation for what they should work on next.]\n\n"
           "Conversation: " + conversation_text)
@@ -1617,12 +1901,18 @@ def interview_submit():
     resume_summary = session.get("resume_summary", "")
 
     prompt_parts = [
-        f"You are a senior {domain} interviewer. Difficulty: {difficulty}.",
+        f"You are a strict {domain} interviewer. Difficulty: {difficulty}.",
         f"Resume summary: {resume_summary}" if resume_summary else "",
-        "Continue the interview. Based on the candidate's last answer, ask the next question. Don't stick on same concept, instead explore different categories of questions and output only question and nothing else.",
-        "Keep it concise. Stay within the same domain and output only raw questions. Do NOT repeat previous questions.",
-        f"Question {submit_q_count + 1} of {MAX_QUESTIONS}.",
+        "CRITICAL RULE: You MUST stay strictly 100% within the domain of " + domain + ". NEVER switch to unrelated fields.",
+        "Output ONLY the raw next question.explore diverse category of questions within the domain and change topic of questions if they previous answer is wrong or not upto the mark Keep it concise (under 2 sentences). ZERO preamble or acknowledgment.",
+        "If they answer 'I don't know', DO NOT give them the answer and DO NOT acknowledge it. Just output the next question immediately.",
     ]
+    
+    if not is_practice and submit_q_count >= MIN_QUESTIONS:
+        prompt_parts.append("If the candidate has demonstrated sufficient knowledge and you are ready to finish the interview, output ONLY the exact phrase: [END_INTERVIEW]")
+        
+    prompt_parts.append(f"Question {submit_q_count + 1} (Max: {MAX_QUESTIONS}).")
+    
     system_prompt = " ".join(p for p in prompt_parts if p)
 
     chat_turns = []
@@ -1637,6 +1927,11 @@ def interview_submit():
             config=types.GenerateContentConfig(system_instruction=system_prompt, max_output_tokens=300),
         )
         question_text = response.text.strip() if response.text else "Tell me about yourself."
+        
+        if not is_practice and "[END_INTERVIEW]" in question_text.upper() and submit_q_count >= MIN_QUESTIONS:
+            save_progress(user_id, submit_history, submit_q_count)
+            return jsonify({"done": True, "redirect": "/interview-result"})
+            
     except Exception as e:
         print(f"[SUBMIT ERROR] {e}")
         question_text = "Can you walk me through a challenging technical problem you solved recently?"
