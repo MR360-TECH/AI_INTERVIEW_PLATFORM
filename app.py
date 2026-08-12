@@ -1499,75 +1499,155 @@ def interview_submit():
 import random
 import smtplib
 import threading
+import urllib.request
+import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+# Shared HTML OTP email body builder
+def _otp_html_body(otp):
+    return f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;
+                background:#f7f9fc;border-radius:12px;border:1px solid #e3e7f0;">
+      <h2 style="color:#1a2036;margin-bottom:6px;">Your Login OTP</h2>
+      <p style="color:#5a6a85;font-size:15px;margin-bottom:24px;">
+        Use the code below to log in to the AI Interview Platform.
+      </p>
+      <div style="background:#ffffff;border:1.5px solid #d0e1fd;border-radius:10px;
+                  text-align:center;padding:24px 0;margin-bottom:24px;">
+        <span style="font-size:38px;font-weight:800;letter-spacing:10px;color:#4e73df;">{otp}</span>
+      </div>
+      <p style="color:#8a96b0;font-size:13px;margin:0;">
+        This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.
+      </p>
+    </div>
+    """
+
+def _send_via_resend(to_email, otp, api_key):
+    """Send via Resend HTTP API (port 443 – works on Render free tier)."""
+    from_addr = os.environ.get("MAIL_FROM", f"AI Interview Platform <noreply@{os.environ.get('RESEND_DOMAIN', 'resend.dev')}>")
+    payload = json.dumps({
+        "from": from_addr,
+        "to": [to_email],
+        "subject": "Your AI Interview Platform Login OTP",
+        "html": _otp_html_body(otp),
+        "text": f"Your OTP is: {otp}\n\nValid for 10 minutes. Do not share it."
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        body = resp.read().decode()
+        print(f"[OTP] Resend response: {resp.status} {body[:120]}")
+        return resp.status in (200, 201)
+
+
+def _send_via_sendgrid(to_email, otp, api_key):
+    """Send via SendGrid HTTP API (port 443 – works on Render free tier)."""
+    from_addr = os.environ.get("MAIL_FROM", "noreply@yourdomain.com")
+    payload = json.dumps({
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": from_addr, "name": "AI Interview Platform"},
+        "subject": "Your AI Interview Platform Login OTP",
+        "content": [
+            {"type": "text/plain", "value": f"Your OTP is: {otp}\n\nValid for 10 minutes."},
+            {"type": "text/html",  "value": _otp_html_body(otp)},
+        ]
+    }).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.sendgrid.com/v3/mail/send",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        print(f"[OTP] SendGrid response: {resp.status}")
+        return resp.status == 202
+
+
+def _send_via_smtp(to_email, otp, mail_user, mail_pass):
+    """SMTP fallback — may be blocked on Render free tier."""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Your AI Interview Platform Login OTP"
+    msg["From"] = f"AI Interview Platform <{mail_user}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(f"Your OTP is: {otp}\n\nValid for 10 minutes.", "plain"))
+    msg.attach(MIMEText(_otp_html_body(otp), "html"))
+
+    import socket
+    result = {"ok": False}
+
+    def _smtp_thread():
+        try:
+            old_to = socket.getdefaulttimeout()
+            socket.setdefaulttimeout(15)
+            with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+                server.login(mail_user, mail_pass)
+                server.sendmail(mail_user, [to_email], msg.as_string())
+            result["ok"] = True
+            print(f"[OTP] SMTP sent to {to_email} successfully.")
+        except Exception as exc:
+            print(f"[OTP] SMTP error: {exc}")
+        finally:
+            socket.setdefaulttimeout(old_to if 'old_to' in dir() else None)
+
+    t = threading.Thread(target=_smtp_thread, daemon=True)
+    t.start()
+    t.join(timeout=20)
+    return result["ok"]
+
 
 def send_otp_email(to_email, otp):
-    """Send OTP via Gmail SMTP. Reads MAIL_USERNAME / MAIL_PASSWORD from .env"""
+    """
+    Send OTP email. Tries providers in priority order:
+      1. Resend  (set RESEND_API_KEY  in Render env vars)
+      2. SendGrid (set SENDGRID_API_KEY in Render env vars)
+      3. Gmail SMTP (set MAIL_USERNAME + MAIL_PASSWORD — blocked on Render free tier)
+    If none are configured, prints OTP to logs (dev/local fallback).
+    """
+    # ── 1. Resend ─────────────────────────────────────────────────────────────
+    resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+    if resend_key:
+        try:
+            ok = _send_via_resend(to_email, otp, resend_key)
+            if ok:
+                print(f"[OTP] Resend: sent to {to_email}")
+                return True
+        except Exception as e:
+            print(f"[OTP] Resend error: {e}")
+
+    # ── 2. SendGrid ───────────────────────────────────────────────────────────
+    sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
+    if sg_key:
+        try:
+            ok = _send_via_sendgrid(to_email, otp, sg_key)
+            if ok:
+                print(f"[OTP] SendGrid: sent to {to_email}")
+                return True
+        except Exception as e:
+            print(f"[OTP] SendGrid error: {e}")
+
+    # ── 3. SMTP (local / non-Render environments) ─────────────────────────────
     mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
     mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
-    if not mail_user or not mail_pass:
-        print(f"[OTP] SMTP not configured — OTP for {to_email} is: {otp}")
-        return True  # still returns True so flow continues (dev fallback)
+    if mail_user and mail_pass:
+        return _send_via_smtp(to_email, otp, mail_user, mail_pass)
 
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Your AI Interview Platform Login OTP"
-        msg["From"] = f"AI Interview Platform <{mail_user}>"
-        msg["To"] = to_email
-
-        # Plain text fallback
-        text_body = f"Your OTP is: {otp}\n\nThis code is valid for 10 minutes. Do not share it with anyone."
-
-        # HTML body
-        html_body = f"""
-        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;
-                    background:#f7f9fc;border-radius:12px;border:1px solid #e3e7f0;">
-          <h2 style="color:#1a2036;margin-bottom:6px;">Your Login OTP</h2>
-          <p style="color:#5a6a85;font-size:15px;margin-bottom:24px;">
-            Use the code below to log in to the AI Interview Platform.
-          </p>
-          <div style="background:#ffffff;border:1.5px solid #d0e1fd;border-radius:10px;
-                      text-align:center;padding:24px 0;margin-bottom:24px;">
-            <span style="font-size:38px;font-weight:800;letter-spacing:10px;color:#4e73df;">{otp}</span>
-          </div>
-          <p style="color:#8a96b0;font-size:13px;margin:0;">
-            This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.
-          </p>
-        </div>
-        """
-
-        msg.attach(MIMEText(text_body, "plain"))
-        msg.attach(MIMEText(html_body, "html"))
-
-        import socket
-        result = {"ok": False}
-
-        def _send():
-            try:
-                old_timeout = socket.getdefaulttimeout()
-                socket.setdefaulttimeout(15)
-                with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
-                    server.login(mail_user, mail_pass)
-                    server.sendmail(mail_user, [to_email], msg.as_string())
-                result["ok"] = True
-                print(f"[OTP] Sent to {to_email} successfully.")
-            except Exception as exc:
-                print(f"[OTP] SMTP error: {exc}")
-            finally:
-                socket.setdefaulttimeout(old_timeout if 'old_timeout' in dir() else None)
-
-        t = threading.Thread(target=_send, daemon=True)
-        t.start()
-        t.join(timeout=20)  # wait up to 20 s — well within gunicorn's 30 s limit
-        return result["ok"]
-    except Exception as e:
-        print(f"[OTP] SMTP error: {e}")
-        return False
+    # ── Dev fallback: no provider configured ──────────────────────────────────
+    print(f"[OTP] No email provider configured. OTP for {to_email}: {otp}")
+    return True  # Allow flow to continue in dev/local mode
 
 
 @app.route("/auth/otp/send", methods=["GET", "POST"])
