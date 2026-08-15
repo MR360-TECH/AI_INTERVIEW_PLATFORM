@@ -660,7 +660,7 @@
                 </div>
                 <div class="meta-card">
                     <div class="meta-label">Evaluation Score</div>
-                    <div class="meta-value score-val">{{ score | int if (score | float == score | int) else score }} / 10</div>
+                    <div class="meta-value score-val">{{ score | round(1) | string | replace('.0', '') }} / 10</div>
                 </div>
             </div>
         </div>
@@ -672,7 +672,7 @@
                     <circle class="ring-fill" cx="62.5" cy="62.5" r="50"/>
                 </svg>
                 <div class="ring-center">
-                    <span class="ring-score">{{ score | int if (score | float == score | int) else score }}</span>
+                    <span class="ring-score">{{ score | round(1) | string | replace('.0', '') }}</span>
                     <span class="ring-denom">OUT OF 10</span>
                 </div>
             </div>
@@ -725,7 +725,7 @@
             </div>
             <div class="metric-card">
                 <div class="metric-icon"><i class="bi bi-bar-chart-fill"></i></div>
-                <div class="metric-val">{{ score | int if (score | float == score | int) else score }} / 10</div>
+                <div class="metric-val">{{ score | round(1) | string | replace('.0', '') }} / 10</div>
                 <div class="metric-desc">Evaluation Index</div>
             </div>
         </div>

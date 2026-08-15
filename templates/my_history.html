@@ -420,11 +420,11 @@
         <div class="attempt-right">
             <div>
                 <div class="score-display">
-                    <span class="score-num">{{ a.score }}</span>
+                    <span class="score-num">{{ a.score | round(1) | string | replace('.0', '') }}</span>
                     <span class="score-denom">/10</span>
                 </div>
                 <div class="score-bar-wrap">
-                    <div class="score-bar-fill" style="width:{{ (a.score / 10 * 100)|int }}%; background: {% if a.score >= 6 %}linear-gradient(90deg,#10b981,#06b6d4){% elif a.score >= 4 %}linear-gradient(90deg,#f59e0b,#d97706){% else %}linear-gradient(90deg,#ef4444,#dc2626){% endif %};"></div>
+                    <div class="score-bar-fill" style="width:{{ ((a.score|float) / 10 * 100)|int }}%; background: {% if (a.score|float) >= 6 %}linear-gradient(90deg,#10b981,#06b6d4){% elif (a.score|float) >= 4 %}linear-gradient(90deg,#f59e0b,#d97706){% else %}linear-gradient(90deg,#ef4444,#dc2626){% endif %};"></div>
                 </div>
             </div>
 

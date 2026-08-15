@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "supersecretkey_production_fallback_key_2026")
+app.secret_key = os.environ.get("SECRET_KEY") or "supersecretkey_production_fallback_key_2026"
 
 IS_PRODUCTION = bool(
     os.environ.get("DATABASE_URL")
@@ -22,12 +22,14 @@ IS_PRODUCTION = bool(
     or os.environ.get("FLASK_ENV") == "production"
 )
 
+# Session cookie security — applied to all environments
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
 if IS_PRODUCTION:
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     app.config["SESSION_COOKIE_SECURE"] = True
-    app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
 
@@ -260,9 +262,27 @@ def clear_progress(user_id):
     db.session.commit()
 
 
+# ── Security headers injected on every response ────────────────────────────
+@app.after_request
+def apply_security_headers(response):
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(self), geolocation=()"
+    if IS_PRODUCTION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
+
+
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -1718,7 +1738,7 @@ def interview_result():
 
     return render_template(
         "interview_result.html",
-        score=score,
+        score=score_num,
         score_percent=score_percent,
         label=label,
         label_color=label_color,
@@ -1785,7 +1805,7 @@ def view_past_result(result_id):
 
     return render_template(
         "interview_result.html",
-        score=result.score,
+        score=score_num,
         score_percent=score_percent,
         label=label,
         label_color=label_color,
