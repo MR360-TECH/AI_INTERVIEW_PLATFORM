@@ -1,7 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" class="dark-theme">
 <head>
-    <title>Assessment History — AI Interview Platform</title>
+    <title>Assessment History â€” AI Interview Platform</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your complete AI placement assessment history with score trends and performance insights.">
@@ -12,11 +12,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <script>
     (function() {
-        var saved = localStorage.getItem('theme') || 'light';
-        if (saved === 'dark') {
-            document.documentElement.classList.add('dark-theme');
+        document.documentElement.classList.add('dark-theme');
             document.documentElement.setAttribute('data-theme', 'dark');
-        }
+            localStorage.setItem('theme', 'dark');
     })();
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -32,8 +30,8 @@
             --brand-glow: rgba(37,99,235,0.15);
         }
         html.dark-theme {
-            --bg: #0b0f19;
-            --surface: rgba(30,41,59,0.55);
+            --bg: rgba(4, 9, 20, 0.65);
+            --surface: rgba(10, 15, 29, 0.65);
             --border: rgba(255,255,255,0.08);
             --text-1: #f1f5f9;
             --text-2: #94a3b8;
@@ -44,27 +42,15 @@
         * { box-sizing: border-box; }
 
         body {
-            background: var(--bg);
+            
             font-family: 'Inter', sans-serif;
             color: var(--text-1);
             min-height: 100vh;
             transition: background 0.25s ease, color 0.25s ease;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                radial-gradient(ellipse 60% 45% at 10% -5%, rgba(37,99,235,0.07) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 90% 100%, rgba(6,182,212,0.05) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        html.dark-theme body::before {
-            background-image:
-                radial-gradient(ellipse 700px 350px at 50% -100px, rgba(59,130,246,0.15) 0%, rgba(6,182,212,0.05) 50%, transparent 70%);
-        }
+        
+        html.dark-theme 
 
         .page-wrap {
             position: relative;
@@ -74,7 +60,7 @@
             padding: 40px 20px 80px;
         }
 
-        /* ── Page header ── */
+        /* â”€â”€ Page header â”€â”€ */
         .page-header {
             display: flex;
             align-items: center;
@@ -110,7 +96,6 @@
             font-weight: 600;
             font-size: 0.88rem;
             text-decoration: none;
-            backdrop-filter: blur(12px);
             transition: all 0.2s ease;
         }
         .back-btn:hover {
@@ -120,14 +105,13 @@
             transform: translateX(-3px);
         }
 
-        /* ── Glass card ── */
+        /* â”€â”€ Glass card â”€â”€ */
         .glass-card {
             background: var(--surface);
             border: 1.5px solid var(--border);
             border-radius: 24px;
             padding: 32px 36px;
             margin-bottom: 24px;
-            backdrop-filter: blur(20px);
             box-shadow: 0 8px 32px rgba(0,0,0,0.06);
             transition: border-color 0.25s ease;
         }
@@ -152,13 +136,13 @@
             margin: 0 0 24px;
         }
 
-        /* ── Chart canvas wrapper ── */
+        /* â”€â”€ Chart canvas wrapper â”€â”€ */
         .chart-wrap {
             position: relative;
             height: 160px;
         }
 
-        /* ── Attempt list ── */
+        /* â”€â”€ Attempt list â”€â”€ */
         .attempts-section-label {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
@@ -175,7 +159,6 @@
             border-radius: 18px;
             padding: 20px 24px;
             margin-bottom: 14px;
-            backdrop-filter: blur(16px);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -306,7 +289,6 @@
             font-size: 0.82rem;
             text-decoration: none;
             transition: all 0.18s ease;
-            backdrop-filter: blur(8px);
         }
         .btn-view-report:hover {
             background: var(--brand);
@@ -315,7 +297,7 @@
             box-shadow: 0 4px 14px var(--brand-glow);
         }
 
-        /* ── Empty state ── */
+        /* â”€â”€ Empty state â”€â”€ */
         .empty-state {
             text-align: center;
             padding: 64px 20px;
@@ -400,7 +382,7 @@
     </div>
 
     <!-- Attempt Cards -->
-    <div class="attempts-section-label">Assessment Records — {{ attempts | length }} total</div>
+    <div class="attempts-section-label">Assessment Records â€” {{ attempts | length }} total</div>
 
     {% for a in attempts %}
     <div class="attempt-card">

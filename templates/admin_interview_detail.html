@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark-theme">
 <head>
     <title>Placement Evaluation Report — AI Interview Platform</title>
     <meta charset="UTF-8">
@@ -8,12 +8,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script>
         (function() {
-            var savedTheme = localStorage.getItem('theme') || 'light';
-            if (savedTheme === 'dark') {
-                document.documentElement.classList.add('dark-theme');
-            }
+            document.documentElement.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
         })();
     </script>
 
@@ -30,9 +29,9 @@
         }
 
         html.dark-theme {
-            --surface:  #0f172a;
-            --bg:       #020617;
-            --bg2:      #1e293b;
+            --surface:  rgba(10, 15, 29, 0.65);
+            --bg:       transparent;
+            --bg2:      transparent;
             --border:   #334155;
             --border2:  #334155;
             --text-1:   #f8fafc;
@@ -40,31 +39,45 @@
             --indigo:   #818cf8;
         }
 
+        .meta-link {
+            color: var(--indigo) !important;
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: color 0.2s ease;
+        }
+        .meta-link:hover {
+            text-decoration: underline !important;
+            filter: brightness(1.15);
+        }
+
+        .skill-badge {
+            background: #eef2ff;
+            color: #4f46e5;
+            border: 1.5px solid #c7d2fe;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        html.dark-theme .skill-badge {
+            background: rgba(99, 102, 241, 0.15) !important;
+            color: #818cf8 !important;
+            border-color: rgba(99, 102, 241, 0.35) !important;
+        }
+
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
         body {
-            background: var(--bg);
+            
             min-height: 100vh;
             padding: 0 0 60px;
             color: var(--text-1);
             transition: background 0.25s ease, color 0.25s ease;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                radial-gradient(ellipse 70% 50% at 15% -5%, rgba(99,102,241,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 85% 100%, rgba(139,92,246,0.07) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 0;
-        }
-        html.dark-theme body::before {
-            background-image:
-                radial-gradient(ellipse 70% 50% at 15% -5%, rgba(99,102,241,0.16) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 40% at 85% 100%, rgba(139,92,246,0.11) 0%, transparent 60%);
-        }
+        
+        html.dark-theme 
 
         .page-shell {
             position: relative;
@@ -415,7 +428,7 @@
 
         /* ── Print ── */
         @media print {
-            body { background: #fff !important; padding: 0 !important; color: #000 !important; }
+            body {  padding: 0 !important; color: #000 !important; }
             body::before { display: none; }
             .top-bar, .btn-pdf-download, .back-btn { display: none !important; }
             .panel {
@@ -554,7 +567,7 @@
                     <div class="meta-card-icon" style="background:#f8fafc;color:#1e293b;"><i class="bi bi-github"></i></div>
                     <div>
                         <div class="meta-card-label">GitHub</div>
-                        <div class="meta-card-val"><a href="{{ candidate.github_url }}" target="_blank" style="color:#4f46e5;text-decoration:none;font-size:0.82rem;">{{ candidate.github_url | replace('https://', '') | truncate(30) }}</a></div>
+                        <div class="meta-card-val"><a href="{{ candidate.github_url }}" target="_blank" class="meta-link">{{ candidate.github_url | replace('https://', '') | truncate(30) }}</a></div>
                     </div>
                 </div>
             </div>
@@ -565,7 +578,7 @@
                     <div class="meta-card-icon" style="background:#eff6ff;color:#0a66c2;"><i class="bi bi-linkedin"></i></div>
                     <div>
                         <div class="meta-card-label">LinkedIn</div>
-                        <div class="meta-card-val"><a href="{{ candidate.linkedin_url }}" target="_blank" style="color:#4f46e5;text-decoration:none;font-size:0.82rem;">{{ candidate.linkedin_url | replace('https://', '') | truncate(30) }}</a></div>
+                        <div class="meta-card-val"><a href="{{ candidate.linkedin_url }}" target="_blank" class="meta-link">{{ candidate.linkedin_url | replace('https://', '') | truncate(30) }}</a></div>
                     </div>
                 </div>
             </div>
@@ -576,7 +589,7 @@
                     <div class="meta-card-label mb-1">Skills</div>
                     <div style="display:flex;flex-wrap:wrap;gap:6px;">
                         {% for skill in candidate.skills.split(',') %}
-                        <span style="background:#eef2ff;color:#4f46e5;border:1.5px solid #c7d2fe;border-radius:6px;padding:2px 8px;font-size:0.72rem;font-weight:700;">{{ skill.strip() }}</span>
+                        <span class="skill-badge">{{ skill.strip() }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -704,7 +717,7 @@
             }
         }
 
-        var currentTheme = localStorage.getItem('theme') || 'light';
+        var currentTheme = localStorage.getItem('theme') || 'dark';
         updateIcon(currentTheme);
         if (currentTheme === 'dark') {
             document.documentElement.classList.add('dark-theme');
@@ -712,7 +725,7 @@
         }
 
         toggleBtn.addEventListener('click', function() {
-            var theme = localStorage.getItem('theme') || 'light';
+            var theme = localStorage.getItem('theme') || 'dark';
             var newTheme = theme === 'light' ? 'dark' : 'light';
             localStorage.setItem('theme', newTheme);
             updateIcon(newTheme);

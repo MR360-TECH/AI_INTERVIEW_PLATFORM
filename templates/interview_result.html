@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark-theme">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,11 +11,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 <script>
 (function() {
-    var saved = localStorage.getItem('theme') || 'light';
-    if (saved === 'dark') {
-        document.documentElement.classList.add('dark-theme');
-        document.documentElement.setAttribute('data-theme', 'dark');
-    }
+    document.documentElement.classList.add('dark-theme');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme', 'dark');
 })();
 </script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -42,7 +40,7 @@
         --score-track:    #cbd5e1;
 
         --header-bg:      linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #1d4ed8 100%);
-        --shadow-flashy:  0 20px 60px -15px rgba(37, 99, 235, 0.35), 0 8px 25px -5px rgba(15, 23, 42, 0.1);
+        --shadow-flashy:  0 20px 60px -15px rgba(37, 99, 235, 0.35), 0 8px 25px -5px rgba(10, 15, 29, 0.65);
 
         --radius-xl:      24px;
         --radius-lg:      18px;
@@ -57,7 +55,7 @@
         --slate:          #f1f5f9;
         --mid:            #cbd5e1;
         --muted:          #94a3b8;
-        --soft:           #64748b;
+        --soft:           #94a3b8;
         --hairline:       #1e293b;
         --surface:        #0d172a;
         --bg:             #030712;
@@ -72,7 +70,7 @@
 
     body {
         font-family: 'Plus Jakarta Sans', sans-serif;
-        background: var(--bg);
+        
         color: var(--navy);
         min-height: 100vh;
         padding: 30px 20px 60px;
@@ -82,18 +80,7 @@
     }
 
     /* Vibrant Breathing Blue Background Orbs */
-    body::before {
-        content: '';
-        position: fixed;
-        inset: 0;
-        background: 
-            radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 45%),
-            radial-gradient(circle at 85% 80%, rgba(29, 78, 216, 0.18) 0%, transparent 45%),
-            radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.12) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 0;
-        animation: pulseAura 10s ease-in-out infinite alternate;
-    }
+    
     @keyframes pulseAura {
         0% { opacity: 0.7; transform: scale(1); }
         100% { opacity: 1; transform: scale(1.05); }
@@ -211,7 +198,6 @@
         padding: 6px 16px;
         border-radius: 100px;
         background: rgba(255, 255, 255, 0.12);
-        backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.75rem;
@@ -248,7 +234,6 @@
     }
     .meta-card {
         background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(12px);
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: var(--radius-md);
         padding: 14px 18px;
@@ -488,7 +473,7 @@
        ══════════════════════════════════════════════════════════════════ */
     .report-body {
         padding: 36px 44px 40px;
-        background: var(--surface);
+        
     }
 
     .section-head { margin-bottom: 20px; }
@@ -538,7 +523,7 @@
         border-radius: var(--radius-md);
         padding: 20px 28px;
         margin-top: 32px;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+        box-shadow: 0 10px 30px rgba(10, 15, 29, 0.65);
     }
     .report-note i {
         font-size: 2rem;
@@ -603,7 +588,7 @@
 
     /* PRINT STYLES */
     @media print {
-        body { background: #ffffff !important; padding: 0 !important; color: #000000 !important; }
+        body {  padding: 0 !important; color: #000000 !important; }
         body::before, .top-bar, .bottom-actions { display: none !important; }
         .report-card { box-shadow: none !important; border: none !important; }
         .meter-fill { width: {{ score_percent }}% !important; }
@@ -615,7 +600,64 @@
         .metrics-row { grid-template-columns: 1fr; }
         .score-dashboard { flex-direction: column; text-align: center; }
     }
-</style>
+
+        /* ── Elite Tech Code Blocks ── */
+        .markdown-body code,
+        .feedback-content code,
+        .report-body code,
+        code { background: #000000 !important; color: #00ff9d !important; border-radius: 4px; padding: 2px 6px; }
+        .markdown-body pre,
+        .feedback-content pre,
+        .report-body pre,
+        pre { background: #000000 !important; border: 1px solid rgba(0,255,255,0.15) !important; border-radius: 8px !important; padding: 16px !important; }
+        .markdown-body pre code,
+        pre code { background: transparent !important; padding: 0 !important; border: none !important; }
+        
+        /* ── Elite Tech Code Blocks ── */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        
+        /* ── Elite Tech Code Blocks ── */
+        .markdown-body code,
+        .feedback-content code,
+        .report-body code,
+        code { background: #000000 !important; color: #00ff9d !important; border-radius: 4px; padding: 2px 6px; }
+        .markdown-body pre,
+        .feedback-content pre,
+        .report-body pre,
+        pre { background: #000000 !important; border: 1px solid rgba(0,255,255,0.15) !important; border-radius: 8px !important; padding: 16px !important; }
+        .markdown-body pre code,
+        pre code { background: transparent !important; padding: 0 !important; border: none !important; }
+        
+        /* ── Elite Tech Code Blocks ── */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        
+        /* ── Elite Tech Code Blocks ── */
+        .markdown-body code,
+        .feedback-content code,
+        .report-body code,
+        code { background: #000000 !important; color: #00ff9d !important; border-radius: 4px; padding: 2px 6px; }
+        .markdown-body pre,
+        .feedback-content pre,
+        .report-body pre,
+        pre { background: #000000 !important; border: 1px solid rgba(0,255,255,0.15) !important; border-radius: 8px !important; padding: 16px !important; }
+        .markdown-body pre code,
+        pre code { background: transparent !important; padding: 0 !important; border: none !important; }
+        
+        /* ── Elite Tech Code Blocks ── */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        </style>
 </head>
 <body>
 

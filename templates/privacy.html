@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark-theme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,63 +8,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <script>
-    (function() {
-        var saved = localStorage.getItem('theme') || 'light';
-        if (saved === 'dark') {
-            document.documentElement.classList.add('dark-theme');
-            document.documentElement.setAttribute('data-theme', 'dark');
-        }
-    })();
-    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        :root {
-            --brand:       #2563eb;
-            --brand-deep:  #1d4ed8;
-            --brand-glow:  rgba(37, 99, 235, 0.12);
-            --bg:          #f0f4ff;
-            --surface:     #ffffff;
-            --border:      rgba(0, 0, 0, 0.07);
-            --text-1:      #0f172a;
-            --text-2:      #475569;
-            --text-3:      #64748b;
-            --nav-bg:      rgba(240, 244, 255, 0.88);
-            --footer-bg:   rgba(241, 245, 255, 0.8);
-            --footer-border: rgba(0, 0, 0, 0.06);
-            --footer-color: #94a3b8;
-            --tag-bg:      rgba(37, 99, 235, 0.08);
-            --tag-color:   #2563eb;
-            --tag-border:  rgba(37, 99, 235, 0.2);
-        }
-
-        html.dark-theme {
-            --brand:       #60a5fa;
-            --brand-deep:  #3b82f6;
-            --brand-glow:  rgba(59, 130, 246, 0.15);
-            --bg:          #0b0f19;
-            --surface:     rgba(15, 23, 42, 0.7);
-            --border:      rgba(255, 255, 255, 0.07);
-            --text-1:      #f1f5f9;
-            --text-2:      #cbd5e1;
-            --text-3:      #94a3b8;
-            --nav-bg:      rgba(11, 15, 25, 0.85);
-            --footer-bg:   rgba(11, 15, 25, 0.6);
-            --footer-border: rgba(255, 255, 255, 0.05);
-            --footer-color: #64748b;
-            --tag-bg:      rgba(59, 130, 246, 0.1);
-            --tag-color:   #93c5fd;
-            --tag-border:  rgba(59, 130, 246, 0.25);
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+        /* ── Dark glassmorphic layout ── */
         body {
             font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text-1);
+            color: #cbd5e1;
             min-height: 100vh;
-            transition: background 0.25s ease, color 0.25s ease;
         }
 
         /* ── Nav ── */
@@ -73,9 +25,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 18px 48px;
-            background: var(--nav-bg);
-            backdrop-filter: blur(14px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(4, 9, 20, 0.92);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.18);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -88,7 +39,7 @@
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
             font-size: 1rem;
-            color: var(--text-1);
+            color: #ffffff;
             text-decoration: none;
         }
 
@@ -96,7 +47,7 @@
             width: 34px;
             height: 34px;
             border-radius: 10px;
-            background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+            background: linear-gradient(135deg, #00d4ff, #0066cc);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -110,19 +61,20 @@
             gap: 7px;
             font-size: 0.85rem;
             font-weight: 600;
-            color: var(--text-3);
+            color: #00ffff;
             text-decoration: none;
             padding: 8px 16px;
             border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            backdrop-filter: blur(8px);
-            transition: color 0.18s ease, border-color 0.18s ease;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 255, 255, 0.08);
+            transition: all 0.2s ease;
         }
 
         .nav-back:hover {
-            color: var(--brand);
-            border-color: var(--tag-border);
+            color: #ffffff;
+            border-color: rgba(0, 255, 255, 0.6);
+            background: rgba(0, 255, 255, 0.18);
+            transform: translateY(-1px);
         }
 
         /* ── Page layout ── */
@@ -141,9 +93,9 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            background: var(--tag-bg);
-            border: 1px solid var(--tag-border);
-            color: var(--tag-color);
+            background: rgba(0, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
             font-size: 0.75rem;
             font-weight: 700;
             letter-spacing: 0.1em;
@@ -151,6 +103,7 @@
             padding: 6px 14px;
             border-radius: 100px;
             margin-bottom: 20px;
+            font-family: 'Outfit', sans-serif;
         }
 
         .doc-title {
@@ -158,14 +111,15 @@
             font-size: 2.4rem;
             font-weight: 800;
             letter-spacing: -0.03em;
-            color: var(--text-1);
+            color: #ffffff;
             line-height: 1.2;
             margin-bottom: 12px;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.8);
         }
 
         .doc-meta {
             font-size: 0.875rem;
-            color: var(--text-3);
+            color: #94a3b8;
             display: flex;
             align-items: center;
             gap: 16px;
@@ -178,14 +132,14 @@
             gap: 5px;
         }
 
-        /* ── Table of contents ── */
+        /* ── Table of contents (Glassmorphic) ── */
         .toc-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: rgba(8, 14, 32, 0.55);
+            border: 1px solid rgba(0, 255, 255, 0.18);
             border-radius: 16px;
             padding: 24px 28px;
             margin-bottom: 40px;
-            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .toc-title {
@@ -194,7 +148,7 @@
             font-weight: 700;
             letter-spacing: 0.12em;
             text-transform: uppercase;
-            color: var(--text-3);
+            color: #94a3b8;
             margin-bottom: 14px;
         }
 
@@ -203,6 +157,11 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            padding-left: 0;
+        }
+
+        .toc-list li {
+            list-style: none;
         }
 
         .toc-list a {
@@ -211,16 +170,20 @@
             gap: 5px;
             font-size: 0.82rem;
             font-weight: 500;
-            color: var(--brand);
+            color: #00ffff;
             text-decoration: none;
             padding: 5px 12px;
             border-radius: 6px;
-            background: var(--brand-glow);
-            transition: background 0.15s ease;
+            background: rgba(0, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.2s ease;
         }
 
         .toc-list a:hover {
-            background: rgba(37, 99, 235, 0.18);
+            background: rgba(0, 255, 255, 0.18);
+            color: #ffffff;
+            border-color: rgba(0, 255, 255, 0.4);
+            transform: translateY(-1px);
         }
 
         /* ── Section ── */
@@ -237,7 +200,7 @@
             font-weight: 700;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--brand);
+            color: #00ffff;
             margin-bottom: 8px;
         }
 
@@ -245,15 +208,16 @@
             font-family: 'Outfit', sans-serif;
             font-size: 1.3rem;
             font-weight: 700;
-            color: var(--text-1);
+            color: #ffffff;
             margin-bottom: 16px;
             letter-spacing: -0.01em;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8);
         }
 
         .section-rule {
             width: 36px;
             height: 3px;
-            background: linear-gradient(90deg, var(--brand), var(--brand-deep));
+            background: linear-gradient(90deg, #00ffff, #0066cc);
             border-radius: 4px;
             margin-bottom: 20px;
         }
@@ -261,7 +225,7 @@
         .section-body {
             font-size: 0.95rem;
             line-height: 1.8;
-            color: var(--text-2);
+            color: #e2e8f0;
         }
 
         .section-body p {
@@ -293,18 +257,18 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: var(--brand);
+            background: #00ffff;
             flex-shrink: 0;
             margin-top: 9px;
         }
 
-        /* ── Highlight box ── */
+        /* ── Highlight info box (Glassmorphic) ── */
         .info-box {
             display: flex;
             gap: 14px;
             align-items: flex-start;
-            background: var(--brand-glow);
-            border: 1px solid var(--tag-border);
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.18);
             border-radius: 12px;
             padding: 16px 20px;
             margin: 20px 0;
@@ -312,7 +276,7 @@
 
         .info-box i {
             font-size: 1.15rem;
-            color: var(--brand);
+            color: #00ffff;
             flex-shrink: 0;
             margin-top: 1px;
         }
@@ -320,20 +284,20 @@
         .info-box-text {
             font-size: 0.88rem;
             line-height: 1.65;
-            color: var(--text-2);
+            color: #cbd5e1;
         }
 
         /* ── Divider ── */
         .section-divider {
             border: none;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid rgba(0, 255, 255, 0.1);
             margin: 44px 0;
         }
 
         /* ── Footer ── */
         footer {
-            background: var(--footer-bg);
-            border-top: 1px solid var(--footer-border);
+            background: rgba(4, 9, 20, 0.85);
+            border-top: 1px solid rgba(0, 255, 255, 0.12);
             padding: 32px 48px;
         }
 
@@ -349,7 +313,7 @@
 
         .footer-copy {
             font-size: 0.8rem;
-            color: var(--footer-color);
+            color: #94a3b8;
         }
 
         .footer-links {
@@ -359,13 +323,13 @@
 
         .footer-link {
             font-size: 0.8rem;
-            color: var(--footer-color);
+            color: #94a3b8;
             text-decoration: none;
             transition: color 0.15s ease;
         }
 
         .footer-link:hover {
-            color: var(--brand);
+            color: #00ffff;
         }
 
         @media (max-width: 640px) {
@@ -464,10 +428,10 @@
         <div class="section-title">AI &amp; Data Processing</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>This platform uses <strong>Google Gemini AI</strong> to generate interview questions, evaluate your responses, and produce assessment summaries. Your interview conversation and resume content are transmitted to Google's Gemini API for this purpose.</p>
+            <p>This platform uses <strong>Google Gemini AI</strong> to generate interview questions, evaluate your responses, and produce assessment summaries. Your interview conversation and resume content are transmitted to Google's servers for this purpose.</p>
             <div class="info-box">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <div class="info-box-text">By using this platform, you consent to your interview responses and resume being processed by Google Gemini AI. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: var(--brand);">Google's Privacy Policy</a> for details on how Google handles API data.</div>
+                <div class="info-box-text">By using this platform, you consent to your interview responses and resume being processed by Google Gemini AI. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: #00ffff;">Google's Privacy Policy</a> for details on how Google handles API data.</div>
             </div>
             <p>AI-generated evaluations are automated. They are not reviewed by human assessors and are intended for practice and self-improvement purposes only. Scores and feedback are not official placement decisions.</p>
         </div>
@@ -502,13 +466,13 @@
         <div class="section-title">Storage &amp; Security</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>Your data is stored in a secured relational database (MySQL or PostgreSQL depending on the deployment environment). Passwords are <strong>never stored in plain text</strong> — they are hashed using industry-standard Werkzeug hashing (PBKDF2/SHA256) before storage.</p>
+            <p>Your data is stored in a secured relational database. Passwords are <strong>never stored in plain text</strong> — they are hashed using industry-standard Werkzeug hashing (PBKDF2/SHA256) before storage.</p>
             <p>We implement the following security controls:</p>
             <ul>
                 <li>HTTPS-only transmission in production environments (HSTS enforced).</li>
-                <li>HTTP security headers on all responses: <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>, <code>X-XSS-Protection</code>, <code>Referrer-Policy</code>, and <code>Permissions-Policy</code>.</li>
+                <li>HTTP security headers on all responses.</li>
                 <li>Session cookies are <code>HttpOnly</code> and <code>SameSite=Lax</code> to mitigate XSS and CSRF risks.</li>
-                <li>File uploads are validated by type and size (10MB maximum). Only permitted extensions (PDF, DOCX, JPG, PNG) are accepted.</li>
+                <li>File uploads are validated by type and size (10MB maximum). Only permitted extensions are accepted.</li>
                 <li>Access to all authenticated routes requires a valid server-side session.</li>
             </ul>
             <p>Despite these measures, no internet-based system is completely immune to security risks. You are advised not to include highly sensitive personal information in your interview responses.</p>
@@ -525,10 +489,10 @@
         <div class="section-body">
             <p>We use a minimal set of cookies essential for the operation of the platform:</p>
             <ul>
-                <li><strong>Session cookie:</strong> A server-managed <code>HttpOnly</code> cookie that maintains your login state across page loads. This is strictly necessary and cannot be disabled without losing access to authenticated features.</li>
-                <li><strong>Theme preference:</strong> A <code>localStorage</code> key (<code>theme</code>) that stores your chosen display mode (light or dark). This is stored locally in your browser and never transmitted to our servers.</li>
+                <li><strong>Session cookie:</strong> A server-managed cookie that maintains your login state.</li>
+                <li><strong>Theme preference:</strong> A local preference key stored in your browser.</li>
             </ul>
-            <p>We do not use tracking cookies, advertising cookies, or any third-party analytics cookies. No cookie consent banner is required as only technically necessary cookies are used.</p>
+            <p>We do not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
         </div>
     </div>
 
@@ -543,12 +507,11 @@
             <p>You have the following rights with respect to your personal data held on this platform:</p>
             <ul>
                 <li><strong>Access:</strong> You may request a summary of the personal data we hold about you.</li>
-                <li><strong>Correction:</strong> You may update your profile information via the Edit Profile page at any time.</li>
-                <li><strong>Deletion:</strong> You may request deletion of your account and all associated data by contacting us directly.</li>
-                <li><strong>Portability:</strong> You may request an export of your assessment history and evaluation reports.</li>
-                <li><strong>Withdrawal of consent:</strong> You may stop using the platform at any time. Ceasing use does not automatically delete stored data; a deletion request must be submitted separately.</li>
+                <li><strong>Correction:</strong> You may update your profile information via the Edit Profile page.</li>
+                <li><strong>Deletion:</strong> You may request deletion of your account and all associated data.</li>
+                <li><strong>Portability:</strong> You may request an export of your assessment history.</li>
             </ul>
-            <p>To exercise any of these rights, contact us using the details in the Contact section below. We will respond within 15 business days.</p>
+            <p>To exercise any of these rights, contact the administrator.</p>
         </div>
     </div>
 
@@ -562,12 +525,11 @@
         <div class="section-body">
             <p>This platform integrates with the following third-party services. Each governs its own data practices:</p>
             <ul>
-                <li><strong>Google Gemini AI API:</strong> Used for question generation and response evaluation. Interview data is transmitted to Google's servers for processing. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: var(--brand);">Google Privacy Policy →</a></li>
-                <li><strong>Google OAuth 2.0:</strong> Optional sign-in method. If used, Google provides your name, email, and profile picture to this platform. <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: var(--brand);">Google Privacy Policy →</a></li>
-                <li><strong>Google Fonts:</strong> Typography assets loaded from Google's CDN. Google may log font request metadata. <a href="https://developers.google.com/fonts/faq/privacy" target="_blank" rel="noopener noreferrer" style="color: var(--brand);">Fonts Privacy FAQ →</a></li>
-                <li><strong>Bootstrap CDN (jsDelivr):</strong> CSS and icon libraries loaded via CDN. No personal data is transmitted. <a href="https://www.jsdelivr.com/terms/privacy-policy-jsdelivr-net" target="_blank" rel="noopener noreferrer" style="color: var(--brand);">jsDelivr Privacy →</a></li>
+                <li><strong>Google Gemini AI API:</strong> Used for question generation and response evaluation.</li>
+                <li><strong>Google OAuth 2.0:</strong> Optional sign-in method.</li>
+                <li><strong>Google Fonts:</strong> Typography assets.</li>
+                <li><strong>Bootstrap CDN:</strong> CSS and icon libraries.</li>
             </ul>
-            <p>We are not responsible for the data practices of these external services. We encourage you to review their privacy policies independently.</p>
         </div>
     </div>
 
@@ -582,14 +544,10 @@
             <p>By accessing and using AI Interview Platform, you agree to the following terms:</p>
             <ul>
                 <li>You must be at least 16 years of age to create an account and use this platform.</li>
-                <li>You are responsible for maintaining the confidentiality of your account credentials. You must not share your account with others.</li>
-                <li>You agree not to attempt to reverse-engineer, scrape, or disrupt the platform or its AI systems.</li>
-                <li>You may not use this platform to generate, store, or transmit content that is unlawful, defamatory, or violates the rights of others.</li>
-                <li>Assessment results are generated by an automated AI system and carry no guarantee of employment outcomes. They are intended solely as a practice and self-assessment tool.</li>
-                <li>We reserve the right to suspend or terminate accounts that violate these terms without prior notice.</li>
-                <li>This platform is provided "as is" without warranties of any kind. We are not liable for any loss arising from use of or reliance on AI-generated assessments.</li>
+                <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+                <li>You agree not to attempt to reverse-engineer or disrupt the platform or its AI systems.</li>
+                <li>Assessment results are generated by an automated AI system and carry no guarantee of employment outcomes.</li>
             </ul>
-            <p>We may update these terms periodically. Continued use of the platform after updates constitutes acceptance of the revised terms.</p>
             <div class="info-box">
                 <i class="bi bi-info-circle-fill"></i>
                 <div class="info-box-text">These terms are governed by the laws of India. Any disputes arising from use of this platform shall be subject to the jurisdiction of competent courts in India.</div>
@@ -610,11 +568,10 @@
                 <i class="bi bi-envelope-at-fill"></i>
                 <div class="info-box-text">
                     <strong>AI Interview Platform — Data Queries</strong><br>
-                    Email: <a href="mailto:admin@gmail.com" style="color: var(--brand);">admin@gmail.com</a><br>
+                    Email: <a href="aiinterviewplatform26@gmail.com" style="color: #00ffff;">admin@gmail.com</a><br>
                     Response time: within 15 business days
                 </div>
             </div>
-            <p>This document was last reviewed in August 2026. We reserve the right to amend this policy at any time. Material changes will be communicated to registered users via email where feasible.</p>
         </div>
     </div>
 

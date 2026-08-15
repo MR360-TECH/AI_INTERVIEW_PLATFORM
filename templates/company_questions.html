@@ -1,10 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" class="dark-theme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ company.name }} Interview Resources — AI Assessment Platform</title>
-    <meta name="description" content="Curated interview preparation resources for {{ company.name }} — coding questions, aptitude papers, system design guides, and more.">
+    <title>{{ company.name }} Interview Resources â€” AI Assessment Platform</title>
+    <meta name="description" content="Curated interview preparation resources for {{ company.name }} â€” coding questions, aptitude papers, system design guides, and more.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
@@ -12,11 +12,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <script>
     (function() {
-        var saved = localStorage.getItem('theme') || 'light';
-        if (saved === 'dark') {
-            document.documentElement.classList.add('dark-theme');
+        document.documentElement.classList.add('dark-theme');
             document.documentElement.setAttribute('data-theme', 'dark');
-        }
+            localStorage.setItem('theme', 'dark');
     })();
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -30,7 +28,7 @@
         }
 
         body {
-            background: var(--bg-base);
+            
             color: var(--ink);
             min-height: 100vh;
             position: relative;
@@ -83,11 +81,9 @@
             pointer-events: none;
         }
 
-        /* ── Hero Banner ── */
+        /* â”€â”€ Hero Banner â”€â”€ */
         .company-hero {
             background: rgba(255, 255, 255, 0.55);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
             border-radius: 28px;
             padding: 40px;
             border: 1px solid rgba(255, 255, 255, 0.7);
@@ -138,7 +134,7 @@
             line-height: 1.7; max-width: 780px;
         }
 
-        /* ── Section Label ── */
+        /* â”€â”€ Section Label â”€â”€ */
         .section-label {
             font-family: 'Outfit', sans-serif;
             font-size: 0.8rem; font-weight: 800;
@@ -146,11 +142,9 @@
             color: #94a3b8; margin-bottom: 24px;
         }
 
-        /* ── Resource Card ── */
+        /* â”€â”€ Resource Card â”€â”€ */
         .resource-card {
             background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.7);
             border-radius: 24px;
             padding: 30px;
@@ -276,7 +270,7 @@
         }
         .resource-card:hover .card-cta i { transform: translate(2px, -2px); }
 
-        /* ── Colour themes per site ── */
+        /* â”€â”€ Colour themes per site â”€â”€ */
         .theme-prepinsta  { --card-accent:#FF6B35; --card-glow:rgba(255,107,53,0.15); --badge-bg:#fff3ee; --badge-color:#FF6B35; --icon-bg:#fff3ee; --icon-color:#FF6B35; --cta-color:#FF6B35; }
         .theme-gfg        { --card-accent:#2f8d46; --card-glow:rgba(47,141,70,0.15); --badge-bg:#edfaf1; --badge-color:#2f8d46; --icon-bg:#edfaf1; --icon-color:#2f8d46; --cta-color:#2f8d46; }
         .theme-leetcode   { --card-accent:#f89f1b; --card-glow:rgba(248,159,27,0.15); --badge-bg:#fff8ec; --badge-color:#f89f1b; --icon-bg:#fff8ec; --icon-color:#f89f1b; --cta-color:#f89f1b; }
@@ -285,7 +279,7 @@
         .theme-infytq     { --card-accent:#007CC3; --card-glow:rgba(0,124,195,0.15); --badge-bg:#e8f4fb; --badge-color:#007CC3; --icon-bg:#e8f4fb; --icon-color:#007CC3; --cta-color:#007CC3; }
         .theme-glassdoor  { --card-accent:#0CAA41; --card-glow:rgba(12,170,65,0.15); --badge-bg:#e8faf0; --badge-color:#0CAA41; --icon-bg:#e8faf0; --icon-color:#0CAA41; --cta-color:#0CAA41; }
 
-        /* ── Pro Tip banner ── */
+        /* â”€â”€ Pro Tip banner â”€â”€ */
         .pro-tip {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             border-radius: 24px;
@@ -308,8 +302,6 @@
         /* Back Button Style with Blue Hover Glow */
         .btn-back {
             background: rgba(255, 255, 255, 0.7) !important;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(0, 0, 0, 0.08) !important;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
             color: #475569 !important;
@@ -325,7 +317,7 @@
 
         /* Dark Theme overrides */
         html.dark-theme body {
-            background-color: #060d1f !important;
+            
         }
         html.dark-theme .cyber-grid {
             background-image: 
@@ -511,7 +503,7 @@
     <div class="pro-tip animate-item" style="animation-delay: 0.25s;">
         <div class="pro-tip-icon"><i class="bi bi-lightbulb-fill text-warning"></i></div>
         <div class="pro-tip-text">
-            <strong>Pro Tip — Combine resources for best results</strong>
+            <strong>Pro Tip â€” Combine resources for best results</strong>
             <p>Use PrepInsta &amp; IndiaBix for aptitude rounds, GeeksForGeeks for topic-wise DSA prep, LeetCode for timed mock coding, and InterviewBit for full-length mock interviews. Covering all four gives you an edge over 90% of candidates.</p>
         </div>
     </div>

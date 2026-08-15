@@ -1,8 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" class="dark-theme">
 
 <head>
-    <title>Placement Assessment — AI Examination Studio</title>
+    <title>Placement Assessment â€” AI Examination Studio</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -12,20 +12,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         (function() {
-            var saved = localStorage.getItem('theme') || 'light';
-            if (saved === 'dark') {
-                document.documentElement.classList.add('dark-theme');
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
+            document.documentElement.classList.add('dark-theme');
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
         })();
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* ═══════════════════════════════════════════════════════
-           AI EXAMINATION STUDIO — NEXT-LEVEL VISUAL SYSTEM
-        ═══════════════════════════════════════════════════════ */
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+           AI EXAMINATION STUDIO â€” NEXT-LEVEL VISUAL SYSTEM
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-        /* ── Design Tokens ── */
+        /* â”€â”€ Design Tokens â”€â”€ */
         :root {
             --studio-bg:         #f0f4ff;
             --studio-glow-r:     rgba(59, 130, 246, 0.08);
@@ -48,7 +46,7 @@
             --q-text-color:      #0f172a;
             --overlay-bg:        rgba(240, 244, 255, 0.96);
 
-            /* Modal tokens (solid backgrounds — no transparency bleed-through) */
+            /* Modal tokens (solid backgrounds â€” no transparency bleed-through) */
             --surface-elevated:  #ffffff;
             --border:            rgba(219, 234, 254, 0.8);
             --text-main:         #0f172a;
@@ -62,14 +60,14 @@
             --studio-glow-r:     rgba(59, 130, 246, 0.15);
             --studio-glow-c:     rgba(6, 182, 212, 0.05);
             --studio-text:       #f1f5f9;
-            --studio-card-bg:    rgba(30, 41, 59, 0.45);
+            --studio-card-bg:    rgba(10, 15, 29, 0.65);
             --studio-card-border: rgba(255, 255, 255, 0.08);
             --studio-card-shadow: 0 20px 50px rgba(0, 0, 0, 0.30);
             --hud-border:        rgba(255, 255, 255, 0.08);
-            --timer-bg:          rgba(15, 23, 42, 0.60);
+            --timer-bg:          rgba(10, 15, 29, 0.65);
             --timer-border:      rgba(255, 255, 255, 0.08);
             --timer-text:        #ffffff;
-            --ai-strip-bg:       rgba(15, 23, 42, 0.60);
+            --ai-strip-bg:       rgba(10, 15, 29, 0.65);
             --ai-strip-border:   rgba(255, 255, 255, 0.08);
             --ai-title-color:    #ffffff;
             --ai-sub-color:      #cbd5e1;
@@ -77,7 +75,7 @@
             --type-badge-color:  #cbd5e1;
             --type-badge-border: rgba(255, 255, 255, 0.10);
             --q-text-color:      #f0f6ff;
-            --overlay-bg:        rgba(11, 15, 25, 0.95);
+            --overlay-bg:        rgba(4, 9, 20, 0.65);
 
             --surface-elevated:  #1e293b;
             --border:            rgba(255, 255, 255, 0.12);
@@ -97,7 +95,7 @@
         }
 
         body {
-            background: var(--studio-bg);
+            
             min-height: 100vh;
             color: var(--studio-text);
             font-family: 'Inter', system-ui, sans-serif;
@@ -105,17 +103,7 @@
             transition: background-color 0.25s ease, color 0.25s ease;
         }
 
-        .studio-glow-top {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 700px;
-            height: 350px;
-            background: radial-gradient(ellipse, var(--studio-glow-r) 0%, var(--studio-glow-c) 50%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
+        .studio-glow-top { display: none !important; }
 
         #loadingOverlay {
             display: none;
@@ -123,7 +111,6 @@
             inset: 0;
             z-index: 9999;
             background: var(--overlay-bg);
-            backdrop-filter: blur(12px);
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -163,15 +150,13 @@
             border-radius: 24px !important;
             box-shadow: var(--studio-card-shadow) !important;
             background: var(--studio-card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
             padding: 40px;
             position: relative;
             z-index: 1;
             transition: border-color 0.3s ease, background-color 0.25s ease;
         }
         .studio-card:hover {
-            border-color: rgba(59, 130, 246, 0.25) !important;
+            border-color: rgba(0, 255, 255, 0.4) !important;
         }
         @media (max-width: 768px) {
             .studio-card { padding: 24px 20px; }
@@ -405,8 +390,8 @@
             margin-bottom: 28px;
         }
 
-        /* ── MONACO CODE EDITOR CONTAINER ── */
-        /* Editor is always dark (VS Code style) — intentional */
+        /* â”€â”€ MONACO CODE EDITOR CONTAINER â”€â”€ */
+        /* Editor is always dark (VS Code style) â€” intentional */
         .editor-frame {
             border: 1.5px solid var(--border-mid);
             border-radius: var(--radius-md);
@@ -434,7 +419,7 @@
             color: #38bdf8;
         }
 
-        /* ── RESPONSE INPUT & MIC ── */
+        /* â”€â”€ RESPONSE INPUT & MIC â”€â”€ */
         .input-wrapper {
             position: relative;
             margin-bottom: 12px;
@@ -522,16 +507,37 @@
             font-family: 'Outfit', sans-serif;
         }
         .time-up-warning.active { display: flex; }
-    </style>
+    
+        /* â”€â”€ Elite Tech Code Blocks â”€â”€ */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        
+        /* â”€â”€ Elite Tech Code Blocks â”€â”€ */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        
+        /* â”€â”€ Elite Tech Code Blocks â”€â”€ */
+        code, pre, .code-block, pre code {
+            background: #000000 !important;
+            color: #00ff9d !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
+        }
+        </style>
 </head>
 
 <body>
-    <div class="studio-glow-top"></div>
+    
 
-    <!-- Instant loading overlay — appears the moment submit is clicked -->
+    <!-- Instant loading overlay â€” appears the moment submit is clicked -->
     <div id="loadingOverlay">
         <div class="loader-spinner"></div>
-        <div class="loader-title">AI Examiner is evaluating…</div>
+        <div class="loader-title">AI Examiner is evaluatingâ€¦</div>
         <div class="loader-sub">Analyzing technical depth and structuring the next question</div>
     </div>
 
@@ -540,10 +546,10 @@
         <div class="row justify-content-center">
             <div class="col-lg-8">
 
-                <!-- ══ MAIN EXAMINATION STUDIO CARD ══ -->
+                <!-- â•â• MAIN EXAMINATION STUDIO CARD â•â• -->
                 <div class="studio-card">
 
-                    <!-- ── HUD HEADER BAR ── -->
+                    <!-- â”€â”€ HUD HEADER BAR â”€â”€ -->
                     <div class="hud-header">
                         <div class="hud-left">
                             <span class="session-badge" style="font-family:'Outfit',sans-serif;font-weight:700;font-size:0.82rem;color:var(--brand-blue);display:inline-flex;align-items:center;gap:6px;background:var(--primary-light,rgba(37,99,235,0.08));padding:6px 14px;border-radius:99px;border:1px solid rgba(37,99,235,0.2);">
@@ -582,7 +588,7 @@
                         </div>
                     </div>
 
-                    <!-- ── AI EXAMINER ORB & VOICE VISUALIZER STRIP ── -->
+                    <!-- â”€â”€ AI EXAMINER ORB & VOICE VISUALIZER STRIP â”€â”€ -->
                     <div class="ai-examiner-strip">
                         <div class="ai-orb-wrap">
                             <div class="ai-orb-ring"></div>
@@ -611,7 +617,7 @@
                     </div>
                     {% endif %}
 
-                    <!-- ── QUESTION TEXT DISPLAY ── -->
+                    <!-- â”€â”€ QUESTION TEXT DISPLAY â”€â”€ -->
                     <div class="question-text-box">{{ question }}</div>
 
                     <form method="POST" id="answerForm" enctype="multipart/form-data">
@@ -671,7 +677,7 @@
                         </div>
 
                         <div class="listening-status-tag" id="listeningTag">
-                            <i class="bi bi-record-fill text-danger fs-6"></i> Microphone active — speak your answer clearly...
+                            <i class="bi bi-record-fill text-danger fs-6"></i> Microphone active â€” speak your answer clearly...
                         </div>
 
                         <div class="time-up-warning" id="timeUpWarning">
@@ -684,7 +690,7 @@
 
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
                             <div style="font-size:0.75rem;color:var(--text-light);">
-                                Shortcut: <kbd>Enter</kbd> submit &nbsp;·&nbsp; <kbd>Insert</kbd> mic toggle
+                                Shortcut: <kbd>Enter</kbd> submit &nbsp;Â·&nbsp; <kbd>Insert</kbd> mic toggle
                             </div>
                             <button type="submit" class="btn btn-primary-grad px-4 py-2" id="submitBtn" style="font-size:0.92rem;">
                                 Submit Answer &rarr;
@@ -696,7 +702,7 @@
         </div>
     </div>
 
-    <!-- ══ CONFIRM EXIT / QUIT MODAL ══ -->
+    <!-- â•â• CONFIRM EXIT / QUIT MODAL â•â• -->
     <div class="modal fade" id="confirmExitModal" tabindex="-1" aria-labelledby="confirmExitModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
@@ -731,7 +737,7 @@
       </div>
     </div>
 
-    <!-- ══ CONFIRM FINISH SESSION MODAL (Practice Mode) ══ -->
+    <!-- â•â• CONFIRM FINISH SESSION MODAL (Practice Mode) â•â• -->
     {% if is_practice %}
     <div class="modal fade" id="confirmFinishModal" tabindex="-1" aria-labelledby="confirmFinishModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -776,7 +782,7 @@
         const loadingOverlay  = document.getElementById('loadingOverlay');
         const waveformWrap    = document.getElementById('waveformWrap');
 
-        // ── DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) ──
+        // â”€â”€ DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) â”€â”€
         const TOTAL_SECONDS = parseInt("{{ timer_seconds or 90 }}", 10) || 90;
         let secondsLeft = TOTAL_SECONDS;
         const timerText = document.getElementById('timerText');
@@ -886,7 +892,7 @@
             observer.observe(listeningTag, { attributes: true, attributeFilter: ['class'] });
         }
 
-        // ── Resume file input ────────────────────────────────────────────────────
+        // â”€â”€ Resume file input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const resumeInput     = document.getElementById('resumeInput');
         const resumeFileName  = document.getElementById('resumeFileName');
         const removeResumeBtn = document.getElementById('removeResumeBtn');
@@ -917,7 +923,7 @@
             }
         }
 
-        // ── Attachment file input ────────────────────────────────────────────────
+        // â”€â”€ Attachment file input â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const attachmentInput     = document.getElementById('attachmentInput');
         const attachmentFileName  = document.getElementById('attachmentFileName');
         const removeAttachmentBtn = document.getElementById('removeAttachmentBtn');
