@@ -295,7 +295,7 @@
             font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: var(--text-2);
+            color: var(--brand);
             margin-bottom: 16px;
         }
 
@@ -428,19 +428,19 @@
             gap: 6px;
             padding: 7px 16px;
             border-radius: 9px;
-            background: var(--surface);
-            border: 1.5px solid var(--brand);
-            color: var(--brand);
+            background: rgba(0, 255, 255, 0.08);
+            border: 1.5px solid rgba(0, 255, 255, 0.25);
+            color: #00ffff;
             font-weight: 700;
             font-size: 0.82rem;
             text-decoration: none;
             transition: all 0.18s ease;
         }
         .btn-view-report:hover {
-            background: var(--brand);
-            color: #fff;
+            background: #00ffff;
+            color: #020510;
             transform: translateY(-1px);
-            box-shadow: 0 4px 14px var(--brand-glow);
+            box-shadow: 0 4px 14px rgba(0, 255, 255, 0.35);
         }
 
         /* â”€â”€ Empty state â”€â”€ */
@@ -523,7 +523,7 @@
             <h1 class="page-title">Assessment History</h1>
             <p class="page-subtitle">Your placement evaluation records and score progression</p>
         </div>
-        <a href="/dashboard" class="back-btn">
+        <a href="/dashboard" class="back-btn-global">
             <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>

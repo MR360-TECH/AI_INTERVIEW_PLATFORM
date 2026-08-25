@@ -258,13 +258,13 @@
         transition: var(--transition);
     }
     .btn-primary-action {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-        color: #ffffff !important;
-        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+        background: linear-gradient(135deg, #00ffff, #0284c7);
+        color: #020510 !important;
+        box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
     }
     .btn-primary-action:hover {
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
+        box-shadow: 0 12px 30px rgba(0, 255, 255, 0.5);
     }
     .btn-secondary-action {
         background: var(--surface);
@@ -299,8 +299,8 @@
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #60a5fa, #3b82f6, #1d4ed8, #00f2fe, #60a5fa);
+        height: 3px;
+        background: linear-gradient(90deg, #00ffff, #0284c7, #818cf8, #00ffff);
         background-size: 200% 100%;
         animation: electricShimmer 3s linear infinite;
         z-index: 10;
@@ -583,14 +583,14 @@
     }
     .metric-card:hover {
         transform: translateY(-4px);
-        border-color: #3b82f6;
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        border-color: rgba(0,255,255,0.5);
+        box-shadow: 0 10px 25px rgba(0, 255, 255, 0.2);
     }
     .metric-icon {
         font-size: 1.5rem;
         margin-bottom: 6px;
-        color: #3b82f6;
-        filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
+        color: #00ffff;
+        filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.4));
     }
     .metric-val {
         font-family: 'Space Grotesk', sans-serif;
@@ -620,7 +620,7 @@
         font-family: 'Space Grotesk', sans-serif;
         font-size: 0.75rem; font-weight: 800;
         letter-spacing: 0.2em; text-transform: uppercase;
-        color: #3b82f6;
+        color: #00ffff;
         margin-bottom: 6px;
         display: flex; align-items: center; gap: 8px;
     }
@@ -766,7 +766,7 @@
         <button onclick="window.print()" class="btn-action btn-primary-action" id="btn-print-top">
             <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
         </button>
-        <a href="/dashboard" class="btn-action btn-secondary-action" id="btn-dashboard-top">
+        <a href="/dashboard" class="back-btn-global" id="btn-dashboard-top">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
     </div>

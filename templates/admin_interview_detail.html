@@ -69,10 +69,11 @@
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
         body {
-            
             min-height: 100vh;
             padding: 0 0 60px;
             color: var(--text-1);
+            background: #020510 !important;
+            background-image: none !important;
             transition: background 0.25s ease, color 0.25s ease;
         }
 
@@ -124,8 +125,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: #fff;
+            background: linear-gradient(135deg, #00ffff, #0284c7);
+            color: #020510;
             border: none;
             padding: 9px 20px;
             border-radius: 10px;
@@ -133,13 +134,13 @@
             font-size: 0.88rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+            box-shadow: 0 4px 16px rgba(0,255,255,0.25);
             text-decoration: none;
         }
         .btn-pdf-download:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(79,70,229,0.4);
-            color: #fff;
+            box-shadow: 0 8px 28px rgba(0,255,255,0.4);
+            color: #020510;
         }
 
         /* ── Panel / Card ── */
@@ -158,9 +159,15 @@
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed, #a78bfa);
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #0284c7, #818cf8, #00ffff);
+            background-size: 200% 100%;
+            animation: shimmerBorder 3s linear infinite;
             border-radius: 22px 22px 0 0;
+        }
+        @keyframes shimmerBorder {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
         }
 
         .panel-title {
@@ -414,7 +421,7 @@
         .summary-rule {
             width: 40px;
             height: 3px;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            background: linear-gradient(90deg, #00ffff, #0284c7);
             border-radius: 3px;
             margin-bottom: 20px;
         }
@@ -454,6 +461,37 @@
         html.dark-theme .education-icon { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
         html.dark-theme .course-icon { background: rgba(217, 119, 6, 0.15); color: #fbbf24; }
         html.dark-theme .semester-icon { background: rgba(220, 38, 38, 0.15); color: #f87171; }
+        html.dark-theme .panel {
+            background: rgba(5, 12, 28, 0.65) !important;
+            border-color: rgba(0, 255, 255, 0.18) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        html.dark-theme .panel:hover {
+            border-color: rgba(0, 255, 255, 0.35) !important;
+        }
+        html.dark-theme .meta-card {
+            background: rgba(5, 12, 28, 0.5) !important;
+            border-color: rgba(0, 255, 255, 0.12) !important;
+        }
+        html.dark-theme .meta-card:hover {
+            border-color: rgba(0, 255, 255, 0.3) !important;
+            box-shadow: 0 4px 16px rgba(0,255,255,0.08);
+        }
+        html.dark-theme .panel-title .title-icon {
+            background: rgba(0, 255, 255, 0.08);
+            border-color: rgba(0, 255, 255, 0.15);
+            color: #00ffff;
+        }
+        html.dark-theme .score-ring {
+            filter: drop-shadow(0 4px 16px rgba(0,255,255,0.3));
+        }
+        html.dark-theme .candidate-name a {
+            border-bottom-color: rgba(0, 255, 255, 0.3);
+        }
+        html.dark-theme .candidate-name a:hover {
+            border-bottom-color: #00ffff;
+        }
         /* ══ GOATED BG OVERRIDES ══ */
         html.dark-theme body {
             background: #020510 !important;
@@ -539,7 +577,7 @@
             <button class="back-btn" id="themeToggle" title="Toggle Theme" style="padding: 9px 14px;">
                 <i class="bi bi-moon-fill" id="themeToggleIcon" style="transition: transform 0.2s ease;"></i>
             </button>
-            <a href="/admin" class="back-btn"><i class="bi bi-arrow-left"></i> Back</a>
+            <a href="/admin" class="back-btn-global"><i class="bi bi-arrow-left"></i> Back</a>
         </div>
     </div>
 
