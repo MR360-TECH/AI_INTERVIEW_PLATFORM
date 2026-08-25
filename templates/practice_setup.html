@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <meta charset="UTF-8">
-    <title>Practice Mode Setup â€” AI Assessment Platform</title>
+    <title>Practice Mode Setup - AI Assessment Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
@@ -39,28 +39,177 @@
         }
 
         html.dark-theme {
-            --page-bg:          #0b0f19;
-            --page-glow:        rgba(59, 130, 246, 0.06);
+            --page-bg:          #040914;
+            --page-glow:        rgba(0, 255, 255, 0.06);
             --card-bg:          rgba(10, 15, 29, 0.65);
-            --card-border:      rgba(255, 255, 255, 0.08);
-            --text-main:        #f1f5f9;
-            --text-muted:       #94a3b8;
-            --topbar-border:    rgba(255, 255, 255, 0.08);
-            --back-bg:          rgba(255, 255, 255, 0.05);
-            --back-border:      rgba(255, 255, 255, 0.10);
-            --back-color:       #94a3b8;
-            --back-hover-bg:    rgba(255, 255, 255, 0.10);
+            --card-border:      rgba(0, 255, 255, 0.18);
+            --text-main:        #ffffff;
+            --text-muted:       #8a9db8;
+            --topbar-border:    rgba(0, 255, 255, 0.18);
+            --back-bg:          rgba(0, 255, 255, 0.05);
+            --back-border:      rgba(0, 255, 255, 0.18);
+            --back-color:       #8a9db8;
+            --back-hover-bg:    rgba(0, 255, 255, 0.15);
             --back-hover-color: #ffffff;
             --highlights-bg:    rgba(10, 15, 29, 0.65);
-            --highlights-border: rgba(255, 255, 255, 0.08);
+            --highlights-border: rgba(0, 255, 255, 0.18);
             --highlight-color:  #cbd5e1;
-            --ph-divider-bg:    rgba(255, 255, 255, 0.10);
-            --settings-border:  rgba(255, 255, 255, 0.08);
+            --ph-divider-bg:    rgba(0, 255, 255, 0.18);
+            --settings-border:  rgba(0, 255, 255, 0.18);
         }
 
         body {
             min-height: 100vh;
-            
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+            background: var(--page-bg) !important;
+            background-image: none !important;
+        }
+
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+
+        /* ═══════════════════════════════════════════
+           GOATED BACKGROUND — Animated Aurora System
+        ═══════════════════════════════════════════ */
+        .db-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+        html.dark-theme .db-bg {
+            display: block;
+        }
+
+        .db-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+        }
+
+        .db-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .db-orb-1 {
+            width: 520px; height: 520px;
+            top: -120px; left: -100px;
+            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
+            animation-delay: 0s; animation-duration: 20s;
+        }
+        .db-orb-2 {
+            width: 400px; height: 400px;
+            top: 10%; right: -80px;
+            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
+            animation-delay: -7s; animation-duration: 24s;
+        }
+        .db-orb-3 {
+            width: 480px; height: 480px;
+            bottom: -80px; left: 30%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+            animation-delay: -13s; animation-duration: 22s;
+        }
+        .db-orb-4 {
+            width: 300px; height: 300px;
+            top: 45%; right: 25%;
+            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
+            animation-delay: -4s; animation-duration: 19s;
+        }
+        .db-orb-5 {
+            width: 350px; height: 350px;
+            bottom: 10%; right: -50px;
+            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
+            animation-delay: -9s; animation-duration: 26s;
+        }
+
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        .db-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .db-particles {
+            position: absolute;
+            inset: 0;
+        }
+        .db-star {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: starTwinkle linear infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        .db-topbar-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Glass Cards overriding */
+        html.dark-theme .practice-card,
+        html.dark-theme .practice-highlights,
+        html.dark-theme .btn-back {
+            background: rgba(8, 14, 30, 0.75) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-color: rgba(0, 255, 255, 0.14) !important;
+        }
+
+        html.dark-theme .btn-back:hover {
+            background: #00ffff !important;
+            color: #020510 !important;
+            border-color: #00ffff !important;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--page-bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
+
+        body {
+            min-height: 100vh;
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
             position: relative;
@@ -80,8 +229,8 @@
 
         .practice-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
-            border-color: rgba(59, 130, 246, 0.35) !important;
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.25);
+            border-color: rgba(0, 255, 255, 0.4) !important;
         }
 
         .practice-icon {
@@ -100,13 +249,15 @@
         html.dark-theme .convo-theme  { color: #38bdf8; }
 
         .selected-card {
-            border: 2px solid #3b82f6 !important;
-            background-color: rgba(59, 130, 246, 0.08) !important;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+            border: 2px solid #00ffff !important;
+            background-color: rgba(0, 255, 255, 0.08) !important;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);
         }
 
         html.dark-theme .selected-card {
-            background-color: rgba(59, 130, 246, 0.15) !important;
+            background-color: rgba(0, 255, 255, 0.15) !important;
+            border-color: #00ffff !important;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.35);
         }
 
         .practice-highlights {
@@ -216,11 +367,23 @@
         </style>
 </head>
 <body>
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
+
     {% include 'navbar.html' %}
 
     <div class="container mt-3">
         <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <div class="col-lg-10 col-xl-9">
 
                 <!-- Page header -->
                 <div class="topbar mb-3">
@@ -231,7 +394,7 @@
                         </p>
                     </div>
                     <a href="/dashboard" class="back-btn-global">
-                        <i class="bi bi-arrow-left"></i> Return to Portal
+                        <i class="bi bi-arrow-left"></i> Back
                     </a>
                 </div>
 
@@ -344,7 +507,7 @@
 
                     <!-- Launch button -->
                     <button type="submit" class="btn w-100 text-white mt-3 py-3"
-                        style="border-radius:12px; background:linear-gradient(135deg,#4e73df,#224abe); font-size:1.05rem; font-weight:700; box-shadow:0 4px 14px rgba(78,115,223,0.35); border:none;">
+                        style="border-radius:12px; background:linear-gradient(135deg,var(--primary,#00ffff),var(--primary-hover,#0284c7)); font-size:1.05rem; font-weight:700; box-shadow:0 4px 14px rgba(0,255,255,0.25); border:none;">
                         Launch Practice Session <i class="bi bi-rocket-takeoff ms-1"></i>
                     </button>
 
@@ -374,7 +537,30 @@
 
             if (mode === 'viva')  vivaInput.setAttribute('required','required');
             if (mode === 'lang')  langInput.setAttribute('required','required');
-        }
     </script>
+
+<script>
+/* ── Practice Setup background particle spawner ── */
+(function() {
+    var container = document.getElementById('dbParticles');
+    if (!container) return;
+    var count = 60;
+    for (var i = 0; i < count; i++) {
+        var star = document.createElement('div');
+        star.className = 'db-star';
+        var size = Math.random() * 2 + 1;
+        star.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (Math.random() * 100) + '%',
+            'top:' + (Math.random() * 100) + '%',
+            'animation-duration:' + (Math.random() * 4 + 2) + 's',
+            'animation-delay:' + (Math.random() * 6) + 's'
+        ].join(';');
+        container.appendChild(star);
+    }
+})();
+</script>
+
 </body>
 </html>

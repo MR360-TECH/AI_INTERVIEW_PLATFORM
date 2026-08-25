@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Company Tech Questions â€” AI Assessment Platform</title>
+    <title>Top Company Tech Questions ” AI Assessment Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
@@ -40,9 +40,8 @@
             border-radius: 50%;
             filter: blur(130px);
             z-index: -1;
-            opacity: 0.55;
+            opacity: 0.5;
             pointer-events: none;
-            mix-blend-mode: multiply;
             animation: floatOrb 20s infinite alternate ease-in-out;
         }
         .orb-1 {
@@ -92,15 +91,18 @@
         .catalog-title {
             font-size: 2.75rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #090e1a 0%, #1e293b 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #67e8f9 50%, #00d4ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
             letter-spacing: -0.03em;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 12px rgba(0,212,255,0.35));
         }
 
         .catalog-subtitle {
             font-size: 1.05rem;
-            color: #4a5568;
+            color: #cbd5e1;
             max-width: 650px;
             line-height: 1.6;
         }
@@ -234,12 +236,14 @@
             
         }
         html.dark-theme .catalog-title {
-            background: linear-gradient(135deg, #f0f6ff 0%, #cbd5e1 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #67e8f9 50%, #00d4ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 12px rgba(0,212,255,0.35));
         }
         html.dark-theme .catalog-subtitle {
-            color: var(--text-desc);
+            color: #cbd5e1;
         }
         html.dark-theme .cyber-grid {
             background-image: 
@@ -292,11 +296,87 @@
         .animate-card {
             animation: cardFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
+        /* Disable pre-existing static orbs and cyber-grid in dark theme */
+        html.dark-theme .orb {
+            display: none !important;
+        }
+        html.dark-theme .cyber-grid {
+            display: none !important;
+        }
+
+        /* ══ GOATED BG OVERRIDES ══ */
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+        .db-bg {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden; display: none;
+        }
+        html.dark-theme .db-bg { display: block; }
+        .db-bg::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,150,255,0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100,0,255,0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,255,220,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,80,255,0.12) 0%, transparent 50%),
+                linear-gradient(160deg,#02060f 0%,#010416 30%,#020820 60%,#010512 100%);
+        }
+        .db-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0; animation:orbDrift 18s ease-in-out infinite; }
+        .db-orb-1 { width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(0,120,255,0.30) 0%,transparent 70%);animation-delay:0s;animation-duration:20s; }
+        .db-orb-2 { width:400px;height:400px;top:10%;right:-80px;background:radial-gradient(circle,rgba(120,0,255,0.22) 0%,transparent 70%);animation-delay:-7s;animation-duration:24s; }
+        .db-orb-3 { width:480px;height:480px;bottom:-80px;left:30%;background:radial-gradient(circle,rgba(0,200,255,0.18) 0%,transparent 70%);animation-delay:-13s;animation-duration:22s; }
+        .db-orb-4 { width:300px;height:300px;top:45%;right:25%;background:radial-gradient(circle,rgba(60,0,180,0.16) 0%,transparent 70%);animation-delay:-4s;animation-duration:19s; }
+        .db-orb-5 { width:350px;height:350px;bottom:10%;right:-50px;background:radial-gradient(circle,rgba(0,255,180,0.12) 0%,transparent 70%);animation-delay:-9s;animation-duration:26s; }
+        @keyframes orbDrift {
+            0%   { opacity:0.6; transform:translate(0,0) scale(1); }
+            25%  { opacity:0.8; transform:translate(30px,-20px) scale(1.05); }
+            50%  { opacity:0.55; transform:translate(-20px,30px) scale(0.97); }
+            75%  { opacity:0.75; transform:translate(15px,10px) scale(1.03); }
+            100% { opacity:0.6; transform:translate(0,0) scale(1); }
+        }
+        .db-grid {
+            position:absolute; inset:0;
+            background-image: linear-gradient(rgba(0,200,255,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,255,0.035) 1px,transparent 1px);
+            background-size:60px 60px;
+            mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+            -webkit-mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+        }
+        .db-particles { position:absolute; inset:0; }
+        .db-star { position:absolute; border-radius:50%; background:#ffffff; animation:starTwinkle linear infinite; }
+        @keyframes starTwinkle {
+            0%,100% { opacity:0.05; transform:scale(1); }
+            50%      { opacity:0.55; transform:scale(1.6); }
+        }
+        .db-topbar-glow {
+            position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent 0%,rgba(0,200,255,0.7) 30%,rgba(120,0,255,0.7) 70%,transparent 100%);
+            animation:topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+        ::-webkit-scrollbar{width:6px;height:6px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
+        ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
 </head>
 <body>
 
 {% include 'navbar.html' %}
+
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
 
 <!-- Background Tech Effects -->
 <div class="cyber-grid"></div>
@@ -312,7 +392,7 @@
             <p class="catalog-subtitle mb-0">Study highly targeted technical and behavioral questions gathered from recent placement assessments at top-tier firms.</p>
         </div>
         <a href="/dashboard" class="btn btn-back rounded-pill px-4 py-2 border shadow-sm">
-            <i class="bi bi-arrow-left me-1"></i> Dashboard
+            <i class="bi bi-arrow-left me-1"></i> Back
         </a>
     </div>
 
@@ -348,11 +428,11 @@
                             {% endif %}
                         </div>
 
-                        <h4 class="fw-bold mb-2" style="color: #0f172a; letter-spacing: -0.02em;">{{ c.name }}</h4>
-                        <p class="text-muted fs-7 mb-3" style="line-height:1.6; min-height:60px;">{{ c.description }}</p>
+                        <h4 class="fw-bold mb-2" style="letter-spacing: -0.02em; color: #f0f6ff !important;">{{ c.name }}</h4>
+                        <p class="text-muted fs-7 mb-3" style="line-height:1.6; min-height:60px; color: #94a3b8 !important;">{{ c.description }}</p>
                     </div>
                     
-                    <div class="mt-auto pt-3 border-top w-100 d-flex justify-content-between align-items-center text-muted" style="border-color: rgba(0,0,0,0.04) !important;">
+                    <div class="mt-auto pt-3 border-top w-100 d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.08) !important;">
                         <span class="fs-7 fw-semibold" style="color: {{ c.color }};">
                             <i class="bi bi-bookmark-star-fill me-1"></i> {{ c.total_questions }} Curated Resources
                         </span>
@@ -366,5 +446,18 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+    var c=document.getElementById('dbParticles');
+    if(!c)return;
+    for(var i=0;i<60;i++){
+        var s=document.createElement('div');
+        s.className='db-star';
+        var sz=Math.random()*2+1;
+        s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
+        c.appendChild(s);
+    }
+})();
+</script>
 </body>
 </html>

@@ -19,153 +19,93 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        :root {
-            --accent: #4f46e5;
-            --accent2: #818cf8;
-            --success-glow: #10b981;
-            --bg: var(--bg-base);
-            --card-bg: var(--surface);
-            --border-glow: var(--brand-glow);
-            --border-color: var(--border-light);
-            --text-main: var(--ink);
-            --text-muted: var(--muted);
-            --text-desc: var(--subtle);
-            --glow-color: rgba(99, 102, 241, 0.03);
-            --auth-badge-bg: var(--primary-light);
-            --auth-badge-border: var(--primary-glow);
-            --auth-badge-text: var(--primary);
-            --input-bg: var(--surface);
-            --input-border: var(--border-mid);
-            --input-text: var(--ink);
-            --input-focus-bg: var(--surface);
-            --type-toggle-bg: var(--bg-alt);
-            --type-toggle-btn-color: var(--muted);
-            --info-note-bg: rgba(16, 185, 129, 0.08);
-            --info-note-border: rgba(16, 185, 129, 0.25);
-            --info-note-text: var(--muted);
-            --glass-border: var(--border-light);
-            --shadow-rgba: rgba(0, 0, 0, 0.08);
-            --edu-pill-bg: var(--bg-alt);
-            --edu-pill-border: var(--border-mid);
-            --edu-pill-color: var(--muted);
-            --sep-line: var(--border-mid);
-            --back-btn-bg: var(--surface);
-            --back-btn-border: var(--border-mid);
-            --back-btn-text: var(--muted);
-            --back-btn-hover-bg: var(--bg-alt);
-            --back-btn-hover-text: var(--ink);
-            --back-btn-hover-border: var(--brand-blue);
-        }
-
-        html.dark-theme {
-            --accent: #4f46e5;
-            --accent2: #818cf8;
-            --success-glow: #10b981;
-            --bg: linear-gradient(135deg, #0f0c29 0%, #1a1040 40%, #111827 100%);
-            --card-bg: rgba(10, 15, 29, 0.65);
-            --border-glow: rgba(129, 140, 248, 0.35);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-main: #f1f5f9;
-            --text-muted: #cbd5e1;
-            --text-desc: #94a3b8;
-            --glow-color: rgba(99, 102, 241, 0.06);
-            --auth-badge-bg: rgba(129, 140, 248, 0.12);
-            --auth-badge-border: rgba(129, 140, 248, 0.3);
-            --auth-badge-text: #818cf8;
-            --input-bg: #02040a;
-            --input-border: rgba(255, 255, 255, 0.12);
-            --input-text: #f1f5f9;
-            --input-focus-bg: #050810;
-            --type-toggle-bg: rgba(255, 255, 255, 0.05);
-            --type-toggle-btn-color: rgba(255, 255, 255, 0.5);
-            --info-note-bg: rgba(16, 185, 129, 0.08);
-            --info-note-border: rgba(16, 185, 129, 0.25);
-            --info-note-text: rgba(255, 255, 255, 0.55);
-            --glass-border: rgba(129, 140, 248, 0.35);
-            --shadow-rgba: rgba(0, 0, 0, 0.45);
-            --edu-pill-bg: rgba(255, 255, 255, 0.04);
-            --edu-pill-border: rgba(255, 255, 255, 0.15);
-            --edu-pill-color: rgba(255, 255, 255, 0.5);
-            --sep-line: rgba(255, 255, 255, 0.1);
-            --back-btn-bg: rgba(255, 255, 255, 0.05);
-            --back-btn-border: rgba(255, 255, 255, 0.1);
-            --back-btn-text: #94a3b8;
-            --back-btn-hover-bg: rgba(255, 255, 255, 0.1);
-            --back-btn-hover-text: #ffffff;
-            --back-btn-hover-border: rgba(255, 255, 255, 0.2);
-        }
-
         body {
             min-height: 100vh;
-            
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
-            line-height: 1.6;
-            padding: 2rem 0 4rem;
-            position: relative;
-            overflow-x: hidden;
-            transition: background-color 0.25s ease, color 0.25s ease;
-        }
-
-        
-
-        .reg-glass {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 25px 60px var(--shadow-rgba);
-            animation: slideUp 0.55s cubic-bezier(0.22,1,0.36,1) both;
-            transition: border-color 0.3s, background-color 0.25s;
-        }
-
-        .reg-glass:hover {
-            border-color: var(--border-glow);
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(36px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .reg-header {
-            background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
-            padding: 2.2rem 2rem 1.8rem;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
             position: relative;
         }
 
-        .reg-header .icon-ring {
-            width: 68px; height: 68px;
+        /* Ambient glow orbs — use divs (body::before/after are suppressed globally) */
+        .orb-tl {
+            pointer-events: none;
+            position: fixed;
+            top: -100px; left: -100px;
+            width: 500px; height: 500px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.15);
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 2rem; color: #fff;
-            margin-bottom: 0.9rem;
-            box-shadow: 0 0 0 8px rgba(255,255,255,0.07);
+            background: radial-gradient(circle, rgba(0,212,255,0.13) 0%, transparent 70%);
+            z-index: 0;
+            animation: floatOrb1 14s ease-in-out infinite alternate;
         }
-        .reg-header h2 { color: #fff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.7rem; margin-bottom: 0.35rem; letter-spacing: -0.02em; }
-        .reg-header p  { color: rgba(255,255,255,0.88); font-size: 0.93rem; margin: 0; font-family: 'Inter', sans-serif; }
-
-        .reg-body { padding: 2.2rem 2.5rem 2.5rem; }
-
-        .auth-badge {
-            display: flex; align-items: center; gap: 0.6rem;
-            background: var(--auth-badge-bg);
-            border: 1px solid var(--auth-badge-border);
-            border-radius: 10px;
-            padding: 0.6rem 1rem;
-            color: var(--auth-badge-text);
-            font-size: 0.85rem; font-weight: 600;
-            margin-bottom: 1.5rem;
+        .orb-br {
+            pointer-events: none;
+            position: fixed;
+            bottom: -80px; right: -80px;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(80,0,255,0.1) 0%, transparent 70%);
+            z-index: 0;
+            animation: floatOrb2 18s ease-in-out infinite alternate;
+        }
+        @keyframes floatOrb1 {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(70px, 90px) scale(1.12); }
+        }
+        @keyframes floatOrb2 {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-60px, -80px) scale(1.1); }
         }
 
+        .page-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            padding: 2.5rem 1rem 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .inner-col {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        /* Animated glow border on card — matches login page */
+        .register-card {
+            position: relative;
+        }
+        .register-card::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, rgba(0,255,255,0.35), rgba(0,100,255,0.2), rgba(0,255,255,0.1));
+            z-index: -1;
+            opacity: 0;
+            animation: cardGlow 4s ease-in-out infinite alternate;
+        }
+        @keyframes cardGlow {
+            0%   { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .text-link {
+            color: var(--brand-blue);
+            font-weight: 700;
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+        .text-link:hover { opacity: 0.8; text-decoration: none; }
+
+        /* Student / Professional toggle */
         .type-toggle {
             display: flex;
             gap: 0.5rem;
-            background: var(--type-toggle-bg);
-            border: 1.5px solid var(--border-color);
+            background: rgba(2, 4, 10, 0.75);
+            border: 1.5px solid rgba(0, 255, 255, 0.25);
             border-radius: 14px;
             padding: 5px;
             margin-bottom: 1.8rem;
@@ -179,80 +119,46 @@
             font-weight: 700; font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.22s;
-            color: var(--type-toggle-btn-color);
+            color: #8a9db8;
             background: transparent;
             letter-spacing: 0.01em;
         }
         .type-toggle button.active {
-            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            background: linear-gradient(135deg, #00d4ff 0%, #0066cc 100%);
             color: #fff;
-            box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 4px 14px rgba(0, 255, 255, 0.35);
         }
         .type-toggle button i { margin-right: 6px; font-size: 0.95rem; }
 
-        .form-label {
-            color: var(--text-muted);
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700; font-size: 0.78rem;
-            text-transform: uppercase; letter-spacing: 0.08em;
-            margin-bottom: 0.45rem;
-            display: flex; align-items: center; gap: 5px;
-        }
-        .form-label i { opacity: 0.65; font-size: 0.85rem; }
-        .form-control, .form-select {
-            background: var(--input-bg) !important;
-            border: 1.5px solid var(--input-border) !important;
-            border-radius: 11px !important;
-            color: var(--input-text) !important;
-            font-size: 0.96rem;
-            font-family: 'Inter', sans-serif;
-            padding: 0.72rem 1.1rem;
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-        }
-        .form-control::placeholder { color: var(--text-desc) !important; font-size: 0.88rem; }
-        .form-control:focus, .form-select:focus {
-            background: var(--input-focus-bg) !important;
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.18) !important;
-            outline: none;
-        }
-        .form-select option { background: #1e1b4b; color: #f1f5f9; }
-
-        .locked-field {
-            background: var(--input-bg) !important;
-            opacity: 0.6;
-            border-style: dashed !important;
-            color: var(--text-desc) !important;
-            cursor: not-allowed;
-        }
-
+        /* Education pills */
         .edu-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.45rem; }
         .edu-pills input[type="radio"] { display: none; }
         .edu-pills label {
             padding: 0.45rem 1rem;
             border-radius: 99px;
-            border: 1.5px solid var(--edu-pill-border);
-            color: var(--edu-pill-color);
+            border: 1.5px solid rgba(0, 255, 255, 0.25);
+            color: #8a9db8;
             font-family: 'Outfit', sans-serif;
             font-size: 0.83rem; font-weight: 700;
             cursor: pointer; transition: all 0.2s;
-            background: var(--edu-pill-bg);
+            background: rgba(2, 4, 10, 0.75);
             letter-spacing: 0.01em;
         }
-        .edu-pills label:hover { border-color: var(--accent); color: var(--accent); }
+        .edu-pills label:hover { border-color: #00ffff; color: #00ffff; }
         .edu-pills input:checked + label {
-            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            background: linear-gradient(135deg, #00d4ff 0%, #0066cc 100%);
             border-color: transparent;
             color: #fff;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35);
+            box-shadow: 0 4px 10px rgba(0, 255, 255, 0.35);
         }
 
+        /* Section separator */
         .section-sep {
             display: flex; align-items: center; gap: 0.9rem;
             margin: 2rem 0 1.5rem;
         }
         .section-sep span {
-            color: var(--text-desc);
+            color: #aabcce;
             font-family: 'Outfit', sans-serif;
             font-size: 0.72rem;
             font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em;
@@ -260,11 +166,39 @@
         }
         .section-sep::before, .section-sep::after {
             content: ''; flex: 1;
-            height: 1.5px; background: var(--sep-line);
+            height: 1.5px; background: rgba(0, 255, 255, 0.15);
         }
 
-        .btn-reg-submit {
-            background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+        /* Error message */
+        .reg-error {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.25);
+            border-radius: 10px;
+            padding: 0.7rem 1rem;
+            color: #fca5a5;
+            font-size: 0.88rem;
+            margin-bottom: 1.2rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        /* Info note */
+        .info-note {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            background: rgba(52, 211, 153, 0.08);
+            border: 1px solid rgba(52, 211, 153, 0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 1.4rem;
+        }
+        .info-note i { color: #34d399; font-size: 1.1rem; flex-shrink: 0; }
+
+        /* Submit button */
+        .btn-register {
+            background: linear-gradient(135deg, #00d4ff 0%, #0066cc 100%);
             border: none;
             border-radius: 12px;
             color: #fff;
@@ -276,254 +210,269 @@
             margin-top: 1.6rem;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.35);
             display: flex; align-items: center; justify-content: center; gap: 0.55rem;
         }
-        .btn-reg-submit:hover {
+        .btn-register:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.55);
+            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.45);
+            color: #fff;
         }
-        .btn-reg-submit:active { transform: translateY(0); }
+        .btn-register:active { transform: translateY(0); }
 
-        .info-note {
-            display: flex; gap: 0.7rem; align-items: flex-start;
-            background: var(--info-note-bg);
-            border: 1px solid var(--info-note-border);
-            border-radius: 12px; padding: 12px 16px;
-            color: var(--info-note-text); font-size: 0.85rem;
-            margin-top: 1.4rem;
-        }
-        .info-note i { color: var(--success-glow); font-size: 1.1rem; flex-shrink: 0; }
-
-        .reg-error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            border-radius: 10px; padding: 0.7rem 1rem;
-            color: #fca5a5; font-size: 0.88rem;
-            margin-bottom: 1.2rem;
-        }
-
-        .back-btn-global {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--back-btn-text);
-            background: var(--back-btn-bg);
-            border: 1px solid var(--back-btn-border);
-            padding: 8px 18px;
-            border-radius: 10px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            font-size: 0.88rem;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .back-btn-global:hover {
-            color: var(--back-btn-hover-text);
-            background: var(--back-btn-hover-bg);
-            border-color: var(--back-btn-hover-border);
-            transform: translateY(-1px);
-        }
-
+        /* Fade sections */
         .fade-section { transition: opacity 0.3s, max-height 0.4s; overflow: hidden; }
         .fade-section.hidden { opacity: 0; max-height: 0; pointer-events: none; }
-        .fade-section.visible { opacity: 1; max-height: 600px; } }
+        .fade-section.visible { opacity: 1; max-height: 600px; }
+        /* ══ GOATED BG OVERRIDES ══ */
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+        .db-bg {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden; display: none;
+        }
+        html.dark-theme .db-bg { display: block; }
+        .db-bg::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,150,255,0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100,0,255,0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,255,220,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,80,255,0.12) 0%, transparent 50%),
+                linear-gradient(160deg,#02060f 0%,#010416 30%,#020820 60%,#010512 100%);
+        }
+        .db-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0; animation:orbDrift 18s ease-in-out infinite; }
+        .db-orb-1 { width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(0,120,255,0.30) 0%,transparent 70%);animation-delay:0s;animation-duration:20s; }
+        .db-orb-2 { width:400px;height:400px;top:10%;right:-80px;background:radial-gradient(circle,rgba(120,0,255,0.22) 0%,transparent 70%);animation-delay:-7s;animation-duration:24s; }
+        .db-orb-3 { width:480px;height:480px;bottom:-80px;left:30%;background:radial-gradient(circle,rgba(0,200,255,0.18) 0%,transparent 70%);animation-delay:-13s;animation-duration:22s; }
+        .db-orb-4 { width:300px;height:300px;top:45%;right:25%;background:radial-gradient(circle,rgba(60,0,180,0.16) 0%,transparent 70%);animation-delay:-4s;animation-duration:19s; }
+        .db-orb-5 { width:350px;height:350px;bottom:10%;right:-50px;background:radial-gradient(circle,rgba(0,255,180,0.12) 0%,transparent 70%);animation-delay:-9s;animation-duration:26s; }
+        @keyframes orbDrift {
+            0%   { opacity:0.6; transform:translate(0,0) scale(1); }
+            25%  { opacity:0.8; transform:translate(30px,-20px) scale(1.05); }
+            50%  { opacity:0.55; transform:translate(-20px,30px) scale(0.97); }
+            75%  { opacity:0.75; transform:translate(15px,10px) scale(1.03); }
+            100% { opacity:0.6; transform:translate(0,0) scale(1); }
+        }
+        .db-grid {
+            position:absolute; inset:0;
+            background-image: linear-gradient(rgba(0,200,255,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,255,0.035) 1px,transparent 1px);
+            background-size:60px 60px;
+            mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+            -webkit-mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+        }
+        .db-particles { position:absolute; inset:0; }
+        .db-star { position:absolute; border-radius:50%; background:#ffffff; animation:starTwinkle linear infinite; }
+        @keyframes starTwinkle {
+            0%,100% { opacity:0.05; transform:scale(1); }
+            50%      { opacity:0.55; transform:scale(1.6); }
+        }
+        .db-topbar-glow {
+            position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent 0%,rgba(0,200,255,0.7) 30%,rgba(120,0,255,0.7) 70%,transparent 100%);
+            animation:topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+        ::-webkit-scrollbar{width:6px;height:6px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
+        ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
 </head>
 <body>
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-7 col-md-9">
+<!-- Ambient orb decorations -->
+<div class="orb-tl" aria-hidden="true"></div>
+<div class="orb-br" aria-hidden="true"></div>
 
-            <!-- Back button -->
-            <div class="mb-3">
-                <a href="/login" class="back-btn-global">
-                    <i class="bi bi-arrow-left"></i> Back
-                </a>
+<div class="page-wrap">
+    <div class="inner-col">
+
+        <div class="mb-3">
+            <a href="/login" class="back-btn-global">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <div class="register-card">
+
+            <div class="register-header">
+                <i class="bi bi-person-vcard-fill"></i>
+                <h2>Create Your Profile</h2>
+                <p>Set up your candidate profile to unlock AI-powered assessments</p>
             </div>
 
-            <div class="reg-glass">
+            <div class="form-body">
 
-                <!-- Header -->
-                <div class="reg-header">
-                    <div class="icon-ring"><i class="bi bi-person-vcard-fill"></i></div>
-                    <h2>Create Your Profile</h2>
-                    <p>Set up your candidate profile to unlock AI-powered assessments</p>
+                {% if error %}
+                <div class="reg-error"><i class="bi bi-exclamation-triangle-fill"></i>{{ error }}</div>
+                {% endif %}
+
+                {% if is_google %}
+                <div class="account-badge">
+                    <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google">
+                    Signed in with Google — email is pre-verified
                 </div>
+                {% endif %}
 
-                <!-- Body -->
-                <div class="reg-body">
+                <form action="/register" method="POST" id="regForm">
 
-                    {% if error %}
-                    <div class="reg-error"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}</div>
-                    {% endif %}
-
-                    <!-- Auth badge -->
-                    {% if is_google %}
-                    <div class="auth-badge">
-                        <img src="https://www.google.com/favicon.ico" width="16" height="16" alt="Google">
-                        Signed in with Google — email is pre-verified
+                    <div class="type-toggle" id="typeToggle">
+                        <button type="button" class="active" id="btn-student" onclick="setType('student')">
+                            <i class="bi bi-mortarboard-fill"></i> Student
+                        </button>
+                        <button type="button" id="btn-professional" onclick="setType('professional')">
+                            <i class="bi bi-briefcase-fill"></i> Professional
+                        </button>
                     </div>
-                    {% endif %}
+                    <input type="hidden" name="user_type" id="userTypeInput" value="student">
 
-                    <form action="/register" method="POST" id="regForm">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-person"></i> Full Name</label>
+                        <input type="text" name="full_name" class="form-control"
+                               placeholder="e.g. Pavan Kumar" value="{{ prefill_name or '' }}" required
+                               autocomplete="name">
+                    </div>
 
-                        <!-- User type toggle -->
-                        <div class="type-toggle" id="typeToggle">
-                            <button type="button" class="active" id="btn-student" onclick="setType('student')">
-                                <i class="bi bi-mortarboard-fill"></i> Student
-                            </button>
-                            <button type="button" id="btn-professional" onclick="setType('professional')">
-                                <i class="bi bi-briefcase-fill"></i> Professional
-                            </button>
-                        </div>
-                        <input type="hidden" name="user_type" id="userTypeInput" value="student">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-envelope"></i> Email Address</label>
+                        {% if prefill_email %}
+                        <input type="email" class="form-control locked-field"
+                               value="{{ prefill_email }}" readonly
+                               title="Email is set from your sign-in method">
+                        {% else %}
+                        <input type="email" name="email" class="form-control"
+                               placeholder="your@email.com" required autocomplete="email">
+                        {% endif %}
+                    </div>
 
-                        <!-- Full name -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-gender-ambiguous"></i> Gender</label>
+                        <select name="gender" class="form-select">
+                            <option value="">— Select —</option>
+                            <option value="Male" {% if prefill_gender == "Male" %}selected{% endif %}>Male</option>
+                            <option value="Female" {% if prefill_gender == "Female" %}selected{% endif %}>Female</option>
+                            <option value="Other" {% if prefill_gender == "Other" %}selected{% endif %}>Other / Prefer not to say</option>
+                        </select>
+                        {% if error and 'gender' in error|lower %}
+                        <small class="text-danger" style="font-size:0.8rem;">{{ error }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="fade-section visible" id="edu-section">
                         <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-person"></i> Full Name</label>
-                            <input type="text" name="full_name" class="form-control"
-                                   placeholder="e.g. Pavan Kumar" value="{{ prefill_name or '' }}" required
-                                   autocomplete="name">
-                        </div>
-
-                        <!-- Email: editable for standalone signup, locked for OAuth/guest -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-envelope"></i> Email Address</label>
-                            {% if prefill_email %}
-                            <input type="email" class="form-control locked-field"
-                                   value="{{ prefill_email }}" readonly
-                                   title="Email is set from your sign-in method">
-                            {% else %}
-                            <input type="email" name="email" class="form-control"
-                                   placeholder="your@email.com" required autocomplete="email">
+                            <label class="form-label"><i class="bi bi-mortarboard"></i> Education Level</label>
+                            <div class="edu-pills">
+                                <input class="form-check-input" type="radio" name="education" value="School" id="edu1" {% if prefill_education == "School" %}checked{% endif %}>
+                                <label for="edu1">School</label>
+                                <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2" {% if prefill_education == "PU/12th" %}checked{% endif %}>
+                                <label for="edu2">PU / 12th</label>
+                                <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3" {% if prefill_education == "Degree" %}checked{% endif %}>
+                                <label for="edu3">Degree</label>
+                                <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if prefill_education == "Post Graduate" %}checked{% endif %}>
+                                <label for="edu4">Post Graduate</label>
+                            </div>
+                            {% if error and 'education' in error|lower %}
+                            <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
                             {% endif %}
-                        </div>
-
-                        
-
-                        <!-- Gender -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-gender-ambiguous"></i> Gender</label>
-                            <select name="gender" class="form-select">
-                                <option value="">— Select —</option>
-                                <option value="Male" {% if prefill_gender == "Male" %}selected{% endif %}>Male</option>
-                                <option value="Female" {% if prefill_gender == "Female" %}selected{% endif %}>Female</option>
-                                <option value="Other" {% if prefill_gender == "Other" %}selected{% endif %}>Other / Prefer not to say</option>
-                            </select>
-                            {% if error and 'gender' in error|lower %}
-                            <small class="text-danger" style="font-size:0.8rem;">{{ error }}</small>
-                            {% endif %}
-                        </div>
-
-                        <!-- Education (Students only) -->
-                        <div class="fade-section visible" id="edu-section">
-                            <div class="mb-3">
-                                <label class="form-label"><i class="bi bi-mortarboard"></i> Education Level</label>
-                                <div class="edu-pills">
-                                    <input class="form-check-input" type="radio" name="education" value="School" id="edu1" {% if prefill_education == "School" %}checked{% endif %}>
-                                    <label for="edu1">School</label>
-                                    <input class="form-check-input" type="radio" name="education" value="PU/12th" id="edu2" {% if prefill_education == "PU/12th" %}checked{% endif %}>
-                                    <label for="edu2">PU / 12th</label>
-                                    <input class="form-check-input" type="radio" name="education" value="Degree" id="edu3" {% if prefill_education == "Degree" %}checked{% endif %}>
-                                    <label for="edu3">Degree</label>
-                                    <input class="form-check-input" type="radio" name="education" value="Post Graduate" id="edu4" {% if prefill_education == "Post Graduate" %}checked{% endif %}>
-                                    <label for="edu4">Post Graduate</label>
-                                </div>
-                                {% if error and 'education' in error|lower %}
-                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
-                                {% endif %}
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label"><i class="bi bi-book"></i> Course / Branch</label>
-                                    <input type="text" name="course" class="form-control"
-                                           placeholder="e.g. BCA, B.Tech CSE" value="{{ prefill_course or '' }}">
-                                    {% if error and 'course' in error|lower %}
-                                    <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label"><i class="bi bi-calendar3"></i> Semester / Year</label>
-                                    <input type="text" name="semester" class="form-control"
-                                           placeholder="e.g. 6th Sem, 3rd Year" value="{{ prefill_semester or '' }}">
-                                    {% if error and 'semester' in error|lower %}
-                                    <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Professional fields (hidden by default) -->
-                        <div class="fade-section hidden" id="prof-section">
-                            <div class="mb-3">
-                                <label class="form-label"><i class="bi bi-building"></i> Current Designation</label>
-                                <input type="text" name="current_designation" class="form-control"
-                                       id="designationInput" placeholder="e.g. Software Engineer, Product Manager" value="{{ prefill_current_designation or '' }}">
-                                {% if error and 'designation' in error|lower %}
-                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
-                                {% endif %}
-                            </div>
-                             <div class="mb-3">
-                                <label class="form-label"><i class="bi bi-clock-history"></i> Years of Experience</label>
-                                <input type="number" name="years_of_experience" class="form-control"
-                                       id="expInput" placeholder="e.g. 3" min="0" max="50" step="0.5" value="{{ prefill_years_of_experience or '' }}">
-                                {% if error and 'experience' in error|lower %}
-                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Optional profile enrichment -->
-                        <div class="section-sep"><span>Optional — Enrich Your Profile</span></div>
-
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-tools"></i> Primary Skills</label>
-                            <input type="text" name="skills" class="form-control"
-                                   placeholder="e.g. Python, React, Machine Learning (comma separated)" value="{{ prefill_skills or '' }}">
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="bi bi-github"></i> GitHub / Portfolio URL</label>
-                                <input type="url" name="github_url" class="form-control"
-                                       placeholder="https://github.com/username" value="{{ prefill_github_url or '' }}">
+                                <label class="form-label"><i class="bi bi-book"></i> Course / Branch</label>
+                                <input type="text" name="course" class="form-control"
+                                       placeholder="e.g. BCA, B.Tech CSE" value="{{ prefill_course or '' }}">
+                                {% if error and 'course' in error|lower %}
+                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label"><i class="bi bi-linkedin"></i> LinkedIn URL</label>
-                                <input type="url" name="linkedin_url" class="form-control"
-                                       placeholder="https://linkedin.com/in/username" value="{{ prefill_linkedin_url or '' }}">
+                                <label class="form-label"><i class="bi bi-calendar3"></i> Semester / Year</label>
+                                <input type="text" name="semester" class="form-control"
+                                       placeholder="e.g. 6th Sem, 3rd Year" value="{{ prefill_semester or '' }}">
+                                {% if error and 'semester' in error|lower %}
+                                <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                                {% endif %}
                             </div>
                         </div>
-
-                        <!-- Submit -->
-                        <button type="submit" class="btn-reg-submit">
-                            <i class="bi bi-rocket-takeoff-fill"></i> Complete Setup &amp; Continue
-                        </button>
-                    </form>
-
-                    <div class="info-note">
-                        <i class="bi bi-info-circle-fill"></i>
-                        <div>Your profile information appears on official PDF evaluation reports. GitHub and LinkedIn URLs help showcase your work to interviewers.</div>
                     </div>
 
-                </div>
-                    {% if not is_google and not is_guest and not prefill_email %}
-                    <p class="text-center mt-3" style="color: var(--text-muted); font-size:0.85rem;">
-                        Already have an account? <a href="/login" style="color: var(--accent2); font-weight:600; text-decoration:none;">Sign in</a>
-                    </p>
-                    {% else %}
-                    <p class="text-center mt-3" style="color: var(--text-muted); font-size:0.85rem;">
-                        Want to use a different account? <a href="/login" style="color: var(--accent2); font-weight:600; text-decoration:none;">Go to Login</a>
-                    </p>
-                    {% endif %}
+                    <div class="fade-section hidden" id="prof-section">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-building"></i> Current Designation</label>
+                            <input type="text" name="current_designation" class="form-control"
+                                   id="designationInput" placeholder="e.g. Software Engineer, Product Manager" value="{{ prefill_current_designation or '' }}">
+                            {% if error and 'designation' in error|lower %}
+                            <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-clock-history"></i> Years of Experience</label>
+                            <input type="number" name="years_of_experience" class="form-control"
+                                   id="expInput" placeholder="e.g. 3" min="0" max="50" step="0.5" value="{{ prefill_years_of_experience or '' }}">
+                            {% if error and 'experience' in error|lower %}
+                            <small class="text-danger" style="font-size:0.8rem; margin-top:4px; display:block;">{{ error }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
 
-                </div><!-- /reg-body -->
-            </div><!-- /reg-glass -->
-        </div>
+                    <div class="section-sep"><span>Optional — Enrich Your Profile</span></div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-tools"></i> Primary Skills</label>
+                        <input type="text" name="skills" class="form-control"
+                               placeholder="e.g. Python, React, Machine Learning (comma separated)" value="{{ prefill_skills or '' }}">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-github"></i> GitHub / Portfolio URL</label>
+                            <input type="url" name="github_url" class="form-control"
+                                   placeholder="https://github.com/username" value="{{ prefill_github_url or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label"><i class="bi bi-linkedin"></i> LinkedIn URL</label>
+                            <input type="url" name="linkedin_url" class="form-control"
+                                   placeholder="https://linkedin.com/in/username" value="{{ prefill_linkedin_url or '' }}">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-register">
+                        <i class="bi bi-rocket-takeoff-fill"></i> Complete Setup &amp; Continue
+                    </button>
+                </form>
+
+                <div class="info-note">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <div>Your profile information appears on official PDF evaluation reports. GitHub and LinkedIn URLs help showcase your work to interviewers.</div>
+                </div>
+
+            </div>
+
+            {% if not is_google and not is_guest and not prefill_email %}
+            <p class="text-center mt-0 mb-4" style="color: var(--muted); font-size:0.85rem;">
+                Already have an account? <a href="/login" class="text-link" style="font-weight:600;">Sign in</a>
+            </p>
+            {% else %}
+            <p class="text-center mt-0 mb-4" style="color: var(--muted); font-size:0.85rem;">
+                Want to use a different account? <a href="/login" class="text-link" style="font-weight:600;">Go to Login</a>
+            </p>
+            {% endif %}
+
+        </div><!-- /register-card -->
     </div>
 </div>
 
@@ -542,7 +491,6 @@
             profSection.classList.replace('visible','hidden');
             btnStudent.classList.add('active');
             btnProf.classList.remove('active');
-            // remove required from professional fields
             document.getElementById('designationInput').removeAttribute('required');
             document.getElementById('expInput').removeAttribute('required');
         } else {
@@ -553,13 +501,24 @@
         }
     }
 
-    // Apply prefilled user type
     {% if prefill_user_type == "professional" %}
         setType("professional");
     {% else %}
         setType("student");
     {% endif %}
-
+</script>
+<script>
+(function(){
+    var c=document.getElementById('dbParticles');
+    if(!c)return;
+    for(var i=0;i<60;i++){
+        var s=document.createElement('div');
+        s.className='db-star';
+        var sz=Math.random()*2+1;
+        s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
+        c.appendChild(s);
+    }
+})();
 </script>
 </body>
 </html>

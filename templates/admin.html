@@ -25,29 +25,148 @@
             --text-1:   #0f172a;
             --text-2:   #475569;
             --row-hover:#f1f5f9;
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
         }
 
         html.dark-theme {
             --surface:  rgba(10, 15, 29, 0.65);
-            --bg:       transparent;
-            --border2:  #1e293b;
-            --text-1:   #f8fafc;
+            --bg:       #020510;
+            --border2:  rgba(0, 255, 255, 0.14);
+            --text-1:   #ffffff;
             --text-2:   #94a3b8;
-            --row-hover:#1e293b;
+            --row-hover: rgba(99, 102, 241, 0.08);
         }
 
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
         body {
-            
             min-height: 100vh;
             color: var(--text-1);
             overflow-x: hidden;
             transition: background 0.25s ease, color 0.25s ease;
+            background: var(--bg) !important;
+            background-image: none !important;
         }
 
-        
-        html.dark-theme 
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+
+        /* ═══════════════════════════════════════════
+           GOATED BACKGROUND — Animated Aurora System
+        ═══════════════════════════════════════════ */
+        .db-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+        html.dark-theme .db-bg {
+            display: block;
+        }
+
+        .db-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+        }
+
+        .db-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .db-orb-1 {
+            width: 520px; height: 520px;
+            top: -120px; left: -100px;
+            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
+            animation-delay: 0s; animation-duration: 20s;
+        }
+        .db-orb-2 {
+            width: 400px; height: 400px;
+            top: 10%; right: -80px;
+            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
+            animation-delay: -7s; animation-duration: 24s;
+        }
+        .db-orb-3 {
+            width: 480px; height: 480px;
+            bottom: -80px; left: 30%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+            animation-delay: -13s; animation-duration: 22s;
+        }
+        .db-orb-4 {
+            width: 300px; height: 300px;
+            top: 45%; right: 25%;
+            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
+            animation-delay: -4s; animation-duration: 19s;
+        }
+        .db-orb-5 {
+            width: 350px; height: 350px;
+            bottom: 10%; right: -50px;
+            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
+            animation-delay: -9s; animation-duration: 26s;
+        }
+
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        .db-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .db-particles {
+            position: absolute;
+            inset: 0;
+        }
+        .db-star {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: starTwinkle linear infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        .db-topbar-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
 
         .page-shell {
             position: relative;
@@ -87,8 +206,8 @@
             flex-shrink: 0;
         }
         html.dark-theme .admin-brand-icon {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            box-shadow: 0 8px 24px rgba(79,70,229,0.35);
+            background: linear-gradient(135deg, #00ffff, #0ea5e9);
+            box-shadow: 0 8px 24px rgba(0,255,255,0.35);
         }
 
         .admin-brand-text h1 {
@@ -127,6 +246,8 @@
             text-decoration: none;
             transition: all 0.2s ease;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
         .header-icon-btn:hover {
             background: #eff6ff;
@@ -140,10 +261,10 @@
             color: #ef4444;
         }
         html.dark-theme .header-icon-btn:hover {
-            background: rgba(79, 70, 229, 0.15);
-            border-color: #6366f1;
-            color: #a5b4fc;
-            box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+            background: rgba(0, 255, 255, 0.15);
+            border-color: #00ffff;
+            color: #00ffff;
+            box-shadow: 0 4px 12px rgba(0,255,255,0.2);
         }
         html.dark-theme .header-icon-btn.danger:hover {
             background: rgba(239, 68, 68, 0.15);
@@ -172,6 +293,8 @@
             position: relative;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
 
         .stat-card::after {
@@ -190,6 +313,9 @@
             border-color: var(--accent-color);
             box-shadow: 0 12px 32px rgba(0,0,0,0.08);
         }
+        html.dark-theme .stat-card:hover {
+            box-shadow: 0 16px 48px rgba(0, 200, 255, 0.18), 0 0 0 1px rgba(0, 200, 255, 0.22) !important;
+        }
         .stat-card:hover::after { opacity: 1; }
 
         .stat-card.active-filter {
@@ -200,11 +326,14 @@
 
         .sc-total   { --accent-color: #2563eb; }
         .sc-month   { --accent-color: #0284c7; }
-        html.dark-theme .sc-total { --accent-color: #4f46e5; }
-        html.dark-theme .sc-month { --accent-color: #8b5cf6; }
-        .sc-today   { --accent-color: #06b6d4; }
+        html.dark-theme .sc-total { --accent-color: #00ffff; }
+        html.dark-theme .sc-month { --accent-color: #38bdf8; }
+        .sc-today   { --accent-color: #0ea5e9; }
         .sc-selected { --accent-color: #10b981; }
         .sc-rejected { --accent-color: #ef4444; }
+        html.dark-theme .sc-today   { --accent-color: #0ea5e9; }
+        html.dark-theme .sc-selected { --accent-color: #34d399; }
+        html.dark-theme .sc-rejected { --accent-color: #ef4444; }
 
         .stat-icon {
             width: 38px;
@@ -266,12 +395,18 @@
             width: 280px;
             transition: all 0.2s ease;
             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
         #searchInput::placeholder { color: #94a3b8; }
         #searchInput:focus {
             outline: none;
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+        html.dark-theme #searchInput:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
         }
 
         /* ── Results table ── */
@@ -281,6 +416,8 @@
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
 
         .results-table {
@@ -341,8 +478,9 @@
             box-shadow: 0 4px 12px rgba(37,99,235,0.2);
         }
         html.dark-theme .avatar-circle {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            box-shadow: 0 4px 12px rgba(79,70,229,0.25);
+            background: linear-gradient(135deg, #00ffff, #0ea5e9);
+            box-shadow: 0 4px 12px rgba(0,255,255,0.25);
+            color: #020510;
         }
 
         /* Bold + Caps name style */
@@ -459,7 +597,7 @@
 
         /* ── Dark theme: table row hover fix ── */
         html.dark-theme .results-table tbody tr:hover {
-            background: rgba(99, 102, 241, 0.08) !important;
+            background: rgba(0, 255, 255, 0.08) !important;
         }
         html.dark-theme .results-table thead tr {
             background: rgba(10, 15, 29, 0.65);
@@ -476,9 +614,28 @@
         html.dark-theme .cand-name {
             color: var(--text-1);
         }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
     </style>
 </head>
 <body>
+
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
+
 <div class="page-shell">
 
     <!-- Header -->
@@ -670,5 +827,29 @@
         });
     })();
 </script>
+
+<script>
+/* ── Admin background particle spawner ── */
+(function() {
+    var container = document.getElementById('dbParticles');
+    if (!container) return;
+    var count = 60;
+    for (var i = 0; i < count; i++) {
+        var star = document.createElement('div');
+        star.className = 'db-star';
+        var size = Math.random() * 2 + 1;
+        star.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (Math.random() * 100) + '%',
+            'top:' + (Math.random() * 100) + '%',
+            'animation-duration:' + (Math.random() * 4 + 2) + 's',
+            'animation-delay:' + (Math.random() * 6) + 's'
+        ].join(';');
+        container.appendChild(star);
+    }
+})();
+</script>
+
 </body>
 </html>

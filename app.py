@@ -33,9 +33,20 @@ if IS_PRODUCTION:
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
 
-# Real-time configurable credentials with environment variables & defaults
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@gmail.com")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+# Real-time configurable credentials with environment variables & secure fallback
+import secrets
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
+
+if not ADMIN_EMAIL:
+    # Safe random fallback email
+    ADMIN_EMAIL = f"admin_{secrets.token_hex(4)}@example.com"
+
+if not ADMIN_PASSWORD:
+    # Generate a random 24-character token so a local attacker cannot guess it if not configured
+    ADMIN_PASSWORD = secrets.token_urlsafe(18)
+    print(f" * SECURE WARNING: ADMIN_PASSWORD environment variable was not set.")
+    print(f" * A random temporary password has been generated for this session: {ADMIN_PASSWORD}")
 
 
 # Database URL configuration and fallback
@@ -75,13 +86,24 @@ if db_url.startswith("mysql"):
             raise ValueError("Invalid MySQL URI format")
     except Exception as e:
         print(f"MySQL database connection failed ({e}). Falling back to SQLite.")
-        db_url = "sqlite:///ai_interview_platform.db"
+        # Support Render persistent disk for SQLite fallback
+        render_persistent_dir = "/var/data"
+        if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
+            db_url = f"sqlite:///{os.path.join(render_persistent_dir, 'ai_interview_platform.db')}"
+        else:
+            db_url = "sqlite:///ai_interview_platform.db"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-app.config['UPLOAD_FOLDER'] = 'uploads'
+# Support Render persistent disk for file uploads
+render_persistent_dir = "/var/data"
+if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
+    app.config['UPLOAD_FOLDER'] = os.path.join(render_persistent_dir, 'uploads')
+else:
+    app.config['UPLOAD_FOLDER'] = 'uploads'
+
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB limit
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -742,6 +764,12 @@ def dashboard_remove_resume():
 def view_original_resume(filename):
     if not session.get("is_admin") and "user_id" not in session:
         return redirect("/login")
+    if not session.get("is_admin"):
+        # Logged in user: find their user model
+        user = db.session.get(User, session["user_id"])
+        if not user or user.resume_filename != filename:
+            # Unauthorized access to another user's file
+            return "Unauthorized", 403
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
@@ -793,11 +821,12 @@ def latest_result():
         label_color="#1cc88a" if result.score and result.score >= 8 else "#4e73df" if result.score and result.score >= 6 else "#f6c23e" if result.score and result.score >= 4 else "#e74a3b",
         summary=result.summary,
         verdict=result.status,
-        verdict_message="🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment." if result.status == "Selected" else "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills.",
+        verdict_message="🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment." if result.status in ("Selected", "PASS") or (result.status and "WELL DONE" in result.status) else "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills.",
         candidate_name=session.get("user_name", "Candidate"),
         report_date=result.interview_datetime.strftime("%B %d, %Y"),
         domain=result.domain or "General"
     )
+
 
 
 @app.route("/admin")
@@ -1797,8 +1826,10 @@ def view_past_result(result_id):
         label_color = "#e74a3b"
 
     score_percent = min(int((score_num / 10) * 100), 100)
-    verdict = result.status
-    if verdict == "Selected":
+    verdict = result.status or "FAIL"
+    # Status values stored: "PASS", "FAIL", "WELL DONE (Practice)", "ALMOST (Practice)", legacy "Selected"/"Rejected"
+    is_pass = verdict in ("PASS", "Selected") or "WELL DONE" in verdict
+    if is_pass:
         verdict_message = "🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment."
     else:
         verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."

@@ -1,8 +1,8 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 
 <head>
-    <title>Placement Assessment â€” AI Examination Studio</title>
+    <title>Placement Assessment ” AI Examination Studio</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -19,11 +19,11 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-           AI EXAMINATION STUDIO â€” NEXT-LEVEL VISUAL SYSTEM
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+        /* â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• 
+           AI EXAMINATION STUDIO - NEXT-LEVEL VISUAL SYSTEM
+        â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â• â•  */
 
-        /* â”€â”€ Design Tokens â”€â”€ */
+        /* -- Design Tokens -- */
         :root {
             --studio-bg:         #f0f4ff;
             --studio-glow-r:     rgba(59, 130, 246, 0.08);
@@ -46,7 +46,7 @@
             --q-text-color:      #0f172a;
             --overlay-bg:        rgba(240, 244, 255, 0.96);
 
-            /* Modal tokens (solid backgrounds â€” no transparency bleed-through) */
+            /* Modal tokens (solid backgrounds - no transparency bleed-through) */
             --surface-elevated:  #ffffff;
             --border:            rgba(219, 234, 254, 0.8);
             --text-main:         #0f172a;
@@ -95,13 +95,153 @@
         }
 
         body {
-            
             min-height: 100vh;
             color: var(--studio-text);
             font-family: 'Inter', system-ui, sans-serif;
             position: relative;
             transition: background-color 0.25s ease, color 0.25s ease;
+            background: var(--studio-bg) !important;
+            background-image: none !important;
         }
+
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+
+        /* ═══════════════════════════════════════════
+           GOATED BACKGROUND — Animated Aurora System
+        ═══════════════════════════════════════════ */
+        .db-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+        html.dark-theme .db-bg {
+            display: block;
+        }
+
+        .db-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+        }
+
+        .db-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .db-orb-1 {
+            width: 520px; height: 520px;
+            top: -120px; left: -100px;
+            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
+            animation-delay: 0s; animation-duration: 20s;
+        }
+        .db-orb-2 {
+            width: 400px; height: 400px;
+            top: 10%; right: -80px;
+            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
+            animation-delay: -7s; animation-duration: 24s;
+        }
+        .db-orb-3 {
+            width: 480px; height: 480px;
+            bottom: -80px; left: 30%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+            animation-delay: -13s; animation-duration: 22s;
+        }
+        .db-orb-4 {
+            width: 300px; height: 300px;
+            top: 45%; right: 25%;
+            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
+            animation-delay: -4s; animation-duration: 19s;
+        }
+        .db-orb-5 {
+            width: 350px; height: 350px;
+            bottom: 10%; right: -50px;
+            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
+            animation-delay: -9s; animation-duration: 26s;
+        }
+
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        .db-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .db-particles {
+            position: absolute;
+            inset: 0;
+        }
+        .db-star {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: starTwinkle linear infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        .db-topbar-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Glass Cards overriding for high-end studio contrast */
+        html.dark-theme .studio-card-bg {
+            background: rgba(10, 15, 29, 0.75) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 255, 0.14) !important;
+        }
+
+        /* Ensure interactive panels are raised and keep their structural bounds relative to the layout canvas */
+        .container, .modal-content, .card {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
+
+        body {
 
         .studio-glow-top { display: none !important; }
 
@@ -391,7 +531,7 @@
         }
 
         /* â”€â”€ MONACO CODE EDITOR CONTAINER â”€â”€ */
-        /* Editor is always dark (VS Code style) â€” intentional */
+        /* Editor is always dark (VS Code style) - intentional */
         .editor-frame {
             border: 1.5px solid var(--border-mid);
             border-radius: var(--radius-md);
@@ -532,12 +672,22 @@
 </head>
 
 <body>
-    
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
 
-    <!-- Instant loading overlay â€” appears the moment submit is clicked -->
+    <!-- Instant loading overlay - appears the moment submit is clicked -->
     <div id="loadingOverlay">
         <div class="loader-spinner"></div>
-        <div class="loader-title">AI Examiner is evaluatingâ€¦</div>
+        <div class="loader-title">AI Examiner is evaluating...</div>
         <div class="loader-sub">Analyzing technical depth and structuring the next question</div>
     </div>
 
@@ -677,7 +827,7 @@
                         </div>
 
                         <div class="listening-status-tag" id="listeningTag">
-                            <i class="bi bi-record-fill text-danger fs-6"></i> Microphone active â€” speak your answer clearly...
+                            <i class="bi bi-record-fill text-danger fs-6"></i> Microphone active - speak your answer clearly...
                         </div>
 
                         <div class="time-up-warning" id="timeUpWarning">
@@ -813,6 +963,7 @@
 
         updateTimerDisplay();
 
+        let timerExpired = false;
         const timerInterval = setInterval(function() {
             secondsLeft--;
             if (secondsLeft <= 0) {
@@ -820,6 +971,22 @@
                 updateTimerDisplay();
                 clearInterval(timerInterval);
                 if (timeUpWarning) timeUpWarning.classList.add('active');
+                // Auto-advance: submit whatever answer exists after a short grace period
+                if (!timerExpired) {
+                    timerExpired = true;
+                    setTimeout(function() {
+                        // Stop mic if running
+                        if (window.stopSpeechRecognition) window.stopSpeechRecognition();
+                        // Sync Monaco editor code → hidden input
+                        if (typeof editorInstance !== 'undefined' && editorInstance && codeAnswerInput) {
+                            codeAnswerInput.value = editorInstance.getValue();
+                        }
+                        // Show loading overlay to prevent double-submit
+                        if (loadingOverlay) loadingOverlay.classList.add('active');
+                        // Force-submit even if answer is empty (timer expired)
+                        answerForm.submit();
+                    }, 1500); // 1.5s grace so user sees "Time's Up!" message
+                }
             } else {
                 updateTimerDisplay();
             }
@@ -970,6 +1137,28 @@
         });
     </script>
     {% endif %}
-</body>
 
+    <script>
+    /* ── Live Assessment page background particle spawner ── */
+    (function() {
+        var container = document.getElementById('dbParticles');
+        if (!container) return;
+        var count = 60;
+        for (var i = 0; i < count; i++) {
+            var star = document.createElement('div');
+            star.className = 'db-star';
+            var size = Math.random() * 2 + 1;
+            star.style.cssText = [
+                'width:' + size + 'px',
+                'height:' + size + 'px',
+                'left:' + (Math.random() * 100) + '%',
+                'top:' + (Math.random() * 100) + '%',
+                'animation-duration:' + (Math.random() * 4 + 2) + 's',
+                'animation-delay:' + (Math.random() * 6) + 's'
+            ].join(';');
+            container.appendChild(star);
+        }
+    })();
+    </script>
+</body>
 </html>

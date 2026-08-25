@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ company.name }} Interview Resources â€” AI Assessment Platform</title>
-    <meta name="description" content="Curated interview preparation resources for {{ company.name }} â€” coding questions, aptitude papers, system design guides, and more.">
+    <title>{{ company.name }} Interview Resources - AI Assessment Platform</title>
+    <meta name="description" content="Curated interview preparation resources for {{ company.name }} - coding questions, aptitude papers, system design guides, and more.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
@@ -44,7 +44,6 @@
             z-index: -1;
             opacity: 0.45;
             pointer-events: none;
-            mix-blend-mode: multiply;
             animation: floatOrb 22s infinite alternate ease-in-out;
         }
         .orb-1 {
@@ -325,61 +324,87 @@
                 linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
         }
         html.dark-theme .breadcrumb-item.active {
-            color: #f0f6ff !important;
+            color: #ffffff !important;
+        }
+        html.dark-theme .breadcrumb-item a {
+            color: #b0c4d8 !important;
         }
         html.dark-theme .company-hero {
-            background: rgba(15, 30, 58, 0.55);
-            border-color: rgba(30, 58, 95, 0.6);
+            background: rgba(10, 15, 29, 0.75) !important;
+            border-color: rgba(0, 255, 255, 0.25) !important;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4), 0 0 30px var(--accent-glow) !important;
         }
         html.dark-theme .company-hero::before {
-            background: linear-gradient(135deg, rgba(30,58,95,0.9), rgba(30,58,95,0.3) 60%, var(--accent) 100%);
+            background: linear-gradient(135deg, rgba(0,255,255,0.4), rgba(0,255,255,0.1) 60%, var(--accent) 100%) !important;
         }
         html.dark-theme .hero-logo-badge {
-            background: #0a1628;
-            border-color: #1e3a5f;
+            background: #040914 !important;
+            border-color: rgba(0, 255, 255, 0.25) !important;
         }
         html.dark-theme .hero-title {
-            color: #f0f6ff;
+            color: #ffffff !important;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important;
         }
         html.dark-theme .hero-desc {
-            color: #8aa4cc;
+            color: #cbd5e1 !important;
         }
         html.dark-theme .resource-card {
-            background: rgba(15, 30, 58, 0.45);
-            border-color: rgba(30, 58, 95, 0.6);
-            color: #f0f6ff;
+            background: rgba(10, 15, 29, 0.75) !important;
+            border-color: rgba(0, 255, 255, 0.18) !important;
+            color: #ffffff !important;
         }
         html.dark-theme .resource-card::before {
-            background: linear-gradient(135deg, rgba(30,58,95,0.8), rgba(30,58,95,0.2) 50%, var(--card-accent) 100%);
+            background: linear-gradient(135deg, rgba(0,255,255,0.3), rgba(0,255,255,0.05) 50%, var(--card-accent) 100%) !important;
         }
         html.dark-theme .resource-card:hover {
-            border-color: rgba(30, 58, 95, 0.9);
+            border-color: var(--card-accent) !important;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px var(--card-accent) !important;
         }
         html.dark-theme .card-label {
-            color: #f0f6ff;
+            color: #ffffff !important;
         }
         html.dark-theme .card-desc {
-            color: #8aa4cc;
+            color: #cbd5e1 !important;
         }
         html.dark-theme .card-cta {
-            background: rgba(10, 22, 40, 0.75);
-            border-color: rgba(30, 58, 95, 0.95);
+            background: rgba(4, 9, 20, 0.8) !important;
+            border-color: rgba(0, 255, 255, 0.2) !important;
+            color: var(--cta-color) !important;
         }
         html.dark-theme .card-cta:hover {
-            background: var(--card-accent);
+            background: var(--card-accent) !important;
+            color: #ffffff !important;
+            border-color: var(--card-accent) !important;
         }
         html.dark-theme .pro-tip {
-            background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%);
+            background: linear-gradient(135deg, #050a15 0%, #0c1830 100%) !important;
+            border: 1px solid rgba(0, 255, 255, 0.15) !important;
         }
         html.dark-theme .btn-back {
-            background: rgba(15, 30, 58, 0.7) !important;
-            border-color: rgba(30, 58, 95, 0.8) !important;
-            color: #c0d4f0 !important;
+            background: rgba(10, 15, 29, 0.85) !important;
+            border-color: rgba(0, 255, 255, 0.2) !important;
+            color: #ffffff !important;
         }
         html.dark-theme .btn-back:hover {
-            background: #162040 !important;
-            border-color: #3b82f6 !important;
-            color: #3b82f6 !important;
+            background: rgba(0, 255, 255, 0.12) !important;
+            border-color: #00ffff !important;
+            color: #00ffff !important;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.45) !important;
+        }
+        
+        /* Modern neon-tinted transparent badge style for dark mode */
+        html.dark-theme .theme-prepinsta  { --badge-bg: rgba(255,107,53,0.12); --badge-color: #FF6B35; --icon-bg: rgba(255,107,53,0.08); }
+        html.dark-theme .theme-gfg        { --badge-bg: rgba(47,141,70,0.12);  --badge-color: #34d399; --icon-bg: rgba(47,141,70,0.08); }
+        html.dark-theme .theme-leetcode   { --badge-bg: rgba(248,159,27,0.12);  --badge-color: #f89f1b; --icon-bg: rgba(248,159,27,0.08); }
+        html.dark-theme .theme-interviewbit { --badge-bg: rgba(96,165,250,0.12); --badge-color: #60a5fa; --icon-bg: rgba(96,165,250,0.08); }
+        html.dark-theme .theme-indiabix   { --badge-bg: rgba(233,30,99,0.12);   --badge-color: #f43f5e; --icon-bg: rgba(233,30,99,0.08); }
+        html.dark-theme .theme-infytq     { --badge-bg: rgba(0,124,195,0.12);  --badge-color: #38bdf8; --icon-bg: rgba(0,124,195,0.08); }
+        html.dark-theme .theme-glassdoor  { --badge-bg: rgba(12,170,65,0.12);   --badge-color: #10b981; --icon-bg: rgba(12,170,65,0.08); }
+        
+        html.dark-theme .card-site-badge {
+            background: var(--badge-bg) !important;
+            color: var(--badge-color) !important;
+            border: 1px solid var(--badge-bg) !important;
         }
 
         /* Micro-animations */
@@ -390,11 +415,82 @@
         .animate-item {
             animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+
+        /* ══ GOATED BG OVERRIDES ══ */
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+        html.dark-theme .orb {
+            display: none !important;
+        }
+        .db-bg {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden; display: none;
+        }
+        html.dark-theme .db-bg { display: block; }
+        .db-bg::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,150,255,0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100,0,255,0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,255,220,0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,80,255,0.12) 0%, transparent 50%),
+                linear-gradient(160deg,#02060f 0%,#010416 30%,#020820 60%,#010512 100%);
+        }
+        .db-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0; animation:orbDrift 18s ease-in-out infinite; }
+        .db-orb-1 { width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(0,120,255,0.30) 0%,transparent 70%);animation-delay:0s;animation-duration:20s; }
+        .db-orb-2 { width:400px;height:400px;top:10%;right:-80px;background:radial-gradient(circle,rgba(120,0,255,0.22) 0%,transparent 70%);animation-delay:-7s;animation-duration:24s; }
+        .db-orb-3 { width:480px;height:480px;bottom:-80px;left:30%;background:radial-gradient(circle,rgba(0,200,255,0.18) 0%,transparent 70%);animation-delay:-13s;animation-duration:22s; }
+        .db-orb-4 { width:300px;height:300px;top:45%;right:25%;background:radial-gradient(circle,rgba(60,0,180,0.16) 0%,transparent 70%);animation-delay:-4s;animation-duration:19s; }
+        .db-orb-5 { width:350px;height:350px;bottom:10%;right:-50px;background:radial-gradient(circle,rgba(0,255,180,0.12) 0%,transparent 70%);animation-delay:-9s;animation-duration:26s; }
+        @keyframes orbDrift {
+            0%   { opacity:0.6; transform:translate(0,0) scale(1); }
+            25%  { opacity:0.8; transform:translate(30px,-20px) scale(1.05); }
+            50%  { opacity:0.55; transform:translate(-20px,30px) scale(0.97); }
+            75%  { opacity:0.75; transform:translate(15px,10px) scale(1.03); }
+            100% { opacity:0.6; transform:translate(0,0) scale(1); }
+        }
+        .db-grid {
+            position:absolute; inset:0;
+            background-image: linear-gradient(rgba(0,200,255,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,255,0.035) 1px,transparent 1px);
+            background-size:60px 60px;
+            mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+            -webkit-mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
+        }
+        .db-particles { position:absolute; inset:0; }
+        .db-star { position:absolute; border-radius:50%; background:#ffffff; animation:starTwinkle linear infinite; }
+        @keyframes starTwinkle {
+            0%,100% { opacity:0.05; transform:scale(1); }
+            50%      { opacity:0.55; transform:scale(1.6); }
+        }
+        .db-topbar-glow {
+            position:absolute; top:0; left:0; right:0; height:2px;
+            background:linear-gradient(90deg,transparent 0%,rgba(0,200,255,0.7) 30%,rgba(120,0,255,0.7) 70%,transparent 100%);
+            animation:topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+        ::-webkit-scrollbar{width:6px;height:6px;}
+        ::-webkit-scrollbar-track{background:transparent;}
+        ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
+        ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
 </head>
 <body>
 
 {% include 'navbar.html' %}
+
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
 
 <!-- Background Tech Effects -->
 <div class="cyber-grid"></div>
@@ -503,7 +599,7 @@
     <div class="pro-tip animate-item" style="animation-delay: 0.25s;">
         <div class="pro-tip-icon"><i class="bi bi-lightbulb-fill text-warning"></i></div>
         <div class="pro-tip-text">
-            <strong>Pro Tip â€” Combine resources for best results</strong>
+            <strong>Pro Tip - Combine resources for best results</strong>
             <p>Use PrepInsta &amp; IndiaBix for aptitude rounds, GeeksForGeeks for topic-wise DSA prep, LeetCode for timed mock coding, and InterviewBit for full-length mock interviews. Covering all four gives you an edge over 90% of candidates.</p>
         </div>
     </div>
@@ -511,5 +607,18 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+    var c=document.getElementById('dbParticles');
+    if(!c)return;
+    for(var i=0;i<60;i++){
+        var s=document.createElement('div');
+        s.className='db-star';
+        var sz=Math.random()*2+1;
+        s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
+        c.appendChild(s);
+    }
+})();
+</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
-    <title>Assessment History â€” AI Interview Platform</title>
+    <title>Assessment History - AI Interview Platform</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Your complete AI placement assessment history with score trends and performance insights.">
@@ -30,27 +30,173 @@
             --brand-glow: rgba(37,99,235,0.15);
         }
         html.dark-theme {
-            --bg: rgba(4, 9, 20, 0.65);
+            --bg: #040914;
             --surface: rgba(10, 15, 29, 0.65);
-            --border: rgba(255,255,255,0.08);
-            --text-1: #f1f5f9;
-            --text-2: #94a3b8;
-            --brand: #60a5fa;
-            --brand-glow: rgba(59,130,246,0.2);
+            --border: rgba(0, 255, 255, 0.18);
+            --text-1: #ffffff;
+            --text-2: #8a9db8;
+            --brand: #00ffff;
+            --brand-glow: rgba(0, 255, 255, 0.35);
         }
 
         * { box-sizing: border-box; }
 
         body {
-            
             font-family: 'Inter', sans-serif;
             color: var(--text-1);
             min-height: 100vh;
             transition: background 0.25s ease, color 0.25s ease;
+            background: var(--bg) !important;
+            background-image: none !important;
         }
 
-        
-        html.dark-theme 
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+
+        /* ═══════════════════════════════════════════
+           GOATED BACKGROUND — Animated Aurora System
+        ═══════════════════════════════════════════ */
+        .db-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+        }
+        html.dark-theme .db-bg {
+            display: block;
+        }
+
+        .db-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+        }
+
+        .db-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .db-orb-1 {
+            width: 520px; height: 520px;
+            top: -120px; left: -100px;
+            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
+            animation-delay: 0s; animation-duration: 20s;
+        }
+        .db-orb-2 {
+            width: 400px; height: 400px;
+            top: 10%; right: -80px;
+            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
+            animation-delay: -7s; animation-duration: 24s;
+        }
+        .db-orb-3 {
+            width: 480px; height: 480px;
+            bottom: -80px; left: 30%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+            animation-delay: -13s; animation-duration: 22s;
+        }
+        .db-orb-4 {
+            width: 300px; height: 300px;
+            top: 45%; right: 25%;
+            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
+            animation-delay: -4s; animation-duration: 19s;
+        }
+        .db-orb-5 {
+            width: 350px; height: 350px;
+            bottom: 10%; right: -50px;
+            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
+            animation-delay: -9s; animation-duration: 26s;
+        }
+
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        .db-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .db-particles {
+            position: absolute;
+            inset: 0;
+        }
+        .db-star {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: starTwinkle linear infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        .db-topbar-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Glass Cards overriding */
+        html.dark-theme .glass-card,
+        html.dark-theme .attempt-card {
+            background: rgba(8, 14, 30, 0.75) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-color: rgba(0, 255, 255, 0.14) !important;
+        }
+
+        html.dark-theme .glass-card:hover {
+            border-color: rgba(0, 255, 255, 0.3) !important;
+        }
+
+        html.dark-theme .back-btn {
+            background: rgba(8, 14, 30, 0.75) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-color: rgba(0, 255, 255, 0.14) !important;
+        }
+        html.dark-theme .back-btn:hover {
+            background: #00ffff !important;
+            color: #020510 !important;
+            border-color: #00ffff !important;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
 
         .page-wrap {
             position: relative;
@@ -174,8 +320,8 @@
             box-shadow: 0 12px 32px rgba(37,99,235,0.1);
         }
         html.dark-theme .attempt-card:hover {
-            border-color: rgba(59,130,246,0.3);
-            box-shadow: 0 12px 32px rgba(59,130,246,0.12);
+            border-color: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 12px 32px rgba(0, 255, 255, 0.15);
         }
 
         .attempt-left {
@@ -198,8 +344,8 @@
             box-shadow: 0 6px 16px rgba(37,99,235,0.22);
         }
         html.dark-theme .attempt-icon {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            box-shadow: 0 6px 16px rgba(79,70,229,0.28);
+            background: linear-gradient(135deg, #00ffff, #0284c7);
+            box-shadow: 0 6px 16px rgba(0, 255, 255, 0.28);
         }
 
         .attempt-domain {
@@ -356,6 +502,18 @@
     </style>
 </head>
 <body>
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
+
 {% include 'navbar.html' %}
 
 <div class="page-wrap">
@@ -366,7 +524,7 @@
             <p class="page-subtitle">Your placement evaluation records and score progression</p>
         </div>
         <a href="/dashboard" class="back-btn">
-            <i class="bi bi-arrow-left"></i> Dashboard
+            <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>
 
@@ -382,7 +540,7 @@
     </div>
 
     <!-- Attempt Cards -->
-    <div class="attempts-section-label">Assessment Records â€” {{ attempts | length }} total</div>
+    <div class="attempts-section-label">Assessment Records - {{ attempts | length }} total</div>
 
     {% for a in attempts %}
     <div class="attempt-card">
@@ -410,14 +568,16 @@
                 </div>
             </div>
 
-            {% if a.status == "Selected" %}
-            <span class="verdict-badge pass">
-                <i class="bi bi-check-circle-fill"></i> Recommended
-            </span>
-            {% else %}
-            <span class="verdict-badge fail">
-                <i class="bi bi-x-circle-fill"></i> Not Recommended
-            </span>
+            {% if session.get('is_admin') %}
+                {% if a.status in ["Selected", "PASS"] or (a.status and "WELL DONE" in a.status) %}
+                <span class="verdict-badge pass">
+                    <i class="bi bi-check-circle-fill"></i> Recommended
+                </span>
+                {% else %}
+                <span class="verdict-badge fail">
+                    <i class="bi bi-x-circle-fill"></i> Not Recommended
+                </span>
+                {% endif %}
             {% endif %}
 
             <a href="/my-history/{{ a.id }}" class="btn-view-report">
@@ -430,8 +590,8 @@
     <script>
         const ctx = document.getElementById('scoreChart').getContext('2d');
         const isDark = document.documentElement.classList.contains('dark-theme');
-        const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
-        const tickColor = isDark ? '#4a5568' : '#94a3b8';
+        const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+        const tickColor = isDark ? '#cbd5e1' : '#475569';
 
         new Chart(ctx, {
             type: 'line',
@@ -440,13 +600,13 @@
                 datasets: [{
                     label: 'Score out of 10',
                     data: {{ chart_scores | tojson }},
-                    borderColor: isDark ? '#60a5fa' : '#2563eb',
-                    backgroundColor: isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.08)',
+                    borderColor: isDark ? '#00ffff' : '#2563eb',
+                    backgroundColor: isDark ? 'rgba(0, 255, 255, 0.08)' : 'rgba(37,99,235,0.08)',
                     fill: true,
                     tension: 0.45,
                     pointRadius: 5,
-                    pointBackgroundColor: isDark ? '#60a5fa' : '#2563eb',
-                    pointBorderColor: isDark ? '#0b0f19' : '#ffffff',
+                    pointBackgroundColor: isDark ? '#00ffff' : '#2563eb',
+                    pointBorderColor: isDark ? '#040914' : '#ffffff',
                     pointBorderWidth: 2,
                     borderWidth: 2.5
                 }]
@@ -498,5 +658,29 @@
     {% endif %}
 
 </div>
+
+<script>
+/* ── History page background particle spawner ── */
+(function() {
+    var container = document.getElementById('dbParticles');
+    if (!container) return;
+    var count = 60;
+    for (var i = 0; i < count; i++) {
+        var star = document.createElement('div');
+        star.className = 'db-star';
+        var size = Math.random() * 2 + 1;
+        star.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (Math.random() * 100) + '%',
+            'top:' + (Math.random() * 100) + '%',
+            'animation-duration:' + (Math.random() * 4 + 2) + 's',
+            'animation-delay:' + (Math.random() * 6) + 's'
+        ].join(';');
+        container.appendChild(star);
+    }
+})();
+</script>
+
 </body>
 </html>

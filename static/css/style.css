@@ -22,9 +22,9 @@
     --brand-aura:       rgba(0, 255, 255, 0.08);
 
     --navy:             #ffffff;
-    --ink:              #e2e8f0;
-    --muted:            #cbd5e1;
-    --subtle:           #64748b;
+    --ink:              #e8edf5;
+    --muted:            #d1dce8;
+    --subtle:           #8a9db8;
 
     --bg-base:          #040914;
     --bg-alt:           rgba(10, 15, 29, 0.65);
@@ -64,9 +64,9 @@ html.dark-theme {
     --brand-aura:       rgba(0, 255, 255, 0.08);
 
     --navy:             #ffffff;
-    --ink:              #e2e8f0;
-    --muted:            #cbd5e1;
-    --subtle:           #64748b;
+    --ink:              #e8edf5;
+    --muted:            #d1dce8;
+    --subtle:           #8a9db8;
 
     --bg-base:          #040914;
     --bg-alt:           rgba(10, 15, 29, 0.65);
@@ -101,17 +101,26 @@ html {
 
 html, body {
     background-color: #040914 !important;
-    background-image: linear-gradient(rgba(4, 9, 20, 0.45), rgba(4, 9, 20, 0.45)), url('../images/ai-bg.jpg') !important;
+    background-image: radial-gradient(circle at center, rgba(4, 9, 20, 0.45) 0%, rgba(4, 9, 20, 0.9) 100%), url('../images/ai-bg.jpg') !important;
     background-size: cover !important;
     background-attachment: fixed !important;
     background-position: center !important;
-    image-rendering: -webkit-optimize-contrast !important;
-    image-rendering: crisp-edges !important;
+    image-rendering: auto !important;
     min-height: 100vh;
     color: var(--ink);
     line-height: 1.6;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     position: relative;
+}
+
+/* Chrome, Safari, Edge autofill customization to keep dark styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px rgba(5, 10, 25, 0.95) inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    transition: background-color 50000s ease-in-out 0s;
 }
 
 /* Kill ALL body pseudo-element decorations */
@@ -149,8 +158,7 @@ a {
 }
 a:hover {
     color: #ffffff;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration: none;
 }
 
 /* Dark mode text overrides — ensure consistency */
@@ -165,7 +173,7 @@ html.dark-theme h6 {
 }
 html.dark-theme body,
 html.dark-theme p {
-    color: #cbd5e1;
+    color: #d8e4f0;
 }
 
 
@@ -774,11 +782,11 @@ html.dark-theme .attempt-header {
 .attempt-body {
     padding: 6px 26px 26px;
     font-size: 0.96rem;
-    color: #cbd5e1;
+    color: #d8e4f0;
     line-height: 1.8;
     font-weight: 400;
 }
-html.dark-theme .attempt-body { color: #cbd5e1; }
+html.dark-theme .attempt-body { color: #d8e4f0; }
 .review-label {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
@@ -787,7 +795,7 @@ html.dark-theme .attempt-body { color: #cbd5e1; }
     letter-spacing: 0.08em;
     margin-bottom: 6px;
     margin-top: 16px;
-    color: #94a3b8;
+    color: #b0c4d8;
 }
 .review-strength { color: #34d399; }
 .review-improve  { color: #fbbf24; }
@@ -840,7 +848,7 @@ tbody td {
     vertical-align: middle;
     font-size: 0.93rem;
     font-weight: 500;
-    color: #e2e8f0;
+    color: #e8edf5;
     border-color: rgba(0, 255, 255, 0.06) !important;
     padding: 16px 14px !important;
     transition: background var(--t-fast);
@@ -858,7 +866,7 @@ html.dark-theme tbody tr:hover td { background: rgba(0, 255, 255, 0.08) !importa
 html.dark-theme tbody tr:hover { box-shadow: inset 3px 0 0 #00ffff; }
 html.dark-theme thead { background: rgba(4, 9, 20, 0.85); border-bottom-color: rgba(0, 255, 255, 0.2); }
 html.dark-theme thead th { color: rgba(0, 255, 255, 0.7); }
-html.dark-theme tbody td { color: #e2e8f0; border-color: rgba(0, 255, 255, 0.06) !important; }
+html.dark-theme tbody td { color: #e8edf5; border-color: rgba(0, 255, 255, 0.06) !important; }
 
 .score-bar-wrap {
     width: 76px; height: 8px;
@@ -936,7 +944,7 @@ html.dark-theme #searchInput {
     color: #e2e8f0;
 }
 
-.filter-label { color: #94a3b8; font-size: 0.9rem; font-weight: 500; }
+.filter-label { color: #b0c4d8; font-size: 0.9rem; font-weight: 500; }
 .filter-label strong { color: #ffffff; font-weight: 700; }
 
 .badge.bg-success { background-color: #059669 !important; border-radius: 6px; font-family:'Outfit',sans-serif; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.03em; padding: 4px 9px; }
@@ -997,39 +1005,40 @@ html.dark-theme .form-select:focus {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     font-size: 0.82rem;
-    color: #e2e8f0;
+    color: #f0f4fb;
     margin-bottom: 7px;
     letter-spacing: 0.01em;
     display: block;
 }
-html.dark-theme .form-label { color: #e2e8f0 !important; }
+html.dark-theme .form-label { color: #f0f4fb !important; }
 
-/* ── Login / Register card ── */
+/* ── Login / Register card — Glassmorphism ── */
 .login-card,
 .register-card {
-    border: 1px solid rgba(0, 255, 255, 0.15) !important;
-    border-radius: 20px !important;
+    border: 1px solid rgba(0, 255, 255, 0.25) !important;
+    border-radius: 24px !important;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8) !important;
-    background: rgba(10, 15, 29, 0.98) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0,255,255,0.08) inset !important;
+    background: rgba(5, 12, 28, 0.55) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
 }
 html.dark-theme .login-card,
 html.dark-theme .register-card {
-    background: rgba(10, 15, 29, 0.98) !important;
-    border-color: rgba(0, 255, 255, 0.15) !important;
+    background: rgba(5, 12, 28, 0.55) !important;
+    border-color: rgba(0, 255, 255, 0.25) !important;
 }
 
 /* Login / Register header */
 .login-header,
 .register-header {
-    background: linear-gradient(140deg, #0066cc 0%, #004499 100%);
+    background: linear-gradient(140deg, rgba(0, 102, 204, 0.7) 0%, rgba(0, 68, 153, 0.7) 100%);
     color: #fff;
-    padding: 36px 32px 32px;
+    padding: 48px 40px 42px;
     text-align: center;
     position: relative;
     overflow: hidden;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.18);
 }
 /* Kill decorative blobs */
 .login-header::before,
@@ -1043,9 +1052,9 @@ html.dark-theme .register-card {
     font-family: 'Outfit', sans-serif;
     font-weight: 800;
     color: #fff;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     letter-spacing: -0.02em;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     text-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 .login-header p,
@@ -1057,18 +1066,18 @@ html.dark-theme .register-card {
 }
 .login-header i,
 .register-header i {
-    font-size: 2.2rem;
+    font-size: 2.8rem;
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     opacity: 0.95;
 }
 
 .form-body {
-    padding: 32px 36px;
-    background: rgba(10, 15, 29, 0.98) !important;
+    padding: 40px 44px;
+    background: transparent !important;
 }
 html.dark-theme .form-body {
-    background: rgba(10, 15, 29, 0.98) !important;
+    background: transparent !important;
 }
 
 /* Override body container bg */
@@ -1510,8 +1519,8 @@ html.dark-theme .score-band { background: rgba(4, 9, 20, 0.8); border-bottom-col
 .report-body { padding: 44px 48px 52px; }
 .section-heading { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.05rem; color: #ffffff; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
 .section-rule { width: 40px; height: 3px; background: #00ffff; margin-bottom: 24px; }
-.summary-text { font-size: 1.08rem; line-height: 1.85; color: #e2e8f0; }
-.summary-text p { margin-bottom: 20px; color: #e2e8f0; }
+.summary-text { font-size: 1.08rem; line-height: 1.85; color: #e8edf5; }
+.summary-text p { margin-bottom: 20px; color: #e8edf5; }
 .summary-text p:first-of-type::first-letter { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 2.6rem; line-height: 0.8; float: left; margin: 6px 8px 0 0; color: #00ffff; }
 .actions { display: flex; gap: 14px; justify-content: center; margin-top: 40px; flex-wrap: wrap; }
 
@@ -1521,14 +1530,14 @@ html.dark-theme .score-band { background: rgba(4, 9, 20, 0.8); border-bottom-col
    ------------------------------------------------------------ */
 html.dark-theme body {
     background-color: #040914 !important;
-    color: #cbd5e1 !important;
+    color: #d8e4f0 !important;
 }
 
 html.dark-theme .container,
 html.dark-theme .container-fluid,
 html.dark-theme .container-xl,
 html.dark-theme .container-lg {
-    color: #cbd5e1;
+    color: #d8e4f0;
 }
 
 html.dark-theme .modal-backdrop {
@@ -1611,8 +1620,8 @@ html.dark-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 
    ------------------------------------------------------------ */
 @media (max-width: 768px) {
     .hero-card { padding: 36px 24px; }
-    .form-body { padding: 24px 22px; }
-    .login-header, .register-header { padding: 28px 22px; }
+    .form-body { padding: 28px 24px; }
+    .login-header, .register-header { padding: 32px 24px 28px; }
     .topbar { padding: 16px 0; }
     .page-header h2 { font-size: 1.35rem; }
     .stat-card h2 { font-size: 1.7rem; }
@@ -1633,8 +1642,6 @@ html.dark-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 
 
 .card,
 .panel,
-.login-card,
-.register-card,
 .studio-card,
 .attempt-card,
 .info-box,
@@ -1658,9 +1665,19 @@ html.dark-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6) !important;
 }
 
+/* Login/Register cards use lighter glass to show the vivid background */
+.login-card,
+.register-card {
+    background: rgba(5, 12, 28, 0.55) !important;
+    backdrop-filter: blur(24px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+    border: 1px solid rgba(0, 255, 255, 0.25) !important;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0,255,255,0.08) inset !important;
+}
+
 /* Ensure text readability on all glassmorphic components */
 .card, .panel, .login-card, .register-card, .studio-card, .attempt-card, .info-box, .toc-card, .report-doc, .top-card, .feature-card, .modal-content, .upload-box, .sidebar, .sidebar-nav {
-    color: #e2e8f0 !important;
+    color: #e8edf5 !important;
 }
 
 /* Ensure all headings inside cards/panels are stark white */
@@ -1668,9 +1685,16 @@ html.dark-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 
 .panel h1, .panel h2, .panel h3, .panel h4, .panel h5, .panel h6,
 .studio-card h1, .studio-card h2, .studio-card h3, .studio-card h4, .studio-card h5, .studio-card h6,
 .login-card h2, .register-card h2,
-.attempt-card h2, .attempt-card h3, .attempt-card h5, .attempt-score {
+.attempt-card h2, .attempt-card h3, .attempt-card h5, .attempt-score,
+.catalog-title, .hero-title, .card-label {
     color: #ffffff !important;
     text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important;
+}
+
+/* Ensure descriptive and subtitle texts stand out clearly against the dark background */
+.catalog-subtitle, .hero-desc, .card-desc, .company-hero p, .company-hero .hero-desc, .company-hero .hero-title {
+    color: #f1f5f9 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6) !important;
 }
 
 /* Form controls / inputs globally transparent-black with cyan borders */

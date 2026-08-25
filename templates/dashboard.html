@@ -88,11 +88,11 @@
         }
 
         html.dark-theme {
-            --primary:          #3b82f6;
-            --primary-hover:    #2563eb;
-            --primary-light:    rgba(59, 130, 246, 0.15);
-            --primary-glow:     rgba(59, 130, 246, 0.28);
-            --primary-glow-lg:  rgba(59, 130, 246, 0.42);
+            --primary:          #00ffff;
+            --primary-hover:    #00d4ff;
+            --primary-light:    rgba(0, 255, 255, 0.12);
+            --primary-glow:     rgba(0, 255, 255, 0.28);
+            --primary-glow-lg:  rgba(0, 255, 255, 0.42);
 
             --sky:              #38bdf8;
             --sky-light:        rgba(56, 189, 248, 0.12);
@@ -117,39 +117,46 @@
 
             --sidebar-bg:       #060c1a;
             --sidebar-bg2:      #040913;
-            --sidebar-text:     #94a3b8;
-            --sidebar-active-bg: rgba(59, 130, 246, 0.18);
-            --sidebar-active-text: #60a5fa;
+            --sidebar-text:     #cbd5e1;
+            --sidebar-active-bg: rgba(0, 255, 255, 0.15);
+            --sidebar-active-text: #00ffff;
             --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
-            --sidebar-icon-color: #64748b;
-            --sidebar-active-icon: #60a5fa;
+            --sidebar-icon-color: #8a9db8;
+            --sidebar-active-icon: #00ffff;
 
-            --border:           rgba(255, 255, 255, 0.08);
-            --border-hover:     rgba(59, 130, 246, 0.25);
-            --border-strong:    rgba(59, 130, 246, 0.4);
+            --border:           rgba(0, 255, 255, 0.15);
+            --border-hover:     rgba(0, 255, 255, 0.3);
+            --border-strong:    rgba(0, 255, 255, 0.4);
 
-            --text-main:        #f8fafc;
-            --text-muted:       #cbd5e1;
-            --text-desc:        #94a3b8;
-            --text-light:       #94a3b8;
+            --text-main:        #ffffff;
+            --text-muted:       #d8e4f0;
+            --text-desc:        #aabcce;
+            --text-light:       #8a9db8;
 
-            --card-shadow:      0 4px 20px rgba(0, 0, 0, 0.25);
-            --card-hover-shadow: 0 12px 30px rgba(59, 130, 246, 0.2), 0 0 0 1px rgba(59, 130, 246, 0.25);
+            --card-shadow:      0 8px 32px rgba(0, 0, 0, 0.4);
+            --card-hover-shadow: 0 16px 40px rgba(0, 255, 255, 0.2), 0 0 0 1px rgba(0, 255, 255, 0.25);
 
-            --sidebar-glow-1:   rgba(29, 78, 216, 0.30);
-            --sidebar-glow-2:   rgba(14, 165, 233, 0.14);
+            --sidebar-glow-1:   rgba(0, 255, 255, 0.08);
+            --sidebar-glow-2:   rgba(14, 165, 233, 0.03);
         }
 
         /* ── BASE ── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
         body {
-            
             min-height: 100vh;
             color: var(--text-main);
             font-family: 'Inter', system-ui, sans-serif;
             overflow-x: hidden;
             transition: background-color 0.25s ease, color 0.25s ease;
+            /* light mode background */
+            background: var(--bg) !important;
+            background-image: none !important;
+        }
+        html.dark-theme body {
+            /* Override global ai-bg.jpg with our richer aurora system */
+            background: #020510 !important;
+            background-image: none !important;
         }
         h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', system-ui, sans-serif; color: var(--text-main); line-height: 1.2; }
 
@@ -522,26 +529,36 @@
         }
 
         .card-glow {
-            position: absolute; top: -40px; right: -40px;
-            width: 180px; height: 180px; border-radius: 50%;
-            opacity: 0.5; transition: opacity 0.3s ease; pointer-events: none;
+            position: absolute; top: -50px; right: -50px;
+            width: 220px; height: 220px; border-radius: 50%;
+            opacity: 0.35; transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none;
         }
-        .top-card:hover .card-glow { opacity: 1; }
+        .top-card:hover .card-glow { opacity: 0.85; }
+
+        .card-assess .card-glow {
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.25) 0%, transparent 70%);
+        }
+        .card-resume .card-glow {
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.25) 0%, transparent 70%);
+        }
+        .card-tech-q .card-glow {
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.25) 0%, transparent 70%);
+        }
 
         /* Top accent stripes */
         .card-assess::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: linear-gradient(90deg, var(--primary), var(--sky));
+            height: 4px; background: linear-gradient(90deg, var(--primary), var(--sky));
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         }
         .card-resume::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: linear-gradient(90deg, #0ea5e9, #00d4ff);
+            height: 4px; background: linear-gradient(90deg, #0ea5e9, #00d4ff);
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         }
         .card-tech-q::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0;
-            height: 3px; background: linear-gradient(90deg, #2563eb, #3b82f6);
+            height: 4px; background: linear-gradient(90deg, #2563eb, #3b82f6);
             border-radius: var(--radius-xl) var(--radius-xl) 0 0;
         }
 
@@ -827,6 +844,159 @@
         .anim { animation: fadeSlideUp 0.44s cubic-bezier(0.16, 1, 0.3, 1) both; }
         .d0{animation-delay:0s} .d1{animation-delay:.07s} .d2{animation-delay:.14s} .d3{animation-delay:.21s} .d4{animation-delay:.28s}
 
+        /* ═══════════════════════════════════════════
+           GOATED BACKGROUND — Animated Aurora System
+        ═══════════════════════════════════════════ */
+
+
+        /* The main ambient canvas behind everything */
+        .db-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* Deep base gradient — multi-stop radial aurora */
+        .db-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100%);
+        }
+
+        /* Animated drifting orbs */
+        .db-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift 18s ease-in-out infinite;
+        }
+        .db-orb-1 {
+            width: 520px; height: 520px;
+            top: -120px; left: -100px;
+            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
+            animation-delay: 0s; animation-duration: 20s;
+        }
+        .db-orb-2 {
+            width: 400px; height: 400px;
+            top: 10%; right: -80px;
+            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
+            animation-delay: -7s; animation-duration: 24s;
+        }
+        .db-orb-3 {
+            width: 480px; height: 480px;
+            bottom: -80px; left: 30%;
+            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
+            animation-delay: -13s; animation-duration: 22s;
+        }
+        .db-orb-4 {
+            width: 300px; height: 300px;
+            top: 45%; right: 25%;
+            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
+            animation-delay: -4s; animation-duration: 19s;
+        }
+        .db-orb-5 {
+            width: 350px; height: 350px;
+            bottom: 10%; right: -50px;
+            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
+            animation-delay: -9s; animation-duration: 26s;
+        }
+
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        /* CSS Grid mesh overlay */
+        .db-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        /* Floating particle dots */
+        .db-particles {
+            position: absolute;
+            inset: 0;
+        }
+        .db-star {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            animation: starTwinkle linear infinite;
+        }
+
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        /* Top horizontal glow bar */
+        .db-topbar-glow {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* Ensure layout is above the bg */
+        .layout { position: relative; z-index: 1; }
+
+        /* Main content subtle frosted depth layer */
+        .main-content {
+            background: transparent;
+        }
+        .page-content {
+            position: relative;
+        }
+
+        /* Richer sidebar for dark mode — more depth */
+        html.dark-theme .sidebar {
+            background: rgba(3, 7, 18, 0.92) !important;
+            border-right-color: rgba(0, 200, 255, 0.12) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        /* Cards — keep them but add subtle depth backdrop for contrast against bg */
+        html.dark-theme .top-card,
+        html.dark-theme .practice-card,
+        html.dark-theme .stat-card,
+        html.dark-theme .history-panel {
+            background: rgba(8, 14, 30, 0.75) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-color: rgba(0, 200, 255, 0.14) !important;
+        }
+        html.dark-theme .top-card:hover,
+        html.dark-theme .practice-card:hover,
+        html.dark-theme .stat-card:hover {
+            background: rgba(10, 18, 38, 0.88) !important;
+            border-color: rgba(0, 200, 255, 0.35) !important;
+            box-shadow: 0 16px 48px rgba(0, 200, 255, 0.18), 0 0 0 1px rgba(0, 200, 255, 0.22) !important;
+        }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-alt); }
@@ -844,9 +1014,22 @@
             .header-controls { width: 100%; justify-content: flex-end; }
             .page-header { align-items: flex-start; }
         }
+
     </style>
 </head>
 <body>
+
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-orb db-orb-4"></div>
+    <div class="db-orb db-orb-5"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
 
 <div class="layout">
 
@@ -1776,6 +1959,29 @@ function handleFileDrop(event) {
         onFileSelect(input);
     }
 }
+</script>
+
+<script>
+/* ── Dashboard background particle spawner ── */
+(function() {
+    var container = document.getElementById('dbParticles');
+    if (!container) return;
+    var count = 60;
+    for (var i = 0; i < count; i++) {
+        var star = document.createElement('div');
+        star.className = 'db-star';
+        var size = Math.random() * 2 + 1;
+        star.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (Math.random() * 100) + '%',
+            'top:' + (Math.random() * 100) + '%',
+            'animation-duration:' + (Math.random() * 4 + 2) + 's',
+            'animation-delay:' + (Math.random() * 6) + 's'
+        ].join(';');
+        container.appendChild(star);
+    }
+})();
 </script>
 
 </body>
