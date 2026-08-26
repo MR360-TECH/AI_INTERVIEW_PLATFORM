@@ -29,8 +29,12 @@ In short: this isn't a system that *simulates* an interview using pre-set conten
 - 📊 **AI-Generated Evaluations**: Detailed feedback containing an overall score, selection verdict, strengths, improvements, and a comprehensive summary.
 - 📄 **Printable PDF Reports**: Premium candidate reports formatted for printing and download directly from the results interface.
 - 👨‍💼 **Recruitment Operations Dashboard**: Clean admin interface showing analytics, real-time candidate search/filtering, candidate details, settings management, and records pruning.
+- 📧 **Robust Multi-Provider OTP Delivery**: Seamless candidate verification powered by Resend HTTP, SendGrid HTTP, and local SMTP fallbacks to ensure compatibility with hosting providers (e.g., Render free tier) that block standard SMTP ports.
+- 💾 **Database-Backed Progress Persistence**: Replaced cookie-based session state storage with dedicated database tables (`interview_progress`) to support long chat history transcripts without hitting the 4KB browser cookie limit.
+- 🔄 **Dynamic Schema Migration**: Automatic database schema verification and auto-migration (such as dynamically injecting `resume_text` and `resume_filename` columns) on server boot.
 - ⚙️ **Configurable Assessment Parameters**: Admin options to customize passing scores, question thresholds, and default academic level difficulty.
 - 🎨 **Premium Modern Design System**: Responsive CSS with dynamic hover effects, smooth transitions, and modern cards layout.
+
 
 ---
 
