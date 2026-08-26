@@ -6,11 +6,16 @@ An enterprise-grade, full-stack conversational mock interview platform engineere
 
 ## 🚀 Core Innovations
 
-* **State-Machine Conversational Flows**: Traditional tools use hardcoded lists of questions. This platform treats the interview like an active conversation. The AI examiner reads your previous answers and crafts the next question live, creating a dynamic, human-like dialogue.
-* **Performance-Aware Adaptation (Dynamic Difficulty)**: The system adjusts to your skill level in real-time. If you answer perfectly, the AI challenges you with deeper questions. If you get stuck or say "I don't know," it shifts down to fundamental questions to check your basics, exactly like a real interviewer would.
-* **Resume Persona Integration**: If you upload a PDF resume, the platform automatically extracts its text and feeds it to the AI. Instead of generic questions, the AI asks you specific questions about your real projects, skills, and past roles.
-* **Cookie-Free Session Resilience**: Most web apps save chat history in browser cookies, which crash when the conversation gets too long (due to the 4KB browser limit). This platform stores active transcripts inside a database table. If you get disconnected, close your tab, or refresh, you can resume immediately without losing your progress.
-* **Dynamic Schema Self-Healing (Auto-Migration)**: Setting up databases manually can cause errors. When this application boots, it automatically checks your tables. If any new columns (like resume text fields) are missing, it runs the database migrations automatically behind the scenes to ensure stability.
+* **Stateful Conversational Interview Engine**: Unlike conventional platforms that serve static question banks, this system models each interview as a live, stateful dialogue. On every interaction, the complete conversation transcript is forwarded to the AI examiner, enabling it to construct contextually intelligent follow-up questions that directly respond to the candidate's preceding answer — mirroring the reasoning pattern of a real human interviewer.
+
+* **Adaptive Difficulty Scaling**: The assessment engine continuously evaluates response quality and recalibrates the complexity of subsequent questions accordingly. Strong, well-articulated answers trigger a progressive escalation in technical depth, while incomplete or uncertain responses prompt the AI to revisit foundational concepts — creating a self-correcting evaluation loop that reflects actual interview dynamics.
+
+* **Resume-Driven Personalisation**: Candidates may upload their CV in PDF format. The platform parses and indexes the extracted text into the candidate's database profile, which is then embedded into the AI's prompt context at assessment time. This allows the examiner to ask role-specific, project-aware, and technology-relevant questions drawn directly from the candidate's professional background.
+
+* **Persistent Session Architecture**: Rather than relying on browser-native cookie storage — which imposes a strict 4KB payload ceiling — active interview transcripts are serialised and persisted in a dedicated relational database table. This guarantees full session continuity across network interruptions, tab closures, or browser refreshes, without any loss of conversational state.
+
+* **Zero-Downtime Schema Auto-Migration**: On every application boot, the platform introspects the live database schema and programmatically applies any missing column definitions. This eliminates manual migration steps, prevents schema drift across environments, and ensures backward compatibility when new candidate data fields are introduced.
+
 
 ---
 
