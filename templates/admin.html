@@ -556,6 +556,18 @@
             align-items: center;
             gap: 5px;
         }
+        .verdict-terminated {
+            background: rgba(239, 68, 68, 0.18);
+            color: #f87171;
+            border: 1.5px solid rgba(239, 68, 68, 0.4);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
         /* ── Date cell ── */
         .date-cell { font-size: 0.82rem; color: var(--text-2); font-weight: 500; }
@@ -752,7 +764,9 @@
                         </div>
                     </td>
                     <td>
-                        {% if result.status == "Selected" %}
+                        {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
+                        <span class="verdict-terminated"><i class="bi bi-shield-slash-fill"></i>Terminated</span>
+                        {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
                         <span class="verdict-recommended"><i class="bi bi-check-circle-fill"></i>Recommended</span>
                         {% else %}
                         <span class="verdict-rejected"><i class="bi bi-x-circle-fill"></i>Not Recommended</span>

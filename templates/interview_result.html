@@ -258,13 +258,13 @@
         transition: var(--transition);
     }
     .btn-primary-action {
-        background: linear-gradient(135deg, #00ffff, #0284c7);
-        color: #020510 !important;
-        box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: #ffffff !important;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
     }
     .btn-primary-action:hover {
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 12px 30px rgba(0, 255, 255, 0.5);
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
     }
     .btn-secondary-action {
         background: var(--surface);
@@ -944,6 +944,7 @@
             if (ring) {
                 ring.style.strokeDashoffset = '{{ (314.16 - (314.16 * (score_percent | default(0)) / 100)) | round(2) }}';
             }
+        }, 100);
     });
 </script>
 

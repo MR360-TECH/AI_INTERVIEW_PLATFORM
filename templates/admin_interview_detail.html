@@ -746,7 +746,7 @@
             </div>
             {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
             <div class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;">
-                <i class="bi bi-shield-slash-fill"></i> Terminated (Code of Conduct)
+                <i class="bi bi-shield-slash-fill"></i> Terminated
             </div>
             {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
             <div class="verdict-pill selected">

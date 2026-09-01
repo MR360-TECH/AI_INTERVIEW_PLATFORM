@@ -1266,11 +1266,22 @@ def practice_start():
                         "enough evaluation data, you MAY choose to end the interview by responding with EXACTLY 'INTERVIEW_COMPLETE'.\n"
                     )
 
+            behavioral_rule = ""
+            if not practice_mode and q_count >= 1:
+                # Additive instruction to include behavioral / situational / self-introduction questions randomly or towards the end of interview
+                behavioral_rule = (
+                    "\nBEHAVIORAL & SITUATIONAL RULE:\n"
+                    "In addition to technical questions in their domain, seamlessly integrate 2 behavioral or situational questions during the interview "
+                    "(such as 'Tell me about yourself', 'Why should we hire you?', or domain-specific real-world scenario/conflict handling). "
+                    "You may ask these randomly or near the final questions before concluding the interview.\n"
+                )
+
             prompt = (
                 "You are an interviewer conducting a real job interview.\n\n"
                 f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
                 "CRITICAL DOMAIN RULE:\n"
                 "Identify their specified domain from their first answer. You MUST stay strictly 100% within this domain. NEVER switch to unrelated fields.stay strictly within the domain and output only questions and nothing else .\n\n"
+                f"{behavioral_rule}\n"
                 "RULES FOR OUTPUT:\n"
                 "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
                 "2. If they struggle or answer 'I don't know', DO NOT give them the answer and DO NOT say 'No problem' or acknowledge it. change the topic  of question within the domain and Just output the next question immediately.\n"
@@ -1562,8 +1573,8 @@ def interview():
                 "4. Explore different topics within the domain. Do not repeat similar questions.\n"
                 "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
                 "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
-                
-                "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
+                "6. randomly ask 2-3 behavioural questions like tell me about yourself or why do we need to hire you or some situational questions based on domain and all these questions can be asked randomly and why do we need to hire you question try to ask it before terminating the intevriew"
+                "7. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
                 "   - `[TYPE: CODE]` if they need to write or fix code.\n"
                 "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
                 "   - `[TYPE: TEXT]` for all other standard questions.\n"
@@ -1703,11 +1714,12 @@ def interview_result():
           "You already know their field from the first exchange in the conversation below. Evaluate them using criteria that a real expert or hiring panel in THAT specific field would actually use, "
           "for example, a fitness coach should be judged on client communication, programming knowledge, and safety awareness, not on unrelated technical skills; a musician should be judged on artistic understanding, technique discussion, and stage/performance readiness where relevant to their answers.\n\n"
           "Ground every claim in what the candidate actually said, reference specific moments or themes from their real answers rather than generic praise or criticism. Do not invent details not present in the conversation. "
+          "If behavioral or situational questions were asked (such as 'tell me about yourself', 'why should we hire you', or domain situational scenarios), evaluate their communication clarity, self-awareness, confidence, and domain-appropriate problem resolution sensitive to their experience. "
           "Initially tell some strengths of the candidate even if he has even one question answered correctly. "
           "Show some mercy on the candidate even if he didn't perform well and tried his best to answer any question. "
           "If an answer was thin, evasive, or off-topic, say so plainly and explain why it fell short. If an answer was excellent, explain specifically what made it strong. "
           "Note how the candidate's performance trended across the interview, did they warm up and improve, stay consistent, or fade under harder questions?\n\n"
-          "Write in formal, precise business-evaluation language, the way a hiring committee's official written report reads. No casual phrasing, no filler praise, no hedging. "
+          "Write in formal, precise business-evaluation language, the way a hiring committee's official written report reads. No casual phrasing, no filler praise, no hedging.dont mention any difficulty levels etc on the report maintain sensitive words and professional tone "
           "Calibrate the score honestly: 9-10 is reserved for exceptional, hire-immediately performance; 7-8 is solid and competent; 5-6 is mixed with real gaps; below 5 means significant weaknesses outweighed strengths. "
           "Respond in EXACTLY this format, nothing else, no markdown symbols like ** or #:\n"
           " output SCORE: [a number out of 10]\n"
@@ -1732,24 +1744,41 @@ def interview_result():
                     summary_lines.append("")
                 continue
 
-            upper_line = line.upper()
+            # Strip markdown formatting like **, *, # for checking
+            clean_line = re.sub(r'[\*\#\_]', '', line).strip()
+            upper_line = clean_line.upper()
 
             if upper_line.startswith("SCORE"):
-                score = line.split(":", 1)[-1].strip()
+                score = clean_line.split(":", 1)[-1].strip()
                 in_summary = False
             elif upper_line.startswith("SUMMARY"):
                 in_summary = True
             elif in_summary:
                 summary_lines.append(line)
 
+        # Robust regex extraction for score number (finds 8, 8.5, 8/10, etc.)
+        score_num = 0.0
+        score_match = re.search(r'SCORE\s*:\s*([0-9]+(?:\.[0-9]+)?)', evaluation, re.IGNORECASE)
+        if score_match:
+            try:
+                score_num = float(score_match.group(1))
+            except (ValueError, TypeError):
+                score_num = 0.0
+        else:
+            # Fallback regex if SCORE is written without colon or with /10
+            fallback_match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', evaluation)
+            if fallback_match:
+                try:
+                    score_num = float(fallback_match.group(1))
+                except (ValueError, TypeError):
+                    score_num = 0.0
+
         summary_text = "\n".join(summary_lines).strip()
         if not summary_text:
-            summary_text = "Not enough data to generate a report."
-
-        try:
-            score_num = float(score.split("/")[0].strip())
-        except:
-            score_num = 0
+            # If summary splitting failed due to format, use the evaluation text
+            summary_text = re.sub(r'SCORE\s*:\s*[^\n]+', '', evaluation, flags=re.IGNORECASE).strip()
+            if not summary_text:
+                summary_text = "Not enough data to generate a report."
 
         if score_num >= 8:
             label = "Excellent"
@@ -2060,6 +2089,11 @@ def interview_submit():
         "Output ONLY the raw next question.explore diverse category of questions within the domain and change topic of questions if they previous answer is wrong or not upto the mark Keep it concise (under 2 sentences). ZERO preamble or acknowledgment.",
         "If they answer 'I don't know', DO NOT give them the answer and DO NOT acknowledge it. Just output the next question immediately.",
     ]
+    if not is_practice:
+        prompt_parts.append(
+            "BEHAVIORAL/SITUATIONAL RULE: Ensure to ask 2 behavioral or situational questions "
+            "(e.g., 'Tell me about yourself', 'Why should we hire you?', or domain scenario questions) randomly or near the end before concluding."
+        )
     
     if not is_practice and submit_q_count >= MIN_QUESTIONS:
         prompt_parts.append("If the candidate has demonstrated sufficient knowledge and you are ready to finish the interview, output ONLY the exact phrase: [END_INTERVIEW]")
