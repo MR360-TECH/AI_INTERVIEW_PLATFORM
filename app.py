@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
 from google.genai import types
@@ -28,7 +29,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 if IS_PRODUCTION:
     from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
