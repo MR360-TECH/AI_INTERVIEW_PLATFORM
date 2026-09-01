@@ -1012,34 +1012,34 @@ html.dark-theme .form-select:focus {
 }
 html.dark-theme .form-label { color: #f0f4fb !important; }
 
-/* ── Login / Register card — Ultra Neon Glassmorphism ── */
+/* ── Login / Register card — Ultra Glowing Neon Glassmorphism ── */
 .login-card,
 .register-card {
-    border: 1.8px solid #00ffff !important;
+    border: 2px solid #00ffff !important;
     border-radius: 24px !important;
     overflow: hidden;
-    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 255, 255, 0.25), 0 0 2px #00ffff inset !important;
-    background: rgba(4, 12, 28, 0.88) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 255, 255, 0.45), 0 0 15px rgba(0, 255, 255, 0.3) inset !important;
+    background: rgba(6, 18, 38, 0.92) !important;
     backdrop-filter: blur(28px) saturate(200%) !important;
     -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
 }
 html.dark-theme .login-card,
 html.dark-theme .register-card {
-    background: rgba(4, 12, 28, 0.88) !important;
+    background: rgba(6, 18, 38, 0.92) !important;
     border-color: #00ffff !important;
 }
 
 /* Login / Register header */
 .login-header,
 .register-header {
-    background: linear-gradient(135deg, rgba(0, 255, 255, 0.32) 0%, rgba(2, 132, 199, 0.45) 100%) !important;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.45) 0%, rgba(2, 132, 199, 0.6) 100%) !important;
     color: #ffffff;
-    padding: 48px 40px 42px;
+    padding: 42px 36px 36px;
     text-align: center;
     position: relative;
     overflow: hidden;
-    border-bottom: 2px solid #00ffff !important;
-    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2);
+    border-bottom: 2.5px solid #00ffff !important;
+    box-shadow: 0 4px 25px rgba(0, 255, 255, 0.4);
 }
 /* Kill decorative blobs */
 .login-header::before,
@@ -1053,31 +1053,31 @@ html.dark-theme .register-card {
     font-family: 'Outfit', sans-serif;
     font-weight: 900;
     color: #ffffff;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     letter-spacing: -0.01em;
-    font-size: 1.9rem;
-    text-shadow: 0 0 20px rgba(0, 255, 255, 0.7), 0 2px 8px rgba(0,0,0,0.9);
+    font-size: 2rem;
+    text-shadow: 0 0 24px #00ffff, 0 2px 10px rgba(0,0,0,0.9);
 }
 .login-header p,
 .register-header p {
     opacity: 1;
     margin: 0;
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: #e2e8f0;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5), 0 1px 4px rgba(0,0,0,0.8);
 }
 .login-header i,
 .register-header i {
-    font-size: 3rem;
+    font-size: 3.2rem;
     display: block;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     color: #00ffff;
-    filter: drop-shadow(0 0 18px #00ffff);
+    filter: drop-shadow(0 0 22px #00ffff) drop-shadow(0 0 8px #ffffff);
 }
 
 .form-body {
-    padding: 40px 44px;
+    padding: 36px 40px;
     background: transparent !important;
 }
 html.dark-theme .form-body {
