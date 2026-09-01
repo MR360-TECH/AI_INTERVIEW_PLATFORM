@@ -358,10 +358,12 @@ def signup():
 
 @app.route("/auth/register/verify-otp", methods=["GET", "POST"])
 def verify_register_otp():
-    if "reg_otp" not in session or "pending_signup_email" not in session:
+    email = session.get("pending_signup_email") or session.get("email_otp_verified")
+    if not email or "reg_otp" not in session:
+        if session.get("email_otp_verified"):
+            return redirect("/signup/set-password")
         return redirect("/signup")
 
-    email = session["pending_signup_email"]
     if request.method == "GET":
         return render_template("verify_otp.html", error=None, email=email, next_step="set_password")
 
@@ -369,7 +371,6 @@ def verify_register_otp():
     if entered == session.get("reg_otp"):
         session.pop("reg_otp", None)
         session["email_otp_verified"] = email
-        session.pop("pending_signup_email", None)
         return redirect("/signup/set-password")
 
     return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=email, next_step="set_password")
@@ -377,7 +378,7 @@ def verify_register_otp():
 
 @app.route("/signup/set-password", methods=["GET", "POST"])
 def signup_set_password():
-    email = session.get("email_otp_verified")
+    email = session.get("email_otp_verified") or session.get("pending_signup_email")
     if not email:
         return redirect("/signup")
 
@@ -392,7 +393,6 @@ def signup_set_password():
 
         session["verified_signup_email"] = email
         session["verified_signup_password"] = generate_password_hash(password)
-        session.pop("email_otp_verified", None)
         return redirect("/register")
 
     return render_template("set_password.html", error=None, email=email)
