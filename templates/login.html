@@ -103,18 +103,18 @@
         .db-bg::before {
             content: ''; position: absolute; inset: 0;
             background:
-                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,150,255,0.18) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100,0,255,0.14) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,255,220,0.10) 0%, transparent 55%),
-                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,80,255,0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,255,255,0.20) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(2,132,199,0.18) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,255,220,0.12) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,180,255,0.15) 0%, transparent 50%),
                 linear-gradient(160deg,#02060f 0%,#010416 30%,#020820 60%,#010512 100%);
         }
         .db-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0; animation:orbDrift 18s ease-in-out infinite; }
-        .db-orb-1 { width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(0,120,255,0.30) 0%,transparent 70%);animation-delay:0s;animation-duration:20s; }
-        .db-orb-2 { width:400px;height:400px;top:10%;right:-80px;background:radial-gradient(circle,rgba(120,0,255,0.22) 0%,transparent 70%);animation-delay:-7s;animation-duration:24s; }
-        .db-orb-3 { width:480px;height:480px;bottom:-80px;left:30%;background:radial-gradient(circle,rgba(0,200,255,0.18) 0%,transparent 70%);animation-delay:-13s;animation-duration:22s; }
-        .db-orb-4 { width:300px;height:300px;top:45%;right:25%;background:radial-gradient(circle,rgba(60,0,180,0.16) 0%,transparent 70%);animation-delay:-4s;animation-duration:19s; }
-        .db-orb-5 { width:350px;height:350px;bottom:10%;right:-50px;background:radial-gradient(circle,rgba(0,255,180,0.12) 0%,transparent 70%);animation-delay:-9s;animation-duration:26s; }
+        .db-orb-1 { width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,rgba(0,255,255,0.28) 0%,transparent 70%);animation-delay:0s;animation-duration:20s; }
+        .db-orb-2 { width:400px;height:400px;top:10%;right:-80px;background:radial-gradient(circle,rgba(2,132,199,0.24) 0%,transparent 70%);animation-delay:-7s;animation-duration:24s; }
+        .db-orb-3 { width:480px;height:480px;bottom:-80px;left:30%;background:radial-gradient(circle,rgba(0,220,255,0.20) 0%,transparent 70%);animation-delay:-13s;animation-duration:22s; }
+        .db-orb-4 { width:300px;height:300px;top:45%;right:25%;background:radial-gradient(circle,rgba(0,160,255,0.18) 0%,transparent 70%);animation-delay:-4s;animation-duration:19s; }
+        .db-orb-5 { width:350px;height:350px;bottom:10%;right:-50px;background:radial-gradient(circle,rgba(0,255,180,0.14) 0%,transparent 70%);animation-delay:-9s;animation-duration:26s; }
         @keyframes orbDrift {
             0%   { opacity:0.6; transform:translate(0,0) scale(1); }
             25%  { opacity:0.8; transform:translate(30px,-20px) scale(1.05); }
@@ -124,7 +124,7 @@
         }
         .db-grid {
             position:absolute; inset:0;
-            background-image: linear-gradient(rgba(0,200,255,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(0,200,255,0.035) 1px,transparent 1px);
+            background-image: linear-gradient(rgba(0,255,255,0.035) 1px,transparent 1px), linear-gradient(90deg,rgba(0,255,255,0.035) 1px,transparent 1px);
             background-size:60px 60px;
             mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
             -webkit-mask-image:radial-gradient(ellipse 100% 100% at 50% 50%,black 20%,transparent 80%);
@@ -137,7 +137,7 @@
         }
         .db-topbar-glow {
             position:absolute; top:0; left:0; right:0; height:2px;
-            background:linear-gradient(90deg,transparent 0%,rgba(0,200,255,0.7) 30%,rgba(120,0,255,0.7) 70%,transparent 100%);
+            background:linear-gradient(90deg,transparent 0%,rgba(0,255,255,0.7) 30%,rgba(2,132,199,0.7) 70%,transparent 100%);
             animation:topbarGlowPulse 4s ease-in-out infinite;
         }
         @keyframes topbarGlowPulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }

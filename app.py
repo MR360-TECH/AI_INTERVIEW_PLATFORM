@@ -614,13 +614,11 @@ def login():
             return render_template("login.html", show_signup_prompt=True, prefill_email=email, has_google_oauth=has_google_oauth)
 
         if user and user.password and check_password_hash(user.password, password):
-            session.pop("pending_google_email", None)
-            session.pop("verified_signup_email", None)
-            session.pop("verified_signup_password", None)
-            session["is_admin"] = False
+            session.clear()
             session["user_id"] = user.id
             session["user_name"] = user.full_name
             session["user_email"] = user.email
+            session["is_admin"] = False
             if not profile_is_complete(user):
                 return redirect("/register")
             return redirect("/dashboard")
@@ -914,15 +912,13 @@ def admin():
 
     settings = get_settings()
 
-    # Pre-calculate user attempt counts
-    user_attempt_counts = {}
-    for r, u in all_results:
-        if u.id not in user_attempt_counts:
-            cnt = InterviewResult.query.filter(
-                InterviewResult.user_id == u.id,
-                ~InterviewResult.status.like('%Practice%')
-            ).count()
-            user_attempt_counts[u.id] = cnt
+    # Optimized single GROUP BY query to avoid N+1 query buffering on Render
+    attempt_counts_raw = db.session.query(
+        InterviewResult.user_id, func.count(InterviewResult.id)
+    ).filter(
+        ~InterviewResult.status.like('%Practice%')
+    ).group_by(InterviewResult.user_id).all()
+    user_attempt_counts = {u_id: count for u_id, count in attempt_counts_raw}
 
     return render_template(
         "admin.html",
@@ -2485,7 +2481,6 @@ def send_slot_unlocked_email(to_email, candidate_name):
                     return
             except Exception as e:
                 print(f"[UNLOCK EMAIL] Resend error: {e}")
-                print(f"[UNLOCK EMAIL] SMTP error: {exc}")
 
     t = threading.Thread(target=_dispatch, daemon=True)
     t.start()
