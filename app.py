@@ -1391,11 +1391,10 @@ def practice_start():
             contents=prompt,
             config=types.GenerateContentConfig(max_output_tokens=150)
         )
-        question_text = response.text.strip()
-
+        question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
-        return redirect("/dashboard?error=ai_error")
+        question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
 
     if question_text == "INTERVIEW_COMPLETE":
         return redirect("/interview-result")
@@ -1690,11 +1689,11 @@ def interview():
             contents=prompt,
             config=types.GenerateContentConfig(max_output_tokens=150)
         )
-        question_text = response.text.strip()
-
+        question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
-        return redirect("/dashboard?error=ai_error")
+        # Safe fallback question instead of crashing or redirecting
+        question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
 
     if question_text == "INTERVIEW_COMPLETE":
         return redirect("/interview-result")
