@@ -202,6 +202,19 @@
         c.appendChild(s);
     }
 })();
+
+// Loading spinner on OTP submit
+(function(){
+    var form = document.getElementById('signupForm');
+    if(!form) return;
+    form.addEventListener('submit', function(){
+        var btn = form.querySelector('button[type="submit"]');
+        if(btn){
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sending verification code…';
+        }
+    });
+})();
 </script>
 </body>
 </html>

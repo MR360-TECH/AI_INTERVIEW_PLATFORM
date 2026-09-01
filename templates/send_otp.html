@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <title>Email OTP Login - AI Interview Platform</title>
@@ -315,7 +315,7 @@
                     <div class="alert alert-danger">{{ error }}</div>
                     {% endif %}
 
-                    <form method="POST" action="/auth/otp/send">
+                    <form method="POST" action="/auth/otp/send" id="otpLoginForm">
                         <div class="mb-3">
                             <label class="form-label" for="email">Email Address</label>
                             <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" required>
@@ -348,6 +348,19 @@
         s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
         c.appendChild(s);
     }
+})();
+
+// Loading spinner on OTP submit
+(function(){
+    var form = document.getElementById('otpLoginForm');
+    if(!form) return;
+    form.addEventListener('submit', function(){
+        var btn = form.querySelector('button[type="submit"]');
+        if(btn){
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Sending OTP…';
+        }
+    });
 })();
 </script>
 </body>
