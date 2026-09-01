@@ -323,8 +323,6 @@ def apply_security_headers(response):
 
 @app.route("/")
 def home():
-    if "user_id" in session:
-        return redirect("/dashboard")
     return render_template("index.html")
 
 
@@ -1364,23 +1362,20 @@ def practice_start():
                 )
 
             prompt = (
-                "You are an interviewer conducting a real job interview.\n\n"
+                "You are an expert interviewer conducting a real-time assessment.\n\n"
                 f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
                 "CRITICAL DOMAIN RULE:\n"
-                "Identify their specified domain from their first answer. You MUST stay strictly 100% within this domain. NEVER switch to unrelated fields.stay strictly within the domain and output only questions and nothing else .\n\n"
-                f"{behavioral_rule}\n"
+                "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
                 "RULES FOR OUTPUT:\n"
                 "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
-                "2. If they struggle or answer 'I don't know', DO NOT give them the answer and DO NOT say 'No problem' or acknowledge it. change the topic  of question within the domain and Just output the next question immediately.\n"
-                "3. If their answer is strong, challenge them with deeper scenarios, but if they give.\n"
-                "4. Explore different topics within the domain. Do not repeat similar questions.\n"
-                "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
-                "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
-                
+                "2. If they struggle or answer 'I don't know', DO NOT give them the answer. Change the topic/concept within the domain and output the next question immediately.\n"
+                "3. Explore diverse categories of questions within the domain without repeating topics.\n"
+                "4. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate indicates they do not understand a term or question, briefly clarify (in 1 short sentence), then state the question.\n"
+                "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
                 "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
                 "   - `[TYPE: CODE]` if they need to write or fix code.\n"
                 "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
-                "   - `[TYPE: TEXT]` for all other standard questions.\n"
+                "   - `[TYPE: TEXT]` for all standard conceptual questions.\n"
                 f"{completion_option}\n"
                 f"Conversation so far:\n{conversation_text}\n"
                 "Output ONLY the raw question text with its tag below:"
@@ -1663,22 +1658,20 @@ def interview():
                     )
 
             prompt = (
-                "You are an interviewer conducting a real job interview.\n\n"
+                "You are an expert interviewer conducting a real-time assessment.\n\n"
                 f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
                 "CRITICAL DOMAIN RULE:\n"
-                "Identify their specified domain from their first answer. You MUST stay strictly 100% within this domain. NEVER switch to unrelated fields.stay strictly within the domain and output only questions and nothing else .\n\n"
+                "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
                 "RULES FOR OUTPUT:\n"
                 "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
-                "2. If they struggle or answer 'I don't know', DO NOT give them the answer and DO NOT say 'No problem' or acknowledge it. change the topic  of question within the domain and Just output the next question immediately.\n"
-                "3. If their answer is strong, challenge them with deeper scenarios, but if they give.\n"
-                "4. Explore different topics within the domain. Do not repeat similar questions.\n"
-                "4. Explore different categories of questions within the domain. Do not repeat similar questions.\n"
-                "5. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate's last message indicates they do not understand a term, concept, or the question itself (e.g., 'What does X mean?', 'I don't understand the question', 'Could you explain Y?'), act like a friendly human interviewer. Explain the concept or rephrase the question VERY briefly (in 1-2 short sentences max), then ask your question. Do not provide long explanations or talk too much.\n"
-                "6. randomly ask 2-3 behavioural questions like tell me about yourself or why do we need to hire you or some situational questions based on domain and all these questions can be asked randomly and why do we need to hire you question try to ask it before terminating the intevriew"
-                "7. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
+                "2. If they struggle or answer 'I don't know', DO NOT give them the answer. Change the topic/concept within the domain and output the next question immediately.\n"
+                "3. Explore diverse categories of questions within the domain without repeating topics.\n"
+                "4. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate indicates they do not understand a term or question, briefly clarify (in 1 short sentence), then state the question.\n"
+                "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
+                "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
                 "   - `[TYPE: CODE]` if they need to write or fix code.\n"
                 "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
-                "   - `[TYPE: TEXT]` for all other standard questions.\n"
+                "   - `[TYPE: TEXT]` for all standard conceptual questions.\n"
                 f"{completion_option}\n"
                 f"Conversation so far:\n{conversation_text}\n"
                 "Output ONLY the raw question text with its tag below:"
