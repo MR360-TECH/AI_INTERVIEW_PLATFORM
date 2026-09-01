@@ -1124,7 +1124,8 @@ def practice_start():
     return redirect(url_for("interview", restart="1", practice="1"))
 
 
-
+@app.route("/interview", methods=["GET", "POST"])
+def interview():
     if session.get("is_admin"):
         return redirect("/admin")
     if "user_id" not in session:
@@ -1445,7 +1446,7 @@ def interview():
 
         # Block entry if limit reached
         if attempts_used >= allowed_total:
-            return redirect("/dashboard?error=attempts_exhausted")
+            return redirect(url_for("interview", restart="1", practice="1"))
 
     if request.args.get("restart") == "1":
         clear_progress(user_id)
@@ -1690,7 +1691,6 @@ def interview():
         question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
-        # Safe fallback question instead of crashing or redirecting
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
 
     if question_text == "INTERVIEW_COMPLETE":
@@ -1711,8 +1711,6 @@ def interview():
     save_progress(user_id, chat_history, q_count)
 
     return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
-
-
 
 @app.route("/finish-interview", methods=["GET", "POST"])
 def finish_interview():
