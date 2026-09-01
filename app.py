@@ -934,7 +934,28 @@ def delete_user(user_id):
 
     db.session.commit()
 
-    return redirect("/admin")
+    next_url = request.args.get("next") or "/admin"
+    return redirect(next_url)
+
+
+@app.route("/admin/users")
+def admin_users():
+    if not session.get("is_admin"):
+        return redirect("/login")
+
+    q = request.args.get("q", "").strip()
+    if q:
+        users = User.query.filter(
+            (User.full_name.ilike(f"%{q}%")) |
+            (User.email.ilike(f"%{q}%")) |
+            (User.course.ilike(f"%{q}%")) |
+            (User.skills.ilike(f"%{q}%"))
+        ).order_by(User.registered_at.desc()).all()
+    else:
+        users = User.query.order_by(User.registered_at.desc()).all()
+
+    return render_template("admin_users.html", users=users, q=q)
+
 
 
 @app.route("/admin/user/<int:user_id>")

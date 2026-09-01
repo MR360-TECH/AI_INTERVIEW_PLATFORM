@@ -40,7 +40,7 @@
         }
 
         .meta-link {
-            color: var(--indigo) !important;
+            color: #00ffff !important;
             text-decoration: none;
             font-size: 0.82rem;
             transition: color 0.2s ease;
@@ -51,20 +51,21 @@
         }
 
         .skill-badge {
-            background: #eef2ff;
-            color: #4f46e5;
-            border: 1.5px solid #c7d2fe;
+            background: rgba(0, 255, 255, 0.12) !important;
+            color: #00ffff !important;
+            border: 1.5px solid rgba(0, 255, 255, 0.3) !important;
             border-radius: 6px;
             padding: 2px 8px;
             font-size: 0.72rem;
             font-weight: 700;
-            display: inline-block;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        html.dark-theme .skill-badge {
-            background: rgba(99, 102, 241, 0.15) !important;
-            color: #818cf8 !important;
-            border-color: rgba(99, 102, 241, 0.35) !important;
+        .skill-badge:hover {
+            background: rgba(0, 255, 255, 0.25) !important;
         }
+
 
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
@@ -200,14 +201,15 @@
             width: 60px;
             height: 60px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: #fff;
+            background: #020510 !important;
+            border: 2px solid #00ffff !important;
+            color: #00ffff !important;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.4rem;
             font-weight: 800;
-            box-shadow: 0 8px 24px rgba(79,70,229,0.25);
+            box-shadow: 0 0 16px rgba(0,255,255,0.35) !important;
             flex-shrink: 0;
         }
 
@@ -223,12 +225,12 @@
         }
 
         .candidate-name a {
-            color: inherit;
+            color: #00ffff !important;
             text-decoration: none;
-            border-bottom: 2px dashed rgba(79,70,229,0.35);
+            border-bottom: 2px dashed rgba(0,255,255,0.35) !important;
             transition: border-color 0.2s ease;
         }
-        .candidate-name a:hover { border-color: #4f46e5; }
+        .candidate-name a:hover { border-color: #00ffff; }
 
         .candidate-email {
             font-size: 0.88rem;
@@ -577,130 +579,141 @@
             <button class="back-btn" id="themeToggle" title="Toggle Theme" style="padding: 9px 14px;">
                 <i class="bi bi-moon-fill" id="themeToggleIcon" style="transition: transform 0.2s ease;"></i>
             </button>
-            <a href="/admin" class="back-btn-global"><i class="bi bi-arrow-left"></i> Back</a>
+            <a href="/admin" class="back-btn-global" style="border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.05) !important;"><i class="bi bi-arrow-left"></i> BACK</a>
         </div>
     </div>
 
-    <!-- Candidate Profile Panel -->
-    <div class="panel anim anim-2">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div class="panel-title mb-0"><span class="title-icon"><i class="bi bi-person-vcard-fill"></i></span> Candidate Profile</div>
-            {% if candidate %}
-            <button class="btn-pdf-download" data-bs-toggle="modal" data-bs-target="#userResumeModal" title="View Candidate Resume" style="padding:6px 14px;font-size:0.8rem;background:linear-gradient(135deg, #1d4ed8, #0ea5e9);">
-                <i class="bi bi-file-earmark-person-fill"></i> User Resume
+    <!-- Candidate Profile Section (Redesigned as per user request layout) -->
+    <div class="profile-hero mb-4" style="background: rgba(10, 15, 29, 0.65) !important; border: 1.5px solid rgba(0, 255, 255, 0.15) !important; border-radius: 24px; padding: 36px 40px; box-shadow: 0 8px 32px rgba(0, 255, 255, 0.05); position: relative; overflow: hidden; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <i class="bi bi-person-badge-fill" style="color: #00ffff;"></i> Candidate Profile
+            </div>
+            {% if candidate and candidate.resume_filename %}
+            <button class="btn" data-bs-toggle="modal" data-bs-target="#userResumeModal" style="border: 1.5px solid rgba(0, 255, 255, 0.2); background: rgba(0, 255, 255, 0.05); color: #00ffff; font-weight: 600; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-file-earmark-text"></i> User Resume
             </button>
             {% endif %}
         </div>
 
-        <div class="d-flex align-items-start gap-4 flex-wrap mb-2">
-            <div class="avatar-circle">{{ candidate.full_name[:2] | upper }}</div>
-            <div>
-                <h3 class="candidate-name mb-1">
-                    <a href="/admin/user/{{ candidate.id }}">{{ candidate.full_name }}</a>
-                </h3>
-                <div class="candidate-email">
-                    <span><i class="bi bi-envelope-fill me-1"></i>{{ candidate.email }}</span>
+        <div class="d-flex align-items-center gap-4 flex-wrap mb-4">
+            <div class="profile-avatar" style="width: 68px; height: 68px; border-radius: 18px; background: linear-gradient(135deg, #00ffff, #0088ff) !important; color: #020510 !important; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.6rem; box-shadow: 0 0 16px rgba(0, 255, 255, 0.35) !important; flex-shrink: 0;">{{ candidate.full_name[0]|upper }}</div>
+            <div class="flex-grow-1">
+                <h1 class="profile-name d-flex align-items-center gap-2" style="color: #00ffff !important; font-weight: 800; text-transform: uppercase; margin: 0; font-size: 1.6rem; letter-spacing: -0.01em;">
+                    <a href="/admin/user/{{ candidate.id }}" style="color: #00ffff !important; text-decoration: none; border-bottom: 2px dashed rgba(0,255,255,0.35);">{{ candidate.full_name|upper }}</a>
+                </h1>
+                <div class="d-flex align-items-center gap-3 flex-wrap mt-2">
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ candidate.email }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.9rem; color: #94a3b8; font-weight: 500; text-decoration: none; transition: color 0.2s ease;" onmouseover="this.style.color='#00ffff';" onmouseout="this.style.color='#94a3b8';" title="Compose email in Gmail for {{ candidate.email }}"><i class="bi bi-envelope-fill me-1"></i>{{ candidate.email }}</a>
                     {% if candidate.auth_provider == "google" %}
-                                <span class="auth-badge google">
-                                    <svg class="google-g-icon" viewBox="0 0 48 48">
-                                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                                    </svg>
-                                    Google (G)
-                                </span>
-                                {% elif candidate.auth_provider == "local" and candidate.email_verified %}
-                                <span class="auth-badge" style="background:#dcfce7;color:#15803d;border:2px solid #22c55e;font-weight:900;">
-                                    <i class="bi bi-envelope-check-fill"></i> Verified Local (V)
-                                </span>
-                                {% elif candidate.auth_provider == "local" %}
-                                <span class="auth-badge guest"><i class="bi bi-person-fill"></i> Local</span>
-                                {% endif %}
+                        <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.75rem;letter-spacing:0.02em; border-color: rgba(66, 133, 244, 0.4) !important; color: #60a5fa !important; background: rgba(66, 133, 244, 0.15) !important; border: 1.5px solid rgba(66, 133, 244, 0.4); padding: 2px 8px; border-radius: 6px;">
+                            <svg class="google-g-icon" viewBox="0 0 48 48" style="width:16px;height:16px;margin-right:4px;flex-shrink:0;">
+                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                            </svg>
+                            GOOGLE
+                        </span>
+                    {% elif candidate.email_verified %}
+                        <span class="auth-badge d-inline-flex align-items-center" style="background: rgba(16, 185, 129, 0.12) !important; color: #34d399 !important; border: 1.5px solid rgba(16, 185, 129, 0.4) !important; font-weight: 900; font-size: 0.75rem; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 6px;">
+                            VERIFIED
+                        </span>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <hr class="profile-divider">
-
-        <div class="row g-3">
-            <div class="col-sm-6 col-md-3">
-                <div class="meta-card">
-                    <div class="meta-card-icon gender-icon"><i class="bi bi-gender-ambiguous"></i></div>
+        <!-- 4 Attribute Blocks -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-gender-ambiguous"></i></div>
                     <div>
-                        <div class="meta-card-label">Gender</div>
-                        <div class="meta-card-val">{{ candidate.gender or "—" }}</div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Gender</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ candidate.gender or '—' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-md-3">
-                <div class="meta-card">
-                    <div class="meta-card-icon education-icon"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-mortarboard-fill"></i></div>
                     <div>
-                        <div class="meta-card-label">Education</div>
-                        <div class="meta-card-val">{{ candidate.education or "—" }}</div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Education Level</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ candidate.education or '—' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-md-3">
-                <div class="meta-card">
-                    <div class="meta-card-icon course-icon"><i class="bi bi-book-half"></i></div>
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(245, 158, 11, 0.15) !important; color: #f59e0b !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-book-half"></i></div>
                     <div>
-                        <div class="meta-card-label">Course</div>
-                        <div class="meta-card-val">{{ candidate.course or "—" }}</div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Course</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ candidate.course or '—' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-sm-6 col-md-3">
-                <div class="meta-card">
-                    <div class="meta-card-icon semester-icon"><i class="bi bi-calendar-event-fill"></i></div>
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-calendar3-event"></i></div>
                     <div>
-                        <div class="meta-card-label">Semester</div>
-                        <div class="meta-card-val">{{ candidate.semester or "—" }}</div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Semester</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ candidate.semester or '—' }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {% if candidate.github_url or candidate.linkedin_url or candidate.skills %}
-        <hr class="profile-divider">
-        <div class="row g-3">
-            {% if candidate.github_url %}
-            <div class="col-sm-6 col-md-4">
-                <div class="meta-card">
-                    <div class="meta-card-icon" style="background:#f8fafc;color:#1e293b;"><i class="bi bi-github"></i></div>
+        <!-- Github / Linkedin / Skills row -->
+        <div class="row g-3 mb-2">
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
+                    <div style="background: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-github"></i></div>
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Github</div>
+                        {% if candidate.github_url %}
+                        <a href="{{ candidate.github_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ candidate.github_url.replace('https://github.com/', '') }}</a>
+                        {% else %}
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
+                    <div style="background: rgba(10, 102, 194, 0.15) !important; color: #00a0dc !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-linkedin"></i></div>
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">LinkedIn</div>
+                        {% if candidate.linkedin_url %}
+                        <a href="{{ candidate.linkedin_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ candidate.linkedin_url.replace('https://www.linkedin.com/in/', '') }}</a>
+                        {% else %}
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px; width: 100%;">
+                    <div style="background: rgba(6, 182, 212, 0.15) !important; color: #06b6d4 !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-cpu"></i></div>
                     <div>
-                        <div class="meta-card-label">GitHub</div>
-                        <div class="meta-card-val"><a href="{{ candidate.github_url }}" target="_blank" class="meta-link">{{ candidate.github_url | replace('https://', '') | truncate(30) }}</a></div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Skills</div>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                             {% if candidate.skills %}
+                                {% for skill in candidate.skills.split(',') %}
+                                <a href="https://www.google.com/search?q={{ skill.strip()|urlencode }}" target="_blank" style="background: rgba(0, 255, 255, 0.12); border: 1px solid rgba(0, 255, 255, 0.3); color: #00ffff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(0, 255, 255, 0.12)'">{{ skill.strip() }}</a>
+                                {% endfor %}
+                            {% else %}
+                                <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
-            {% if candidate.linkedin_url %}
-            <div class="col-sm-6 col-md-4">
-                <div class="meta-card">
-                    <div class="meta-card-icon" style="background:#eff6ff;color:#0a66c2;"><i class="bi bi-linkedin"></i></div>
-                    <div>
-                        <div class="meta-card-label">LinkedIn</div>
-                        <div class="meta-card-val"><a href="{{ candidate.linkedin_url }}" target="_blank" class="meta-link">{{ candidate.linkedin_url | replace('https://', '') | truncate(30) }}</a></div>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% if candidate.skills %}
-            <div class="col-sm-12 col-md-4">
-                <div class="meta-card" style="flex-direction:column;align-items:flex-start;">
-                    <div class="meta-card-label mb-1">Skills</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                        {% for skill in candidate.skills.split(',') %}
-                        <span class="skill-badge">{{ skill.strip() }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endif %}
         </div>
-        {% endif %}
+
+        <!-- Registration Timestamp details inside card bottom -->
+        <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+            <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: #00ffff;">{{ candidate.registered_at.strftime('%d %b %Y, %I:%M %p')|upper }}</span>
+        </div>
     </div>
 
     <!-- Evaluation Report Panel -->

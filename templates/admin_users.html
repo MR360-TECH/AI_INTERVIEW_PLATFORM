@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <title>Registered Candidates — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin panel for managing registered candidates.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        (function() {
+            document.documentElement.classList.add('dark-theme');
+            localStorage.setItem('theme', 'dark');
+        })();
+    </script>
+    <style>
+        :root {
+            --surface:  #ffffff;
+            --bg:       #f8fafc;
+            --border2:  #e2e8f0;
+            --text-1:   #0f172a;
+            --text-2:   #475569;
+            --row-hover:#f1f5f9;
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        html.dark-theme {
+            --surface:  rgba(10, 15, 29, 0.65);
+            --bg:       #020510;
+            --border2:  rgba(0, 255, 255, 0.14);
+            --text-1:   #ffffff;
+            --text-2:   #94a3b8;
+            --row-hover: rgba(99, 102, 241, 0.08);
+        }
+
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            color: var(--text-1);
+            overflow-x: hidden;
+            transition: background 0.25s ease, color 0.25s ease;
+            background: var(--bg) !important;
+            background-image: none !important;
+            padding: 0 0 60px;
+        }
+
+        html.dark-theme body {
+            background: #020510 !important;
+            background-image: none !important;
+        }
+
+        .db-bg {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none; overflow: hidden; display: none;
+        }
+        html.dark-theme .db-bg { display: block; }
+        .db-bg::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
+                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+        }
+
+        .db-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0; animation: orbDrift 18s ease-in-out infinite; }
+        .db-orb-1 { width: 520px; height: 520px; top: -120px; left: -100px; background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%); animation-duration: 20s; }
+        .db-orb-2 { width: 400px; height: 400px; top: 10%; right: -80px; background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%); animation-delay: -7s; animation-duration: 24s; }
+        .db-orb-3 { width: 480px; height: 480px; bottom: -80px; left: 30%; background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%); animation-delay: -13s; animation-duration: 22s; }
+        
+        @keyframes orbDrift {
+            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
+            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
+            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
+            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+        }
+
+        .db-grid {
+            position: absolute; inset: 0;
+            background-image: linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
+        }
+
+        .db-particles { position: absolute; inset: 0; }
+        .db-star { position: absolute; border-radius: 50%; background: #ffffff; animation: starTwinkle linear infinite; }
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.05; transform: scale(1); }
+            50%      { opacity: 0.55; transform: scale(1.6); }
+        }
+
+        .db-topbar-glow {
+            position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            animation: topbarGlowPulse 4s ease-in-out infinite;
+        }
+        @keyframes topbarGlowPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        .page-shell { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+        
+        .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; gap: 16px; flex-wrap: wrap; }
+        .admin-brand { display: flex; align-items: center; gap: 16px; }
+        .admin-brand-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: #020510 !important;
+            border: 2px solid #00ffff !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #00ffff !important;
+            box-shadow: 0 0 16px rgba(0, 255, 255, 0.35) !important;
+        }
+        .admin-brand-text h1 { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.6rem; margin: 0; letter-spacing: -0.03em; color: var(--text-1); }
+        .admin-brand-text p { font-size: 0.85rem; color: var(--text-2); margin: 2px 0 0; font-weight: 500; }
+        
+        .admin-header-actions { display: flex; align-items: center; gap: 10px; }
+        
+        .header-icon-btn {
+            height: 42px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--border2); color: var(--text-2);
+            display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; text-decoration: none; transition: all 0.2s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+        }
+        .header-icon-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #2563eb; transform: translateY(-1px); }
+        html.dark-theme .header-icon-btn:hover { background: rgba(99, 102, 241, 0.15); border-color: #00ffff; color: #00ffff; }
+
+        .filter-bar { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1.5px solid var(--border2); border-radius: 16px; padding: 14px 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); gap: 16px; flex-wrap: wrap; }
+        .filter-label { font-size: 0.88rem; color: var(--text-2); font-weight: 550; }
+        
+        #searchInput { width: 320px; max-width: 100%; border: 1.5px solid var(--border2); border-radius: 10px; background: var(--surface); padding: 8px 14px 8px 36px; font-size: 0.86rem; color: var(--text-1); transition: all 0.2s ease; font-family: 'bootstrap-icons', 'Inter', sans-serif; }
+        #searchInput:focus { outline: none; border-color: #00ffff; box-shadow: 0 0 0 1px #00ffff, 0 0 10px rgba(0,255,255,0.15); }
+        .search-container { position: relative; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-2); font-size: 0.9rem; pointer-events: none; }
+
+        .results-panel { background: var(--surface); border: 1.5px solid var(--border2); border-radius: var(--radius-xl); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table thead tr { border-bottom: 1.5px solid var(--border2); background: rgba(0,0,0,0.02); }
+        html.dark-theme .results-table thead tr { background: rgba(255,255,255,0.01); }
+        .results-table thead th { padding: 16px 24px; font-size: 0.74rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-2); text-align: left; }
+        .results-table tbody tr { border-bottom: 1px solid var(--border2); transition: all 0.15s ease; cursor: pointer; }
+        .results-table tbody tr:hover { background: var(--row-hover); }
+        .results-table tbody td { padding: 18px 24px; font-size: 0.92rem; vertical-align: middle; color: var(--text-1); }
+        
+        .candidate-cell { display: flex; align-items: center; gap: 14px; }
+        .avatar-circle { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #00ffff); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.1rem; color: #fff; box-shadow: 0 4px 10px rgba(0,255,255,0.15); flex-shrink: 0; }
+        .cand-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.02rem; color: var(--text-1); margin-bottom: 2px; }
+        .cand-email { font-size: 0.8rem; color: var(--text-2); }
+        
+        .auth-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+        .auth-badge.google { background: rgba(66,133,244,0.1); border: 1.5px solid rgba(66,133,244,0.25); color: #2563eb; }
+        html.dark-theme .auth-badge.google { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.35); color: #60a5fa; }
+
+        .btn-view { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; border: 1.5px solid var(--border2); background: transparent; color: var(--text-2); font-weight: 600; font-size: 0.78rem; text-decoration: none; transition: all 0.15s ease; }
+        .btn-view:hover { border-color: #00ffff; color: #00ffff; background: rgba(0, 255, 255, 0.05); }
+        
+        .btn-delete { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; border: 1.5px solid rgba(239, 68, 68, 0.2); background: transparent; color: #ef4444; font-weight: 600; font-size: 0.78rem; text-decoration: none; transition: all 0.15s ease; margin-left: 8px; }
+        .btn-delete:hover { border-color: #ef4444; color: #fff; background: #ef4444; }
+
+        .empty-state { text-align: center; padding: 60px 40px; color: var(--text-2); }
+        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 12px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<div class="db-bg" aria-hidden="true">
+    <div class="db-orb db-orb-1"></div>
+    <div class="db-orb db-orb-2"></div>
+    <div class="db-orb db-orb-3"></div>
+    <div class="db-grid"></div>
+    <div class="db-particles" id="dbParticles"></div>
+    <div class="db-topbar-glow"></div>
+</div>
+
+<div class="page-shell">
+    <!-- Header -->
+    <div class="admin-header">
+        <div class="admin-brand">
+            <div class="admin-brand-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="admin-brand-text">
+                <h1>Registered Candidates</h1>
+                <p>Manage candidate profiles and details</p>
+            </div>
+        </div>
+        <div class="admin-header-actions">
+            <a href="/admin" class="header-icon-btn" style="width: auto; padding: 0 20px; gap: 8px; border-radius: 10px; border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.05) !important;">
+                <i class="bi bi-arrow-left"></i> BACK
+            </a>
+            <a href="/logout" class="header-icon-btn danger" style="width: 42px; height: 42px;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+        <p class="filter-label mb-0">
+            Registered Users ({% if users %}{{ users|length }}{% else %}0{% endif %})
+        </p>
+        <form method="GET" action="/admin/users" class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" name="q" id="searchInput" placeholder="Search by name, email, skills..." value="{{ q or '' }}" autocomplete="off">
+        </form>
+    </div>
+
+    <!-- Users table -->
+    <div class="results-panel">
+        <div class="table-responsive">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Education / Course</th>
+                        <th>Registration Date &amp; Time</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr onclick="window.location='/admin/user/{{ user.id }}'">
+                        <td>
+                            <div class="candidate-cell">
+                                <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
+                                <div>
+                                    <div class="cand-name d-flex align-items-center gap-2" style="color: #00ffff !important; font-weight: 800; letter-spacing: 0.02em;">
+                                        {{ user.full_name|upper }}
+                                        {% if user.auth_provider == "google" %}
+                                            <span class="auth-badge google" style="border-color: rgba(0, 255, 255, 0.4) !important; color: #00ffff !important;"><i class="bi bi-google"></i> GOOGLE</span>
+                                        {% elif user.email_verified %}
+                                            <span class="auth-badge d-inline-flex align-items-center" style="background: rgba(0, 255, 255, 0.1); color: #00ffff; border: 1.5px solid rgba(0, 255, 255, 0.4); font-weight: 900; font-size: 0.72rem; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 6px; text-transform: uppercase;">VERIFIED</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="cand-email" style="font-weight: 500;">{{ user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: #ffffff;">{{ user.education|upper or '—' }}</div>
+                            <div style="font-size: 0.82rem; color: #00ffff; font-weight: 600;">{{ user.course|upper or '' }}{% if user.semester %} ·{{ user.semester }}{% endif %}</div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: #ffffff;">{{ user.registered_at.strftime('%d %b %Y')|upper if user.registered_at else '—' }}</div>
+                            <div style="font-size: 0.82rem; color: #00ffff; font-weight: 600;">{{ user.registered_at.strftime('%I:%M %p')|upper if user.registered_at else '—' }}</div>
+                        </td>
+                        <td style="text-align: right;" onclick="event.stopPropagation();">
+                            <a href="/admin/user/{{ user.id }}" class="btn-view">
+                                <i class="bi bi-eye-fill"></i> View
+                            </a>
+                            <a href="/admin/delete-user/{{ user.id }}?next=/admin/users" class="btn-delete"
+                               onclick="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
+                                <i class="bi bi-trash3-fill"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="bi bi-people"></i>
+                                {% if q %}No candidates match "{{ q }}"{% else %}No registered candidates yet.{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function(){
+    var c=document.getElementById('dbParticles');
+    if(!c)return;
+    for(var i=0;i<60;i++){
+        var s=document.createElement('div');
+        s.className='db-star';
+        var sz=Math.random()*2+1;
+        s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
+        c.appendChild(s);
+    }
+})();
+</script>
+</body>
+</html>

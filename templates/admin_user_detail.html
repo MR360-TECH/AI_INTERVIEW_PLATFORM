@@ -119,47 +119,40 @@
 
         /* ── Profile hero card ── */
         .profile-hero {
-            background: var(--surface);
-            border: 1.5px solid var(--border);
+            background: rgba(10, 15, 29, 0.65) !important;
+            border: 1.5px solid rgba(0, 255, 255, 0.15) !important;
             border-radius: 24px;
             padding: 36px 40px;
             margin-bottom: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 32px rgba(0, 255, 255, 0.05);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
         .profile-hero::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #2563eb, #06b6d4);
-        }
-        html.dark-theme .profile-hero {
-            background: #0f172a;
-            border-color: #1e293b;
-        }
-        html.dark-theme .profile-hero::before {
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            height: 3px;
+            background: linear-gradient(90deg, #00ffff, #0088ff) !important;
         }
 
         .profile-avatar {
             width: 68px;
             height: 68px;
             border-radius: 18px;
-            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            background: #020510 !important;
+            border: 2px solid #00ffff !important;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Outfit', sans-serif;
             font-weight: 900;
             font-size: 1.6rem;
-            color: #fff;
-            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+            color: #00ffff !important;
+            box-shadow: 0 0 20px rgba(0,255,255,0.3) !important;
             flex-shrink: 0;
-        }
-        html.dark-theme .profile-avatar {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
         }
 
         .profile-name {
@@ -203,16 +196,14 @@
 
         /* ── Info grid ── */
         .info-section {
-            background: var(--surface);
-            border: 1.5px solid var(--border);
+            background: rgba(10, 15, 29, 0.65) !important;
+            border: 1.5px solid rgba(0, 255, 255, 0.15) !important;
             border-radius: 20px;
             padding: 32px 40px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
-        }
-        html.dark-theme .info-section {
-            background: #0f172a;
-            border-color: #1e293b;
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
         }
 
         .section-title {
@@ -462,98 +453,146 @@ html.dark-theme .db-bg { display: block; }
 <div class="page-shell">
 
     <div class="top-bar">
-        <a href="/admin" class="back-btn">
-            <i class="bi bi-arrow-left"></i> Back
+        <a href="/admin/users" class="back-btn" style="border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.05) !important;">
+            <i class="bi bi-arrow-left"></i> BACK
         </a>
-        <a href="/admin/delete-user/{{ user.id }}" class="btn-del-user"
-           onclick="return confirm('This will permanently delete this user AND all their interview history. Continue?');">
+        <a href="/admin/delete-user/{{ user.id }}?next=/admin/users" class="btn-del-user"
+           onclick="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
             <i class="bi bi-trash"></i> Delete User
         </a>
     </div>
 
     <!-- Profile Hero -->
+    <!-- Candidate Profile Section (Redesigned as per user request layout) -->
     <div class="profile-hero">
-        <div class="d-flex align-items-center gap-4 flex-wrap">
-            <div class="profile-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <i class="bi bi-person-badge-fill" style="color: #00ffff;"></i> Candidate Profile
+            </div>
+            {% if user.resume_filename %}
+            <a href="/admin/user/{{ user.id }}/resume" class="btn" style="border: 1.5px solid rgba(0, 255, 255, 0.2); background: rgba(0, 255, 255, 0.05); color: #00ffff; font-weight: 600; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-file-earmark-text"></i> User Resume
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center gap-4 flex-wrap mb-4">
+            <div class="profile-avatar" style="width: 68px; height: 68px; border-radius: 18px; background: linear-gradient(135deg, #00ffff, #0088ff) !important; color: #020510 !important; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.6rem; box-shadow: 0 0 16px rgba(0, 255, 255, 0.35) !important; flex-shrink: 0;">{{ user.full_name[0]|upper }}</div>
             <div class="flex-grow-1">
-                <h1 class="profile-name d-flex align-items-center gap-2">{{ user.full_name }}
+                <h1 class="profile-name d-flex align-items-center gap-2" style="color: #00ffff !important; font-weight: 800; text-transform: uppercase; margin: 0; font-size: 1.6rem; letter-spacing: -0.01em;">
+                    {{ user.full_name|upper }}
+                </h1>
+                <div class="d-flex align-items-center gap-3 flex-wrap mt-2">
+                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ user.email }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.9rem; color: #94a3b8; font-weight: 500; text-decoration: none; transition: color 0.2s ease;" onmouseover="this.style.color='#00ffff';" onmouseout="this.style.color='#94a3b8';" title="Compose email in Gmail for {{ user.email }}"><i class="bi bi-envelope-fill me-1"></i>{{ user.email }}</a>
                     {% if user.auth_provider == "google" %}
-                        <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.75rem;letter-spacing:0.02em;">
+                        <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.75rem;letter-spacing:0.02em; border-color: rgba(66, 133, 244, 0.4) !important; color: #60a5fa !important; background: rgba(66, 133, 244, 0.15) !important; border: 1.5px solid rgba(66, 133, 244, 0.4); padding: 2px 8px; border-radius: 6px;">
                             <svg class="google-g-icon" viewBox="0 0 48 48" style="width:16px;height:16px;margin-right:4px;flex-shrink:0;">
                                 <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                                 <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
                                 <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                 <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                             </svg>
-                            Google
+                            GOOGLE
                         </span>
                     {% elif user.email_verified %}
-                        <span class="auth-badge d-inline-flex align-items-center" style="background:#dcfce7;color:#15803d;border:2px solid #22c55e;font-weight:900;font-size:0.75rem;letter-spacing:0.02em;">
+                        <span class="auth-badge d-inline-flex align-items-center" style="background: rgba(16, 185, 129, 0.12) !important; color: #34d399 !important; border: 1.5px solid rgba(16, 185, 129, 0.4) !important; font-weight: 900; font-size: 0.75rem; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 6px;">
                             VERIFIED
                         </span>
                     {% endif %}
-                </h1>
-                <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
-                    <span class="info-value" style="font-size:0.9rem;">{{ user.email }}</span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Profile Info -->
-    <div class="info-section">
-        <div class="section-title"><i class="bi bi-person-lines-fill"></i> Candidate Details</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <div class="info-label">Gender</div>
-                <div class="info-value">{{ user.gender or '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Education Level</div>
-                <div class="info-value">{{ user.education or '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Course / Programme</div>
-                <div class="info-value">{{ user.course or '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Semester</div>
-                <div class="info-value">{{ user.semester or '—' }}</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Registered On</div>
-                <div class="info-value">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p') }}</div>
-            </div>
-            {% if user.github_url %}
-            <div class="info-item">
-                <div class="info-label">GitHub / Portfolio</div>
-                <div class="info-value">
-                    <a href="{{ user.github_url }}" target="_blank" rel="noopener" class="social-link social-link-github">
-                        <i class="bi bi-github"></i>
-                        <span class="social-link-url">{{ user.github_url }}</span>
-                        <i class="bi bi-box-arrow-up-right" style="font-size:0.72rem;opacity:0.6;"></i>
-                    </a>
+        <!-- 4 Attribute Blocks -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-gender-ambiguous"></i></div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Gender</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.gender or '—' }}</div>
+                    </div>
                 </div>
             </div>
-            {% endif %}
-            {% if user.linkedin_url %}
-            <div class="info-item">
-                <div class="info-label">LinkedIn</div>
-                <div class="info-value">
-                    <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener" class="social-link social-link-linkedin">
-                        <i class="bi bi-linkedin"></i>
-                        <span class="social-link-url">{{ user.linkedin_url }}</span>
-                        <i class="bi bi-box-arrow-up-right" style="font-size:0.72rem;opacity:0.6;"></i>
-                    </a>
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-mortarboard-fill"></i></div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Education Level</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.education or '—' }}</div>
+                    </div>
                 </div>
             </div>
-            {% endif %}
-            {% if user.skills %}
-            <div class="info-item" style="grid-column: 1 / -1;">
-                <div class="info-label">Skills</div>
-                <div class="info-value">{{ user.skills }}</div>
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(245, 158, 11, 0.15) !important; color: #f59e0b !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-book-half"></i></div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Course</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.course or '—' }}</div>
+                    </div>
+                </div>
             </div>
-            {% endif %}
+            <div class="col-md-3 col-sm-6">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-calendar3-event"></i></div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Semester</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.semester or '—' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Github / Linkedin / Skills row -->
+        <div class="row g-3 mb-2">
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
+                    <div style="background: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-github"></i></div>
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Github</div>
+                        {% if user.github_url %}
+                        <a href="{{ user.github_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ user.github_url.replace('https://github.com/', '') }}</a>
+                        {% else %}
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
+                    <div style="background: rgba(10, 102, 194, 0.15) !important; color: #00a0dc !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-linkedin"></i></div>
+                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">LinkedIn</div>
+                        {% if user.linkedin_url %}
+                        <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ user.linkedin_url.replace('https://www.linkedin.com/in/', '') }}</a>
+                        {% else %}
+                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px; width: 100%;">
+                    <div style="background: rgba(6, 182, 212, 0.15) !important; color: #06b6d4 !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-cpu"></i></div>
+                    <div>
+                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Skills</div>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                             {% if user.skills %}
+                                {% for skill in user.skills.split(',') %}
+                                <a href="https://www.google.com/search?q={{ skill.strip()|urlencode }}" target="_blank" style="background: rgba(0, 255, 255, 0.12); border: 1px solid rgba(0, 255, 255, 0.3); color: #00ffff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(0, 255, 255, 0.12)'">{{ skill.strip() }}</a>
+                                {% endfor %}
+                            {% else %}
+                                <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Registration Timestamp details inside card bottom -->
+        <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
+            <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: #00ffff;">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p')|upper }}</span>
         </div>
     </div>
 
@@ -573,7 +612,7 @@ html.dark-theme .db-bg { display: block; }
                 </thead>
                 <tbody>
                     {% for i in interviews %}
-                    <tr>
+                    <tr onclick="window.location='/admin/interview/{{ i.id }}'" style="cursor: pointer;">
                         <td>
                             <span style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.05rem;">{{ i.score }}</span>
                             <span style="font-size:0.8rem;color:var(--text-2);">/10</span>

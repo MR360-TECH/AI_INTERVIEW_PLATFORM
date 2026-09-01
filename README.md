@@ -6,26 +6,6 @@ An enterprise-grade, full-stack conversational mock interview platform engineere
 
 ---
 
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Language** | Python 3.11+ |
-| **Web Framework** | Flask 3.0+ |
-| **Templating** | Jinja2 |
-| **ORM** | Flask-SQLAlchemy |
-| **Database (Production)** | MySQL 8.0+ / PostgreSQL |
-| **Database (Development)** | SQLite (auto-fallback) |
-| **AI Model** | Google Gemini (`gemini-2.0-flash`) |
-| **AI SDK** | `google-genai` Python SDK |
-| **Authentication** | Werkzeug (password hashing), Authlib (Google OAuth 2.0) |
-| **Email Delivery** | Resend HTTP API, SendGrid HTTP API, Gmail SMTP |
-| **Voice Input** | Web Speech API (`webkitSpeechRecognition`) |
-| **Frontend** | HTML5, CSS3, Bootstrap 5, Bootstrap Icons |
-| **Deployment** | Render (Gunicorn + Procfile + render.yaml) |
-| **Version Control** | Git & GitHub |
-
----
 
 ## 🎯 Project Objective
 
@@ -106,6 +86,27 @@ flowchart TD
 * **Operational Control Center**: Admin panel featuring real-time candidate lists, click-through transcript readers, and settings consoles to configure global question caps and pass score thresholds.
 * **Curated Interview Prep Hub**: Integrated preparation resource hub linking to external technical challenges and interview guides across top-tier companies — Google, Amazon, Meta, Microsoft, TCS, Infosys, Wipro, Accenture, and more.
 * **Theme-Optimised Design System**: High-performance Bootstrap 5 interface featuring dark-mode gradients, smooth state transitions, and fully responsive cards.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Language** | Python 3.11+ |
+| **Web Framework** | Flask 3.0+ |
+| **Templating** | Jinja2 |
+| **ORM** | Flask-SQLAlchemy |
+| **Database (Production)** | MySQL 8.0+ / PostgreSQL |
+| **Database (Development)** | SQLite (auto-fallback) |
+| **AI Model** | Google Gemini (`gemini-flash-lite-latest`) |
+| **AI SDK** | `google-genai` Python SDK |
+| **Authentication** | Werkzeug (password hashing), Authlib (Google OAuth 2.0) |
+| **Email Delivery** | Resend HTTP API, SendGrid HTTP API, Gmail SMTP |
+| **Voice Input** | Web Speech API (`webkitSpeechRecognition`) |
+| **Frontend** | HTML5, CSS3, Bootstrap 5, Bootstrap Icons |
+| **Deployment** | Render (Gunicorn + Procfile + render.yaml) |
+| **Version Control** | Git & GitHub |
 
 ---
 
