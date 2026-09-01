@@ -1173,6 +1173,11 @@
                         </p>
                     </div>
                     <div>
+                        {% if is_locked %}
+                        <button type="button" class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#attemptLimitReachedModal" id="assessmentMainBtn" style="background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #ffffff !important; border: none; border-radius: 12px; padding: 12px 20px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">
+                            <i class="bi bi-lock-fill fs-5"></i> Session Limit Reached &rarr;
+                        </button>
+                        {% else %}
                         <button type="button" class="btn-primary-grad w-100" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
                             {% if has_progress %}
                             <i class="bi bi-play-circle-fill"></i> Resume Assessment Studio &rarr;
@@ -1184,6 +1189,7 @@
                         <button type="button" class="btn-reset-ghost" id="resetAssessmentBtn">
                             <i class="bi bi-arrow-clockwise"></i> Start Fresh Session
                         </button>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -1436,6 +1442,47 @@
   </div>
 </div>
 {% endif %}
+
+<!-- ══ ATTEMPT LIMIT REACHED EXPLANATION MODAL ══ -->
+<div class="modal fade" id="attemptLimitReachedModal" tabindex="-1" aria-labelledby="attemptLimitReachedLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:var(--radius-lg);border:1.5px solid rgba(239, 68, 68, 0.4);background:var(--surface-elevated);">
+      <div class="modal-header border-0 p-4 pb-2">
+        <h5 class="modal-title fw-bold" id="attemptLimitReachedLabel" style="color:#ef4444;font-family:'Outfit',sans-serif;">
+          <i class="bi bi-lock-fill me-2"></i>Assessment Session Quota Completed
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 pt-2">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div style="background:rgba(239, 68, 68, 0.12);border-radius:12px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(239, 68, 68, 0.3);">
+            <i class="bi bi-person-workspace text-danger fs-3"></i>
+          </div>
+          <div>
+            <p class="fw-bold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:1.05rem;">
+              You have completed all authorized evaluation slots.
+            </p>
+            <p style="color:var(--text-desc);font-size:0.9rem;margin:0;line-height:1.6;">
+              Your formal assessment responses have been recorded and sent for system processing. Standard evaluation sessions for this placement cycle are currently closed for your profile.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-3" style="background:rgba(0, 255, 255, 0.05);border:1px solid rgba(0, 255, 255, 0.2);border-radius:12px;color:#cbd5e1;font-size:0.88rem;">
+          <div class="d-flex align-items-center gap-2 mb-1 fw-bold" style="color:#00ffff;font-family:'Outfit',sans-serif;">
+            <i class="bi bi-stars"></i> Stay Tuned for Upcoming Rounds!
+          </div>
+          <div>
+            Please stay tuned as your results are reviewed. You will be notified once additional evaluation slots or specialized rounds are opened for your account. In the meantime, you can continue refining your skills using our Practice Modes!
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0">
+        <button type="button" class="btn rounded-pill px-4 fw-bold w-100" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; border: none; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 18px rgba(0, 255, 255, 0.35);">Got it, Stay Tuned!</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ START ASSESSMENT CONFIRMATION MODAL ══ -->
 <div class="modal fade" id="confirmStartAssessmentModal" tabindex="-1" aria-labelledby="confirmStartAssessmentModalLabel" aria-hidden="true">

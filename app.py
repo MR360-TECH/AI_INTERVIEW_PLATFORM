@@ -187,6 +187,7 @@ class User(db.Model):
     current_designation = db.Column(db.String(100))
     resume_text = db.Column(db.Text)
     resume_filename = db.Column(db.String(255))
+    extra_allowed_interviews = db.Column(db.Integer, default=0)
 
 
 class InterviewResult(db.Model):
@@ -222,6 +223,8 @@ class AdminSettings(db.Model):
     pass_score = db.Column(db.Integer, default=3)
     default_difficulty = db.Column(db.String(20), default='student')
     question_timer_seconds = db.Column(db.Integer, default=90)
+    enable_attempt_limits = db.Column(db.Boolean, default=True)
+    default_allowed_interviews = db.Column(db.Integer, default=2)
 
 
 def get_settings():
@@ -240,26 +243,44 @@ def get_settings():
             db.session.commit()
         except Exception:
             db.session.rollback()
+        try:
+            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN enable_attempt_limits BOOLEAN DEFAULT 1"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+        try:
+            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN default_allowed_interviews INT DEFAULT 2"))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         settings = AdminSettings.query.first()
 
     if not settings:
-        settings = AdminSettings(min_questions=3, max_questions=8, pass_score=3, default_difficulty='student', question_timer_seconds=90)
+        settings = AdminSettings(
+            min_questions=3,
+            max_questions=8,
+            pass_score=3,
+            default_difficulty='student',
+            question_timer_seconds=90,
+            enable_attempt_limits=True,
+            default_allowed_interviews=2
+        )
         db.session.add(settings)
         db.session.commit()
 
-    if getattr(settings, 'question_timer_seconds', None) is None:
-        settings.question_timer_seconds = 90
-        try:
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
-    if not settings.default_difficulty:
-        settings.default_difficulty = 'student'
-        try:
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+    # Dynamic migrations check
+    try:
+        if getattr(settings, 'question_timer_seconds', None) is None:
+            settings.question_timer_seconds = 90
+        if getattr(settings, 'enable_attempt_limits', None) is None:
+            settings.enable_attempt_limits = True
+        if getattr(settings, 'default_allowed_interviews', None) is None:
+            settings.default_allowed_interviews = 2
+        if not settings.default_difficulty:
+            settings.default_difficulty = 'student'
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
     return settings
 
@@ -587,6 +608,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
 
+        if not user:
+            return render_template("login.html", show_signup_prompt=True, prefill_email=email, has_google_oauth=has_google_oauth)
+
         if user and user.password and check_password_hash(user.password, password):
             session.clear()
             session["user_id"] = user.id
@@ -594,7 +618,7 @@ def login():
             session["user_email"] = user.email
             return redirect("/dashboard")
         else:
-            return render_template("login.html", error="Invalid email or password.", has_google_oauth=has_google_oauth)
+            return render_template("login.html", error="Invalid password. Please try again.", has_google_oauth=has_google_oauth)
 
     error_msg = None
     err_code = request.args.get("error")
@@ -694,9 +718,23 @@ def dashboard():
     elif err_code == "api_key_missing":
         error_msg = "AI Placement evaluation is not configured. Please set the GEMINI_API_KEY environment variable."
 
+    # Check attempt limit status (for UI button state)
+    settings = get_settings()
+    is_locked = False
+    if settings.enable_attempt_limits:
+        attempts_used = InterviewResult.query.filter(
+            InterviewResult.user_id == session["user_id"],
+            ~InterviewResult.status.like('%Practice%')
+        ).count()
+        extra_granted = current_user.extra_allowed_interviews or 0 if current_user else 0
+        allowed_total = (settings.default_allowed_interviews or 2) + extra_granted
+        if attempts_used >= allowed_total:
+            is_locked = True
+
     return render_template("dashboard.html", name=session["user_name"], user=current_user,
                            has_progress=has_progress, has_result=has_result,
-                           recent_results=recent_results, error=error_msg)
+                           recent_results=recent_results, error=error_msg,
+                           is_locked=is_locked)
 
 
 @app.route("/dashboard/update-resume", methods=["POST"])
@@ -867,6 +905,18 @@ def admin():
     else:
         results = all_results
 
+    settings = get_settings()
+
+    # Pre-calculate user attempt counts
+    user_attempt_counts = {}
+    for r, u in all_results:
+        if u.id not in user_attempt_counts:
+            cnt = InterviewResult.query.filter(
+                InterviewResult.user_id == u.id,
+                ~InterviewResult.status.like('%Practice%')
+            ).count()
+            user_attempt_counts[u.id] = cnt
+
     return render_template(
         "admin.html",
         results=results,
@@ -875,7 +925,9 @@ def admin():
         total_count=total_count,
         selected_count=selected_count,
         rejected_count=rejected_count,
-        filter_type=filter_type
+        filter_type=filter_type,
+        settings=settings,
+        user_attempt_counts=user_attempt_counts
     )
 
 @app.route("/admin/settings", methods=["GET", "POST"])
@@ -904,6 +956,14 @@ def admin_settings():
                 settings.question_timer_seconds = int(float(request.form["question_timer_seconds"]))
             except (ValueError, TypeError):
                 pass
+        
+        settings.enable_attempt_limits = bool(request.form.get("enable_attempt_limits"))
+        if "default_allowed_interviews" in request.form:
+            try:
+                settings.default_allowed_interviews = int(float(request.form["default_allowed_interviews"]))
+            except (ValueError, TypeError):
+                pass
+
         db.session.commit()
         return redirect("/admin/settings?saved=1")
 
@@ -921,6 +981,30 @@ def delete_result(result_id):
         db.session.commit()
 
     return redirect("/admin")
+
+
+@app.route("/admin/user/<int:user_id>/unlock-attempt", methods=["POST"])
+def admin_unlock_attempt(user_id):
+    if not session.get("is_admin"):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+
+    user_obj = db.session.get(User, user_id)
+    if not user_obj:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    current_extra = user_obj.extra_allowed_interviews or 0
+    user_obj.extra_allowed_interviews = current_extra + 1
+    db.session.commit()
+
+    # Trigger automated notification email to candidate
+    if user_obj.email:
+        send_slot_unlocked_email(user_obj.email, user_obj.full_name)
+
+    return jsonify({
+        "status": "success",
+        "message": f"Successfully granted 1 extra interview attempt for {user_obj.full_name or 'candidate'}.",
+        "new_extra": user_obj.extra_allowed_interviews
+    })
 
 
 @app.route("/admin/delete-user/<int:user_id>")
@@ -1345,6 +1429,21 @@ def interview():
     MIN_QUESTIONS = settings.min_questions
     MAX_QUESTIONS = settings.max_questions
     timer_seconds = settings.question_timer_seconds or 90
+
+    # Guard check for interview attempt restriction (non-practice standard interviews)
+    is_practice_intent = bool(session.get("interview_mode") or request.args.get("practice") == "1")
+    if not is_practice_intent and settings.enable_attempt_limits:
+        attempts_used = InterviewResult.query.filter(
+            InterviewResult.user_id == user_id,
+            ~InterviewResult.status.like('%Practice%')
+        ).count()
+        user_obj = db.session.get(User, user_id)
+        extra_granted = user_obj.extra_allowed_interviews or 0 if user_obj else 0
+        allowed_total = (settings.default_allowed_interviews or 2) + extra_granted
+
+        # Block entry if limit reached
+        if attempts_used >= allowed_total:
+            return redirect("/dashboard?error=attempts_exhausted")
 
     if request.args.get("restart") == "1":
         clear_progress(user_id)
@@ -2258,6 +2357,98 @@ def _send_via_smtp(to_email, otp, mail_user, mail_pass):
     return result["ok"]
 
 
+def send_slot_unlocked_email(to_email, candidate_name):
+    """Send an automated HTML notification email when candidate slot is unlocked."""
+    subject = "🎉 Your Assessment Slot Has Been Unlocked — AI Assessment Studio"
+    candidate_display = (candidate_name or "Candidate").strip()
+    
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #080e1e; color: #e2e8f0; border-radius: 16px; border: 1px solid rgba(0, 255, 255, 0.25);">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <span style="background: rgba(0, 255, 255, 0.12); color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 100px; padding: 6px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
+          Assessment Status Update
+        </span>
+      </div>
+      <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-bottom: 8px; text-align: center;">
+        New Interview Slot Authorized!
+      </h2>
+      <p style="color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
+        Great news, <strong>{candidate_display}</strong>! An additional standard evaluation slot has been unlocked for your account on AI Assessment Studio.
+      </p>
+      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 28px;">
+        <div style="color: #00ffff; font-weight: 700; font-size: 14px; margin-bottom: 6px;">
+          ✓ What's Next?
+        </div>
+        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
+          Log in to your workspace dashboard to launch your new assessment session. Ensure your camera, microphone, and quiet environment are ready.
+        </div>
+      </div>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <a href="https://ai-interview-platform.onrender.com/dashboard" style="background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; text-decoration: none; padding: 12px 32px; border-radius: 10px; font-weight: 800; font-size: 15px; display: inline-block;">
+          Go to Workspace Dashboard &rarr;
+        </a>
+      </div>
+      <p style="color: #64748b; font-size: 12px; text-align: center; margin: 0;">
+        This is an automated system notification from AI Assessment Studio.
+      </p>
+    </div>
+    """
+    
+    text_content = f"Hello {candidate_display},\n\nYour standard assessment slot has been unlocked! Log in to your workspace dashboard to begin your new evaluation session.\n\nVisit your dashboard: https://ai-interview-platform.onrender.com/dashboard"
+
+    def _dispatch():
+        # 1. Resend
+        resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+        if resend_key:
+            try:
+                from_addr = os.environ.get("MAIL_FROM", f"AI Assessment Studio <onboarding@{os.environ.get('RESEND_DOMAIN', 'resend.dev')}>")
+                payload = json.dumps({
+                    "from": from_addr,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html_content,
+                    "text": text_content
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "https://api.resend.com/emails",
+                    data=payload,
+                    headers={
+                        "Authorization": f"Bearer {resend_key}",
+                        "Content-Type": "application/json",
+                    },
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    print(f"[UNLOCK EMAIL] Resend status: {resp.status}")
+                    return
+            except Exception as e:
+                print(f"[UNLOCK EMAIL] Resend error: {e}")
+
+        # 2. SMTP fallback
+        mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
+        mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
+        if mail_user and mail_pass:
+            try:
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = f"AI Assessment Studio <{mail_user}>"
+                msg["To"] = to_email
+                msg["Auto-Submitted"] = "auto-generated"
+                msg.attach(MIMEText(text_content, "plain"))
+                msg.attach(MIMEText(html_content, "html"))
+                with smtplib.SMTP("smtp.gmail.com", 587) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.login(mail_user, mail_pass)
+                    server.sendmail(mail_user, [to_email], msg.as_string())
+                print(f"[UNLOCK EMAIL] SMTP sent to {to_email}")
+            except Exception as exc:
+                print(f"[UNLOCK EMAIL] SMTP error: {exc}")
+
+    t = threading.Thread(target=_dispatch, daemon=True)
+    t.start()
+
+
 def send_otp_email(to_email, otp):
     """
     Send OTP email. Tries providers in priority order:
@@ -2582,6 +2773,10 @@ with app.app_context():
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
                         conn.commit()
                         print("Added column 'resume_filename' dynamically to users table.")
+                    if 'extra_allowed_interviews' not in columns:
+                        conn.execute(db.text("ALTER TABLE users ADD COLUMN extra_allowed_interviews INT DEFAULT 0"))
+                        conn.commit()
+                        print("Added column 'extra_allowed_interviews' dynamically to users table.")
                 if inspector.has_table('interview_results'):
                     res_columns = [c['name'] for c in inspector.get_columns('interview_results')]
                     if 'is_terminated' not in res_columns:

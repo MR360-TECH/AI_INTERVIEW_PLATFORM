@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <title>Login — AI Interview Platform</title>
@@ -201,7 +201,7 @@
                         <div class="mb-3">
                             <label class="form-label" for="email">Email Address</label>
                             <input type="email" name="email" id="email" class="form-control" required
-                                   placeholder="your@email.com" autocomplete="email">
+                                   placeholder="your@email.com" autocomplete="email" value="{{ prefill_email or '' }}">
                         </div>
                         <div class="mb-1">
                             <label class="form-label" for="password">Password</label>
@@ -233,6 +233,43 @@
         </div>
     </div>
 </div>
+
+<!-- ══ UNREGISTERED EMAIL THEME MODAL ══ -->
+<div class="modal fade" id="unregisteredAccountModal" tabindex="-1" aria-labelledby="unregisteredAccountModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:22px; border:1.5px solid rgba(0, 255, 255, 0.25); background:rgba(8, 14, 30, 0.96); backdrop-filter:blur(20px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);">
+      <div class="modal-header border-0 p-4 pb-2">
+        <h5 class="modal-title fw-bold" id="unregisteredAccountModalLabel" style="color:#00ffff; font-family:'Outfit',sans-serif; letter-spacing:0.02em;">
+          <i class="bi bi-person-plus-fill me-2"></i>Account Not Found
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 pt-2">
+        <div class="d-flex align-items-start gap-3 mb-3">
+          <div style="background:rgba(0, 255, 255, 0.1); border-radius:14px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(0, 255, 255, 0.3);">
+            <i class="bi bi-person-exclamation text-cyan fs-3" style="color:#00ffff;"></i>
+          </div>
+          <div>
+            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.08rem;">
+              No account registered for <span id="unregisteredEmailDisplay" style="color:#00ffff; word-break:break-all;">{{ prefill_email }}</span>
+            </p>
+            <p style="color:#94a3b8; font-size:0.88rem; margin:0; line-height:1.6;">
+              It looks like this email address hasn't been registered on our platform yet. Would you like to create a new candidate account now?
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
+        <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#94a3b8; border:1px solid rgba(255,255,255,0.15);">
+          <i class="bi bi-arrow-left me-1"></i> Back
+        </button>
+        <a href="/signup?email={{ prefill_email or '' }}" id="signupRedirectBtn" class="btn rounded-pill px-4 fw-bold flex-fill text-decoration-none text-center" style="background:linear-gradient(135deg, #00ffff, #0284c7) !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; box-shadow:0 4px 18px rgba(0, 255, 255, 0.35); display:inline-block; line-height:2.2;">
+          <i class="bi bi-person-plus-fill me-1"></i> Sign Up Now
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
@@ -259,6 +296,16 @@ function togglePasswordVisibility(fieldId, btn) {
         c.appendChild(s);
     }
 })();
+
+{% if show_signup_prompt %}
+document.addEventListener('DOMContentLoaded', function() {
+    var modalElem = document.getElementById('unregisteredAccountModal');
+    if (modalElem) {
+        var modal = new bootstrap.Modal(modalElem);
+        modal.show();
+    }
+});
+{% endif %}
 </script>
 </body>
 </html>

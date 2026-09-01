@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <title>Create Account - AI Interview Platform</title>
@@ -172,7 +172,7 @@
                         <div class="mb-4">
                             <label class="form-label" for="email">Email Address</label>
                             <input type="email" name="email" id="email" class="form-control" required
-                                   placeholder="e.g. yourname@gmail.com" autocomplete="email" autofocus>
+                                   placeholder="e.g. yourname@gmail.com" autocomplete="email" value="{{ request.args.get('email', '') }}" autofocus>
                         </div>
 
                         <button type="submit" class="btn btn-login w-100 text-white mb-2">
