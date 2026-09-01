@@ -28,7 +28,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 if IS_PRODUCTION:
     from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
     app.config["SESSION_COOKIE_SECURE"] = True
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
@@ -614,10 +614,15 @@ def login():
             return render_template("login.html", show_signup_prompt=True, prefill_email=email, has_google_oauth=has_google_oauth)
 
         if user and user.password and check_password_hash(user.password, password):
-            session.clear()
+            session.pop("pending_google_email", None)
+            session.pop("verified_signup_email", None)
+            session.pop("verified_signup_password", None)
+            session["is_admin"] = False
             session["user_id"] = user.id
             session["user_name"] = user.full_name
             session["user_email"] = user.email
+            if not profile_is_complete(user):
+                return redirect("/register")
             return redirect("/dashboard")
         else:
             return render_template("login.html", error="Invalid password. Please try again.", has_google_oauth=has_google_oauth)
