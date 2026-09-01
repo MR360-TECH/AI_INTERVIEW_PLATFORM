@@ -194,12 +194,15 @@ class InterviewResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     score = db.Column(db.Numeric(4, 2))
-    status = db.Column(db.String(20))
+    status = db.Column(db.String(50))
     strengths = db.Column(db.Text)
     improvements = db.Column(db.Text)
     summary = db.Column(db.Text)
     domain = db.Column(db.String(150))
+    is_terminated = db.Column(db.Boolean, default=False)
+    termination_reason = db.Column(db.Text)
     interview_datetime = db.Column(db.DateTime, server_default=db.func.now())
+
 
 
 class InterviewProgress(db.Model):
@@ -1616,6 +1619,27 @@ def interview_result():
     if "user_id" not in session:
         return redirect("/login")
 
+    # If redirected from proctoring termination
+    if request.args.get("terminated") == "1":
+        latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).first()
+        if latest_res and latest_res.is_terminated:
+            return render_template(
+                "interview_result.html",
+                score=0,
+                score_percent=0,
+                label="Disqualified",
+                label_color="#e74a3b",
+                summary=latest_res.summary,
+                verdict="Terminated (Breach)",
+                verdict_message="This assessment session was automatically terminated by the automated security proctoring system due to a breach of the Candidate Code of Conduct.",
+                is_practice=False,
+                candidate_name=session.get("user_name", "Candidate"),
+                report_date=datetime.now().strftime("%B %d, %Y"),
+                domain=latest_res.domain or "General",
+                is_terminated=True,
+                termination_reason=latest_res.termination_reason or "Repeated window focus loss / tab switching detected during active assessment"
+            )
+
     settings = get_settings()
     PASS_SCORE = settings.pass_score
 
@@ -1848,12 +1872,17 @@ def view_past_result(result_id):
 
     score_percent = min(int((score_num / 10) * 100), 100)
     verdict = result.status or "FAIL"
-    # Status values stored: "PASS", "FAIL", "WELL DONE (Practice)", "ALMOST (Practice)", legacy "Selected"/"Rejected"
-    is_pass = verdict in ("PASS", "Selected") or "WELL DONE" in verdict
-    if is_pass:
-        verdict_message = "🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment."
+    is_terminated = bool(result.is_terminated)
+    
+    if is_terminated or "Terminated" in str(verdict):
+        verdict = "Terminated (Breach)"
+        verdict_message = "This assessment session was automatically terminated by the automated security proctoring system due to a breach of the Candidate Code of Conduct."
     else:
-        verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
+        is_pass = verdict in ("PASS", "Selected") or "WELL DONE" in verdict
+        if is_pass:
+            verdict_message = "🎉 Congratulations! You have met the recruitment selection criteria and successfully passed the assessment."
+        else:
+            verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
 
     return render_template(
         "interview_result.html",
@@ -1866,7 +1895,9 @@ def view_past_result(result_id):
         verdict_message=verdict_message,
         candidate_name=session.get("user_name", "Candidate"),
         report_date=result.interview_datetime.strftime("%B %d, %Y"),
-        domain=result.domain or "General"
+        domain=result.domain or "General",
+        is_terminated=is_terminated,
+        termination_reason=result.termination_reason or "Repeated window focus loss / tab switching detected during active assessment"
     )
 
 
@@ -1912,6 +1943,56 @@ def reset_assessment():
     # Also delete persisted DB progress
     clear_progress(user_id)
     return jsonify({"status": "ok"})
+
+
+@app.route("/terminate-proctoring", methods=["POST"])
+def terminate_proctoring():
+    """AJAX endpoint: Called when user breaches proctoring security 2 times."""
+    if "user_id" not in session:
+        return jsonify({"status": "error", "message": "unauthorized"}), 401
+    
+    user_id = session["user_id"]
+    domain_val = session.get("interview_domain", "General")
+    
+    reason = "Repeated window focus loss / tab switching detected during active assessment"
+    summary_msg = (
+        "OFFICIAL DISQUALIFICATION NOTICE:\n\n"
+        "This assessment session was automatically terminated by the automated security proctoring system "
+        "due to a breach of the Candidate Code of Conduct. Specifically, unauthorized application tab switching "
+        "or window focus loss was detected on multiple occasions during an active examination session.\n\n"
+        "In accordance with evaluation security standards, all progress has been recorded as terminated "
+        "and flagged for administrator audit review."
+    )
+    
+    try:
+        result_record = InterviewResult(
+            user_id=user_id,
+            score=0.0,
+            status="Terminated (Breach)",
+            summary=summary_msg,
+            domain=domain_val,
+            is_terminated=True,
+            termination_reason=reason
+        )
+        db.session.add(result_record)
+        db.session.commit()
+    except Exception as db_err:
+        print(f"Error recording proctoring termination: {db_err}")
+        db.session.rollback()
+
+    # Clear active session progress keys
+    session.pop("chat_history", None)
+    session.pop("q_count", None)
+    session.pop("resume_choice", None)
+    session.pop("resume_summary", None)
+    session.pop("interview_domain", None)
+    session.pop("interview_difficulty", None)
+    session.pop("interview_mode", None)
+    session.pop("practice_topic", None)
+    session.modified = True
+    clear_progress(user_id)
+
+    return jsonify({"status": "terminated", "redirect": "/interview-result?terminated=1"})
 
 
 @app.route("/logout")
@@ -2467,6 +2548,16 @@ with app.app_context():
                         conn.execute(db.text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
                         conn.commit()
                         print("Added column 'resume_filename' dynamically to users table.")
+                if inspector.has_table('interview_results'):
+                    res_columns = [c['name'] for c in inspector.get_columns('interview_results')]
+                    if 'is_terminated' not in res_columns:
+                        conn.execute(db.text("ALTER TABLE interview_results ADD COLUMN is_terminated BOOLEAN DEFAULT 0"))
+                        conn.commit()
+                        print("Added column 'is_terminated' dynamically to interview_results table.")
+                    if 'termination_reason' not in res_columns:
+                        conn.execute(db.text("ALTER TABLE interview_results ADD COLUMN termination_reason TEXT"))
+                        conn.commit()
+                        print("Added column 'termination_reason' dynamically to interview_results table.")
         except Exception as schema_err:
             print(f"Schema check notice: {schema_err}")
         print("Database tables verified/created successfully.")

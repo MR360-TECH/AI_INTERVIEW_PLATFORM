@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
     <title>Assessment History - AI Interview Platform</title>
@@ -568,7 +568,11 @@
                 </div>
             </div>
 
-            {% if session.get('is_admin') %}
+            {% if a.is_terminated or (a.status and "Terminated" in a.status) %}
+            <span class="verdict-badge fail" style="background: rgba(239, 68, 68, 0.18) !important; color: #f87171 !important; border-color: rgba(239, 68, 68, 0.4) !important;">
+                <i class="bi bi-shield-slash-fill"></i> Terminated (Code of Conduct)
+            </span>
+            {% elif session.get('is_admin') %}
                 {% if a.status in ["Selected", "PASS"] or (a.status and "WELL DONE" in a.status) %}
                 <span class="verdict-badge pass">
                     <i class="bi bi-check-circle-fill"></i> Recommended

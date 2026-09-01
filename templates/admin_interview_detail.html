@@ -720,10 +720,23 @@
     <div class="panel anim anim-3">
         <div class="panel-title"><span class="title-icon"><i class="bi bi-clipboard-data-fill"></i></span> Placement Evaluation Report</div>
 
+        {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
+        <div class="p-3 mb-4" style="background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.4); border-radius: 14px; color: #fca5a5;">
+            <div class="d-flex align-items-center gap-2 mb-1" style="color: #ef4444; font-weight: 800; font-family: 'Outfit', sans-serif;">
+                <i class="bi bi-shield-slash-fill fs-5" style="color: #f87171;"></i> PROCTORING SECURITY DISQUALIFICATION ALERT
+            </div>
+            <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">
+                This assessment session was <strong>automatically terminated</strong> by the platform anti-cheating system.
+                <br>
+                <span style="color: #fca5a5; font-weight: 600;"><i class="bi bi-info-circle me-1"></i> Violation Reason:</span> {{ result.termination_reason or "Repeated window focus loss / tab switching detected during active assessment." }}
+            </div>
+        </div>
+        {% endif %}
+
         <div class="report-header">
             <div class="score-ring-wrap">
                 <div class="score-ring-container">
-                    <div class="score-ring" style="--ring-color: {{ '#10b981' if result.status == 'Selected' else '#ef4444' }}; --ring-pct: {{ (result.score|float / 10 * 100)|round|int }}%;"></div>
+                    <div class="score-ring" style="--ring-color: {{ '#10b981' if (result.status == 'Selected' or 'PASS' in result.status) and not result.is_terminated else '#ef4444' }}; --ring-pct: {{ (result.score|float / 10 * 100)|round|int }}%;"></div>
                     <span class="score-ring-inner">{{ result.score }}</span>
                 </div>
                 <div>
@@ -731,13 +744,19 @@
                     <div class="score-date"><i class="bi bi-clock me-1"></i>{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</div>
                 </div>
             </div>
-            <div class="verdict-pill {% if result.status == 'Selected' %}selected{% else %}rejected{% endif %}">
-                {% if result.status == "Selected" %}
-                <i class="bi bi-check-circle-fill"></i> Recommended
-                {% else %}
-                <i class="bi bi-x-circle-fill"></i> Not Recommended
-                {% endif %}
+            {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
+            <div class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;">
+                <i class="bi bi-shield-slash-fill"></i> Terminated (Code of Conduct)
             </div>
+            {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
+            <div class="verdict-pill selected">
+                <i class="bi bi-check-circle-fill"></i> Recommended
+            </div>
+            {% else %}
+            <div class="verdict-pill rejected">
+                <i class="bi bi-x-circle-fill"></i> Not Recommended
+            </div>
+            {% endif %}
         </div>
 
         <div class="summary-heading">Performance Summary</div>

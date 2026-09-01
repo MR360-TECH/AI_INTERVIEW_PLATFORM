@@ -618,7 +618,9 @@ html.dark-theme .db-bg { display: block; }
                             <span style="font-size:0.8rem;color:var(--text-2);">/10</span>
                         </td>
                         <td>
-                            {% if i.status == "Selected" %}
+                            {% if i.is_terminated or (i.status and "Terminated" in i.status) %}
+                            <span class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;"><i class="bi bi-shield-slash-fill"></i> Terminated (Breach)</span>
+                            {% elif i.status in ["Selected", "PASS"] or (i.status and "WELL DONE" in i.status) %}
                             <span class="verdict-pill selected"><i class="bi bi-check-circle-fill"></i> Recommended</span>
                             {% else %}
                             <span class="verdict-pill rejected"><i class="bi bi-x-circle-fill"></i> Not Recommended</span>

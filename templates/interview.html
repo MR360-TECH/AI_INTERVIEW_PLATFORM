@@ -922,6 +922,35 @@
     </div>
     {% endif %}
 
+    <!-- Proctoring Security Warning Modal (Strike 1) -->
+    <div class="modal fade" id="proctorWarningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="proctorWarningModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:20px; border: 1.5px solid rgba(239, 68, 68, 0.4); background: #0c1222; box-shadow: 0 0 40px rgba(239, 68, 68, 0.25);">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="proctorWarningModalLabel" style="color: #ef4444; font-family: 'Outfit', sans-serif; font-size: 1.2rem;">
+              <i class="bi bi-shield-exclamation-fill fs-3" style="color: #f87171;"></i>
+              SECURITY WARNING (STRIKE 1 / 2)
+            </h5>
+          </div>
+          <div class="modal-body p-4 pt-2" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+            <div class="p-3 mb-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; color: #fca5a5;">
+              <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Unauthorized Window Focus Loss Detected!</strong><br>
+              You navigated away from the live assessment screen.
+            </div>
+            <p class="mb-2">In accordance with our <strong>Candidate Integrity &amp; Anti-Cheating Policy</strong>, candidates must remain on the assessment screen throughout the examination.</p>
+            <p class="mb-0 text-warning" style="font-size:0.88rem;">
+              <i class="bi bi-info-circle me-1"></i> <strong>FINAL WARNING:</strong> Navigating away or switching tabs a <u>second time</u> will result in <strong>immediate session termination</strong> and an official Code of Conduct violation record.
+            </p>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0">
+            <button type="button" class="btn w-100 fw-bold py-2.5" id="btnAcknowledgeProctorWarning" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; border-radius: 12px; font-family: 'Outfit', sans-serif; letter-spacing: 0.02em;">
+              <i class="bi bi-shield-check me-2"></i>I Understand &amp; Resume Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
     <script>
@@ -1160,5 +1189,157 @@
         }
     })();
     </script>
+
+    {% if not is_practice %}
+    <!-- Proctoring Security Warning Modal (Standard Recruitment Assessment Only) -->
+    <div class="modal fade" id="proctorWarningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="proctorWarningModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:24px; border: 1.5px solid rgba(0, 255, 255, 0.35) !important; background: rgba(8, 14, 30, 0.94) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 0 50px rgba(0, 255, 255, 0.2) !important;">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="proctorWarningTitle" style="color: #00ffff; font-family: 'Outfit', sans-serif; font-size: 1.25rem;">
+              <i class="bi bi-shield-exclamation fs-2" style="color: #00ffff; filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.6));"></i>
+              EXAMINATION SECURITY WARNING STRIKE
+            </h5>
+          </div>
+          <div class="modal-body p-4 pt-2" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+            <div class="p-3 mb-3" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 14px; color: #fca5a5;">
+              <strong><i class="bi bi-exclamation-triangle-fill me-1" style="color: #f87171;"></i> Unauthorized Window Focus Loss Detected!</strong><br>
+              You navigated away from the live assessment screen.
+            </div>
+            <p class="mb-2">In accordance with our <strong>Candidate Integrity &amp; Anti-Cheating Regulations</strong>, candidates must remain focused on the assessment screen throughout the examination.</p>
+            <div class="p-3 mt-2" style="background: rgba(0, 255, 255, 0.08); border: 1px dashed rgba(0, 255, 255, 0.35); border-radius: 12px; color: #7dd3fc; font-size: 0.88rem;">
+              <i class="bi bi-shield-lock-fill me-1" style="color: #00ffff;"></i> <strong>FINAL NOTICE:</strong> Navigating away or switching tabs again will result in <strong>immediate session termination</strong> and an official Code of Conduct violation record.
+            </div>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0">
+            <button type="button" class="btn w-100 fw-bold py-2.5" id="btnAcknowledgeProctorWarning" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #00ffff, #0088ff); color: #020510; border-radius: 12px; font-family: 'Outfit', sans-serif; letter-spacing: 0.02em; border: none; box-shadow: 0 0 20px rgba(0, 255, 255, 0.35);">
+              <i class="bi bi-shield-check me-2"></i>I Understand &amp; Resume Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
+
+    {% if not is_practice %}
+    <!-- ── Automated Proctoring & Anti-Cheating Security System (Explicit Modal-Acknowledge Policy) ── -->
+    <script>
+    (function() {
+        var WARNED_KEY = 'interview_proctor_warned';
+        var PENDING_WARN_KEY = 'interview_proctor_pending_warn';
+        var isTerminating = false;
+
+        {% if q_num == 1 %}
+        sessionStorage.removeItem(WARNED_KEY);
+        sessionStorage.removeItem(PENDING_WARN_KEY);
+        {% endif %}
+
+        function isAcknowledged() {
+            return sessionStorage.getItem(WARNED_KEY) === 'true';
+        }
+
+        function setAcknowledged() {
+            sessionStorage.setItem(WARNED_KEY, 'true');
+            sessionStorage.removeItem(PENDING_WARN_KEY);
+        }
+
+        function triggerTermination() {
+            if (isTerminating) return;
+            isTerminating = true;
+
+            // Hide warning modal if open
+            try {
+                var wModalEl = document.getElementById('proctorWarningModal');
+                if (wModalEl && typeof bootstrap !== 'undefined') {
+                    var inst = bootstrap.Modal.getInstance(wModalEl);
+                    if (inst) inst.hide();
+                }
+            } catch(e) {}
+
+            // Activate visual overlay
+            var overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                var label = overlay.querySelector('.cyber-loader-title');
+                if (label) label.textContent = "SESSION TERMINATED — CODE OF CONDUCT VIOLATION";
+                overlay.classList.add('active');
+            }
+
+            // Post termination request to server
+            fetch('/terminate-proctoring', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                sessionStorage.removeItem(WARNED_KEY);
+                sessionStorage.removeItem(PENDING_WARN_KEY);
+                window.location.href = data.redirect || '/interview-result?terminated=1';
+            })
+            .catch(function() {
+                sessionStorage.removeItem(WARNED_KEY);
+                sessionStorage.removeItem(PENDING_WARN_KEY);
+                window.location.href = '/interview-result?terminated=1';
+            });
+        }
+
+        // Tab switch / page minimize detection
+        document.addEventListener('visibilitychange', function() {
+            if (isTerminating) return;
+
+            if (document.hidden) {
+                // User navigated away from assessment screen
+                if (isAcknowledged()) {
+                    // This is leaving AFTER having explicitly acknowledged the warning modal! TERMINATE!
+                    triggerTermination();
+                } else {
+                    // 1st time leaving — mark pending warning modal trigger
+                    sessionStorage.setItem(PENDING_WARN_KEY, 'true');
+                }
+            } else {
+                // User returned back to assessment screen
+                if (isAcknowledged() && !isTerminating) {
+                    // Already acknowledged and left again while returning -> Terminate
+                    triggerTermination();
+                } else if (sessionStorage.getItem(PENDING_WARN_KEY) === 'true' && !isTerminating) {
+                    // 1st time return: Show Warning Modal to candidate
+                    var warningModalEl = document.getElementById('proctorWarningModal');
+                    if (warningModalEl && typeof bootstrap !== 'undefined') {
+                        var modalInstance = bootstrap.Modal.getOrCreateInstance(warningModalEl);
+                        modalInstance.show();
+                    }
+                }
+            }
+        });
+
+        // Set acknowledged flag when user clicks "I Understand & Resume Assessment" button
+        var ackBtn = document.getElementById('btnAcknowledgeProctorWarning');
+        if (ackBtn) {
+            ackBtn.addEventListener('click', function() {
+                setAcknowledged();
+            });
+        }
+
+        // Reset warning state when user submits an answer to move to next question
+        var mainForm = document.getElementById('interviewForm');
+        if (mainForm) {
+            mainForm.addEventListener('submit', function() {
+                isTerminating = true;
+                sessionStorage.removeItem(WARNED_KEY);
+                sessionStorage.removeItem(PENDING_WARN_KEY);
+            });
+        }
+
+        // Prevent right-click context menu on assessment area
+        document.addEventListener('contextmenu', function(e) {
+            if (!e.target.closest('textarea') && !e.target.closest('input')) {
+                e.preventDefault();
+            }
+        });
+    })();
+    </script>
+    {% endif %}
 </body>
 </html>

@@ -766,8 +766,8 @@
         <button onclick="window.print()" class="btn-action btn-primary-action" id="btn-print-top">
             <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
         </button>
-        <a href="javascript:history.back()" class="back-btn-global" id="btn-back-top">
-            <i class="bi bi-arrow-left"></i> BACK
+        <a href="/dashboard" class="back-btn-global" id="btn-back-top">
+            <i class="bi bi-arrow-left"></i> DASHBOARD
         </a>
     </div>
 
@@ -830,6 +830,15 @@
             </div>
 
             <div class="score-info">
+                {% if is_terminated %}
+                <div class="competency-badge" style="background: rgba(239, 68, 68, 0.15) !important; color: #f87171 !important; border: 1.5px solid rgba(239, 68, 68, 0.4) !important;">
+                    <i class="bi bi-shield-slash-fill me-1"></i> DISQUALIFIED (CODE OF CONDUCT BREACH)
+                </div>
+                <div class="p-3 mt-2 mb-2" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; color: #fca5a5; font-size: 0.9rem;">
+                    <strong><i class="bi bi-exclamation-octagon-fill me-1"></i> AUTOMATED TERMINATION NOTICE:</strong><br>
+                    {{ termination_reason or "Repeated window focus loss / tab switching detected during active assessment." }}
+                </div>
+                {% else %}
                 <div class="competency-badge">
                     <i class="bi bi-award-fill"></i> {{ label }}
                 </div>
@@ -844,6 +853,7 @@
                         The report provides an initial performance benchmark to guide ongoing learning and technical practice.
                     {% endif %}
                 </p>
+                {% endif %}
             </div>
         </div>
 
@@ -914,14 +924,15 @@
         <button onclick="window.print()" class="btn-bottom btn-bottom-secondary" id="btn-print-bottom">
             <i class="bi bi-printer-fill"></i> Print Report
         </button>
-        <a href="javascript:history.back()" class="btn-bottom btn-bottom-primary" id="btn-back-bottom">
-            <i class="bi bi-arrow-left"></i> BACK
+        <a href="/dashboard" class="btn-bottom btn-bottom-primary" id="btn-back-bottom">
+            <i class="bi bi-arrow-left"></i> RETURN TO DASHBOARD
         </a>
     </div>
 
 </div>
 
 <script>
+    sessionStorage.removeItem('interview_proctor_strikes');
     window.addEventListener('load', function() {
         setTimeout(function() {
             // Animate score bar

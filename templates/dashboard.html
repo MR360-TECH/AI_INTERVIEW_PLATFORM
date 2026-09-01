@@ -1465,6 +1465,18 @@
             </p>
           </div>
         </div>
+
+        <!-- Automated Proctoring Rules Notice -->
+        <div class="p-3 mt-3" style="background: rgba(0,255,255,0.06); border: 1.5px solid rgba(0,255,255,0.22); border-radius: 14px; color: #cbd5e1; font-size: 0.84rem;">
+          <div class="d-flex align-items-center gap-2 mb-2 fw-bold" style="color: #00ffff; font-family: 'Outfit', sans-serif; font-size: 0.88rem;">
+            <i class="bi bi-shield-lock-fill"></i> Proctoring Security &amp; Examination Regulations
+          </div>
+          <ul class="mb-0 ps-3" style="line-height: 1.65; color: #94a3b8;">
+            <li><strong style="color:#f1f5f9;">Continuous Window Focus:</strong> Leaving the examination studio or switching browser tabs is strictly monitored by our automated proctoring system.</li>
+            <li><strong style="color:#f1f5f9;">Security Warning Strike:</strong> Navigating away from the assessment screen will issue a formal security warning strike on your session.</li>
+            <li><strong style="color:#f1f5f9;">Automatic Disqualification:</strong> Switching tabs again after receiving a warning strike will immediately terminate your session and disqualify your attempt on record.</li>
+          </ul>
+        </div>
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
         <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
@@ -1630,6 +1642,20 @@
               <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
                   If you wish to discard your active assessment session and start fresh from Question 1, click <strong>Reset Assessment</strong> on the main assessment card. A confirmation dialog will verify your request before resetting.
+                </div>
+              </div>
+            </div>
+
+            <!-- Proctoring FAQ Item -->
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingFive">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFive" aria-expanded="false" aria-controls="faqCollapseFive" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-shield-lock me-2" style="color: #00ffff;"></i> What is the Automated Proctoring &amp; Anti-Cheating Policy?
+                </button>
+              </h2>
+              <div id="faqCollapseFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  During formal placement assessments, our automated proctoring system continuously monitors your browser window focus. Switching browser tabs, minimizing the window, or navigating away triggers a <strong>Security Warning Strike</strong>. Leaving the examination window again <strong>after receiving a warning strike</strong> results in <strong>immediate, automatic session termination</strong> and an official Code of Conduct disqualification record. Practice sessions are not subject to this policy.
                 </div>
               </div>
             </div>
@@ -1962,6 +1988,7 @@ function handleFileDrop(event) {
 </script>
 
 <script>
+sessionStorage.removeItem('interview_proctor_strikes');
 /* ── Dashboard background particle spawner ── */
 (function() {
     var container = document.getElementById('dbParticles');
