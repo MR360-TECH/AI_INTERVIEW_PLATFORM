@@ -149,7 +149,11 @@ def is_valid_email(email):
 
 
 def profile_is_complete(user):
-    return bool(user.gender and user.education and user.course and user.semester)
+    if not user.gender:
+        return False
+    if getattr(user, 'user_type', None) == 'professional':
+        return bool(user.current_designation and user.years_of_experience)
+    return bool(user.education and user.course and user.semester)
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
