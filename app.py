@@ -1359,7 +1359,6 @@ def interview():
 
             behavioral_rule = ""
             if not practice_mode and q_count >= 1:
-                # Additive instruction to include behavioral / situational / self-introduction questions randomly or towards the end of interview
                 behavioral_rule = (
                     "\nBEHAVIORAL & SITUATIONAL RULE:\n"
                     "In addition to technical questions in their domain, seamlessly integrate 2 behavioral or situational questions during the interview "
