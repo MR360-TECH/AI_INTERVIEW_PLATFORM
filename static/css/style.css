@@ -234,46 +234,50 @@ html.dark-theme p {
 }
 
 
-/* ------------------------------------------------------------
-   3. Global Back Button
-   ------------------------------------------------------------ */
 .back-btn-global {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    color: #00ffff;
-    background: rgba(10, 15, 29, 0.95);
-    border: 1px solid rgba(0, 255, 255, 0.25);
-    padding: 8px 18px;
-    border-radius: 8px;
+    gap: 8px;
+    color: #ffffff !important;
+    background: #0f1c3a !important;
+    border: 1.5px solid #475569 !important;
+    padding: 10px 20px;
+    border-radius: 12px;
     font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    font-size: 0.88rem;
-    text-decoration: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    transition: all 0.18s ease;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    text-decoration: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
 }
 .back-btn-global:hover {
-    color: #ffffff;
-    background: rgba(0, 255, 255, 0.12);
-    border-color: rgba(0, 255, 255, 0.5);
-    box-shadow: 0 4px 20px rgba(0, 255, 255, 0.2);
-    transform: translateY(-1px);
-    text-decoration: none;
+    color: #00ffff !important;
+    background: #14244d !important;
+    border-color: #00ffff !important;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.35);
+    transform: translateX(-3px);
+    text-decoration: none !important;
 }
-.back-btn-global i { transition: transform 0.18s ease; }
-.back-btn-global:hover i { transform: translateX(-3px); }
+.back-btn-global i {
+    font-size: 1rem;
+    transition: transform 0.18s ease;
+}
+.back-btn-global:hover i {
+    transform: translateX(-3px);
+}
 
-/* Dark-theme explicit rules (same as default since we're always dark) */
+/* Dark-theme explicit rules */
 html.dark-theme .back-btn-global {
-    color: #00ffff;
-    background: rgba(10, 15, 29, 0.95);
-    border-color: rgba(0, 255, 255, 0.25);
+    color: #ffffff !important;
+    background: #0f1c3a !important;
+    border-color: #475569 !important;
 }
 html.dark-theme .back-btn-global:hover {
-    color: #ffffff;
-    background: rgba(0, 255, 255, 0.12);
+    color: #00ffff !important;
+    background: #14244d !important;
+    border-color: #00ffff !important;
 }
 
 
