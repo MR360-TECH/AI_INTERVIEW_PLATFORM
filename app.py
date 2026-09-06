@@ -1425,16 +1425,16 @@ def interview():
 
             domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
-                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
-                "RULES:\n"
-                "1. Output ONLY 1 concise next question (1-2 sentences). No preamble, commentary, or praise.\n"
-                "2. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area/skill within the domain.\n"
-                "3. If candidate answered poorly or said 'I don't know', move to a completely new topic within the domain.\n"
-                "4. Append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+                f"Role: Direct Technical Examiner for {domain_name}. Candidate Level: {difficulty_instruction}\n"
+                f"DOMAIN CONSTRAINT: 100% {domain_name} questions only.\n"
+                "CRITICAL OUTPUT RULES:\n"
+                "1. Output EXACTLY 1 raw question sentence. ZERO preamble, ZERO conversational commentary, ZERO praise, ZERO feedback.\n"
+                "2. ZERO CHATTER RULE: NEVER start with phrases like 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start immediately with the question word (e.g. 'What', 'How', 'Explain', 'Write', 'Describe').\n"
+                "3. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area within the domain.\n"
+                "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the very end.\n"
                 f"{completion_option}\n"
                 f"Interview Conversation so far:\n{conversation_text}\n"
-                "Next Question with tag:"
+                "Output ONLY the question with tag:"
             )
 
         if not question_text:
@@ -1460,6 +1460,17 @@ def interview():
             question_type = tag_type
         # Strip the tag from the final display question text
         question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
+
+    # Post-processor: Strip any conversational filler or transitions leaked by LLM
+    conversational_patterns = [
+        r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
+        r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
+        r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
+    ]
+    for pattern in conversational_patterns:
+        question_text = re.sub(pattern, '', question_text, flags=re.IGNORECASE).strip()
+    if question_text and question_text[0].islower():
+        question_text = question_text[0].upper() + question_text[1:]
 
     chat_history.append({"role": "question", "text": question_text, "type": question_type})
     session.modified = True
