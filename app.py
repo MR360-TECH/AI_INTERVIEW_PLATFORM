@@ -257,6 +257,19 @@ _cached_settings_time = 0
 from flask import has_app_context
 
 
+class SettingsSnapshot:
+    def __init__(self, s=None):
+        self.min_questions = getattr(s, 'min_questions', 3) or 3
+        self.max_questions = getattr(s, 'max_questions', 8) or 8
+        self.pass_score = getattr(s, 'pass_score', 3) or 3
+        self.default_difficulty = getattr(s, 'default_difficulty', 'student') or 'student'
+        self.question_timer_seconds = getattr(s, 'question_timer_seconds', 90) or 90
+        self.enable_attempt_limits = getattr(s, 'enable_attempt_limits', True)
+        if self.enable_attempt_limits is None:
+            self.enable_attempt_limits = True
+        self.default_allowed_interviews = getattr(s, 'default_allowed_interviews', 2) or 2
+
+
 def get_settings():
     global _cached_settings, _cached_settings_time
     import time
@@ -264,26 +277,10 @@ def get_settings():
     if _cached_settings and (now - _cached_settings_time) < 60:
         return _cached_settings
 
-    if not has_app_context():
-        with app.app_context():
-            return _fetch_settings_from_db(now)
-    return _fetch_settings_from_db(now)
-
-
-def _fetch_settings_from_db(now):
-    global _cached_settings, _cached_settings_time
     try:
-        settings = AdminSettings.query.first()
-    except Exception:
-        try:
-            db.session.rollback()
-        except Exception:
-            pass
-        settings = None
-
-    if not settings:
-        try:
-            settings = AdminSettings(
+        settings_row = AdminSettings.query.first()
+        if not settings_row:
+            settings_row = AdminSettings(
                 min_questions=3,
                 max_questions=8,
                 pass_score=3,
@@ -292,34 +289,19 @@ def _fetch_settings_from_db(now):
                 enable_attempt_limits=True,
                 default_allowed_interviews=2
             )
-            db.session.add(settings)
+            db.session.add(settings_row)
             db.session.commit()
+        snapshot = SettingsSnapshot(settings_row)
+    except Exception:
+        try:
+            db.session.rollback()
         except Exception:
-            try:
-                db.session.rollback()
-            except Exception:
-                pass
-            try:
-                settings = AdminSettings.query.first()
-            except Exception:
-                settings = None
+            pass
+        snapshot = SettingsSnapshot()
 
-    if settings:
-        _cached_settings = settings
-        _cached_settings_time = now
-        return settings
-
-    # Safe in-memory fallback object if database is initializing
-    class DefaultSettings:
-        min_questions = 3
-        max_questions = 8
-        pass_score = 3
-        default_difficulty = 'student'
-        question_timer_seconds = 90
-        enable_attempt_limits = True
-        default_allowed_interviews = 2
-
-    return DefaultSettings()
+    _cached_settings = snapshot
+    _cached_settings_time = now
+    return snapshot
 
 def save_progress(user_id, chat_history, q_count):
     try:
