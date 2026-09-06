@@ -1296,7 +1296,23 @@ def interview():
                     session["interview_domain"] = session.get("practice_topic", "Practice")
                 else:
                     session["interview_domain"] = answer.strip()
-                session["interview_difficulty"] = settings.default_difficulty or "student"
+                
+                # Determine baseline difficulty from candidate profile
+                user_obj = db.session.get(User, user_id)
+                diff = settings.default_difficulty or "student"
+                if user_obj and getattr(user_obj, 'user_type', None) == 'professional':
+                    try:
+                        exp_digits = re.findall(r'\d+', str(user_obj.years_of_experience or '0'))
+                        exp_val = float(exp_digits[0]) if exp_digits else 0
+                        if exp_val >= 5 or any(k in (user_obj.current_designation or '').lower() for k in ['senior', 'lead', 'principal', 'head', 'architect', 'manager']):
+                            diff = "senior"
+                        elif exp_val >= 2:
+                            diff = "mid"
+                        else:
+                            diff = "student"
+                    except Exception:
+                        diff = "mid"
+                session["interview_difficulty"] = diff
 
             full_answer = answer
             if code_answer:
@@ -1444,9 +1460,7 @@ def build_interview_prompt(chat_history, q_count, domain_name, difficulty, pract
     """
     Universal Domain-Agnostic Adaptive Interview Prompt Engine.
     Returns (system_instruction, user_prompt) for Gemini API.
-    Works dynamically for ANY profession or skill:
-    - Tech: Software Engineer, DevOps, Data Analyst, CyberSecurity
-    - Non-Tech: Fitness Trainer, Marketing Strategist, Executive Chef, Doctor, Financial Analyst, Pilot, etc.
+    Works dynamically for ANY profession or skill with an 8-Stage Competency Progression Matrix.
     """
     if practice_mode == "viva":
         difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and fundamental definitions."
@@ -1455,12 +1469,12 @@ def build_interview_prompt(chat_history, q_count, domain_name, difficulty, pract
     elif practice_mode == "drill":
         difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate's problem-solving logic and domain depth."
     else:
-        if difficulty == "student":
-            difficulty_instruction = f"Entry / Junior level. Evaluate fundamental principles, basic terminology, and core rules of {domain_name}."
-        elif difficulty == "senior":
+        if difficulty == "senior":
             difficulty_instruction = f"Senior / Lead / Expert level. Evaluate high-level strategy, trade-offs, complex edge cases, crisis handling, and advanced mastery in {domain_name}."
-        else:
+        elif difficulty == "mid":
             difficulty_instruction = f"Mid-Level professional. Evaluate hands-on execution, practical methodologies, problem solving, and real-world scenarios in {domain_name}."
+        else:
+            difficulty_instruction = f"Entry / Junior level. Evaluate fundamental principles, basic terminology, and core rules of {domain_name}."
 
     # Extract all previously asked questions for strict deduplication
     prior_questions = [e["text"] for e in chat_history if e.get("role") == "question"]
@@ -1475,29 +1489,33 @@ def build_interview_prompt(chat_history, q_count, domain_name, difficulty, pract
     if len(latest_answer) > 500:
         latest_answer = latest_answer[:500] + "..."
 
-    # Universal 5-Stage Competency Progression Matrix (works for ANY domain)
-    if q_count <= 1:
-        stage_focus = f"Stage 1 (Core Fundamentals & Principles): Ask a foundational question assessing core science, industry standards, essential principles, or core methodology of '{domain_name}'."
-    elif q_count == 2:
-        stage_focus = f"Stage 2 (Practical Application & Scenario Handling): Present a realistic real-world case, client scenario, or hands-on task requiring practical execution in '{domain_name}'."
-    elif q_count == 3:
-        stage_focus = f"Stage 3 (Methodologies, Tools & Assessments): Ask about specialized frameworks, tracking metrics, assessment methods, or industry tools used in '{domain_name}'."
-    elif q_count == 4:
-        stage_focus = f"Stage 4 (Troubleshooting, Crisis & Difficult Edge Cases): Present a challenging problem, unexpected client/project crisis, failure recovery, or safety dilemma in '{domain_name}'."
-    else:
-        stage_focus = f"Stage 5 (Advanced Strategy, Scalability & Leadership): Ask about advanced strategy, long-term planning, ethical trade-offs, or high-level optimization in '{domain_name}'."
+    # Comprehensive 8-Stage Competency Progression Matrix
+    stages = [
+        ("Stage 1: Core Fundamentals & Principles", f"Assess foundational theory, core definitions, basic mechanisms, and essential principles of '{domain_name}'."),
+        ("Stage 2: Applied Workflow & Hands-On Execution", f"Present a realistic everyday client scenario or task requiring step-by-step practical execution in '{domain_name}'."),
+        ("Stage 3: Tools, Metrics & Industry Methodologies", f"Ask about specific industry frameworks, measurement KPIs, diagnostic tools, or evaluation protocols used in '{domain_name}'."),
+        ("Stage 4: Practical Troubleshooting & Diagnosis", f"Present a common diagnostic puzzle, stalled progress, or practical obstacle requiring troubleshooting in '{domain_name}'."),
+        ("Stage 5: High-Stakes Crisis & Edge Cases", f"Present an urgent crisis, safety risk, emergency, or high-risk edge case in '{domain_name}' requiring immediate mitigation."),
+        ("Stage 6: Optimization, Scalability & Efficiency", f"Ask how to optimize performance, increase throughput, scale systems/programs, or improve efficiency in '{domain_name}'."),
+        ("Stage 7: Stakeholder Communication & Ethics", f"Present a realistic human scenario involving difficult clients, team conflicts, ethics, or expectation management in '{domain_name}'."),
+        ("Stage 8: Strategic Architecture & Leadership", f"Ask about long-term strategic roadmapping, architectural trade-offs, system design, or leadership vision in '{domain_name}'.")
+    ]
+
+    # Map q_count across total questions dynamically
+    stage_idx = min(int(max(q_count - 1, 0) / max(max_questions, 1) * len(stages)), len(stages) - 1)
+    stage_title, stage_objective = stages[stage_idx]
 
     completion_option = ""
     if q_count >= min_questions:
         completion_option = f"If you have gathered comprehensive evaluation data and the interview has reached {max_questions} questions, output ONLY: [END_INTERVIEW]\n"
 
     system_instruction = (
-        f"You are an Elite Senior Interviewer and Subject Matter Expert conducting a real-time interview in: {domain_name}.\n"
+        f"You are an Elite Senior Interviewer and Subject Matter Expert conducting a structured professional assessment in: {domain_name}.\n"
         "STRICT SYSTEM RULES:\n"
         f"1. Output EXACTLY ONE single, clear, concise interview question (1-2 sentences) directly evaluating '{domain_name}'.\n"
         "2. ZERO FILLER: Absolutely NO conversational preamble, praise, feedback, or greetings (NEVER say 'Great', 'Understood', 'Let\\'s move to', 'Good answer', 'Here is your question'). Start immediately with the question word.\n"
-        "3. DEDUPLICATION: You MUST NEVER repeat, re-phrase, or re-ask any question or concept that was already asked in the PREVIOUSLY ASKED QUESTIONS list.\n"
-        "4. DIVERSITY: Explore a completely new, untested competency area within the domain.\n"
+        "3. STRICT DEDUPLICATION: You MUST NEVER repeat, re-phrase, or re-ask any question or concept that was already asked in the PREVIOUSLY ASKED QUESTIONS list.\n"
+        "4. DIVERSITY: Ensure you switch to the designated stage focus and explore a completely fresh competency area.\n"
         f"5. TAG RULE: If '{domain_name}' is a software coding/programming role, you may end with [TYPE: CODE] or [TYPE: TEXT]. For all non-programming domains (fitness, marketing, medicine, culinary, management, finance, design, etc.), ALWAYS end with [TYPE: TEXT] or [TYPE: FILE]."
     )
 
@@ -1505,9 +1523,9 @@ def build_interview_prompt(chat_history, q_count, domain_name, difficulty, pract
         f"Domain: {domain_name}\n"
         f"Candidate Target Level: {difficulty_instruction}\n"
         f"Interview Progress: Question {q_count} of {max_questions}\n"
-        f"Current Stage Objective: {stage_focus}\n\n"
+        f"Current Stage Objective: {stage_title} -> {stage_objective}\n\n"
         f"Candidate's Latest Response to Evaluate:\n\"{latest_answer}\"\n\n"
-        "PREVIOUSLY ASKED QUESTIONS (STRICT RULE: NEVER REPEAT ANY OF THESE):\n"
+        "PREVIOUSLY ASKED QUESTIONS (STRICT RULE: NEVER REPEAT ANY OF THESE CONCEPTS):\n"
         f"{prior_q_list}\n\n"
         f"{completion_option}"
         "Generate the next question with tag:"
