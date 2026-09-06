@@ -869,6 +869,16 @@ def view_original_resume(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
+@app.route("/admin/user/<int:user_id>/resume")
+def admin_view_user_resume(user_id):
+    if not session.get("is_admin"):
+        return redirect("/admin/login")
+    user = db.session.get(User, user_id)
+    if not user or not user.resume_filename:
+        return redirect(f"/admin/user/{user_id}")
+    return send_from_directory(app.config['UPLOAD_FOLDER'], user.resume_filename)
+
+
 @app.route("/edit-profile", methods=["GET", "POST"])
 def edit_profile():
     if session.get("is_admin"):
