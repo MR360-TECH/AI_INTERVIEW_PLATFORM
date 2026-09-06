@@ -1,271 +1,274 @@
-# 🤖 AI Interview Platform
+# 🤖 AI Interview Studio & Assessment Platform
 
-An enterprise-grade, full-stack conversational mock interview platform engineered to prepare candidates for modern technical and non-technical roles through highly realistic, adaptive, and personalized simulations. The system leverages state-of-the-art Large Language Models (specifically Google Gemini AI) acting as a dynamic examiner, while a robust relational database layer (featuring SQLAlchemy with native support for MySQL, PostgreSQL, and SQLite fallback) securely persists candidate personas, resume data, and chronological scorecards. Engineered with production-ready resiliency, the application integrates multi-provider OTP verification loops, real-time voice-to-text dictation, and complete administrative control dashboards to bridge the gap between academic preparation and professional recruitment standards.
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-Flash%20Lite%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL%20%7C%20SQLite-00758F?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![Deployment](https://img.shields.io/badge/Deployment-Render%20Cloud-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 
-> **Built for:** Final-year students, fresh graduates, and early-career professionals seeking structured, intelligent, and domain-specific mock interview practice — far beyond what static quiz platforms can offer.
+An enterprise-grade, full-stack AI-powered technical and situational mock interview platform designed to simulate realistic, unscripted hiring evaluations. Powered by state-of-the-art **Google Gemini AI** and built on a resilient **Flask & SQLAlchemy** foundation, the platform delivers adaptive assessments, real-time voice dictation, integrated code execution sandboxes, automated anti-cheat proctoring, multi-provider OTP authentication, and comprehensive competency scorecards with printable PDF reports.
 
----
-
-
-## 🎯 Project Objective
-
-This platform was conceived to address a fundamental gap in the job preparation ecosystem. While numerous resources exist for learning and practising technical concepts, candidates rarely get the opportunity to experience a true, unscripted interview simulation before facing one in a real recruitment context.
-
-The AI Interview Platform delivers exactly that — an intelligent, conversational mock interview experience driven by a live AI examiner that adapts to each candidate's individual knowledge level, background, and professional domain. By integrating resume parsing, OTP-secured onboarding, voice dictation, and detailed AI-generated scorecards, the platform provides students and job seekers with actionable, personalised feedback that directly accelerates their interview readiness and professional confidence.
+> **Designed for:** University students, aspiring engineers, and job seekers aiming to master technical, behavioral, and domain-specific interviews through intelligent, real-time AI simulations.
 
 ---
 
-## 🚀 Core Innovations
+## 🎯 Key Capabilities & Highlights
 
-* **Stateful Conversational Interview Engine**: Unlike conventional platforms that serve static question banks, this system models each interview as a live, stateful dialogue. On every interaction, the complete conversation transcript is forwarded to the AI examiner, enabling it to construct contextually intelligent follow-up questions that directly respond to the candidate's preceding answer — mirroring the reasoning pattern of a real human interviewer.
-
-* **Adaptive Difficulty Scaling**: The assessment engine continuously evaluates response quality and recalibrates the complexity of subsequent questions accordingly. Strong, well-articulated answers trigger a progressive escalation in technical depth, while incomplete or uncertain responses prompt the AI to revisit foundational concepts — creating a self-correcting evaluation loop that reflects actual interview dynamics.
-
-* **Resume-Driven Personalisation**: Candidates may upload their CV in PDF format. The platform parses and indexes the extracted text into the candidate's database profile, which is then embedded into the AI's prompt context at assessment time. This allows the examiner to ask role-specific, project-aware, and technology-relevant questions drawn directly from the candidate's professional background.
-
-* **Persistent Session Architecture**: Rather than relying on browser-native cookie storage — which imposes a strict 4KB payload ceiling — active interview transcripts are serialised and persisted in a dedicated relational database table. This guarantees full session continuity across network interruptions, tab closures, or browser refreshes, without any loss of conversational state.
-
-* **Zero-Downtime Schema Auto-Migration**: On every application boot, the platform introspects the live database schema and programmatically applies any missing column definitions. This eliminates manual migration steps, prevents schema drift across environments, and ensures backward compatibility when new candidate data fields are introduced.
-
+* 🧠 **Adaptive AI Examiner**: Evaluates technical depth, analytical reasoning, and communication clarity in real-time, dynamically adjusting questions based on candidate performance.
+* 🛡️ **Automated Security Proctoring**: Real-time window focus tracking, tab-switch breach detection, two-strike disciplinary warning modals, and automatic session disqualification for code of conduct breaches.
+* 🎓 **Multi-Track Practice Hub**:
+  * **Academic Viva Voce**: Oral university exam simulations testing definitions, theoretical rigor, and algorithms.
+  * **FluentFlow Language Practice**: Conversational multilingual practice with instant grammatical corrections and translations.
+  * **Concept Drills**: Rapid-fire architectural and scenario reasoning challenges.
+* 🎙️ **Hands-Free Voice Dictation**: Integrated client-side Web Speech API (`webkitSpeechRecognition`) with animated neural waveform visualizers.
+* 💻 **Monaco Code Editor**: Built-in VS Code-style Python 3 programming sandbox for coding challenges.
+* 📄 **Resume-Driven Questioning**: Automatic PDF/DOCX resume text extraction and embedding into the candidate's interview context.
+* 📊 **Instant Competency Scorecards**: High-contrast score gauge rings, competency matrix breakdowns, qualitative executive summaries, and single-click printable PDF report generation.
+* 🔐 **Triple-Redundant OTP Delivery**: Resend HTTP API, SendGrid HTTP API, and SMTP failover routing for ultra-reliable email authentication.
+* ⚙️ **Executive Operations Dashboard**: Administrative candidate management, live assessment monitoring, candidate resume viewers, and real-time pass-score threshold configuration.
 
 ---
 
-## 🔄 End-to-End Application Workflow
-
-The platform operates as a cohesive lifecycle that takes a candidate from registration to a final AI-generated scorecard.
+## 🔄 End-to-End Platform Architecture
 
 ```mermaid
 flowchart TD
-    Start([Candidate Visits Platform]) --> Auth[1. Authentication & Onboarding]
-    Auth --> Resume[2. Resume Setup & Processing]
-    Resume --> Config[3. Assessment Track Configuration]
-    Config --> Prep[Optional: Explore Curated Prep Hub]
-    Config --> Loop[4. Dynamic Conversational Interview Loop]
-    Loop --> Evaluation[5. AI Grading & Result Persistence]
-    Evaluation --> AdminPanel[6. Admin Dashboard Monitoring]
-    AdminPanel --> End([Platform Lifecycle Complete])
+    User([Candidate / Job Seeker]) --> AuthLayer{Authentication Gateway}
+    
+    AuthLayer -->|Local Account| LocalLogin[PBKDF2 Password Auth]
+    AuthLayer -->|Social Login| GoogleOAuth[Google OAuth 2.0]
+    AuthLayer -->|Passwordless| OTPAuth[Multi-Provider OTP Dispatcher]
+    
+    LocalLogin --> Dashboard[Candidate Workspace Dashboard]
+    GoogleOAuth --> Dashboard
+    OTPAuth --> Dashboard
+    
+    Dashboard --> ResumeUpload[Resume Indexing & Text Extraction]
+    Dashboard --> TrackSelection[Mode Selection: Assessment vs Practice]
+    
+    TrackSelection --> InterviewEngine[Live Assessment Studio Engine]
+    ResumeUpload -.->|Embedded Context| InterviewEngine
+    
+    InterviewEngine --> Proctor[Active Anti-Cheat Proctoring Monitor]
+    InterviewEngine --> VoiceInput[Web Speech Voice Transcription]
+    InterviewEngine --> Monaco[Monaco Code Editor Sandbox]
+    InterviewEngine --> GeminiEngine[Google Gemini Flash AI Engine]
+    
+    GeminiEngine -->|Streaming Q&A| InterviewEngine
+    Proctor -->|2nd Strike Breach| Terminate[Disqualification & Termination]
+    
+    InterviewEngine -->|Completion| ResultGen[Rapid AI Evaluation Pipeline]
+    ResultGen --> Scorecard[Performance Evaluation Report & PDF]
+    Scorecard --> History[Candidate Attempt Progression & History]
+    
+    Scorecard -.-> DB[(Relational Database: MySQL / PostgreSQL)]
+    History -.-> DB
+    
+    AdminUser([Recruiter / Administrator]) --> AdminPanel[Admin Operations Control Center]
+    AdminPanel --> DB
+    AdminPanel --> ConfigMgmt[Global Settings & Cutoff Configuration]
 ```
 
-### 1. Authentication & Onboarding
-* Candidates can sign up locally or instantly log in via third-party OAuth providers (Google OAuth 2.0). 
-* To ensure secure registrations, the backend runs a multi-provider OTP verification loop. Once a candidate submits their email, the system automatically dispatches a unique one-time password (OTP) via high-priority mail delivery channels before password configuration.
+---
 
-### 2. Resume Setup & Processing
-* After verifying their account, candidates can upload their resume in PDF format.
-* The backend extracts the raw text from the resume on submission. It saves this information to the database profile, creating a persistent technical persona that the AI can reference during assessments.
+## 🛠️ Technical Stack
 
-### 3. Assessment Track Configuration
-* Candidates configure their practice session by selecting their target technical domain (e.g., Data Science, React Frontend, Backend Python), preferred difficulty level, and experience class (student or professional).
-* Alternatively, candidates can browse the built-in Prep Hub, which surfaces curated external technical challenge sets and interview preparation guides for top-tier companies.
-
-### 4. Dynamic Conversational Interview Loop
-* Once the session starts, the application initialises a session-tracking record in the database.
-* The system constructs a structured prompt payload incorporating candidate experience details, target difficulty, parsed resume context, and the full running chat transcript.
-* The AI generates a tailored, domain-specific question on each iteration.
-* Candidates respond via typed input or real-time voice dictation, which transcribes microphone audio directly into the answer field.
-* The loop continues dynamically until the AI determines sufficient evaluation signal has been gathered, capping at a configurable maximum question count.
-
-### 5. AI Grading & Result Persistence
-* Upon completion, the full conversational transcript is submitted to Gemini's evaluation pipeline.
-* The model assesses communication depth, analytical capability, and domain accuracy, producing a structured scorecard: overall score (out of 10), bulleted strengths, improvement areas, and an executive summary.
-* The score is benchmarked against the configured pass threshold, the result is tagged Selected or Rejected, persisted to the database, and the active progress record is cleared.
-* Candidates are redirected to an interactive scorecard interface with full transcript review and PDF export capabilities.
-
-### 6. Admin Dashboard Monitoring
-* Administrators access a protected dashboard surfacing aggregate metrics: all-time interview counts, daily activity, and candidate performance distributions.
-* Admins can inspect individual candidate profiles, review full Q&A transcripts, prune obsolete records, and adjust global assessment parameters — pass score thresholds and question count limits — in real time.
+| Component | Technology | Description |
+|---|---|---|
+| **Backend Framework** | Python 3.11+ / Flask 3.0+ | Core application server, routing, and session management |
+| **Database ORM** | Flask-SQLAlchemy 3.1+ | Unified relational ORM supporting MySQL, PostgreSQL, and SQLite |
+| **AI Assessment Engine** | Google Gemini (`gemini-flash-lite-latest`) | High-speed, context-aware conversational questioning & grading |
+| **Authentication & Security** | Werkzeug / Authlib / PyCryptodome | PBKDF2-SHA256 password hashing, Google OAuth 2.0 OpenID Connect |
+| **Email Delivery Engine** | Resend API / SendGrid API / SMTP | Multi-provider fallback delivery system for verification codes |
+| **Speech Processing** | Web Speech API | Client-side browser-native speech-to-text recognition |
+| **Code Editor** | Monaco Editor CDN | Embedded VS Code syntax highlighter and code input |
+| **Data Visualization** | Chart.js 4.4+ | Interactive score progression and trend lines |
+| **Styling & Theme** | Bootstrap 5.3 + Custom CSS3 | Elite Cyber-Blue high-contrast dark theme with neural aurora backdrop |
+| **Production WSGI** | Gunicorn | High-concurrency production HTTP application server |
 
 ---
 
-## 🚀 Key Features
+## 🔐 Security & Anti-Cheat System
 
-* **Dual-Method Authentication Gateway**: Seamless local registration with Werkzeug password hashing alongside Google OAuth 2.0 OpenID Connect flows.
-* **Multi-Provider OTP Routing**: An email routing dispatcher that automatically tries Resend HTTP API, SendGrid HTTP API, and SMTP fallbacks sequentially, avoiding hosting-tier port restrictions.
-* **Web Speech Voice Integration**: Hands-free voice dictation enabling candidates to speak their answers using client-side microphone APIs, transcribed in real-time.
-* **Visual Evaluation Reports**: Detailed AI-graded scorecards mapping scores, strengths, weaknesses, and direct download links to printable PDF reports.
-* **Operational Control Center**: Admin panel featuring real-time candidate lists, click-through transcript readers, and settings consoles to configure global question caps and pass score thresholds.
-* **Curated Interview Prep Hub**: Integrated preparation resource hub linking to external technical challenges and interview guides across top-tier companies — Google, Amazon, Meta, Microsoft, TCS, Infosys, Wipro, Accenture, and more.
-* **Theme-Optimised Design System**: High-performance Bootstrap 5 interface featuring dark-mode gradients, smooth state transitions, and fully responsive cards.
+```
+                      PROCTORING LIFECYCLE
+                     
+  [Active Interview] ────── Tab Switch / Focus Lost ──────► [Strike 1 Recorded]
+          ▲                                                         │
+          │                        Dismiss Modal                    ▼
+          └──────────────────────── (Warning Only) ◄───── [Proctor Warning Modal]
+                                                                    │
+                                   Second Tab Switch                ▼
+                             ─────────────────────────────► [Strike 2 Triggered]
+                                                                    │
+                                                                    ▼
+                                                         [Immediate Disqualification]
+                                                                    │
+                                                                    ▼
+                                                         [Record Flagged in DB]
+```
 
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Language** | Python 3.11+ |
-| **Web Framework** | Flask 3.0+ |
-| **Templating** | Jinja2 |
-| **ORM** | Flask-SQLAlchemy |
-| **Database (Production)** | MySQL 8.0+ / PostgreSQL |
-| **Database (Development)** | SQLite (auto-fallback) |
-| **AI Model** | Google Gemini (`gemini-flash-lite-latest`) |
-| **AI SDK** | `google-genai` Python SDK |
-| **Authentication** | Werkzeug (password hashing), Authlib (Google OAuth 2.0) |
-| **Email Delivery** | Resend HTTP API, SendGrid HTTP API, Gmail SMTP |
-| **Voice Input** | Web Speech API (`webkitSpeechRecognition`) |
-| **Frontend** | HTML5, CSS3, Bootstrap 5, Bootstrap Icons |
-| **Deployment** | Render (Gunicorn + Procfile + render.yaml) |
-| **Version Control** | Git & GitHub |
+* **Window Focus Detection**: Uses the browser Page Visibility API and `window.onblur` event listeners to monitor candidate window focus.
+* **Two-Strike Escalation**: First focus violation triggers a full-screen red warning modal; second violation immediately disqualifies the session.
+* **Encrypted Sessions**: Server-signed cryptographic session cookies (`HttpOnly`, `SameSite=Lax`, `Secure` in production).
+* **Role-Based Access Control**: Strict multi-tier authentication barriers isolating administrative dashboards, user modification tools, and scoring metrics from standard users.
 
 ---
 
-## 🔐 Security Architecture
-
-The platform is built with a security-first mindset across all layers of the stack:
-
-| Concern | Implementation |
-|---|---|
-| **Password Storage** | All passwords are hashed using Werkzeug's PBKDF2-SHA256 algorithm before persistence — plaintext credentials are never stored |
-| **Session Integrity** | Flask session cookies are cryptographically signed via a server-side `SECRET_KEY` and flagged `HttpOnly` and `SameSite=Lax` to prevent client-side tampering and CSRF abuse |
-| **HTTPS Enforcement** | In production environments, `SESSION_COOKIE_SECURE` is activated and requests are normalised through `ProxyFix` middleware to correctly resolve HTTPS scheme headers from reverse proxies |
-| **OAuth 2.0 Token Flow** | Google sign-in uses the Authlib OpenID Connect flow — no passwords are transmitted or stored for OAuth-authenticated users |
-| **OTP Verification** | Email-based OTP codes are single-use, session-scoped, and invalidated immediately upon successful verification |
-| **API Key Isolation** | All third-party API keys (Gemini, Resend, SendGrid, Google OAuth) are loaded exclusively from environment variables and are never committed to source control |
-| **Route-Level Access Control** | All candidate and admin routes enforce session-based authentication checks — admin routes apply a secondary credential layer to ensure strict role isolation |
-| **Automatic Security Headers** | An `after_request` hook injects production-grade HTTP security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) on every response |
-
----
-
-## 📊 Detailed Database Schema & ER Model
-
-
+## 📊 Database Entity Model
 
 ```mermaid
 erDiagram
-    users ||--o{ interview_results : "has many"
-    users ||--o| interview_progress : "maintains active"
+    users ||--o{ interview_results : "completes"
+    users ||--o| interview_progress : "tracks active session"
 
     users {
-        int id PK "Auto Increment"
-        varchar full_name "User's Full Name"
-        varchar email UK "Unique Email Address"
-        varchar password "Hashed Password (nullable for Google OAuth)"
-        varchar gender "User Gender"
-        varchar education "Education Level"
-        varchar course "Course / Specialization"
-        varchar semester "Semester / Year"
+        int id PK
+        varchar full_name
+        varchar email UK
+        varchar password "Hashed PBKDF2"
         varchar auth_provider "local | google | otp"
-        varchar google_id UK "Google Account Identifier (nullable)"
-        text resume_text "Parsed text from resume upload"
-        varchar resume_filename "Path or filename of resume"
-        datetime registered_at "Registration Timestamp"
+        varchar google_id UK
+        varchar education
+        varchar course
+        varchar semester
+        text resume_text
+        varchar resume_filename
+        datetime registered_at
     }
 
     interview_results {
-        int id PK "Auto Increment"
-        int user_id FK "Linked to users.id"
-        decimal score "Interview score out of 10"
-        varchar status "Selected | Rejected"
-        text strengths "Bullet points of strengths"
-        text improvements "Bullet points of improvements"
-        text summary "Executive assessment summary"
-        varchar domain "Target Job Role or Technical Domain"
-        datetime interview_datetime "Completion timestamp"
+        int id PK
+        int user_id FK
+        decimal score "Score out of 10"
+        varchar status "PASS | FAIL | Terminated | Selected"
+        text summary "AI Assessment Summary"
+        varchar domain "Interview Domain"
+        boolean is_terminated "Anti-cheat flag"
+        text termination_reason
+        datetime interview_datetime
     }
 
     interview_progress {
-        int id PK "Auto Increment"
-        int user_id FK "Linked to users.id (Unique)"
-        text chat_history "Serialized JSON conversation stream"
-        int q_count "Current question index"
-        datetime updated_at "Last updated timestamp"
+        int id PK
+        int user_id FK
+        text chat_history "Serialized conversation transcript"
+        int q_count "Question progress index"
+        datetime updated_at
     }
 
     admin_settings {
-        int id PK "Auto Increment"
-        int min_questions "Minimum rounds required (default: 5)"
-        int max_questions "Maximum rounds capped (default: 8)"
-        int pass_score "Score cutoff for selection (default: 6)"
-        varchar default_difficulty "Default difficulty level"
+        int id PK
+        int min_questions "Default: 5"
+        int max_questions "Default: 5"
+        int pass_score "Cutoff: 6"
+        varchar default_difficulty
     }
 ```
 
-### Database Tables Breakdown
-1. **`users` Table**: Stores candidate profile information, registration method (local, OAuth, or OTP), and parsed resume texts used to tailor the interview.
-2. **`interview_results` Table**: Persists the outcomes of completed mock interviews, containing the overall evaluation details (score, verdict status, strengths, improvements, domain, and completion times).
-3. **`interview_progress` Table**: Backs up in-progress assessment states (including the serialized chat history) so candidates can resume if disconnected, bypassing browser session storage limits.
-4. **`admin_settings` Table**: Holds global evaluation parameters editable by administrative accounts.
-
 ---
 
-## 🧠 Gemini AI Prompt Mechanics & Logic Flow
+## ⚙️ Environment Configuration
 
-The AI engine uses Google Gemini dynamically in two operational loops:
+Create a `.env` file in the root directory and configure the required environment variables:
 
+```bash
+# -------------------------------------------------------------
+# CORE APPLICATION SETTINGS
+# -------------------------------------------------------------
+SECRET_KEY=your_secure_random_flask_secret_key_here
+FLASK_ENV=production
+
+# -------------------------------------------------------------
+# DATABASE CONFIGURATION
+# (Leave empty or unset to automatically fallback to local SQLite)
+# -------------------------------------------------------------
+DATABASE_URL=mysql+pymysql://username:password@hostname:3306/database_name
+
+# -------------------------------------------------------------
+# GOOGLE GEMINI AI ENGINE
+# -------------------------------------------------------------
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# -------------------------------------------------------------
+# GOOGLE OAUTH 2.0 (Optional - for Google Single Sign-On)
+# -------------------------------------------------------------
+GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
+
+# -------------------------------------------------------------
+# EMAIL DELIVERY & OTP SERVICES (Optional - with SMTP fallback)
+# -------------------------------------------------------------
+RESEND_API_KEY=your_resend_api_key_here
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=your_sender_email@gmail.com
+MAIL_PASSWORD=your_email_app_password
+MAIL_DEFAULT_SENDER=your_sender_email@gmail.com
+
+# -------------------------------------------------------------
+# ADMINISTRATOR CREDENTIALS (Auto-initialized on first launch)
+# -------------------------------------------------------------
+ADMIN_EMAIL=admin@platform.local
+ADMIN_PASSWORD=your_custom_admin_password
 ```
-[Candidate starts practice]
-       │
-       ▼
-1. Adaptive Question Loop
-   ├── Input context: target domain + difficulty + parsed resume text + full chat history
-   ├── Prompt constraint: Output strictly ONLY a single raw question (under 2 sentences). No fluff.
-   └── Output: Next question served to candidate
-       │
-[Loop repeats 5 to 8 times until Gemini signals completion or max count is reached]
-       │
-       ▼
-2. Full Transcript Evaluation
-   ├── Input context: Full interview Q&A transcript
-   ├── Prompt constraint: Output JSON with: score, strengths, improvements, summary
-   └── Output: Record saved in DB, linked to user, evaluation screen displayed to user
+
+---
+
+## 🚀 Installation & Local Setup
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/MR360-TECH/AI_INTERVIEW_PLATFORM.git
+cd AI_INTERVIEW_PLATFORM
 ```
 
-* **Dynamic Constraints**: The AI is strictly bound to the target domain, references candidate experience parameters, and is barred from outputting preambles or conversational filler.
-* **Score-to-Verdict Mapping**: The system compares the AI evaluation score against the threshold set in `admin_settings` to dynamically determine candidate selection status.
+### 2. Create and Activate Virtual Environment
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS / Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run the Application
+```bash
+python app.py
+```
+Open your browser and navigate to `http://127.0.0.1:5000`.
 
 ---
 
-## ⚙️ Configuration Parameters (Environment Variables)
+## 🌐 Production Cloud Deployment (Render)
 
-The application consumes environment configurations from a local `.env` file. These configurations define authentication and mail APIs conceptually:
+This repository includes native deployment support for **Render**:
 
-* **Core Settings**:
-  * `SECRET_KEY`: Used by Flask to sign session cookies securely.
-* **Database Connection**:
-  * `DATABASE_URL`: Connection string mapping to external engines (MySQL/PostgreSQL). If undefined, falls back automatically to SQLite.
-* **AI Platform API**:
-  * `GEMINI_API_KEY`: API access key for connecting to Google Gemini AI models.
-* **OAuth Credentials**:
-  * `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`: Client IDs and secrets required for Google OAuth 2.0 logins.
-* **OTP Delivery APIs**:
-  * `RESEND_API_KEY` / `SENDGRID_API_KEY`: Integrations for Resend or SendGrid HTTP mail delivery.
-  * `MAIL_USERNAME` / `MAIL_PASSWORD`: Standard SMTP credentials used as fallback delivery.
-* **Operations Credentials**:
-  * `ADMIN_EMAIL` / `ADMIN_PASSWORD`: Administrative dashboard credentials (auto-generated if not supplied).
+1. Fork or push this repository to your GitHub account.
+2. Log in to [Render Dashboard](https://dashboard.render.com/) and click **New + Web Service**.
+3. Connect your repository and configure:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app`
+4. Under **Environment Variables**, add `SECRET_KEY`, `GEMINI_API_KEY`, `DATABASE_URL`, and other optional credentials.
+5. Deploy the service. The SQL engine will auto-verify database schemas and apply migrations automatically on startup.
 
 ---
 
-## 🚀 Execution & Run Guide
+## 📄 License & Attribution
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/MR360-TECH/AI_INTERVIEW_PLATFORM.git
-   cd AI_INTERVIEW_PLATFORM
-   ```
-
-2. **Establish Python Virtual Environment**
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On MacOS/Linux:
-   source venv/bin/activate
-   ```
-
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Verify / Run the Application**
-   ```bash
-   python app.py
-   ```
-   *Note: On startup, the SQL engine verifies tables and implements migrations dynamically.*
+Distributed under the MIT License. Developed and maintained by **MR360-TECH**.
 
 ---
 
-## 👨‍💻 Developed By
-
-**Gowtham V**
+**Developed with ❤️ by [Gowtham V](https://github.com/MR360-TECH)**
