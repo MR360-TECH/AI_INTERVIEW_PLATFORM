@@ -995,7 +995,7 @@
         const loadingOverlay  = document.getElementById('loadingOverlay');
         const waveformWrap    = document.getElementById('waveformWrap');
 
-        // â”€â”€ DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) â”€â”€
+        // ── DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) ──
         const TOTAL_SECONDS = parseInt("{{ timer_seconds or 90 }}", 10) || 90;
         let secondsLeft = TOTAL_SECONDS;
         const timerText = document.getElementById('timerText');
@@ -1034,21 +1034,16 @@
                 updateTimerDisplay();
                 clearInterval(timerInterval);
                 if (timeUpWarning) timeUpWarning.classList.add('active');
-                // Auto-advance: submit whatever answer exists after a short grace period
                 if (!timerExpired) {
                     timerExpired = true;
                     setTimeout(function() {
-                        // Stop mic if running
                         if (window.stopSpeechRecognition) window.stopSpeechRecognition();
-                        // Sync Monaco editor code → hidden input
                         if (typeof editorInstance !== 'undefined' && editorInstance && codeAnswerInput) {
                             codeAnswerInput.value = editorInstance.getValue();
                         }
-                        // Show loading overlay to prevent double-submit
                         if (loadingOverlay) loadingOverlay.classList.add('active');
-                        // Force-submit even if answer is empty (timer expired)
                         answerForm.submit();
-                    }, 1500); // 1.5s grace so user sees "Time's Up!" message
+                    }, 1500);
                 }
             } else {
                 updateTimerDisplay();

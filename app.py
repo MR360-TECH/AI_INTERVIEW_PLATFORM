@@ -137,62 +137,22 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
-PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
-FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.6-flash"]
-_gemini_client_instance = None
-
-
-def get_gemini_client():
-    """Dynamically get or initialize the Gemini API client."""
-    global _gemini_client_instance
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return None
-    if _gemini_client_instance is None:
-        _gemini_client_instance = genai.Client(api_key=api_key)
-    return _gemini_client_instance
-
-
-def generate_gemini_response(contents, config=None, fallback_text=""):
-    """
-    Executes Gemini content generation with multi-model fallback,
-    ensuring high availability, fast response times, and resilience against spikes.
-    """
-    g_client = get_gemini_client()
-    if not g_client:
-        return fallback_text
-
-    candidate_models = [PRIMARY_MODEL] + [m for m in FALLBACK_MODELS if m != PRIMARY_MODEL]
-    last_err = None
-
-    for m in candidate_models:
-        try:
-            res = g_client.models.generate_content(
-                model=m,
-                contents=contents,
-                config=config
-            )
-            if res and hasattr(res, 'text') and res.text:
-                return res.text.strip()
-        except Exception as e:
-            last_err = e
-            print(f"[GEMINI WARNING] Model {m} failed: {e}. Trying fallback model...")
-            continue
-
-    print(f"[GEMINI ERROR] All candidate models failed. Last error: {last_err}")
-    return fallback_text
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
+MODEL_NAME = "gemini-flash-lite-latest"
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
     try:
         prompt = "Analyze this file in the context of a job interview. " + context_hint + " Be factual and concise, 2-4 sentences only."
-        contents = [
-            types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-            prompt
-        ]
-        config = types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
-        res_text = generate_gemini_response(contents, config=config, fallback_text="")
-        return res_text if res_text else "Could not analyze the attached file."
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=[
+                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                prompt
+            ]
+        )
+        return response.text.strip()
     except Exception as e:
         print(f"[ATTACHMENT ANALYSIS ERROR] {e}")
         return "Could not analyze the attached file."
@@ -1348,9 +1308,11 @@ def interview():
             practice_topic = session.get("practice_topic", "General")
 
             if practice_mode == "viva":
-                question_text = f"Welcome to your Academic Viva Voce examination on {practice_topic}. To begin, could you explain the foundational principles and core concepts of this subject? [TYPE: TEXT]"
-            elif practice_mode == "drill":
-                question_text = f"Welcome to your Concept Drill on {practice_topic}. Let's begin: can you explain the core fundamentals and primary applications of {practice_topic}? [TYPE: TEXT]"
+                prompt = (
+                    f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
+                    "Briefly introduce the exam and ask the candidate your very first conceptual question about this subject. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
             elif practice_mode == "lang":
                 target_lang = session.get("lang_target", "English")
                 focus_cat = session.get("lang_focus", "conversation")
@@ -1362,19 +1324,35 @@ def interview():
                     else f"Format the question STRICTLY as follows: first write the question in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Do NOT skip the English translation. "
                 )
                 prompt = (
-                    f"You are a language validator and native tutor. Start a language speaking practice session. "
-                    f"Target language: {target_lang}. Level: {level.capitalize()}. Focus: {focus_cat.capitalize()}. "
-                    "Briefly introduce the session and ask the first practice prompt. "
+                    f"You are a language validator and native tutor. First, analyze the string: '{target_lang}'. "
+                    "Is this a legitimate language name (e.g. English, French, Spanish, Hindi, Telugu, Sindhi, Japanese, Arabic, Russian, etc.)? "
+                    "If it is NOT a legitimate or real language, respond with exactly: "
+                    "'ERROR: Language not found. Please start a new session and specify a valid language. [TYPE: TEXT]' "
+                    "If it IS a legitimate language, start a language speaking practice session. "
+                    f"The target language is: {target_lang}. The candidate's level is: {level.capitalize()}. "
+                    f"The focus category is: {focus_cat.capitalize()}. "
+                    "Briefly introduce the session with a warm and slightly friendly tone, then ask the first practice question or prompt. "
                     f"{translation_rule_q1}"
-                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble."
+                    "The user can answer in any language they prefer. "
+                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble, no extra commentary."
                 )
-                config = types.GenerateContentConfig(temperature=0.3, max_output_tokens=250)
-                question_text = generate_gemini_response(prompt, config=config, fallback_text=f"Welcome to your {target_lang} speaking practice! How are you today? [TYPE: TEXT]")
+            elif practice_mode == "drill":
+                prompt = (
+                    f"You are a friendly mentor starting a concept drill session on the topic: {practice_topic}. "
+                    "State the topic and ask the candidate their first open conceptual question. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
             else:
                 resume_context = ""
                 if session.get("resume_summary"):
-                    resume_context = f" I see your background from your uploaded resume."
-                question_text = f"Welcome to your assessment.{resume_context} Which specific technical role or domain are you interviewing for today? [TYPE: TEXT]"
+                    resume_context = "The candidate uploaded their resume, summarized as: " + session["resume_summary"] + " Use this context when useful, but still ask them to confirm their role/domain first. "
+
+                prompt = (
+                    "You are an interviewer starting an interview. "
+                    + resume_context +
+                    "Ask the candidate which specific role or domain they are interviewing for. "
+                    "Output ONLY the question text itself followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
         else:
             difficulty = session.get("interview_difficulty", "student")
             practice_mode = session.get("interview_mode")
@@ -1413,21 +1391,21 @@ def interview():
             else:
                 if difficulty == "student":
                     difficulty_instruction = (
-                        "The candidate is a Student/Beginner. Keep questions friendly, clear, and focused on core fundamental concepts. "
-                        "Ask practical interview questions suitable for a junior role. Explore diverse categories within their domain. "
-                        "If their previous answer was weak or incorrect, smoothly move to a different concept within the domain. "
+                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
+                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
+                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle, change the topic and ask different question within the same domain. "
+                        "Do not end early unless you have asked at least 5 questions. "
                         "Keep conversational feedback minimal and professional."
                     )
                 elif difficulty == "senior":
                     difficulty_instruction = (
-                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenario questions. "
-                        "Challenge design choices, drill down into technical trade-offs, and maintain a high standard. "
-                        "Explore diverse categories within the domain. Do not offer filler praise."
+                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
+                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar. Explore different categories of questions within the domain and output only question and not anything else. Do not offer any conversational filler or praise."
                     )
                 else:
                     difficulty_instruction = (
-                        "The candidate is Mid-Level. Ask standard industry questions with practical scenarios and solid fundamentals. "
-                        "Adjust difficulty adaptively based on their performance. Explore diverse categories within the domain."
+                        "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
+                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
                     )
 
             completion_option = ""
@@ -1467,14 +1445,11 @@ def interview():
                 "Output ONLY the raw question text with its tag below:"
             )
 
-            config = types.GenerateContentConfig(
-                temperature=0.3,
-                max_output_tokens=300
-            )
-            fallback_default = "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]"
-            question_text = generate_gemini_response(prompt, config=config, fallback_text=fallback_default)
-            if not question_text:
-                question_text = fallback_default
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt
+        )
+        question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Which specific role or domain are you interviewing for? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -1610,11 +1585,11 @@ def interview_result():
           "[A formal, multi-paragraph evaluation of at least 180 words, written as a real hiring panel report. Structure it as flowing paragraphs (not bullet points or labeled sections) covering: overall impression and field-appropriate competence; concrete strengths grounded in specific answers; concrete weaknesses or gaps grounded in specific answers; how they performed under increasing difficulty; and a closing paragraph with a clear, actionable recommendation for what they should work on next.]\n\n"
           "Conversation: " + conversation_text)
 
-        config = types.GenerateContentConfig(
-            temperature=0.2,
-            max_output_tokens=600
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt
         )
-        evaluation = generate_gemini_response(prompt, config=config, fallback_text="SCORE: 5\nSUMMARY: The candidate completed the interview assessment session.")
+        evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
 
         score = "N/A"
         summary_lines = []
@@ -2010,16 +1985,12 @@ def interview_submit():
         chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
 
     try:
-        config = types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            temperature=0.3,
-            max_output_tokens=400
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=chat_turns,
+            config=types.GenerateContentConfig(system_instruction=system_prompt, max_output_tokens=300),
         )
-        question_text = generate_gemini_response(
-            chat_turns,
-            config=config,
-            fallback_text="Can you walk me through a challenging problem you solved recently? [TYPE: TEXT]"
-        )
+        question_text = response.text.strip() if response.text else "Tell me about yourself."
         
         if not is_practice and "[END_INTERVIEW]" in question_text.upper() and submit_q_count >= MIN_QUESTIONS:
             save_progress(user_id, submit_history, submit_q_count)
@@ -2027,7 +1998,7 @@ def interview_submit():
             
     except Exception as e:
         print(f"[SUBMIT ERROR] {e}")
-        question_text = "Can you walk me through a challenging technical problem you solved recently? [TYPE: TEXT]"
+        question_text = "Can you walk me through a challenging technical problem you solved recently?"
 
     question_type = "text"
     match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
