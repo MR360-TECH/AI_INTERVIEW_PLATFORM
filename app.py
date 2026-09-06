@@ -198,6 +198,36 @@ def analyze_attachment(file_bytes, mime_type, context_hint=""):
         return "Could not analyze the attached file."
 
 
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
+
+oauth = OAuth(app)
+if has_google_oauth:
+    google = oauth.register(
+        name='google',
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'}
+    )
+else:
+    google = None
+
+
+def is_valid_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+
+def profile_is_complete(user):
+    if not user.gender:
+        return False
+    if getattr(user, 'user_type', None) == 'professional':
+        return bool(user.current_designation and user.years_of_experience)
+    return bool(user.education and user.course and user.semester)
+
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
