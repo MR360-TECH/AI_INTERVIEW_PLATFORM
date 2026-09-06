@@ -144,7 +144,7 @@ def get_genai_client():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return None
-    return genai.Client(api_key=api_key)
+    return genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=10000))
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
@@ -732,9 +732,25 @@ def internal_server_error(error):
     except Exception:
         pass
     print(f"[Internal Server Error]: {error}")
-    # For AJAX/submit route — return JSON so interview can continue
-    if request.path == "/interview/submit" or request.headers.get("Content-Type", "").startswith("application/json"):
-        return jsonify({"error": "server_error", "question": "Can you walk me through a challenging problem you solved recently?", "q_num": session.get("q_count", 0) + 1, "total": 10, "question_type": "text", "done": False}), 200
+    # For AJAX or interview POST submissions — always return clean JSON so candidate session is NEVER interrupted
+    is_ajax = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or request.headers.get("Accept", "").find("application/json") != -1
+        or request.path.startswith("/interview")
+    )
+    if is_ajax and request.method == "POST":
+        q_cnt = session.get("q_count", 0) + 1
+        settings = get_settings()
+        return jsonify({
+            "status": "ok",
+            "question": "Can you explain a key technical challenge you encountered in your projects and how you resolved it?",
+            "q_num": q_cnt,
+            "total": settings.max_questions,
+            "question_type": "text",
+            "is_practice": bool(session.get("interview_mode")),
+            "timer_seconds": settings.question_timer_seconds or 90,
+            "done": False
+        }), 200
     # For all other routes — return a simple inline error page (NO redirects to avoid loops)
     back_url = "/dashboard" if "user_id" in session else "/login"
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title>
