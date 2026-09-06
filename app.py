@@ -1235,10 +1235,15 @@ def interview():
             session.pop("practice_topic", None)
 
     # Always load chat history from DB — avoids session cookie size limits in production
-    _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
-    chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
-    if "q_count" not in session:
-        session["q_count"] = _db_progress.q_count if _db_progress else 0
+    try:
+        _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+        chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
+        if "q_count" not in session:
+            session["q_count"] = _db_progress.q_count if _db_progress else 0
+    except Exception as db_err:
+        print(f"[DB LOAD ERROR] {db_err}")
+        db.session.rollback()
+        chat_history = session.get("chat_history", [])
     q_count = session.get("q_count", 0)
 
     if request.method == "POST":
@@ -1469,7 +1474,7 @@ def interview():
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=80)
+                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=250)
             )
             question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
