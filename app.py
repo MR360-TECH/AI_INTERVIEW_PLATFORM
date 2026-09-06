@@ -752,8 +752,13 @@ def dashboard():
     if not profile_is_complete(current_user):
         return redirect("/register")
 
-    progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
-    has_progress = bool(progress and progress.q_count > 0)
+    latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).first()
+    if latest_res and latest_res.is_terminated:
+        clear_progress(session["user_id"])
+        has_progress = False
+    else:
+        progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
+        has_progress = bool(progress and progress.q_count > 0)
 
     recent_results = InterviewResult.query.filter(
         InterviewResult.user_id == session["user_id"],
