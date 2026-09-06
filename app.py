@@ -1420,23 +1420,23 @@ def interview():
 
             domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                f"You are an expert {domain_name} interviewer conducting a candidate assessment.\n"
-                f"Difficulty Level: {difficulty_instruction}\n"
-                f"STRICT DOMAIN RULE: All questions MUST stay 100% within the domain of '{domain_name}'.\n"
+                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
+                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
                 "RULES:\n"
-                "1. Output ONLY the raw next question (1-2 sentences). ZERO filler, praise, or acknowledgment.\n"
-                "2. If the candidate answers wrongly or says 'I don't know', change the topic within the domain and ask the next question immediately.\n"
-                "3. Append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end of the question.\n"
+                "1. Output ONLY 1 concise next question (1-2 sentences). No preamble, commentary, or praise.\n"
+                "2. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area/skill within the domain.\n"
+                "3. If candidate answered poorly or said 'I don't know', move to a completely new topic within the domain.\n"
+                "4. Append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
                 f"{completion_option}\n"
                 f"Interview Conversation so far:\n{conversation_text}\n"
-                "Output ONLY the next question with tag:"
+                "Next Question with tag:"
             )
 
         if not question_text:
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=250)
+                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=80)
             )
             question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
@@ -1532,72 +1532,37 @@ def interview_result():
         practice_topic = session.get("practice_topic", "General")
         
         if practice_mode == "viva":
-            grading_instruction = (
-                f"CRITICAL GRADING LEVEL: This is an Academic Viva Voce exam on the subject: {practice_topic}. "
-                "Evaluate the candidate strictly on theoretical precision, accuracy of definitions, academic correctness, and conceptual clarity. "
-                "Provide constructive feedback to help them score well in their university exams."
-            )
+            grading_instruction = f"Academic Viva Voce exam on {practice_topic}. Grade strictly on theoretical accuracy and academic definitions."
         elif practice_mode == "lang":
             target_lang = session.get("lang_target", "English")
-            focus_cat = session.get("lang_focus", "conversation")
-            level = session.get("lang_level", "intermediate")
-            grading_instruction = (
-                f"CRITICAL GRADING LEVEL: This is a language practice session in {target_lang}. "
-                f"Proficiency target: {level.capitalize()}. Focus Category: {focus_cat.capitalize()}. "
-                "Grade the candidate based on: 1. Grammar & Phrasing Accuracy, 2. Vocabulary Range, "
-                "3. Fluency & Pronunciation, 4. Conversational Flow and comprehension. "
-                "Ensure the evaluation and feedback are tailored specifically to learning and improving in this target language, "
-                "providing highly constructive and encouraging advice on their weak points."
-            )
+            grading_instruction = f"Language practice in {target_lang}. Grade on grammar, vocabulary, and conversational fluency."
         elif practice_mode == "drill":
-            grading_instruction = (
-                f"CRITICAL GRADING LEVEL: This is a Concept Drill on the topic: {practice_topic}. "
-                "Evaluate them on logic, structure of thinking, and factual correctness regarding the topic."
-            )
+            grading_instruction = f"Concept Drill on {practice_topic}. Grade on conceptual understanding and logical reasoning."
         else:
             difficulty = session.get("interview_difficulty", "student")
             if difficulty == "student":
-                grading_instruction = (
-                    "CRITICAL GRADING LEVEL: The candidate is a Student / Beginner. Grade them leniently. "
-                    "Evaluate them on basic concepts, enthusiasm, structural thinking, and foundational knowledge. "
-                    "Do NOT penalize them for lacking deep production/architectural experience or advanced corporate scenario management. "
-                    "For a student, a solid basic answer should easily earn a 7-8 out of 10. Be encouraging and focus on potential."
-                )
+                grading_instruction = "Candidate level: Student/Beginner. Grade encouragingly on fundamentals and potential."
             elif difficulty == "senior":
-                grading_instruction = (
-                    "CRITICAL GRADING LEVEL: The candidate is a Senior / Expert. Grade them strictly. "
-                    "Expect detailed technical answers, architectural awareness, system design trade-offs, real-world case experiences, "
-                    "and robust scenario management. A basic answer without depth should get a low score. Reserve 8-10 for outstanding professional-level answers."
-                )
+                grading_instruction = "Candidate level: Senior/Expert. Grade strictly on deep technical proficiency, design, and architecture."
             else:
-                grading_instruction = (
-                    "CRITICAL GRADING LEVEL: The candidate is Mid-Level. Grade them on standard expectations. "
-                    "Expect practical knowledge, mid-level competency, and clean implementation. Grade balanced and fairly."
-                )
+                grading_instruction = "Candidate level: Mid-Level. Grade balanced on standard industry expectations."
 
-        prompt = ("You are a senior interviewer at a professional hiring panel, writing the official written evaluation for a candidate's interview record. "
-          f"{grading_instruction}\n\n"
-          "This candidate may be interviewing in ANY field, software engineering, music performance, dance, fitness coaching, marketing, teaching, or any other domain. "
-          "You already know their field from the first exchange in the conversation below. Evaluate them using criteria that a real expert or hiring panel in THAT specific field would actually use, "
-          "for example, a fitness coach should be judged on client communication, programming knowledge, and safety awareness, not on unrelated technical skills; a musician should be judged on artistic understanding, technique discussion, and stage/performance readiness where relevant to their answers.\n\n"
-          "Ground every claim in what the candidate actually said, reference specific moments or themes from their real answers rather than generic praise or criticism. Do not invent details not present in the conversation. "
-          "If behavioral or situational questions were asked (such as 'tell me about yourself', 'why should we hire you', or domain situational scenarios), evaluate their communication clarity, self-awareness, confidence, and domain-appropriate problem resolution sensitive to their experience. "
-          "Initially tell some strengths of the candidate even if he has even one question answered correctly. "
-          "Show some mercy on the candidate even if he didn't perform well and tried his best to answer any question. "
-          "If an answer was thin, evasive, or off-topic, say so plainly and explain why it fell short. If an answer was excellent, explain specifically what made it strong. "
-          "Note how the candidate's performance trended across the interview, did they warm up and improve, stay consistent, or fade under harder questions?\n\n"
-          "Write in formal, precise business-evaluation language, the way a hiring committee's official written report reads. No casual phrasing, no filler praise, no hedging.dont mention any difficulty levels etc on the report maintain sensitive words and professional tone "
-          "Calibrate the score honestly: 9-10 is reserved for exceptional, hire-immediately performance; 7-8 is solid and competent; 5-6 is mixed with real gaps; below 5 means significant weaknesses outweighed strengths. "
-          "Respond in EXACTLY this format, nothing else, no markdown symbols like ** or #:\n"
-          " output SCORE: [a number out of 10]\n"
-          "SUMMARY:\n"
-          "[A formal, multi-paragraph evaluation of at least 180 words, written as a real hiring panel report. Structure it as flowing paragraphs (not bullet points or labeled sections) covering: overall impression and field-appropriate competence; concrete strengths grounded in specific answers; concrete weaknesses or gaps grounded in specific answers; how they performed under increasing difficulty; and a closing paragraph with a clear, actionable recommendation for what they should work on next.]\n\n"
-          "Conversation: " + conversation_text)
+        domain_val = session.get("interview_domain", "General")
+        prompt = (
+            f"Write an official hiring panel evaluation for this {domain_val} interview assessment.\n"
+            f"{grading_instruction}\n"
+            "Evaluate candidate's actual answers in the conversation below.\n\n"
+            "Format EXACTLY as follows (no markdown symbols, no bullets):\n"
+            "SCORE: [number out of 10]\n"
+            "SUMMARY:\n"
+            "[A clear 2-paragraph professional report covering overall technical impression, verified strengths, gaps/improvements, and future recommendations.]\n\n"
+            f"Interview Transcript:\n{conversation_text}"
+        )
 
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=350)
+            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=220)
         )
         evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
 
