@@ -1423,18 +1423,24 @@ def interview():
             if q_count >= MIN_QUESTIONS:
                 completion_option = f"If you have gathered enough evaluation data after {MIN_QUESTIONS} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
 
-            domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
-                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
-                "RULES:\n"
-                "1. Output ONLY 1 concise next question (1-2 sentences). No preamble, commentary, or praise.\n"
-                "2. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area/skill within the domain.\n"
-                "3. If candidate answered poorly or said 'I don't know', move to a completely new topic within the domain.\n"
-                "4. Append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+                "You are an expert interviewer conducting a real-time assessment.\n\n"
+                f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
+                "CRITICAL DOMAIN RULE:\n"
+                "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
+                "RULES FOR OUTPUT:\n"
+                "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
+                "2. If they struggle or answer 'I don't know', DO NOT give them the answer. Change the topic/concept within the domain and output the next question immediately.\n"
+                "3. Explore diverse categories of questions within the domain without repeating topics.\n"
+                "4. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate indicates they do not understand a term or question, briefly clarify (in 1 short sentence), then state the question.\n"
+                "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
+                "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
+                "   - `[TYPE: CODE]` if they need to write or fix code.\n"
+                "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
+                "   - `[TYPE: TEXT]` for all standard conceptual questions.\n"
                 f"{completion_option}\n"
-                f"Interview Conversation so far:\n{conversation_text}\n"
-                "Next Question with tag:"
+                f"Conversation so far:\n{conversation_text}\n"
+                "Output ONLY the raw question text with its tag below:"
             )
 
         if not question_text:
@@ -1554,22 +1560,21 @@ def interview_result():
 
         domain_val = session.get("interview_domain", "General")
         prompt = (
-            f"Write an official hiring panel evaluation for this {domain_val} interview assessment.\n"
+            f"Evaluate this {domain_val} interview assessment.\n"
             f"{grading_instruction}\n"
-            "Evaluate candidate's actual answers in the conversation below.\n\n"
-            "Format EXACTLY as follows (no markdown symbols, no bullets):\n"
-            "SCORE: [number out of 10]\n"
+            "Format EXACTLY as follows:\n"
+            "SCORE: [number 1-10]\n"
             "SUMMARY:\n"
-            "[A clear 2-paragraph professional report covering overall technical impression, verified strengths, gaps/improvements, and future recommendations.]\n\n"
-            f"Interview Transcript:\n{conversation_text}"
+            "[2 concise professional sentences evaluating candidate performance, technical strengths, and placement recommendation.]\n\n"
+            f"Transcript:\n{conversation_text}"
         )
 
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=220)
+            config=types.GenerateContentConfig(temperature=0.1, max_output_tokens=110)
         )
-        evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
+        evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 7\nSUMMARY: The candidate actively completed their assessment questions within their core domain."
 
         score = "N/A"
         summary_lines = []

@@ -945,7 +945,7 @@
           </div>
           <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
             <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Continue Session</button>
-            <form method="POST" action="/finish-interview" style="margin:0;">
+            <form method="POST" action="/finish-interview" style="margin:0;" onsubmit="if (loadingOverlay) { const t = document.querySelector('.loader-title'); const s = document.querySelector('.loader-sub'); if (t) t.textContent='Generating practice assessment report...'; if (s) s.textContent='Analyzing responses and scoring performance'; loadingOverlay.classList.add('active'); }">
               <button type="submit" class="btn btn-emerald-grad rounded-pill px-4 fw-bold text-white">
                 <i class="bi bi-check2-circle me-1"></i> Yes, Finish &amp; View Report
               </button>
@@ -1075,7 +1075,20 @@
             if (answerBox) answerBox.classList.remove('input-error');
 
             if (window.stopSpeechRecognition) window.stopSpeechRecognition();
-            if (loadingOverlay) loadingOverlay.classList.add('active');
+            
+            const currentQ = parseInt("{{ q_num }}", 10) || 1;
+            const totalQ = parseInt("{{ total }}", 10) || 5;
+            const isPracticeMode = "{{ 'true' if is_practice else 'false' }}" === "true";
+            
+            if (loadingOverlay) {
+                if (!isPracticeMode && currentQ >= totalQ) {
+                    const t = document.querySelector('.loader-title');
+                    const s = document.querySelector('.loader-sub');
+                    if (t) t.textContent = "AI Panel is compiling your evaluation...";
+                    if (s) s.textContent = "Computing domain scoring, competency ratings & official scorecard";
+                }
+                loadingOverlay.classList.add('active');
+            }
             clearInterval(timerInterval);
 
             answerForm.submit();
