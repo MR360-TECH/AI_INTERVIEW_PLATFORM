@@ -322,27 +322,32 @@ def _fetch_settings_from_db(now):
     return DefaultSettings()
 
 def save_progress(user_id, chat_history, q_count):
-    progress = InterviewProgress.query.filter_by(user_id=user_id).first()
-    if not progress:
-        progress = InterviewProgress(user_id=user_id)
-        db.session.add(progress)
-    progress.chat_history = json.dumps(chat_history)
-    progress.q_count = q_count
     try:
-        db.session.commit()
-    except Exception:
-        # Another concurrent request already inserted this user's row — retry as an update.
-        db.session.rollback()
         progress = InterviewProgress.query.filter_by(user_id=user_id).first()
-        if progress:
-            progress.chat_history = json.dumps(chat_history)
-            progress.q_count = q_count
-            db.session.commit()
+        if not progress:
+            progress = InterviewProgress(user_id=user_id)
+            db.session.add(progress)
+        progress.chat_history = json.dumps(chat_history)
+        progress.q_count = q_count
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        try:
+            progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+            if progress:
+                progress.chat_history = json.dumps(chat_history)
+                progress.q_count = q_count
+                db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 
 def clear_progress(user_id):
-    InterviewProgress.query.filter_by(user_id=user_id).delete()
-    db.session.commit()
+    try:
+        InterviewProgress.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 # ── Security headers injected on every response ────────────────────────────
@@ -1258,22 +1263,17 @@ def interview():
                 if user:
                     user.resume_filename = saved_filename
                     resume_file.seek(0)
-                    extracted_text = analyze_attachment(
+                    resume_analysis = analyze_attachment(
                         file_bytes, resume_file.mimetype,
-                        context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+                        context_hint="Verify this is a candidate resume. If not, output NOT_A_RESUME. Otherwise summarize their role, key skills, and experience level in 2 concise sentences."
                     )
-                    user.resume_text = extracted_text
+                    if "NOT_A_RESUME" not in resume_analysis:
+                        user.resume_text = resume_analysis
+                        session["resume_summary"] = resume_analysis
                     db.session.commit()
-
-                resume_file.seek(0)
-                resume_analysis = analyze_attachment(
-                    file_bytes, resume_file.mimetype,
-                    context_hint="This is supposed to be the candidate's resume. First, verify it genuinely looks like a resume/CV (has sections like experience, education, or skills). If it does NOT look like a real resume, respond with exactly: NOT_A_RESUME. If it IS a resume, summarize their role, key skills, and experience level in 3-4 sentences."
-                )
-                if "NOT_A_RESUME" not in resume_analysis:
-                    session["resume_summary"] = resume_analysis
             except Exception as e:
                 print(f"Error handling interview resume upload: {e}")
+                db.session.rollback()
 
         if answer or code_answer:
             if q_count == 0:
@@ -1321,8 +1321,8 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build conversation text for Gemini prompt — only last 8 turns to keep prompt small and fast
-    recent_history = chat_history[-8:] if len(chat_history) > 8 else chat_history
+    # Build conversation text for Gemini prompt — only last 6 turns to keep prompt small and fast (<1s)
+    recent_history = chat_history[-6:] if len(chat_history) > 6 else chat_history
     conversation_text = ""
     for entry in recent_history:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
@@ -1470,7 +1470,7 @@ def interview():
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=150)
+                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=80)
             )
             question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
@@ -1535,9 +1535,29 @@ def interview_result():
     settings = get_settings()
     PASS_SCORE = settings.pass_score
 
-    conversation_text = ""
     _result_progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
     _result_history = json.loads(_result_progress.chat_history or '[]') if _result_progress else []
+
+    if not _result_history:
+        latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).first()
+        if latest_res:
+            score_pct = int((latest_res.score / 10.0) * 100) if latest_res.score else 0
+            return render_template(
+                "interview_result.html",
+                score=latest_res.score,
+                score_percent=score_pct,
+                label="Completed" if (latest_res.score or 0) >= PASS_SCORE else "Needs Improvement",
+                label_color="#1cc88a" if (latest_res.score or 0) >= PASS_SCORE else "#f6c23e",
+                summary=latest_res.summary,
+                verdict=latest_res.status,
+                verdict_message="Your official evaluation report is recorded.",
+                is_practice=False,
+                candidate_name=session.get("user_name", "Candidate"),
+                report_date=latest_res.interview_datetime.strftime("%B %d, %Y") if latest_res.interview_datetime else datetime.now().strftime("%B %d, %Y"),
+                domain=latest_res.domain or "General"
+            )
+
+    conversation_text = ""
     for entry in _result_history:
         conversation_text += entry["role"] + ": " + entry["text"] + "\n"
 
@@ -1610,7 +1630,8 @@ def interview_result():
 
         response = client.models.generate_content(
             model=MODEL_NAME,
-            contents=prompt
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=350)
         )
         evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
 
