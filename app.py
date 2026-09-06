@@ -732,19 +732,22 @@ def request_entity_too_large(error):
 
 @app.errorhandler(500)
 def internal_server_error(error):
-    db.session.rollback()
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
     print(f"[Internal Server Error]: {error}")
-    # If it's an AJAX/JSON request (e.g. /interview/submit), return JSON error
-    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.path == "/interview/submit":
+    # For AJAX/submit route — return JSON so interview can continue
+    if request.path == "/interview/submit" or request.headers.get("Content-Type", "").startswith("application/json"):
         return jsonify({"error": "server_error", "question": "Can you walk me through a challenging problem you solved recently?", "q_num": session.get("q_count", 0) + 1, "total": 10, "question_type": "text", "done": False}), 200
-    # If user is in interview, return them to interview
-    if "user_id" in session and request.path and "/interview" in request.path:
-        return redirect("/interview")
-    if "user_id" in session:
-        return redirect("/dashboard")
-    return redirect("/login")
-
-
+    # For all other routes — return a simple inline error page (NO redirects to avoid loops)
+    back_url = "/dashboard" if "user_id" in session else "/login"
+    return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title>
+    <style>body{{font-family:sans-serif;background:#0a0f1e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:16px}}
+    h2{{color:#00ffff}}a{{color:#00ffff;font-weight:bold}}</style></head>
+    <body><h2>⚠️ Something went wrong</h2>
+    <p>A temporary server error occurred. Your interview progress is saved.</p>
+    <a href="{back_url}">← Return to Dashboard</a></body></html>""", 500
 
 
 @app.route("/dashboard")
