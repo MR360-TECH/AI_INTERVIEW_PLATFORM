@@ -1088,84 +1088,108 @@
                 const decoder = new TextDecoder('utf-8');
                 let accumulatedText = '';
                 let buffer = '';
+                let completed = false;
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
                     buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n\n');
-                    buffer = lines.pop();
+                    
+                    // Split on event boundaries (handles \r\n\r\n, \n\n)
+                    const chunks = buffer.split(/\r?\n\r?\n/);
+                    buffer = chunks.pop() || '';
 
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const eventData = JSON.parse(line.slice(6));
+                    for (const chunk of chunks) {
+                        const trimmedChunk = chunk.trim();
+                        if (!trimmedChunk) continue;
 
-                                if (eventData.status === 'redirect' || eventData.done) {
-                                    window.location.href = eventData.redirect_url || '/interview-result';
-                                    return;
-                                }
+                        const lines = trimmedChunk.split(/\r?\n/);
+                        for (const line of lines) {
+                            const trimmedLine = line.trim();
+                            if (trimmedLine.startsWith('data:')) {
+                                const jsonStr = trimmedLine.slice(5).trim();
+                                if (!jsonStr) continue;
+                                try {
+                                    const eventData = JSON.parse(jsonStr);
 
-                                if (eventData.status === 'chunk' && eventData.text) {
-                                    accumulatedText += eventData.text;
-                                    let cleanDisplay = accumulatedText.replace(/\[TYPE:\s*[A-Z]+\]/gi, '');
-                                    if (qBox) {
-                                        qBox.innerHTML = cleanDisplay + '<span class="streaming-cursor">▌</span>';
-                                    }
-                                }
-
-                                if (eventData.status === 'complete') {
-                                    if (qBox) {
-                                        qBox.textContent = eventData.full_question;
+                                    if (eventData.status === 'redirect' || eventData.done) {
+                                        window.location.href = eventData.redirect_url || '/interview-result';
+                                        return;
                                     }
 
-                                    // Toggle dynamic input wrappers based on question type
-                                    const codeWrap = document.getElementById('codeEditorWrapper');
-                                    const fileWrap = document.getElementById('attachmentBoxWrapper');
-                                    if (codeWrap) {
-                                        codeWrap.style.display = (eventData.question_type === 'code') ? 'block' : 'none';
-                                        if (eventData.question_type === 'code' && typeof initMonacoEditor === 'function') {
-                                            initMonacoEditor();
+                                    if (eventData.status === 'chunk' && eventData.text) {
+                                        accumulatedText += eventData.text;
+                                        let cleanDisplay = accumulatedText.replace(/\[TYPE:\s*[A-Z]+\]/gi, '');
+                                        if (qBox) {
+                                            qBox.innerHTML = cleanDisplay + '<span class="streaming-cursor">▌</span>';
                                         }
                                     }
-                                    if (fileWrap) {
-                                        fileWrap.style.display = (eventData.question_type === 'file') ? 'block' : 'none';
+
+                                    if (eventData.status === 'complete') {
+                                        completed = true;
+                                        if (qBox) {
+                                            qBox.textContent = eventData.full_question;
+                                        }
+
+                                        // Toggle dynamic input wrappers based on question type
+                                        const codeWrap = document.getElementById('codeEditorWrapper');
+                                        const fileWrap = document.getElementById('attachmentBoxWrapper');
+                                        if (codeWrap) {
+                                            codeWrap.style.display = (eventData.question_type === 'code') ? 'block' : 'none';
+                                            if (eventData.question_type === 'code' && typeof initMonacoEditor === 'function') {
+                                                initMonacoEditor();
+                                            }
+                                        }
+                                        if (fileWrap) {
+                                            fileWrap.style.display = (eventData.question_type === 'file') ? 'block' : 'none';
+                                        }
+
+                                        // Clear input fields
+                                        if (answerBox) answerBox.value = '';
+                                        if (codeAnswerInput) codeAnswerInput.value = '';
+                                        if (typeof editorInstance !== 'undefined' && editorInstance) {
+                                            editorInstance.setValue("# Write your code/solution here...\n");
+                                        }
+
+                                        const fileInput = document.getElementById('attachmentInput');
+                                        if (fileInput) fileInput.value = '';
+                                        const attName = document.getElementById('attachmentFileName');
+                                        if (attName) attName.style.display = 'none';
+
+                                        // Reset timer countdown
+                                        secondsLeft = TOTAL_SECONDS;
+                                        timerExpired = false;
+                                        if (timeUpWarning) timeUpWarning.classList.remove('active');
+                                        updateTimerDisplay();
+                                        startTimer();
+
+                                        // Hide resume box after question 1
+                                        const resumeBox = document.querySelector('.upload-box');
+                                        if (resumeBox && eventData.q_num > 1) {
+                                            resumeBox.style.display = 'none';
+                                        }
+
+                                        if (loadingOverlay) loadingOverlay.classList.remove('active');
+                                        isSubmitting = false;
+                                        if (answerBox) answerBox.focus();
                                     }
-
-                                    // Clear input fields
-                                    if (answerBox) answerBox.value = '';
-                                    if (codeAnswerInput) codeAnswerInput.value = '';
-                                    if (typeof editorInstance !== 'undefined' && editorInstance) {
-                                        editorInstance.setValue("# Write your code/solution here...\n");
-                                    }
-
-                                    const fileInput = document.getElementById('attachmentInput');
-                                    if (fileInput) fileInput.value = '';
-                                    const attName = document.getElementById('attachmentFileName');
-                                    if (attName) attName.style.display = 'none';
-
-                                    // Reset timer countdown
-                                    secondsLeft = TOTAL_SECONDS;
-                                    timerExpired = false;
-                                    if (timeUpWarning) timeUpWarning.classList.remove('active');
-                                    updateTimerDisplay();
-                                    startTimer();
-
-                                    // Hide resume box after question 1
-                                    const resumeBox = document.querySelector('.upload-box');
-                                    if (resumeBox && eventData.q_num > 1) {
-                                        resumeBox.style.display = 'none';
-                                    }
-
-                                    if (loadingOverlay) loadingOverlay.classList.remove('active');
-                                    isSubmitting = false;
-                                    if (answerBox) answerBox.focus();
+                                } catch (e) {
+                                    console.error("JSON parse error:", e, jsonStr);
                                 }
-                            } catch (e) {
-                                console.error("JSON parse error:", e);
                             }
                         }
+                    }
+                }
+
+                // If stream ended but complete event wasn't received (proxy boundary cut), finalize safely
+                if (!completed && accumulatedText && qBox) {
+                    let cleanDisplay = accumulatedText.replace(/\[TYPE:\s*[A-Z]+\]/gi, '').trim();
+                    if (cleanDisplay) {
+                        qBox.textContent = cleanDisplay;
+                        if (answerBox) answerBox.value = '';
+                        isSubmitting = false;
+                        if (answerBox) answerBox.focus();
                     }
                 }
             } catch (err) {

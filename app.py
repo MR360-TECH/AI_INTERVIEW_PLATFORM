@@ -1689,7 +1689,11 @@ def interview_stream():
 
         yield f"data: {json.dumps({'status': 'complete', 'full_question': cleaned_q, 'question_type': question_type, 'q_num': answers_count + 1, 'total': MAX_QUESTIONS, 'timer_seconds': timer_seconds, 'done': False})}\n\n"
 
-    return Response(stream_with_context(generate_question_stream()), mimetype="text/event-stream")
+    response = Response(stream_with_context(generate_question_stream()), mimetype="text/event-stream")
+    response.headers["Cache-Control"] = "no-cache, no-transform"
+    response.headers["X-Accel-Buffering"] = "no"
+    response.headers["Connection"] = "keep-alive"
+    return response
 
 
 @app.route("/finish-interview", methods=["GET", "POST"])
