@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory, Response, stream_with_context
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1502,7 +1502,202 @@ def interview():
             "done": False
         })
 
-    return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+@app.route("/interview/stream", methods=["POST"])
+def interview_stream():
+    if "user_id" not in session:
+        def unauth_stream():
+            yield f"data: {json.dumps({'status': 'redirect', 'redirect_url': '/login', 'done': True})}\n\n"
+        return Response(stream_with_context(unauth_stream()), mimetype="text/event-stream")
+
+    user_id = session["user_id"]
+    settings = get_settings()
+    MIN_QUESTIONS = settings.min_questions
+    MAX_QUESTIONS = settings.max_questions
+    timer_seconds = settings.question_timer_seconds or 90
+
+    # Load DB progress
+    try:
+        _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+        chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
+        if "q_count" not in session:
+            session["q_count"] = _db_progress.q_count if _db_progress else 0
+    except Exception as db_err:
+        print(f"[STREAM DB LOAD ERROR] {db_err}")
+        db.session.rollback()
+        chat_history = session.get("chat_history", [])
+
+    q_count = session.get("q_count", 0)
+
+    answer = request.form.get("answer", "").strip()
+    code_answer = request.form.get("code_answer", "").strip()
+    attachment = request.files.get("attachment")
+    resume_file = request.files.get("resume")
+
+    if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+        try:
+            filename = resume_file.filename
+            ext = filename.rsplit('.', 1)[1].lower()
+            user = db.session.get(User, user_id)
+            saved_filename = f"user_{user.id}_resume.{ext}"
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], saved_filename)
+            resume_file.seek(0)
+            file_bytes = resume_file.read()
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)
+            if user:
+                user.resume_filename = saved_filename
+                resume_file.seek(0)
+                resume_analysis = analyze_attachment(
+                    file_bytes, resume_file.mimetype,
+                    context_hint="Verify this is a candidate resume. If not, output NOT_A_RESUME. Otherwise summarize their role, key skills, and experience level in 2 concise sentences."
+                )
+                if "NOT_A_RESUME" not in resume_analysis:
+                    user.resume_text = resume_analysis
+                    session["resume_summary"] = resume_analysis
+                db.session.commit()
+        except Exception as e:
+            print(f"Error handling resume upload: {e}")
+            db.session.rollback()
+
+    if answer or code_answer:
+        if q_count == 0:
+            if session.get("interview_mode"):
+                session["interview_domain"] = session.get("practice_topic", "Practice")
+            else:
+                session["interview_domain"] = answer.strip()
+            session["interview_difficulty"] = settings.default_difficulty or "student"
+
+        full_answer = answer
+        if code_answer:
+            full_answer = (full_answer + "\n\n[Candidate Code Input]:\n" + code_answer) if full_answer else ("[Candidate Code Input]:\n" + code_answer)
+
+        if attachment and attachment.filename and allowed_file(attachment.filename):
+            file_bytes = attachment.read()
+            mime_type = attachment.mimetype
+            analysis = analyze_attachment(
+                file_bytes, mime_type,
+                context_hint="This was attached by the candidate alongside their answer during a job interview."
+            )
+            full_answer += " [Attached file analysis: " + analysis + "]"
+
+        try:
+            chat_history.append({"role": "answer", "text": full_answer})
+            q_count += 1
+            session["q_count"] = q_count
+            session.modified = True
+            save_progress(user_id, chat_history, q_count)
+        except Exception as save_err:
+            print(f"[STREAM SAVE ERROR] {save_err}")
+            db.session.rollback()
+
+    is_practice = bool(session.get("interview_mode"))
+    if not is_practice and q_count >= MAX_QUESTIONS:
+        def finish_stream():
+            yield f"data: {json.dumps({'status': 'redirect', 'redirect_url': '/interview-result', 'done': True})}\n\n"
+        return Response(stream_with_context(finish_stream()), mimetype="text/event-stream")
+
+    # Build prompt
+    conversation_text = ""
+    for entry in chat_history[-6:]:
+        role_tag = "Q" if entry["role"] == "question" else "A"
+        txt = entry["text"]
+        if len(txt) > 200:
+            txt = txt[:200] + "..."
+        conversation_text += f"{role_tag}: {txt}\n"
+
+    difficulty = session.get("interview_difficulty", "student")
+    practice_mode = session.get("interview_mode")
+    practice_topic = session.get("practice_topic", "General")
+
+    if practice_mode == "viva":
+        difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and definitions."
+    elif practice_mode == "lang":
+        target_lang = session.get("lang_target", "English")
+        difficulty_instruction = f"FluentFlow language practice in {target_lang}. Focus on conversation flow and vocabulary."
+    elif practice_mode == "drill":
+        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge logic and reasoning."
+    else:
+        if difficulty == "student":
+            difficulty_instruction = "Junior/Student level. Ask foundational interview questions suitable for a beginner. Explore core fundamentals."
+        elif difficulty == "senior":
+            difficulty_instruction = "Senior/Expert level. Ask challenging architectural, trade-off, and real-world system design questions."
+        else:
+            difficulty_instruction = "Mid-Level. Ask practical engineering, implementation, and problem-solving questions."
+
+    completion_option = ""
+    if q_count >= MIN_QUESTIONS:
+        completion_option = f"If you have gathered enough evaluation data after {MIN_QUESTIONS} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
+
+    domain_name = session.get("interview_domain", "Software Engineering")
+    prompt = (
+        f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
+        f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
+        "RULES:\n"
+        "1. Output ONLY 1 concise next question (1 sentence). ZERO preamble, praise, feedback, or transition phrases.\n"
+        "2. ZERO CHATTER: NEVER say 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start directly with the question.\n"
+        "3. DIVERSITY: Do not repeat any question or topic already asked in the conversation history below.\n"
+        "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+        f"{completion_option}\n"
+        f"Interview Conversation so far:\n{conversation_text}\n"
+        "Next Question with tag:"
+    )
+
+    def generate_question_stream():
+        accumulated_text = ""
+        genai_client = get_genai_client()
+        try:
+            if genai_client:
+                response = genai_client.models.generate_content_stream(
+                    model=MODEL_NAME,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
+                )
+                for chunk in response:
+                    if hasattr(chunk, 'text') and chunk.text:
+                        accumulated_text += chunk.text
+                        yield f"data: {json.dumps({'status': 'chunk', 'text': chunk.text})}\n\n"
+            if not accumulated_text:
+                accumulated_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+                yield f"data: {json.dumps({'status': 'chunk', 'text': accumulated_text})}\n\n"
+        except Exception as err:
+            print(f"[STREAM GENERATION ERROR] {err}")
+            if not accumulated_text:
+                accumulated_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+                yield f"data: {json.dumps({'status': 'chunk', 'text': accumulated_text})}\n\n"
+
+        if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in accumulated_text.upper() or "[END_INTERVIEW]" in accumulated_text.upper()):
+            yield f"data: {json.dumps({'status': 'redirect', 'redirect_url': '/interview-result', 'done': True})}\n\n"
+            return
+
+        question_type = "text"
+        match = re.search(r'\[TYPE:\s*([A-Z]+)\]', accumulated_text)
+        if match:
+            tag_type = match.group(1).lower()
+            if tag_type in ["code", "file", "text"]:
+                question_type = tag_type
+            accumulated_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', accumulated_text).strip()
+
+        conversational_patterns = [
+            r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
+            r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
+            r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
+        ]
+        for pattern in conversational_patterns:
+            accumulated_text = re.sub(pattern, '', accumulated_text, flags=re.IGNORECASE).strip()
+        if accumulated_text and accumulated_text[0].islower():
+            accumulated_text = accumulated_text[0].upper() + accumulated_text[1:]
+
+        try:
+            chat_history.append({"role": "question", "text": accumulated_text, "type": question_type})
+            session.modified = True
+            save_progress(user_id, chat_history, q_count)
+        except Exception as db_err:
+            print(f"[STREAM SAVE QUESTION ERROR] {db_err}")
+
+        yield f"data: {json.dumps({'status': 'complete', 'full_question': accumulated_text, 'question_type': question_type, 'q_num': q_count + 1, 'total': MAX_QUESTIONS, 'timer_seconds': timer_seconds, 'done': False})}\n\n"
+
+    return Response(stream_with_context(generate_question_stream()), mimetype="text/event-stream")
+
 
 @app.route("/finish-interview", methods=["GET", "POST"])
 def finish_interview():
