@@ -137,15 +137,23 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
-gemini_api_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 MODEL_NAME = "gemini-flash-lite-latest"
+
+
+def get_genai_client():
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    return genai.Client(api_key=api_key)
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
     try:
+        genai_client = get_genai_client()
+        if not genai_client:
+            return "Could not analyze the attached file."
         prompt = "Analyze this file in the context of a job interview. " + context_hint + " Be factual and concise, 2-4 sentences only."
-        response = client.models.generate_content(
+        response = genai_client.models.generate_content(
             model=MODEL_NAME,
             contents=[
                 types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
@@ -1422,12 +1430,16 @@ def interview():
             )
 
         if not question_text:
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
-            )
-            question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
+            genai_client = get_genai_client()
+            if genai_client:
+                response = genai_client.models.generate_content(
+                    model=MODEL_NAME,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
+                )
+                question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
+            else:
+                question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -1574,12 +1586,15 @@ def interview_result():
             f"Interview Transcript:\n{conversation_text}"
         )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
-        )
-        raw_eval = response.text.strip() if response and hasattr(response, 'text') and response.text else ""
+        genai_client = get_genai_client()
+        raw_eval = ""
+        if genai_client:
+            response = genai_client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
+            )
+            raw_eval = response.text.strip() if response and hasattr(response, 'text') and response.text else ""
 
         # Robust score extraction
         score_match = re.search(r'(?:SCORE|RATING|OVERALL SCORE)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?)\s*(?:/\s*10)?', raw_eval, re.IGNORECASE)
