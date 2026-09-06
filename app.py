@@ -1438,68 +1438,69 @@ def interview():
 
 def build_interview_prompt(chat_history, q_count, domain_name, difficulty, practice_mode, practice_topic, lang_target, lang_focus, lang_level, min_questions, max_questions):
     """
-    Builds a structured, non-repeating, progressive prompt for Gemini.
-    - Dynamically progresses through evaluation phases (Fundamentals -> Practical/Code -> Architecture -> Troubleshooting -> Performance).
-    - Explicitly lists all previously asked questions to strictly prevent repetition.
+    Universal Domain-Agnostic Adaptive Interview Prompt Engine.
+    Works dynamically for ANY profession or skill:
+    - Tech: Software Engineer, DevOps, Data Analyst, CyberSecurity
+    - Non-Tech: Fitness Trainer, Marketing Strategist, Executive Chef, Doctor, Financial Analyst, Pilot, etc.
     """
     if practice_mode == "viva":
         difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and fundamental definitions."
     elif practice_mode == "lang":
         difficulty_instruction = f"FluentFlow language practice in {lang_target}. Focus on natural conversational fluency, idiom usage, and vocabulary."
     elif practice_mode == "drill":
-        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate's problem-solving logic and technical depth."
+        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate's problem-solving logic and domain depth."
     else:
         if difficulty == "student":
-            difficulty_instruction = "Junior / Entry Level. Focus on core syntax, fundamental data structures, basic API concepts, and foundational principles."
+            difficulty_instruction = f"Entry / Junior level. Evaluate fundamental principles, basic terminology, and core rules of {domain_name}."
         elif difficulty == "senior":
-            difficulty_instruction = "Senior / Staff Level. Focus on system design, trade-offs, concurrency, high availability, database internals, and architectural bottlenecks."
+            difficulty_instruction = f"Senior / Lead / Expert level. Evaluate high-level strategy, trade-offs, complex edge cases, crisis handling, and advanced mastery in {domain_name}."
         else:
-            difficulty_instruction = "Mid-Level. Focus on practical engineering implementation, clean code, error handling, state management, and real-world design."
+            difficulty_instruction = f"Mid-Level professional. Evaluate hands-on execution, practical methodologies, problem solving, and real-world scenarios in {domain_name}."
 
-    # Explicitly list all previously asked questions so the model NEVER repeats
+    # Extract all previously asked questions for strict deduplication
     prior_questions = [e["text"] for e in chat_history if e.get("role") == "question"]
     if prior_questions:
         prior_q_list = "\n".join([f"- {q}" for q in prior_questions])
     else:
-        prior_q_list = "None yet."
+        prior_q_list = "None yet (this is the first interview question)."
 
-    # Get the candidate's latest response
+    # Extract candidate's latest response
     candidate_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
     latest_answer = candidate_answers[-1] if candidate_answers else ""
     if len(latest_answer) > 400:
         latest_answer = latest_answer[:400] + "..."
 
-    # Structured technical interview progression
+    # Universal 5-Stage Competency Progression Matrix (works for ANY domain)
     if q_count <= 1:
-        phase_focus = f"Phase 1 (Core Fundamentals): Test fundamental concepts, internal language/framework mechanics, or core principles in {domain_name}."
+        stage_focus = f"Stage 1 (Core Fundamentals & Principles): Ask a foundational question assessing core science, industry standards, essential principles, or core methodology of '{domain_name}'."
     elif q_count == 2:
-        phase_focus = f"Phase 2 (Practical Implementation): Present a practical coding or design challenge testing hands-on problem solving in {domain_name}."
+        stage_focus = f"Stage 2 (Practical Application & Scenario Handling): Present a realistic real-world case, client scenario, or hands-on task requiring practical execution in '{domain_name}'."
     elif q_count == 3:
-        phase_focus = f"Phase 3 (Architecture & State/Data): Ask about database design, caching, state management, or component contracts in {domain_name}."
+        stage_focus = f"Stage 3 (Methodologies, Tools & Assessments): Ask about specialized frameworks, tracking metrics, assessment methods, or industry tools used in '{domain_name}'."
     elif q_count == 4:
-        phase_focus = f"Phase 4 (Troubleshooting & Scenarios): Present a realistic debugging scenario, production incident, or edge case in {domain_name}."
+        stage_focus = f"Stage 4 (Troubleshooting, Crisis & Difficult Edge Cases): Present a challenging problem, unexpected client/project crisis, failure recovery, or safety dilemma in '{domain_name}'."
     else:
-        phase_focus = f"Phase 5 (Performance & Scaling): Ask about concurrency, performance profiling, security, or architectural trade-offs in {domain_name}."
+        stage_focus = f"Stage 5 (Advanced Strategy, Scalability & Leadership): Ask about advanced strategy, long-term planning, ethical trade-offs, or high-level optimization in '{domain_name}'."
 
     completion_option = ""
     if q_count >= min_questions:
         completion_option = f"If you have gathered comprehensive evaluation data and the interview has reached {max_questions} questions, output ONLY: [END_INTERVIEW]\n"
 
     prompt = (
-        f"Role: Expert {domain_name} Technical Interviewer.\n"
-        f"Difficulty: {difficulty_instruction}\n"
-        f"Current Stage: Question {q_count} of {max_questions}.\n"
-        f"Stage Objective: {phase_focus}\n\n"
-        f"Candidate's Latest Response:\n\"{latest_answer}\"\n\n"
-        "TOPICS & QUESTIONS ALREADY ASKED (STRICT RULE: NEVER REPEAT ANY OF THESE CONCEPTS OR QUESTIONS):\n"
+        f"You are an Elite Senior Interviewer and Subject Matter Expert in: {domain_name}.\n"
+        f"Candidate Target Level: {difficulty_instruction}\n"
+        f"Interview Progress: Question {q_count} of {max_questions}.\n"
+        f"Current Evaluation Objective: {stage_focus}\n\n"
+        f"Candidate's Latest Response to Evaluate:\n\"{latest_answer}\"\n\n"
+        "PREVIOUSLY ASKED QUESTIONS (STRICT RULE: YOU MUST NEVER REPEAT OR RE-ASK ANY OF THESE CONCEPTS):\n"
         f"{prior_q_list}\n\n"
-        "RULES:\n"
-        f"1. Ask EXACTLY 1 new, concise technical question (1-2 sentences) strictly within '{domain_name}'.\n"
-        "2. ZERO CHATTER: DO NOT say 'Good job', 'Understood', 'Let\\'s move on', 'Sure', or 'Great answer'. Start directly with the question.\n"
-        "3. DIVERSITY: Explore a completely fresh facet of the technology stack without repeating earlier topics.\n"
-        "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+        "RULES FOR GENERATING THE NEXT QUESTION:\n"
+        f"1. Ask EXACTLY 1 new, concise question (1-2 sentences) directly relevant to '{domain_name}'.\n"
+        "2. ZERO CHATTER: Absolutely NO conversational filler ('Good job', 'Understood', 'Let\\'s move on', 'Sure', 'Great answer'). Start immediately with the question.\n"
+        "3. DIVERSITY: Explore a completely fresh, untested competency area within the domain.\n"
+        f"4. TAG RULE: If '{domain_name}' involves software coding/programming, you may use [TYPE: CODE] or [TYPE: TEXT]. For all non-programming domains (fitness, medicine, marketing, finance, design, management, etc.), ALWAYS end with [TYPE: TEXT] or [TYPE: FILE].\n"
         f"{completion_option}\n"
-        "Next Question:"
+        "Next Question with tag:"
     )
     return prompt
 
