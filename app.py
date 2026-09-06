@@ -730,14 +730,20 @@ def request_entity_too_large(error):
         return redirect("/dashboard?error=file_too_large")
     return redirect("/login?error=file_too_large")
 
-
 @app.errorhandler(500)
 def internal_server_error(error):
     db.session.rollback()
     print(f"[Internal Server Error]: {error}")
+    # If it's an AJAX/JSON request (e.g. /interview/submit), return JSON error
+    if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.path == "/interview/submit":
+        return jsonify({"error": "server_error", "question": "Can you walk me through a challenging problem you solved recently?", "q_num": session.get("q_count", 0) + 1, "total": 10, "question_type": "text", "done": False}), 200
+    # If user is in interview, return them to interview
+    if "user_id" in session and request.path and "/interview" in request.path:
+        return redirect("/interview")
     if "user_id" in session:
-        return redirect("/dashboard?error=server_error")
+        return redirect("/dashboard")
     return redirect("/login")
+
 
 
 
@@ -1291,11 +1297,15 @@ def interview():
                 )
                 full_answer += " [Attached file analysis: " + analysis + "]"
 
-            chat_history.append({"role": "answer", "text": full_answer})
-            q_count += 1
-            session["q_count"] = q_count
-            session.modified = True
-            save_progress(user_id, chat_history, q_count)
+            try:
+                chat_history.append({"role": "answer", "text": full_answer})
+                q_count += 1
+                session["q_count"] = q_count
+                session.modified = True
+                save_progress(user_id, chat_history, q_count)
+            except Exception as save_err:
+                print(f"[SAVE PROGRESS ERROR] {save_err}")
+                db.session.rollback()
 
     # Practice mode has no question cap — user finishes via the Finish button
     is_practice = bool(session.get("interview_mode"))
@@ -1308,9 +1318,10 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build conversation text for Gemini prompt
+    # Build conversation text for Gemini prompt — only last 8 turns to keep prompt small and fast
+    recent_history = chat_history[-8:] if len(chat_history) > 8 else chat_history
     conversation_text = ""
-    for entry in chat_history:
+    for entry in recent_history:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
     question_text = ""
     prompt = ""
@@ -1995,8 +2006,10 @@ def interview_submit():
 
     system_prompt = " ".join(p for p in prompt_parts if p)
 
+    # Only send last 8 turns — keeps prompt small and Gemini fast
+    recent_submit = submit_history[-8:] if len(submit_history) > 8 else submit_history
     chat_turns = []
-    for msg in submit_history:
+    for msg in recent_submit:
         role = "user" if msg["role"] == "answer" else "model"
         chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
 
@@ -2004,7 +2017,7 @@ def interview_submit():
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=chat_turns,
-            config=types.GenerateContentConfig(system_instruction=system_prompt, max_output_tokens=300),
+            config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.3, max_output_tokens=120),
         )
         question_text = response.text.strip() if response.text else "Tell me about yourself."
         
