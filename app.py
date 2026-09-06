@@ -360,6 +360,10 @@ def apply_security_headers(response):
 
 @app.route("/")
 def home():
+    if "user_id" in session:
+        return redirect("/dashboard")
+    if session.get("is_admin"):
+        return redirect("/admin")
     return render_template("index.html")
 
 
@@ -731,7 +735,9 @@ def request_entity_too_large(error):
 def internal_server_error(error):
     db.session.rollback()
     print(f"[Internal Server Error]: {error}")
-    return render_template("index.html"), 500
+    if "user_id" in session:
+        return redirect("/dashboard?error=server_error")
+    return redirect("/login")
 
 
 
@@ -743,7 +749,11 @@ def dashboard():
         return redirect("/login")
 
     current_user = db.session.get(User, session["user_id"])
-    if current_user and not profile_is_complete(current_user):
+    if not current_user:
+        session.clear()
+        return redirect("/login")
+
+    if not profile_is_complete(current_user):
         return redirect("/register")
 
     progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
@@ -1302,6 +1312,8 @@ def interview():
     conversation_text = ""
     for entry in chat_history:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
+    question_text = ""
+    prompt = ""
     try:
         if q_count == 0:
             practice_mode = session.get("interview_mode")
@@ -1343,16 +1355,10 @@ def interview():
                     "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
                 )
             else:
-                resume_context = ""
                 if session.get("resume_summary"):
-                    resume_context = "The candidate uploaded their resume, summarized as: " + session["resume_summary"] + " Use this context when useful, but still ask them to confirm their role/domain first. "
-
-                prompt = (
-                    "You are an interviewer starting an interview. "
-                    + resume_context +
-                    "Ask the candidate which specific role or domain they are interviewing for. "
-                    "Output ONLY the question text itself followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
+                    question_text = "Welcome! Based on your resume, which specific role or domain are you interviewing for? [TYPE: TEXT]"
+                else:
+                    question_text = "Which specific role or domain are you interviewing for? [TYPE: TEXT]"
         else:
             difficulty = session.get("interview_difficulty", "student")
             practice_mode = session.get("interview_mode")
@@ -1425,17 +1431,18 @@ def interview():
                     "You may ask these randomly or near the final questions before concluding the interview.\n"
                 )
 
+            domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                "You are an expert interviewer conducting a real-time assessment.\n\n"
+                f"You are an expert interviewer conducting a real-time assessment for the domain: '{domain_name}'.\n\n"
                 f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
-                "CRITICAL DOMAIN RULE:\n"
-                "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
+                f"CRITICAL DOMAIN RULE:\n"
+                f"You MUST ask questions strictly 100% within the candidate's chosen domain: '{domain_name}'. Never switch to unrelated fields.\n\n"
                 "RULES FOR OUTPUT:\n"
                 "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
                 "2. If they struggle or answer 'I don't know', DO NOT give them the answer. Change the topic/concept within the domain and output the next question immediately.\n"
                 "3. Explore diverse categories of questions within the domain without repeating topics.\n"
                 "4. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate indicates they do not understand a term or question, briefly clarify (in 1 short sentence), then state the question.\n"
-                "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
+                "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?').\n"
                 "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
                 "   - `[TYPE: CODE]` if they need to write or fix code.\n"
                 "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
@@ -1445,11 +1452,13 @@ def interview():
                 "Output ONLY the raw question text with its tag below:"
             )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
-        )
-        question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Which specific role or domain are you interviewing for? [TYPE: TEXT]")
+        if not question_text:
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=150)
+            )
+            question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -1959,24 +1968,31 @@ def interview_submit():
     difficulty = session.get("interview_difficulty", "student")
     resume_summary = session.get("resume_summary", "")
 
+    if difficulty == "student":
+        diff_note = "Candidate level: Student/Beginner. Ask practical beginner-friendly questions. No advanced or architecture-level questions."
+    elif difficulty == "senior":
+        diff_note = "Candidate level: Senior/Expert. Ask deep technical, architectural, and scenario-based questions. Maintain a high bar."
+    else:
+        diff_note = "Candidate level: Mid-Level. Ask standard industry questions with moderate depth."
+
     prompt_parts = [
-        f"You are a strict {domain} interviewer. Difficulty: {difficulty}.",
+        f"You are a strict {domain} interviewer. Domain: {domain}. {diff_note}",
         f"Resume summary: {resume_summary}" if resume_summary else "",
-        "CRITICAL RULE: You MUST stay strictly 100% within the domain of " + domain + ". NEVER switch to unrelated fields.",
-        "Output ONLY the raw next question.explore diverse category of questions within the domain and change topic of questions if they previous answer is wrong or not upto the mark Keep it concise (under 2 sentences). ZERO preamble or acknowledgment.",
-        "If they answer 'I don't know', DO NOT give them the answer and DO NOT acknowledge it. Just output the next question immediately.",
+        f"CRITICAL RULE: ALL questions MUST be strictly within the '{domain}' domain only. NEVER ask questions from unrelated fields.",
+        "Output ONLY the raw next question. Explore diverse categories within the domain. Change topic if the previous answer was wrong. Keep it concise (1-2 sentences). ZERO preamble, filler, or acknowledgment.",
+        "If they answer 'I don't know', DO NOT give them the answer. Just output the next question immediately.",
     ]
     if not is_practice:
         prompt_parts.append(
             "BEHAVIORAL/SITUATIONAL RULE: Ensure to ask 2 behavioral or situational questions "
             "(e.g., 'Tell me about yourself', 'Why should we hire you?', or domain scenario questions) randomly or near the end before concluding."
         )
-    
+
     if not is_practice and submit_q_count >= MIN_QUESTIONS:
         prompt_parts.append("If the candidate has demonstrated sufficient knowledge and you are ready to finish the interview, output ONLY the exact phrase: [END_INTERVIEW]")
-        
-    prompt_parts.append(f"Question {submit_q_count + 1} (Max: {MAX_QUESTIONS}).")
-    
+
+    prompt_parts.append(f"Question {submit_q_count + 1} (Max: {MAX_QUESTIONS}). You MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.")
+
     system_prompt = " ".join(p for p in prompt_parts if p)
 
     chat_turns = []
