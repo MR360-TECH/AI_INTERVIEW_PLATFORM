@@ -3,7 +3,7 @@ services:
     name: ai-interview-platform
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 2 --threads 4 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120
     envVars:
       - key: DATABASE_URL
         fromDatabase:

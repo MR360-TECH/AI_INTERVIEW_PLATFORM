@@ -96,7 +96,24 @@ if db_url.startswith("mysql"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Production database connection pooling (prevents dead connection stalls on Render PostgreSQL)
+if not db_url.startswith("sqlite"):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 280,
+        'pool_timeout': 20,
+        'max_overflow': 5
+    }
+
 db = SQLAlchemy(app)
+
+# Performance optimization: static asset browser caching
+@app.after_request
+def add_performance_headers(response):
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response
 
 # Support Render persistent disk for file uploads
 render_persistent_dir = "/var/data"
@@ -120,55 +137,66 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
-gemini_api_key = os.environ.get("GEMINI_API_KEY")
-client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
-MODEL_NAME = "gemini-flash-lite-latest"
+PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
+FALLBACK_MODELS = ["gemini-3.5-flash-lite", "gemini-3.6-flash"]
+_gemini_client_instance = None
 
 
-
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
-
-oauth = OAuth(app)
-if has_google_oauth:
-    google = oauth.register(
-        name='google',
-        client_id=GOOGLE_CLIENT_ID,
-        client_secret=GOOGLE_CLIENT_SECRET,
-        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-        client_kwargs={'scope': 'openid email profile'}
-    )
-else:
-    google = None
+def get_gemini_client():
+    """Dynamically get or initialize the Gemini API client."""
+    global _gemini_client_instance
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    if _gemini_client_instance is None:
+        _gemini_client_instance = genai.Client(api_key=api_key)
+    return _gemini_client_instance
 
 
-def is_valid_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
+def generate_gemini_response(contents, config=None, fallback_text=""):
+    """
+    Executes Gemini content generation with multi-model fallback,
+    ensuring high availability, fast response times, and resilience against spikes.
+    """
+    g_client = get_gemini_client()
+    if not g_client:
+        return fallback_text
 
+    candidate_models = [PRIMARY_MODEL] + [m for m in FALLBACK_MODELS if m != PRIMARY_MODEL]
+    last_err = None
 
-def profile_is_complete(user):
-    if not user.gender:
-        return False
-    if getattr(user, 'user_type', None) == 'professional':
-        return bool(user.current_designation and user.years_of_experience)
-    return bool(user.education and user.course and user.semester)
+    for m in candidate_models:
+        try:
+            res = g_client.models.generate_content(
+                model=m,
+                contents=contents,
+                config=config
+            )
+            if res and hasattr(res, 'text') and res.text:
+                return res.text.strip()
+        except Exception as e:
+            last_err = e
+            print(f"[GEMINI WARNING] Model {m} failed: {e}. Trying fallback model...")
+            continue
+
+    print(f"[GEMINI ERROR] All candidate models failed. Last error: {last_err}")
+    return fallback_text
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
     try:
         prompt = "Analyze this file in the context of a job interview. " + context_hint + " Be factual and concise, 2-4 sentences only."
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=[
-                types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
-                prompt
-            ]
-        )
-        return response.text.strip()
+        contents = [
+            types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+            prompt
+        ]
+        config = types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
+        res_text = generate_gemini_response(contents, config=config, fallback_text="")
+        return res_text if res_text else "Could not analyze the attached file."
     except Exception as e:
+        print(f"[ATTACHMENT ANALYSIS ERROR] {e}")
         return "Could not analyze the attached file."
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -1359,21 +1387,21 @@ def interview():
             else:
                 if difficulty == "student":
                     difficulty_instruction = (
-                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
-                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
-                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle,change the topic and ask different question withtin the same domain "
-                        "ask a simpler follow-up or guide them gently.if previous answer was notupto the mark or wrong , change the concept of question. Do not end early unless you have asked at least 5 questions. "
+                        "The candidate is a Student/Beginner. Keep questions friendly, clear, and focused on core fundamental concepts. "
+                        "Ask practical interview questions suitable for a junior role. Explore diverse categories within their domain. "
+                        "If their previous answer was weak or incorrect, smoothly move to a different concept within the domain. "
                         "Keep conversational feedback minimal and professional."
                     )
                 elif difficulty == "senior":
                     difficulty_instruction = (
-                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
-                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar.explore different categories of questions within the domain and output only question and not anything els. Do not offer any conversational filler or praise."
+                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenario questions. "
+                        "Challenge design choices, drill down into technical trade-offs, and maintain a high standard. "
+                        "Explore diverse categories within the domain. Do not offer filler praise."
                     )
                 else:
                     difficulty_instruction = (
-                        "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
-                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
+                        "The candidate is Mid-Level. Ask standard industry questions with practical scenarios and solid fundamentals. "
+                        "Adjust difficulty adaptively based on their performance. Explore diverse categories within the domain."
                     )
 
             completion_option = ""
@@ -1413,12 +1441,14 @@ def interview():
                 "Output ONLY the raw question text with its tag below:"
             )
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-            config=types.GenerateContentConfig(max_output_tokens=150)
+        config = types.GenerateContentConfig(
+            temperature=0.3,
+            max_output_tokens=400
         )
-        question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]")
+        fallback_default = "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]"
+        question_text = generate_gemini_response(prompt, config=config, fallback_text=fallback_default)
+        if not question_text:
+            question_text = fallback_default
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -1554,11 +1584,11 @@ def interview_result():
           "[A formal, multi-paragraph evaluation of at least 180 words, written as a real hiring panel report. Structure it as flowing paragraphs (not bullet points or labeled sections) covering: overall impression and field-appropriate competence; concrete strengths grounded in specific answers; concrete weaknesses or gaps grounded in specific answers; how they performed under increasing difficulty; and a closing paragraph with a clear, actionable recommendation for what they should work on next.]\n\n"
           "Conversation: " + conversation_text)
 
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
+        config = types.GenerateContentConfig(
+            temperature=0.2,
+            max_output_tokens=1500
         )
-        evaluation = response.text.strip()
+        evaluation = generate_gemini_response(prompt, config=config, fallback_text="SCORE: 5\nSUMMARY: The candidate completed the interview assessment session.")
 
         score = "N/A"
         summary_lines = []
@@ -1954,12 +1984,16 @@ def interview_submit():
         chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
 
     try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=chat_turns,
-            config=types.GenerateContentConfig(system_instruction=system_prompt, max_output_tokens=300),
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            temperature=0.3,
+            max_output_tokens=400
         )
-        question_text = response.text.strip() if response.text else "Tell me about yourself."
+        question_text = generate_gemini_response(
+            chat_turns,
+            config=config,
+            fallback_text="Can you walk me through a challenging problem you solved recently? [TYPE: TEXT]"
+        )
         
         if not is_practice and "[END_INTERVIEW]" in question_text.upper() and submit_q_count >= MIN_QUESTIONS:
             save_progress(user_id, submit_history, submit_q_count)
@@ -1967,7 +2001,7 @@ def interview_submit():
             
     except Exception as e:
         print(f"[SUBMIT ERROR] {e}")
-        question_text = "Can you walk me through a challenging technical problem you solved recently?"
+        question_text = "Can you walk me through a challenging technical problem you solved recently? [TYPE: TEXT]"
 
     question_type = "text"
     match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
