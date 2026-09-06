@@ -1313,13 +1313,13 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build complete conversation text for Gemini prompt — compact and fast
+    # Build compact conversation history for ultra-fast Gemini generation
     conversation_text = ""
-    for entry in chat_history:
-        role_tag = "Question" if entry["role"] == "question" else "Candidate Answer"
+    for entry in chat_history[-6:]:
+        role_tag = "Q" if entry["role"] == "question" else "A"
         txt = entry["text"]
-        if len(txt) > 350:
-            txt = txt[:350] + "..."
+        if len(txt) > 200:
+            txt = txt[:200] + "..."
         conversation_text += f"{role_tag}: {txt}\n"
     question_text = ""
     prompt = ""
@@ -1374,15 +1374,15 @@ def interview():
             practice_topic = session.get("practice_topic", "General")
 
             if practice_mode == "viva":
-                difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Ask focused academic and theoretical questions."
+                difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and definitions."
             elif practice_mode == "lang":
                 target_lang = session.get("lang_target", "English")
-                difficulty_instruction = f"Language practice in {target_lang}. Focus on conversation flow and vocabulary."
+                difficulty_instruction = f"FluentFlow language practice in {target_lang}. Focus on conversation flow and vocabulary."
             elif practice_mode == "drill":
-                difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate reasoning."
+                difficulty_instruction = f"Concept drill on {practice_topic}. Challenge logic and reasoning."
             else:
                 if difficulty == "student":
-                    difficulty_instruction = "Student/Beginner level. Ask clear fundamental questions suitable for a junior role. Keep it friendly and foundational."
+                    difficulty_instruction = "Junior/Student level. Ask foundational interview questions suitable for a beginner. Explore core fundamentals."
                 elif difficulty == "senior":
                     difficulty_instruction = "Senior/Expert level. Ask challenging architectural, trade-off, and real-world system design questions."
                 else:
@@ -1394,13 +1394,12 @@ def interview():
 
             domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                f"Role: Expert {domain_name} Technical Examiner. Level: {difficulty_instruction}\n"
-                f"DOMAIN: 100% strictly within '{domain_name}'.\n"
-                "LOGICAL FLOW: Build logically and progressively on the conversation so far. Advance from fundamentals to realistic scenarios.\n"
+                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
+                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
                 "RULES:\n"
-                "1. Output EXACTLY 1 raw question sentence. ZERO preamble, commentary, or praise.\n"
-                "2. ZERO CHATTER: NEVER start with phrases like 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start immediately with the question.\n"
-                "3. DIVERSITY: Do not repeat identical concepts already tested in the conversation below.\n"
+                "1. Output ONLY 1 concise next question (1 sentence). ZERO preamble, praise, feedback, or transition phrases.\n"
+                "2. ZERO CHATTER: NEVER say 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start directly with the question.\n"
+                "3. DIVERSITY: Do not repeat any question or topic already asked in the conversation history below.\n"
                 "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
                 f"{completion_option}\n"
                 f"Interview Conversation so far:\n{conversation_text}\n"
@@ -1411,7 +1410,7 @@ def interview():
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=80)
+                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
             )
             question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
