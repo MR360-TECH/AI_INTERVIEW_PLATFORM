@@ -558,19 +558,6 @@
             line-height: 1.55;
             letter-spacing: -0.015em;
             margin-bottom: 28px;
-            min-height: 52px;
-        }
-
-        .streaming-cursor {
-            display: inline-block;
-            color: #00ffff;
-            font-weight: 800;
-            margin-left: 3px;
-            animation: blinkCursor 0.75s infinite;
-        }
-        @keyframes blinkCursor {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
         }
 
         /* â”€â”€ MONACO CODE EDITOR CONTAINER â”€â”€ */
@@ -835,7 +822,8 @@
                         </div>
                         {% endif %}
 
-                        <div class="upload-box mb-3" id="attachmentBoxWrapper" style="display: {% if question_type == 'file' %}block{% else %}none{% endif %};">
+                        {% if question_type == 'file' %}
+                        <div class="upload-box mb-3">
                             <label class="upload-title"><i class="bi bi-paperclip"></i> Attach File / Diagram Solution (Optional)</label>
                             <div class="upload-row">
                                 <label class="upload-icon-btn" title="Upload file">
@@ -848,8 +836,10 @@
                                 </button>
                             </div>
                         </div>
+                        {% endif %}
 
-                        <div class="mb-3" id="codeEditorWrapper" style="display: {% if question_type == 'code' %}block{% else %}none{% endif %};">
+                        {% if question_type == 'code' %}
+                        <div class="mb-3">
                             <div class="editor-frame">
                                 <div class="editor-topbar">
                                     <span class="editor-lang-tag"><i class="bi bi-filetype-py"></i> Python 3 Solution</span>
@@ -859,6 +849,7 @@
                             </div>
                             <input type="hidden" name="code_answer" id="codeAnswerInput">
                         </div>
+                        {% endif %}
 
                         <!-- Answer input textarea with inside mic button -->
                         <div class="input-wrapper">
@@ -965,6 +956,35 @@
     </div>
     {% endif %}
 
+    <!-- Proctoring Security Warning Modal (Strike 1) -->
+    <div class="modal fade" id="proctorWarningModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="proctorWarningModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:20px; border: 1.5px solid rgba(239, 68, 68, 0.4); background: #0c1222; box-shadow: 0 0 40px rgba(239, 68, 68, 0.25);">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="proctorWarningModalLabel" style="color: #ef4444; font-family: 'Outfit', sans-serif; font-size: 1.2rem;">
+              <i class="bi bi-shield-exclamation-fill fs-3" style="color: #f87171;"></i>
+              SECURITY WARNING (STRIKE 1 / 2)
+            </h5>
+          </div>
+          <div class="modal-body p-4 pt-2" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+            <div class="p-3 mb-3" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; color: #fca5a5;">
+              <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Unauthorized Window Focus Loss Detected!</strong><br>
+              You navigated away from the live assessment screen.
+            </div>
+            <p class="mb-2">In accordance with our <strong>Candidate Integrity &amp; Anti-Cheating Policy</strong>, candidates must remain on the assessment screen throughout the examination.</p>
+            <p class="mb-0 text-warning" style="font-size:0.88rem;">
+              <i class="bi bi-info-circle me-1"></i> <strong>FINAL WARNING:</strong> Navigating away or switching tabs a <u>second time</u> will result in <strong>immediate session termination</strong> and an official Code of Conduct violation record.
+            </p>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0">
+            <button type="button" class="btn w-100 fw-bold py-2.5" id="btnAcknowledgeProctorWarning" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; border-radius: 12px; font-family: 'Outfit', sans-serif; letter-spacing: 0.02em;">
+              <i class="bi bi-shield-check me-2"></i>I Understand &amp; Resume Assessment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
     <script>
@@ -1007,29 +1027,28 @@
         updateTimerDisplay();
 
         let timerExpired = false;
-        let timerInterval = null;
-
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(function() {
-                secondsLeft--;
-                if (secondsLeft <= 0) {
-                    secondsLeft = 0;
-                    updateTimerDisplay();
-                    clearInterval(timerInterval);
-                    if (timeUpWarning) timeUpWarning.classList.add('active');
-                    if (!timerExpired) {
-                        timerExpired = true;
-                        setTimeout(function() {
-                            trySubmit();
-                        }, 1200);
-                    }
-                } else {
-                    updateTimerDisplay();
+        const timerInterval = setInterval(function() {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+                secondsLeft = 0;
+                updateTimerDisplay();
+                clearInterval(timerInterval);
+                if (timeUpWarning) timeUpWarning.classList.add('active');
+                if (!timerExpired) {
+                    timerExpired = true;
+                    setTimeout(function() {
+                        if (window.stopSpeechRecognition) window.stopSpeechRecognition();
+                        if (typeof editorInstance !== 'undefined' && editorInstance && codeAnswerInput) {
+                            codeAnswerInput.value = editorInstance.getValue();
+                        }
+                        if (loadingOverlay) loadingOverlay.classList.add('active');
+                        answerForm.submit();
+                    }, 1500);
                 }
-            }, 1000);
-        }
-        startTimer();
+            } else {
+                updateTimerDisplay();
+            }
+        }, 1000);
 
         function isAnswerEmpty() {
             const textVal = answerBox ? answerBox.value.trim() : "";
@@ -1040,11 +1059,7 @@
             return textVal.length === 0 && codeVal.length === 0;
         }
 
-        let isSubmitting = false;
-
-        async function trySubmit() {
-            if (isSubmitting) return;
-
+        function trySubmit() {
             if (typeof editorInstance !== 'undefined' && editorInstance && codeAnswerInput) {
                 codeAnswerInput.value = editorInstance.getValue();
             }
@@ -1061,85 +1076,9 @@
 
             if (window.stopSpeechRecognition) window.stopSpeechRecognition();
             if (loadingOverlay) loadingOverlay.classList.add('active');
-            if (timerInterval) clearInterval(timerInterval);
-            isSubmitting = true;
+            clearInterval(timerInterval);
 
-            const formData = new FormData(answerForm);
-
-            try {
-                const response = await fetch('/interview', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (!response.ok) {
-                    answerForm.submit();
-                    return;
-                }
-
-                const data = await response.json();
-
-                if (data.status === 'redirect' || data.done || data.redirect_url) {
-                    window.location.href = data.redirect_url || '/interview-result';
-                    return;
-                }
-
-                // Update Question Text
-                const qBox = document.querySelector('.question-text-box');
-                if (qBox && data.question) {
-                    qBox.textContent = data.question;
-                }
-
-                // Toggle dynamic input wrappers based on question type
-                const codeWrap = document.getElementById('codeEditorWrapper');
-                const fileWrap = document.getElementById('attachmentBoxWrapper');
-                if (codeWrap) {
-                    codeWrap.style.display = (data.question_type === 'code') ? 'block' : 'none';
-                    if (data.question_type === 'code' && typeof initMonacoEditor === 'function') {
-                        initMonacoEditor();
-                    }
-                }
-                if (fileWrap) {
-                    fileWrap.style.display = (data.question_type === 'file') ? 'block' : 'none';
-                }
-
-                // Clear input fields
-                if (answerBox) answerBox.value = '';
-                if (codeAnswerInput) codeAnswerInput.value = '';
-                if (typeof editorInstance !== 'undefined' && editorInstance) {
-                    editorInstance.setValue("# Write your code/solution here...\n");
-                }
-
-                const fileInput = document.getElementById('attachmentInput');
-                if (fileInput) fileInput.value = '';
-                const attName = document.getElementById('attachmentFileName');
-                if (attName) attName.style.display = 'none';
-
-                // Reset timer countdown
-                secondsLeft = TOTAL_SECONDS;
-                timerExpired = false;
-                if (timeUpWarning) timeUpWarning.classList.remove('active');
-                updateTimerDisplay();
-                startTimer();
-
-                // Hide resume box after question 1
-                const resumeBox = document.querySelector('.upload-box');
-                if (resumeBox && data.q_num > 1) {
-                    resumeBox.style.display = 'none';
-                }
-
-                // Hide loading overlay & refocus
-                if (loadingOverlay) loadingOverlay.classList.remove('active');
-                isSubmitting = false;
-                if (answerBox) answerBox.focus();
-
-            } catch (err) {
-                console.error("Submit error, falling back to standard POST:", err);
-                answerForm.submit();
-            }
+            answerForm.submit();
         }
 
         if (answerBox) {
@@ -1236,39 +1175,26 @@
         });
     </script>
 
+    {% if question_type == 'code' %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
     <script>
-        let editorInstance = null;
-        let monacoLoaded = false;
-
-        function initMonacoEditor() {
-            if (editorInstance) return;
-            const container = document.getElementById('monacoEditorContainer');
-            if (!container) return;
-
-            if (typeof require !== 'undefined') {
-                require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
-                require(['vs/editor/editor.main'], function () {
-                    if (editorInstance) return;
-                    editorInstance = monaco.editor.create(container, {
-                        value: "# Write your code/solution here...\n",
-                        language: 'python',
-                        theme: document.documentElement.classList.contains('dark-theme') ? 'vs-dark' : 'vs',
-                        automaticLayout: true,
-                        fontSize: 14,
-                        minimap: { enabled: false }
-                    });
-                    editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
-                        trySubmit();
-                    });
-                });
-            }
-        }
-
-        {% if question_type == 'code' %}
-        document.addEventListener('DOMContentLoaded', initMonacoEditor);
-        {% endif %}
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+        let editorInstance;
+        require(['vs/editor/editor.main'], function () {
+            editorInstance = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
+                value: "# Write your code/solution here...\n",
+                language: 'python',
+                theme: document.documentElement.classList.contains('dark-theme') ? 'vs-dark' : 'vs',
+                automaticLayout: true,
+                fontSize: 14,
+                minimap: { enabled: false }
+            });
+            editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
+                trySubmit();
+            });
+        });
     </script>
+    {% endif %}
 
     <script>
     /* ── Live Assessment page background particle spawner ── */
@@ -1323,6 +1249,9 @@
       </div>
     </div>
     {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
 
     {% if not is_practice %}
     <!-- ── Automated Proctoring & Anti-Cheating Security System (Explicit Modal-Acknowledge Policy) ── -->
@@ -1423,7 +1352,7 @@
         }
 
         // Reset warning state when user submits an answer to move to next question
-        var mainForm = document.getElementById('answerForm');
+        var mainForm = document.getElementById('interviewForm');
         if (mainForm) {
             mainForm.addEventListener('submit', function() {
                 isTerminating = true;

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory, Response, stream_with_context
+from flask import Flask, render_template, request, redirect, session, url_for, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -137,23 +137,15 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
+client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
 MODEL_NAME = "gemini-flash-lite-latest"
-
-
-def get_genai_client():
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return None
-    return genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=10000))
 
 
 def analyze_attachment(file_bytes, mime_type, context_hint=""):
     try:
-        genai_client = get_genai_client()
-        if not genai_client:
-            return "Could not analyze the attached file."
         prompt = "Analyze this file in the context of a job interview. " + context_hint + " Be factual and concise, 2-4 sentences only."
-        response = genai_client.models.generate_content(
+        response = client.models.generate_content(
             model=MODEL_NAME,
             contents=[
                 types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
@@ -732,25 +724,9 @@ def internal_server_error(error):
     except Exception:
         pass
     print(f"[Internal Server Error]: {error}")
-    # For AJAX or interview POST submissions — always return clean JSON so candidate session is NEVER interrupted
-    is_ajax = (
-        request.headers.get("X-Requested-With") == "XMLHttpRequest"
-        or request.headers.get("Accept", "").find("application/json") != -1
-        or request.path.startswith("/interview")
-    )
-    if is_ajax and request.method == "POST":
-        q_cnt = session.get("q_count", 0) + 1
-        settings = get_settings()
-        return jsonify({
-            "status": "ok",
-            "question": "Can you explain a key technical challenge you encountered in your projects and how you resolved it?",
-            "q_num": q_cnt,
-            "total": settings.max_questions,
-            "question_type": "text",
-            "is_practice": bool(session.get("interview_mode")),
-            "timer_seconds": settings.question_timer_seconds or 90,
-            "done": False
-        }), 200
+    # For AJAX/submit route — return JSON so interview can continue
+    if request.path == "/interview/submit" or request.headers.get("Content-Type", "").startswith("application/json"):
+        return jsonify({"error": "server_error", "question": "Can you walk me through a challenging problem you solved recently?", "q_num": session.get("q_count", 0) + 1, "total": 10, "question_type": "text", "done": False}), 200
     # For all other routes — return a simple inline error page (NO redirects to avoid loops)
     back_url = "/dashboard" if "user_id" in session else "/login"
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title>
@@ -1218,10 +1194,10 @@ def interview():
     MIN_QUESTIONS = settings.min_questions
     MAX_QUESTIONS = settings.max_questions
     timer_seconds = settings.question_timer_seconds or 90
-    is_practice = bool(session.get("interview_mode"))
 
     if request.args.get("restart") == "1":
         _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
+        _ex_history = json.loads(_existing_prog.chat_history or '[]') if _existing_prog else []
         if not session.get("interview_mode") and request.args.get("practice") != "1" and _existing_prog and _existing_prog.q_count > 0:
             try:
                 res_rec = InterviewResult(
@@ -1245,16 +1221,17 @@ def interview():
             session.pop("interview_mode", None)
             session.pop("practice_topic", None)
 
-    # Always load chat history from DB
+    # Always load chat history from DB — avoids session cookie size limits in production
     try:
         _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
         chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
+        if "q_count" not in session:
+            session["q_count"] = _db_progress.q_count if _db_progress else 0
     except Exception as db_err:
         print(f"[DB LOAD ERROR] {db_err}")
         db.session.rollback()
         chat_history = session.get("chat_history", [])
-
-    answers_count = len([e for e in chat_history if e.get("role") == "answer"])
+    q_count = session.get("q_count", 0)
 
     if request.method == "POST":
         answer = request.form.get("answer", "").strip()
@@ -1262,7 +1239,7 @@ def interview():
         attachment = request.files.get("attachment")
         resume_file = request.files.get("resume")
 
-        if answers_count == 0 and not is_practice and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+        if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
             try:
                 filename = resume_file.filename
                 ext = filename.rsplit('.', 1)[1].lower()
@@ -1291,28 +1268,13 @@ def interview():
                 db.session.rollback()
 
         if answer or code_answer:
-            if answers_count == 0:
+            if q_count == 0:
                 if session.get("interview_mode"):
                     session["interview_domain"] = session.get("practice_topic", "Practice")
                 else:
                     session["interview_domain"] = answer.strip()
-                
-                # Determine baseline difficulty from candidate profile
-                user_obj = db.session.get(User, user_id)
-                diff = settings.default_difficulty or "student"
-                if user_obj and getattr(user_obj, 'user_type', None) == 'professional':
-                    try:
-                        exp_digits = re.findall(r'\d+', str(user_obj.years_of_experience or '0'))
-                        exp_val = float(exp_digits[0]) if exp_digits else 0
-                        if exp_val >= 5 or any(k in (user_obj.current_designation or '').lower() for k in ['senior', 'lead', 'principal', 'head', 'architect', 'manager']):
-                            diff = "senior"
-                        elif exp_val >= 2:
-                            diff = "mid"
-                        else:
-                            diff = "student"
-                    except Exception:
-                        diff = "mid"
-                session["interview_difficulty"] = diff
+                # difficulty is set by admin globally — candidate has no choice
+                session["interview_difficulty"] = settings.default_difficulty or "student"
 
             full_answer = answer
             if code_answer:
@@ -1332,215 +1294,178 @@ def interview():
 
             try:
                 chat_history.append({"role": "answer", "text": full_answer})
-                answers_count = len([e for e in chat_history if e.get("role") == "answer"])
-                session["q_count"] = answers_count
+                q_count += 1
+                session["q_count"] = q_count
                 session.modified = True
-                save_progress(user_id, chat_history, answers_count)
+                save_progress(user_id, chat_history, q_count)
             except Exception as save_err:
                 print(f"[SAVE PROGRESS ERROR] {save_err}")
                 db.session.rollback()
 
-    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.headers.get("Accept", "").find("application/json") != -1
-
-    if not is_practice and answers_count >= MAX_QUESTIONS:
-        if is_ajax:
-            return jsonify({"status": "redirect", "redirect_url": "/interview-result", "done": True})
+    # Practice mode has no question cap — user finishes via the Finish button
+    is_practice = bool(session.get("interview_mode"))
+    if not is_practice and q_count >= MAX_QUESTIONS:
         return redirect("/interview-result")
-
-    # Initial state — setup Q0
-    if not chat_history:
-        practice_mode = session.get("interview_mode")
-        practice_topic = session.get("practice_topic", "General")
-        if practice_mode == "viva":
-            initial_q = f"Welcome to your Viva Voce examination on {practice_topic}. To begin, please explain the core fundamental concepts and definition of {practice_topic}."
-        elif practice_mode == "lang":
-            target_lang = session.get("lang_target", "English")
-            initial_q = f"Welcome to your language practice session in {target_lang}. Please introduce yourself briefly and describe your goals for this session."
-        elif practice_mode == "drill":
-            initial_q = f"Welcome to the concept drill on {practice_topic}. Let's dive straight in: What are the foundational principles of {practice_topic}?"
-        else:
-            if session.get("resume_summary"):
-                initial_q = "Welcome! Based on your uploaded resume, which specific technical role or domain are you interviewing for? [TYPE: TEXT]"
-            else:
-                initial_q = "Which specific technical role or domain are you interviewing for? [TYPE: TEXT]"
-
-        cleaned_q, question_type = clean_generated_question(initial_q)
-        chat_history.append({"role": "question", "text": cleaned_q, "type": question_type})
-        session.modified = True
-        save_progress(user_id, chat_history, 0)
-        return render_template("interview.html", question=cleaned_q, q_num=1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     if chat_history and chat_history[-1]["role"] == "question":
         last_question_entry = chat_history[-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
-        if is_ajax and request.method == "POST":
-            return jsonify({
-                "status": "ok",
-                "question": last_question,
-                "q_num": answers_count + 1,
-                "total": MAX_QUESTIONS,
-                "question_type": question_type,
-                "is_practice": is_practice,
-                "timer_seconds": timer_seconds,
-                "done": False
-            })
-        return render_template("interview.html", question=last_question, q_num=answers_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+        return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Need to generate next question for standard POST fallback
-    domain_name = session.get("interview_domain")
-    if not domain_name:
-        all_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
-        if all_answers:
-            domain_name = all_answers[0].split("\n")[0].strip()
-    if not domain_name:
-        domain_name = "Software Engineering"
-
-    difficulty = session.get("interview_difficulty", settings.default_difficulty or "student")
-    practice_mode = session.get("interview_mode")
-    practice_topic = session.get("practice_topic", "General")
-    lang_target = session.get("lang_target", "English")
-    lang_focus = session.get("lang_focus", "conversation")
-    lang_level = session.get("lang_level", "intermediate")
-
-    sys_instruction, user_prompt = build_interview_prompt(
-        chat_history=chat_history,
-        q_count=answers_count,
-        domain_name=domain_name,
-        difficulty=difficulty,
-        practice_mode=practice_mode,
-        practice_topic=practice_topic,
-        lang_target=lang_target,
-        lang_focus=lang_focus,
-        lang_level=lang_level,
-        min_questions=MIN_QUESTIONS,
-        max_questions=MAX_QUESTIONS
-    )
-
-    genai_client = get_genai_client()
+    # Build complete conversation text for Gemini prompt — full session context
+    conversation_text = ""
+    for entry in chat_history:
+        conversation_text += f"{entry['role']}: {entry['text']}\n"
     question_text = ""
+    prompt = ""
     try:
-        if genai_client:
-            response = genai_client.models.generate_content(
-                model=MODEL_NAME,
-                contents=user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=sys_instruction,
-                    temperature=0.7,
-                    max_output_tokens=300
+        if q_count == 0:
+            practice_mode = session.get("interview_mode")
+            practice_topic = session.get("practice_topic", "General")
+
+            if practice_mode == "viva":
+                prompt = (
+                    f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
+                    "Briefly introduce the exam and ask the candidate your very first conceptual question about this subject. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
                 )
+            elif practice_mode == "lang":
+                target_lang = session.get("lang_target", "English")
+                focus_cat = session.get("lang_focus", "conversation")
+                level = session.get("lang_level", "intermediate")
+                is_english_target = target_lang.strip().lower() == "english"
+                translation_rule_q1 = (
+                    ""
+                    if is_english_target
+                    else f"Format the question STRICTLY as follows: first write the question in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Do NOT skip the English translation. "
+                )
+                prompt = (
+                    f"You are a language validator and native tutor. First, analyze the string: '{target_lang}'. "
+                    "Is this a legitimate language name (e.g. English, French, Spanish, Hindi, Telugu, Sindhi, Japanese, Arabic, Russian, etc.)? "
+                    "If it is NOT a legitimate or real language, respond with exactly: "
+                    "'ERROR: Language not found. Please start a new session and specify a valid language. [TYPE: TEXT]' "
+                    "If it IS a legitimate language, start a language speaking practice session. "
+                    f"The target language is: {target_lang}. The candidate's level is: {level.capitalize()}. "
+                    f"The focus category is: {focus_cat.capitalize()}. "
+                    "Briefly introduce the session with a warm and slightly friendly tone, then ask the first practice question or prompt. "
+                    f"{translation_rule_q1}"
+                    "The user can answer in any language they prefer. "
+                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble, no extra commentary."
+                )
+            elif practice_mode == "drill":
+                prompt = (
+                    f"You are a friendly mentor starting a concept drill session on the topic: {practice_topic}. "
+                    "State the topic and ask the candidate their first open conceptual question. "
+                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+                )
+            else:
+                if session.get("resume_summary"):
+                    question_text = "Welcome! Based on your resume, which specific role or domain are you interviewing for? [TYPE: TEXT]"
+                else:
+                    question_text = "Which specific role or domain are you interviewing for? [TYPE: TEXT]"
+        else:
+            difficulty = session.get("interview_difficulty", "student")
+            practice_mode = session.get("interview_mode")
+            practice_topic = session.get("practice_topic", "General")
+
+            if practice_mode == "viva":
+                difficulty_instruction = (
+                    f"The candidate is undergoing an Academic Viva Voce exam on: {practice_topic}. "
+                    "Keep questions clear, technical, and strictly focused on academic course concepts. "
+                    "Evaluate their understanding of theory, equations, algorithms, or definitions."
+                )
+            elif practice_mode == "lang":
+                target_lang = session.get("lang_target", "English")
+                focus_cat = session.get("lang_focus", "conversation")
+                level = session.get("lang_level", "intermediate")
+                is_english_target = target_lang.strip().lower() == "english"
+                translation_rule = (
+                    ""
+                    if is_english_target
+                    else f"IMPORTANT FORMAT RULE: Always write each question first in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Never skip the English translation. "
+                )
+                difficulty_instruction = (
+                    f"This is a FluentFlow language practice session in {target_lang}. The candidate's level is {level.capitalize()}. "
+                    f"Focus Category: {focus_cat.capitalize()}. "
+                    "Maintain a warm, polite, and professional but encouraging tone. Keep any conversational remarks extremely short (under 2 sentences). "
+                    "If the candidate's last response contained any clear grammatical, vocabulary, or structural mistakes, "
+                    "provide a single, polite, direct correction sentence (e.g., 'Correction: Instead of ..., it is better to say ...'), then immediately ask the next question. "
+                    f"{translation_rule}"
+                    "The candidate can answer in any language they prefer — do not restrict or comment on the language of their answer."
+                )
+            elif practice_mode == "drill":
+                difficulty_instruction = (
+                    f"The candidate is doing a Concept Drill on: {practice_topic}. "
+                    "Ask helpful conceptual questions that challenge their logic and reasoning on this topic."
+                )
+            else:
+                if difficulty == "student":
+                    difficulty_instruction = (
+                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
+                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
+                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle, change the topic and ask different question within the same domain. "
+                        "Do not end early unless you have asked at least 5 questions. "
+                        "Keep conversational feedback minimal and professional."
+                    )
+                elif difficulty == "senior":
+                    difficulty_instruction = (
+                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
+                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar. Explore different categories of questions within the domain and output only question and not anything else. Do not offer any conversational filler or praise."
+                    )
+                else:
+                    difficulty_instruction = (
+                        "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
+                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
+                    )
+
+            completion_option = ""
+            if q_count >= MIN_QUESTIONS:
+                completion_option = f"If you have gathered enough evaluation data after {MIN_QUESTIONS} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
+
+            domain_name = session.get("interview_domain", "Software Engineering")
+            prompt = (
+                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
+                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
+                "RULES:\n"
+                "1. Output ONLY 1 concise next question (1-2 sentences). No preamble, commentary, or praise.\n"
+                "2. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area/skill within the domain.\n"
+                "3. If candidate answered poorly or said 'I don't know', move to a completely new topic within the domain.\n"
+                "4. Append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+                f"{completion_option}\n"
+                f"Interview Conversation so far:\n{conversation_text}\n"
+                "Next Question with tag:"
             )
-            question_text = response.text.strip() if response and hasattr(response, 'text') and response.text else f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
-        else:
-            question_text = f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
+
+        if not question_text:
+            response = client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=80)
+            )
+            question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
-        print(f"[INTERVIEW GENERATE ERROR] {e}")
-        question_text = f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
+        print(f"[INTERVIEW ERROR] {e}")
+        question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
 
-    cleaned_q, question_type = clean_generated_question(question_text)
-    chat_history.append({"role": "question", "text": cleaned_q, "type": question_type})
-    session.modified = True
-    save_progress(user_id, chat_history, answers_count)
+    if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in question_text.upper() or "[END_INTERVIEW]" in question_text.upper()):
+        return redirect("/interview-result")
 
-    if is_ajax and request.method == "POST":
-        return jsonify({
-            "status": "ok",
-            "question": cleaned_q,
-            "q_num": answers_count + 1,
-            "total": MAX_QUESTIONS,
-            "question_type": question_type,
-            "is_practice": is_practice,
-            "timer_seconds": timer_seconds,
-            "done": False
-        })
-    return render_template("interview.html", question=cleaned_q, q_num=answers_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
-
-
-def build_interview_prompt(chat_history, q_count, domain_name, difficulty, practice_mode, practice_topic, lang_target, lang_focus, lang_level, min_questions, max_questions):
-    """
-    Universal Domain-Agnostic Situation-Based Interview Prompt Engine.
-    Returns (system_instruction, user_prompt) for Gemini API.
-    Dynamically generates realistic situational challenges and on-the-job scenarios for ANY domain.
-    """
-    if practice_mode == "viva":
-        difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and fundamental definitions."
-    elif practice_mode == "lang":
-        difficulty_instruction = f"FluentFlow language practice in {lang_target}. Focus on natural conversational fluency, idiom usage, and vocabulary."
-    elif practice_mode == "drill":
-        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate's problem-solving logic and domain depth."
-    else:
-        if difficulty == "senior":
-            difficulty_instruction = f"Senior / Lead Level (Expect deep mastery, edge cases, trade-offs, and situational leadership in {domain_name})."
-        elif difficulty == "mid":
-            difficulty_instruction = f"Mid-Level Professional (Expect practical hands-on execution, real-world scenario resolution, and domain proficiency in {domain_name})."
-        else:
-            difficulty_instruction = f"Junior / Entry Level (Expect foundational understanding, standard practices, and realistic problem solving in {domain_name})."
-
-    # Extract all previously asked questions for strict deduplication
-    prior_questions = [e["text"] for e in chat_history if e.get("role") == "question"]
-    if prior_questions:
-        prior_q_list = "\n".join([f"- {q}" for q in prior_questions])
-    else:
-        prior_q_list = "None yet (this is the first interview question)."
-
-    # Extract candidate's latest response
-    candidate_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
-    latest_answer = candidate_answers[-1] if candidate_answers else ""
-    if len(latest_answer) > 500:
-        latest_answer = latest_answer[:500] + "..."
-
-    completion_option = ""
-    if q_count >= min_questions:
-        completion_option = f"If you have gathered comprehensive evaluation data and the interview has reached {max_questions} questions, output ONLY: [END_INTERVIEW]\n"
-
-    system_instruction = (
-        f"You are an Elite Senior Interviewer and Subject Matter Expert in: {domain_name}.\n"
-        "STRICT INTERVIEW RULES:\n"
-        f"1. SITUATION-BASED FLOW: Pose an engaging, realistic on-the-job situation, practical scenario, or critical challenge in '{domain_name}' dynamically tailored to the candidate's answers.\n"
-        "2. EXACTLY ONE QUESTION: Output ONLY 1 concise question (1-2 sentences). Do not ask compound or multi-part questions.\n"
-        "3. ZERO FILLER: Absolutely NO conversational preamble, praise, feedback, or greetings (NEVER say 'Great', 'Understood', 'Let\\'s move to', 'Good answer', 'Here is your question'). Start immediately with the question word.\n"
-        "4. STRICT DEDUPLICATION: You MUST NEVER repeat, re-phrase, or re-ask any question or concept that was already asked in the PREVIOUSLY ASKED QUESTIONS list.\n"
-        "5. SCENARIO DIVERSITY: Explore diverse realistic situations across the profession (e.g. client issues, troubleshooting, crisis handling, efficiency, ethics, and technical trade-offs).\n"
-        f"6. TAG RULE: If '{domain_name}' is a software coding/programming role, you may end with [TYPE: CODE] or [TYPE: TEXT]. For all non-programming domains (fitness, marketing, medicine, culinary, management, finance, design, etc.), ALWAYS end with [TYPE: TEXT] or [TYPE: FILE]."
-    )
-
-    user_prompt = (
-        f"Domain: {domain_name}\n"
-        f"Candidate Target Level: {difficulty_instruction}\n"
-        f"Interview Progress: Question {q_count} of {max_questions}\n\n"
-        f"Candidate's Latest Response to Evaluate:\n\"{latest_answer}\"\n\n"
-        "PREVIOUSLY ASKED QUESTIONS (STRICT RULE: NEVER REPEAT ANY OF THESE CONCEPTS):\n"
-        f"{prior_q_list}\n\n"
-        f"{completion_option}"
-        "Generate the next situational question with tag:"
-    )
-
-    return system_instruction, user_prompt
-
-
-def clean_generated_question(raw_text):
-    if not raw_text:
-        return "Could you share a key technical challenge you recently solved in your domain? [TYPE: TEXT]", "text"
-    
+    # Parse TYPE tag
     question_type = "text"
-    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', raw_text)
+    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
     if match:
         tag_type = match.group(1).lower()
         if tag_type in ["code", "file", "text"]:
             question_type = tag_type
-        raw_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', raw_text).strip()
-    
-    conversational_patterns = [
-        r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
-        r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
-        r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
-    ]
-    for pattern in conversational_patterns:
-        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE).strip()
-    if raw_text and raw_text[0].islower():
-        raw_text = raw_text[0].upper() + raw_text[1:]
-    return raw_text, question_type
+        # Strip the tag from the final display question text
+        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
 
+    chat_history.append({"role": "question", "text": question_text, "type": question_type})
+    session.modified = True
+    save_progress(user_id, chat_history, q_count)
+
+    return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
 @app.route("/finish-interview", methods=["GET", "POST"])
 def finish_interview():
@@ -1605,8 +1530,7 @@ def interview_result():
 
     conversation_text = ""
     for entry in _result_history:
-        role_tag = "Question" if entry["role"] == "question" else "Candidate Answer"
-        conversation_text += f"{role_tag}: {entry['text']}\n"
+        conversation_text += entry["role"] + ": " + entry["text"] + "\n"
 
     try:
         practice_mode = session.get("interview_mode")
@@ -1630,45 +1554,69 @@ def interview_result():
 
         domain_val = session.get("interview_domain", "General")
         prompt = (
-            f"Write an official hiring panel evaluation report for this candidate assessment in: {domain_val}.\n"
+            f"Write an official hiring panel evaluation for this {domain_val} interview assessment.\n"
             f"{grading_instruction}\n"
             "Evaluate candidate's actual answers in the conversation below.\n\n"
             "Format EXACTLY as follows (no markdown symbols, no bullets):\n"
             "SCORE: [number out of 10]\n"
             "SUMMARY:\n"
-            "[A formal, 2-3 paragraph professional report covering: 1. Overall impression & competency in the domain, 2. Specific verified strengths grounded in candidate answers, 3. Areas for technical growth/weaknesses, and 4. Actionable next steps.]\n\n"
+            "[A clear 2-paragraph professional report covering overall technical impression, verified strengths, gaps/improvements, and future recommendations.]\n\n"
             f"Interview Transcript:\n{conversation_text}"
         )
 
-        genai_client = get_genai_client()
-        raw_eval = ""
-        if genai_client:
-            response = genai_client.models.generate_content(
-                model=MODEL_NAME,
-                contents=prompt,
-                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
-            )
-            raw_eval = response.text.strip() if response and hasattr(response, 'text') and response.text else ""
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt,
+            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=220)
+        )
+        evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
 
-        # Robust score extraction
-        score_match = re.search(r'(?:SCORE|RATING|OVERALL SCORE)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?)\s*(?:/\s*10)?', raw_eval, re.IGNORECASE)
+        score = "N/A"
+        summary_lines = []
+        in_summary = False
+
+        for raw_line in evaluation.split("\n"):
+            line = raw_line.strip()
+            if not line:
+                if in_summary:
+                    summary_lines.append("")
+                continue
+
+            # Strip markdown formatting like **, *, # for checking
+            clean_line = re.sub(r'[\*\#\_]', '', line).strip()
+            upper_line = clean_line.upper()
+
+            if upper_line.startswith("SCORE"):
+                score = clean_line.split(":", 1)[-1].strip()
+                in_summary = False
+            elif upper_line.startswith("SUMMARY"):
+                in_summary = True
+            elif in_summary:
+                summary_lines.append(line)
+
+        # Robust regex extraction for score number (finds 8, 8.5, 8/10, etc.)
+        score_num = 0.0
+        score_match = re.search(r'SCORE\s*:\s*([0-9]+(?:\.[0-9]+)?)', evaluation, re.IGNORECASE)
         if score_match:
             try:
-                score_num = min(max(float(score_match.group(1)), 0.0), 10.0)
-            except Exception:
-                score_num = 7.0
+                score_num = float(score_match.group(1))
+            except (ValueError, TypeError):
+                score_num = 0.0
         else:
-            fallback_match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', raw_eval)
-            score_num = float(fallback_match.group(1)) if fallback_match else 7.0
+            # Fallback regex if SCORE is written without colon or with /10
+            fallback_match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', evaluation)
+            if fallback_match:
+                try:
+                    score_num = float(fallback_match.group(1))
+                except (ValueError, TypeError):
+                    score_num = 0.0
 
-        # Robust summary extraction
-        summary_text = re.sub(r'(?i)^\s*(?:\*\*)?(?:SCORE|RATING|OVERALL SCORE)\s*[:\-]?\s*[^\n]+(?:\*\*)?', '', raw_eval).strip()
-        summary_text = re.sub(r'(?i)^\s*(?:\*\*)?SUMMARY\s*[:\-]?\s*(?:\*\*)?', '', summary_text).strip()
-        summary_text = summary_text.lstrip(':\n- ').strip()
-        summary_text = re.sub(r'[\*\#\_]', '', summary_text).strip()
-
+        summary_text = "\n".join(summary_lines).strip()
         if not summary_text:
-            summary_text = f"The candidate demonstrated foundational knowledge and practical understanding across questions in {domain_val}. Their performance showed clear potential with opportunities for further depth in advanced scenarios."
+            # If summary splitting failed due to format, use the evaluation text
+            summary_text = re.sub(r'SCORE\s*:\s*[^\n]+', '', evaluation, flags=re.IGNORECASE).strip()
+            if not summary_text:
+                summary_text = "Not enough data to generate a report."
 
         if score_num >= 8:
             label = "Excellent"
@@ -1702,6 +1650,8 @@ def interview_result():
             else:
                 verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
             db_verdict = verdict
+
+        domain_val = session.get("interview_domain", "General")
 
         try:
             result_record = InterviewResult(
@@ -1957,8 +1907,118 @@ def logout():
 # ─────────────────────────────────────────────────────────────────────────────
 @app.route("/interview/submit", methods=["POST"])
 def interview_submit():
-    """Legacy AJAX endpoint redirecting to unified interview endpoint."""
-    return interview()
+    """AJAX endpoint: accepts an answer, calls Gemini, returns the next question as JSON."""
+    if session.get("is_admin"):
+        return jsonify({"redirect": "/admin"})
+    if "user_id" not in session:
+        return jsonify({"redirect": "/login"})
+    if not os.environ.get("GEMINI_API_KEY"):
+        return jsonify({"redirect": "/dashboard?error=api_key_missing"})
+
+    user_id = session["user_id"]
+    settings = get_settings()
+    MIN_QUESTIONS = settings.min_questions
+    MAX_QUESTIONS = settings.max_questions
+
+    answer = (request.form.get("answer") or "").strip()
+    code_answer = (request.form.get("code_answer") or "").strip()
+    is_practice = bool(session.get("interview_mode"))  # any of: 'viva', 'drill', 'lang'
+
+    if not answer and not code_answer:
+        return jsonify({"error": "empty_answer"})
+
+    full_answer = answer
+    if code_answer:
+        if full_answer:
+            full_answer += "\n\n[Candidate Code]:\n" + code_answer
+        else:
+            full_answer = "[Candidate Code]:\n" + code_answer
+
+    # Load chat history from DB — avoids session cookie size limits in production
+    _submit_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    submit_history = json.loads(_submit_progress.chat_history or '[]') if _submit_progress else []
+    submit_q_count = session.get("q_count", 0) + 1
+
+    submit_history.append({"role": "answer", "text": full_answer})
+    session["q_count"] = submit_q_count
+    session.modified = True
+
+    # Check if interview is complete
+    if not is_practice and submit_q_count >= MAX_QUESTIONS:
+        save_progress(user_id, submit_history, submit_q_count)
+        return jsonify({"done": True, "redirect": "/interview-result"})
+
+    # Generate next question
+    domain = session.get("interview_domain", "Software Engineering")
+    difficulty = session.get("interview_difficulty", "student")
+    resume_summary = session.get("resume_summary", "")
+
+    if difficulty == "student":
+        diff_note = "Candidate level: Student/Beginner. Ask practical beginner-friendly questions. No advanced or architecture-level questions."
+    elif difficulty == "senior":
+        diff_note = "Candidate level: Senior/Expert. Ask deep technical, architectural, and scenario-based questions. Maintain a high bar."
+    else:
+        diff_note = "Candidate level: Mid-Level. Ask standard industry questions with moderate depth."
+
+    prompt_parts = [
+        f"You are a strict {domain} interviewer. Domain: {domain}. {diff_note}",
+        f"Resume summary: {resume_summary}" if resume_summary else "",
+        f"CRITICAL RULE: ALL questions MUST be strictly within the '{domain}' domain only. NEVER ask questions from unrelated fields.",
+        "Output ONLY the raw next question. Explore diverse categories within the domain. Change topic if the previous answer was wrong. Keep it concise (1-2 sentences). ZERO preamble, filler, or acknowledgment.",
+        "If they answer 'I don't know', DO NOT give them the answer. Just output the next question immediately.",
+    ]
+    if not is_practice:
+        prompt_parts.append(
+            "BEHAVIORAL/SITUATIONAL RULE: Ensure to ask 2 behavioral or situational questions "
+            "(e.g., 'Tell me about yourself', 'Why should we hire you?', or domain scenario questions) randomly or near the end before concluding."
+        )
+
+    if not is_practice and submit_q_count >= MIN_QUESTIONS:
+        prompt_parts.append("If the candidate has demonstrated sufficient knowledge and you are ready to finish the interview, output ONLY the exact phrase: [END_INTERVIEW]")
+
+    prompt_parts.append(f"Question {submit_q_count + 1} (Max: {MAX_QUESTIONS}). You MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.")
+
+    system_prompt = " ".join(p for p in prompt_parts if p)
+
+    chat_turns = []
+    for msg in submit_history:
+        role = "user" if msg["role"] == "answer" else "model"
+        chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
+
+    try:
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=chat_turns,
+            config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.3, max_output_tokens=120),
+        )
+        question_text = response.text.strip() if response.text else "Tell me about yourself."
+        
+        if not is_practice and "[END_INTERVIEW]" in question_text.upper() and submit_q_count >= MIN_QUESTIONS:
+            save_progress(user_id, submit_history, submit_q_count)
+            return jsonify({"done": True, "redirect": "/interview-result"})
+            
+    except Exception as e:
+        print(f"[SUBMIT ERROR] {e}")
+        question_text = "Can you walk me through a challenging technical problem you solved recently?"
+
+    question_type = "text"
+    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
+    if match:
+        tag = match.group(1).lower()
+        if tag in ["code", "file", "text"]:
+            question_type = tag
+        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
+
+    submit_history.append({"role": "question", "text": question_text, "type": question_type})
+    save_progress(user_id, submit_history, submit_q_count)
+
+    return jsonify({
+        "question": question_text,
+        "q_num": submit_q_count + 1,
+        "total": MAX_QUESTIONS,
+        "question_type": question_type,
+        "done": False,
+    })
 
 
 # ─────────────────────────────────────────────────────────────────────────────
