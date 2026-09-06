@@ -835,8 +835,7 @@
                         </div>
                         {% endif %}
 
-                        {% if question_type == 'file' %}
-                        <div class="upload-box mb-3">
+                        <div class="upload-box mb-3" id="attachmentBoxWrapper" style="display: {% if question_type == 'file' %}block{% else %}none{% endif %};">
                             <label class="upload-title"><i class="bi bi-paperclip"></i> Attach File / Diagram Solution (Optional)</label>
                             <div class="upload-row">
                                 <label class="upload-icon-btn" title="Upload file">
@@ -849,10 +848,8 @@
                                 </button>
                             </div>
                         </div>
-                        {% endif %}
 
-                        {% if question_type == 'code' %}
-                        <div class="mb-3">
+                        <div class="mb-3" id="codeEditorWrapper" style="display: {% if question_type == 'code' %}block{% else %}none{% endif %};">
                             <div class="editor-frame">
                                 <div class="editor-topbar">
                                     <span class="editor-lang-tag"><i class="bi bi-filetype-py"></i> Python 3 Solution</span>
@@ -862,7 +859,6 @@
                             </div>
                             <input type="hidden" name="code_answer" id="codeAnswerInput">
                         </div>
-                        {% endif %}
 
                         <!-- Answer input textarea with inside mic button -->
                         <div class="input-wrapper">
@@ -1124,6 +1120,19 @@
                                         qBox.textContent = eventData.full_question;
                                     }
 
+                                    // Toggle dynamic input wrappers based on question type
+                                    const codeWrap = document.getElementById('codeEditorWrapper');
+                                    const fileWrap = document.getElementById('attachmentBoxWrapper');
+                                    if (codeWrap) {
+                                        codeWrap.style.display = (eventData.question_type === 'code') ? 'block' : 'none';
+                                        if (eventData.question_type === 'code' && typeof initMonacoEditor === 'function') {
+                                            initMonacoEditor();
+                                        }
+                                    }
+                                    if (fileWrap) {
+                                        fileWrap.style.display = (eventData.question_type === 'file') ? 'block' : 'none';
+                                    }
+
                                     // Clear input fields
                                     if (answerBox) answerBox.value = '';
                                     if (codeAnswerInput) codeAnswerInput.value = '';
@@ -1259,26 +1268,39 @@
         });
     </script>
 
-    {% if question_type == 'code' %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
     <script>
-        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
-        let editorInstance;
-        require(['vs/editor/editor.main'], function () {
-            editorInstance = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
-                value: "# Write your code/solution here...\n",
-                language: 'python',
-                theme: document.documentElement.classList.contains('dark-theme') ? 'vs-dark' : 'vs',
-                automaticLayout: true,
-                fontSize: 14,
-                minimap: { enabled: false }
-            });
-            editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
-                trySubmit();
-            });
-        });
+        let editorInstance = null;
+        let monacoLoaded = false;
+
+        function initMonacoEditor() {
+            if (editorInstance) return;
+            const container = document.getElementById('monacoEditorContainer');
+            if (!container) return;
+
+            if (typeof require !== 'undefined') {
+                require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+                require(['vs/editor/editor.main'], function () {
+                    if (editorInstance) return;
+                    editorInstance = monaco.editor.create(container, {
+                        value: "# Write your code/solution here...\n",
+                        language: 'python',
+                        theme: document.documentElement.classList.contains('dark-theme') ? 'vs-dark' : 'vs',
+                        automaticLayout: true,
+                        fontSize: 14,
+                        minimap: { enabled: false }
+                    });
+                    editorInstance.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
+                        trySubmit();
+                    });
+                });
+            }
+        }
+
+        {% if question_type == 'code' %}
+        document.addEventListener('DOMContentLoaded', initMonacoEditor);
+        {% endif %}
     </script>
-    {% endif %}
 
     <script>
     /* ── Live Assessment page background particle spawner ── */

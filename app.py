@@ -1218,10 +1218,10 @@ def interview():
     MIN_QUESTIONS = settings.min_questions
     MAX_QUESTIONS = settings.max_questions
     timer_seconds = settings.question_timer_seconds or 90
+    is_practice = bool(session.get("interview_mode"))
 
     if request.args.get("restart") == "1":
         _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
-        _ex_history = json.loads(_existing_prog.chat_history or '[]') if _existing_prog else []
         if not session.get("interview_mode") and request.args.get("practice") != "1" and _existing_prog and _existing_prog.q_count > 0:
             try:
                 res_rec = InterviewResult(
@@ -1245,17 +1245,16 @@ def interview():
             session.pop("interview_mode", None)
             session.pop("practice_topic", None)
 
-    # Always load chat history from DB — avoids session cookie size limits in production
+    # Always load chat history from DB
     try:
         _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
         chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
-        if "q_count" not in session:
-            session["q_count"] = _db_progress.q_count if _db_progress else 0
     except Exception as db_err:
         print(f"[DB LOAD ERROR] {db_err}")
         db.session.rollback()
         chat_history = session.get("chat_history", [])
-    q_count = session.get("q_count", 0)
+
+    answers_count = len([e for e in chat_history if e.get("role") == "answer"])
 
     if request.method == "POST":
         answer = request.form.get("answer", "").strip()
@@ -1263,7 +1262,7 @@ def interview():
         attachment = request.files.get("attachment")
         resume_file = request.files.get("resume")
 
-        if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+        if answers_count == 0 and not is_practice and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
             try:
                 filename = resume_file.filename
                 ext = filename.rsplit('.', 1)[1].lower()
@@ -1292,12 +1291,11 @@ def interview():
                 db.session.rollback()
 
         if answer or code_answer:
-            if q_count == 0:
+            if answers_count == 0:
                 if session.get("interview_mode"):
                     session["interview_domain"] = session.get("practice_topic", "Practice")
                 else:
                     session["interview_domain"] = answer.strip()
-                # difficulty is set by admin globally — candidate has no choice
                 session["interview_difficulty"] = settings.default_difficulty or "student"
 
             full_answer = answer
@@ -1318,22 +1316,43 @@ def interview():
 
             try:
                 chat_history.append({"role": "answer", "text": full_answer})
-                q_count += 1
-                session["q_count"] = q_count
+                answers_count = len([e for e in chat_history if e.get("role") == "answer"])
+                session["q_count"] = answers_count
                 session.modified = True
-                save_progress(user_id, chat_history, q_count)
+                save_progress(user_id, chat_history, answers_count)
             except Exception as save_err:
                 print(f"[SAVE PROGRESS ERROR] {save_err}")
                 db.session.rollback()
 
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.headers.get("Accept", "").find("application/json") != -1
 
-    # Practice mode has no question cap — user finishes via the Finish button
-    is_practice = bool(session.get("interview_mode"))
-    if not is_practice and q_count >= MAX_QUESTIONS:
+    if not is_practice and answers_count >= MAX_QUESTIONS:
         if is_ajax:
             return jsonify({"status": "redirect", "redirect_url": "/interview-result", "done": True})
         return redirect("/interview-result")
+
+    # Initial state — setup Q0
+    if not chat_history:
+        practice_mode = session.get("interview_mode")
+        practice_topic = session.get("practice_topic", "General")
+        if practice_mode == "viva":
+            initial_q = f"Welcome to your Viva Voce examination on {practice_topic}. To begin, please explain the core fundamental concepts and definition of {practice_topic}."
+        elif practice_mode == "lang":
+            target_lang = session.get("lang_target", "English")
+            initial_q = f"Welcome to your language practice session in {target_lang}. Please introduce yourself briefly and describe your goals for this session."
+        elif practice_mode == "drill":
+            initial_q = f"Welcome to the concept drill on {practice_topic}. Let's dive straight in: What are the foundational principles of {practice_topic}?"
+        else:
+            if session.get("resume_summary"):
+                initial_q = "Welcome! Based on your uploaded resume, which specific technical role or domain are you interviewing for? [TYPE: TEXT]"
+            else:
+                initial_q = "Which specific technical role or domain are you interviewing for? [TYPE: TEXT]"
+
+        cleaned_q, question_type = clean_generated_question(initial_q)
+        chat_history.append({"role": "question", "text": cleaned_q, "type": question_type})
+        session.modified = True
+        save_progress(user_id, chat_history, 0)
+        return render_template("interview.html", question=cleaned_q, q_num=1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     if chat_history and chat_history[-1]["role"] == "question":
         last_question_entry = chat_history[-1]
@@ -1343,164 +1362,171 @@ def interview():
             return jsonify({
                 "status": "ok",
                 "question": last_question,
-                "q_num": q_count + 1,
+                "q_num": answers_count + 1,
                 "total": MAX_QUESTIONS,
                 "question_type": question_type,
                 "is_practice": is_practice,
                 "timer_seconds": timer_seconds,
                 "done": False
             })
-        return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+        return render_template("interview.html", question=last_question, q_num=answers_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build compact conversation history for ultra-fast Gemini generation
-    conversation_text = ""
-    for entry in chat_history[-6:]:
-        role_tag = "Q" if entry["role"] == "question" else "A"
-        txt = entry["text"]
-        if len(txt) > 200:
-            txt = txt[:200] + "..."
-        conversation_text += f"{role_tag}: {txt}\n"
+    # Need to generate next question for standard POST fallback
+    domain_name = session.get("interview_domain")
+    if not domain_name:
+        all_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
+        if all_answers:
+            domain_name = all_answers[0].split("\n")[0].strip()
+    if not domain_name:
+        domain_name = "Software Engineering"
+
+    difficulty = session.get("interview_difficulty", settings.default_difficulty or "student")
+    practice_mode = session.get("interview_mode")
+    practice_topic = session.get("practice_topic", "General")
+    lang_target = session.get("lang_target", "English")
+    lang_focus = session.get("lang_focus", "conversation")
+    lang_level = session.get("lang_level", "intermediate")
+
+    prompt = build_interview_prompt(
+        chat_history=chat_history,
+        q_count=answers_count,
+        domain_name=domain_name,
+        difficulty=difficulty,
+        practice_mode=practice_mode,
+        practice_topic=practice_topic,
+        lang_target=lang_target,
+        lang_focus=lang_focus,
+        lang_level=lang_level,
+        min_questions=MIN_QUESTIONS,
+        max_questions=MAX_QUESTIONS
+    )
+
+    genai_client = get_genai_client()
     question_text = ""
-    prompt = ""
     try:
-        if q_count == 0:
-            practice_mode = session.get("interview_mode")
-            practice_topic = session.get("practice_topic", "General")
-
-            if practice_mode == "viva":
-                prompt = (
-                    f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
-                    "Briefly introduce the exam and ask the candidate your very first conceptual question about this subject. "
-                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
-            elif practice_mode == "lang":
-                target_lang = session.get("lang_target", "English")
-                focus_cat = session.get("lang_focus", "conversation")
-                level = session.get("lang_level", "intermediate")
-                is_english_target = target_lang.strip().lower() == "english"
-                translation_rule_q1 = (
-                    ""
-                    if is_english_target
-                    else f"Format the question STRICTLY as follows: first write the question in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Do NOT skip the English translation. "
-                )
-                prompt = (
-                    f"You are a language validator and native tutor. First, analyze the string: '{target_lang}'. "
-                    "Is this a legitimate language name (e.g. English, French, Spanish, Hindi, Telugu, Sindhi, Japanese, Arabic, Russian, etc.)? "
-                    "If it is NOT a legitimate or real language, respond with exactly: "
-                    "'ERROR: Language not found. Please start a new session and specify a valid language. [TYPE: TEXT]' "
-                    "If it IS a legitimate language, start a language speaking practice session. "
-                    f"The target language is: {target_lang}. The candidate's level is: {level.capitalize()}. "
-                    f"The focus category is: {focus_cat.capitalize()}. "
-                    "Briefly introduce the session with a warm and slightly friendly tone, then ask the first practice question or prompt. "
-                    f"{translation_rule_q1}"
-                    "The user can answer in any language they prefer. "
-                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble, no extra commentary."
-                )
-            elif practice_mode == "drill":
-                prompt = (
-                    f"You are a friendly mentor starting a concept drill session on the topic: {practice_topic}. "
-                    "State the topic and ask the candidate their first open conceptual question. "
-                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
-            else:
-                if session.get("resume_summary"):
-                    question_text = "Welcome! Based on your resume, which specific role or domain are you interviewing for? [TYPE: TEXT]"
-                else:
-                    question_text = "Which specific role or domain are you interviewing for? [TYPE: TEXT]"
-        else:
-            difficulty = session.get("interview_difficulty", "student")
-            practice_mode = session.get("interview_mode")
-            practice_topic = session.get("practice_topic", "General")
-
-            if practice_mode == "viva":
-                difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and definitions."
-            elif practice_mode == "lang":
-                target_lang = session.get("lang_target", "English")
-                difficulty_instruction = f"FluentFlow language practice in {target_lang}. Focus on conversation flow and vocabulary."
-            elif practice_mode == "drill":
-                difficulty_instruction = f"Concept drill on {practice_topic}. Challenge logic and reasoning."
-            else:
-                if difficulty == "student":
-                    difficulty_instruction = "Junior/Student level. Ask foundational interview questions suitable for a beginner. Explore core fundamentals."
-                elif difficulty == "senior":
-                    difficulty_instruction = "Senior/Expert level. Ask challenging architectural, trade-off, and real-world system design questions."
-                else:
-                    difficulty_instruction = "Mid-Level. Ask practical engineering, implementation, and problem-solving questions."
-
-            completion_option = ""
-            if q_count >= MIN_QUESTIONS:
-                completion_option = f"If you have gathered enough evaluation data after {MIN_QUESTIONS} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
-
-            domain_name = session.get("interview_domain", "Software Engineering")
-            prompt = (
-                f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
-                f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
-                "RULES:\n"
-                "1. Output ONLY 1 concise next question (1 sentence). ZERO preamble, praise, feedback, or transition phrases.\n"
-                "2. ZERO CHATTER: NEVER say 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start directly with the question.\n"
-                "3. DIVERSITY: Do not repeat any question or topic already asked in the conversation history below.\n"
-                "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
-                f"{completion_option}\n"
-                f"Interview Conversation so far:\n{conversation_text}\n"
-                "Next Question with tag:"
+        if genai_client:
+            response = genai_client.models.generate_content(
+                model=MODEL_NAME,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.7, max_output_tokens=70)
             )
-
-        if not question_text:
-            genai_client = get_genai_client()
-            if genai_client:
-                response = genai_client.models.generate_content(
-                    model=MODEL_NAME,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
-                )
-                question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
-            else:
-                question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+            question_text = response.text.strip() if response and hasattr(response, 'text') and response.text else f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
+        else:
+            question_text = f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
     except Exception as e:
-        print(f"[INTERVIEW ERROR] {e}")
-        question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+        print(f"[INTERVIEW GENERATE ERROR] {e}")
+        question_text = f"Could you explain your approach to solving complex problems in {domain_name}? [TYPE: TEXT]"
 
-    if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in question_text.upper() or "[END_INTERVIEW]" in question_text.upper()):
-        if is_ajax:
-            return jsonify({"status": "redirect", "redirect_url": "/interview-result", "done": True})
-        return redirect("/interview-result")
-
-    # Parse TYPE tag
-    question_type = "text"
-    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', question_text)
-    if match:
-        tag_type = match.group(1).lower()
-        if tag_type in ["code", "file", "text"]:
-            question_type = tag_type
-        # Strip the tag from the final display question text
-        question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
-
-    # Post-processor: Strip any conversational filler or transitions leaked by LLM
-    conversational_patterns = [
-        r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
-        r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
-        r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
-    ]
-    for pattern in conversational_patterns:
-        question_text = re.sub(pattern, '', question_text, flags=re.IGNORECASE).strip()
-    if question_text and question_text[0].islower():
-        question_text = question_text[0].upper() + question_text[1:]
-
-    chat_history.append({"role": "question", "text": question_text, "type": question_type})
+    cleaned_q, question_type = clean_generated_question(question_text)
+    chat_history.append({"role": "question", "text": cleaned_q, "type": question_type})
     session.modified = True
-    save_progress(user_id, chat_history, q_count)
+    save_progress(user_id, chat_history, answers_count)
 
     if is_ajax and request.method == "POST":
         return jsonify({
             "status": "ok",
-            "question": question_text,
-            "q_num": q_count + 1,
+            "question": cleaned_q,
+            "q_num": answers_count + 1,
             "total": MAX_QUESTIONS,
             "question_type": question_type,
             "is_practice": is_practice,
             "timer_seconds": timer_seconds,
             "done": False
         })
+    return render_template("interview.html", question=cleaned_q, q_num=answers_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
+
+
+def build_interview_prompt(chat_history, q_count, domain_name, difficulty, practice_mode, practice_topic, lang_target, lang_focus, lang_level, min_questions, max_questions):
+    """
+    Builds a structured, non-repeating, progressive prompt for Gemini.
+    - Dynamically progresses through evaluation phases (Fundamentals -> Practical/Code -> Architecture -> Troubleshooting -> Performance).
+    - Explicitly lists all previously asked questions to strictly prevent repetition.
+    """
+    if practice_mode == "viva":
+        difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and fundamental definitions."
+    elif practice_mode == "lang":
+        difficulty_instruction = f"FluentFlow language practice in {lang_target}. Focus on natural conversational fluency, idiom usage, and vocabulary."
+    elif practice_mode == "drill":
+        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate's problem-solving logic and technical depth."
+    else:
+        if difficulty == "student":
+            difficulty_instruction = "Junior / Entry Level. Focus on core syntax, fundamental data structures, basic API concepts, and foundational principles."
+        elif difficulty == "senior":
+            difficulty_instruction = "Senior / Staff Level. Focus on system design, trade-offs, concurrency, high availability, database internals, and architectural bottlenecks."
+        else:
+            difficulty_instruction = "Mid-Level. Focus on practical engineering implementation, clean code, error handling, state management, and real-world design."
+
+    # Explicitly list all previously asked questions so the model NEVER repeats
+    prior_questions = [e["text"] for e in chat_history if e.get("role") == "question"]
+    if prior_questions:
+        prior_q_list = "\n".join([f"- {q}" for q in prior_questions])
+    else:
+        prior_q_list = "None yet."
+
+    # Get the candidate's latest response
+    candidate_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
+    latest_answer = candidate_answers[-1] if candidate_answers else ""
+    if len(latest_answer) > 400:
+        latest_answer = latest_answer[:400] + "..."
+
+    # Structured technical interview progression
+    if q_count <= 1:
+        phase_focus = f"Phase 1 (Core Fundamentals): Test fundamental concepts, internal language/framework mechanics, or core principles in {domain_name}."
+    elif q_count == 2:
+        phase_focus = f"Phase 2 (Practical Implementation): Present a practical coding or design challenge testing hands-on problem solving in {domain_name}."
+    elif q_count == 3:
+        phase_focus = f"Phase 3 (Architecture & State/Data): Ask about database design, caching, state management, or component contracts in {domain_name}."
+    elif q_count == 4:
+        phase_focus = f"Phase 4 (Troubleshooting & Scenarios): Present a realistic debugging scenario, production incident, or edge case in {domain_name}."
+    else:
+        phase_focus = f"Phase 5 (Performance & Scaling): Ask about concurrency, performance profiling, security, or architectural trade-offs in {domain_name}."
+
+    completion_option = ""
+    if q_count >= min_questions:
+        completion_option = f"If you have gathered comprehensive evaluation data and the interview has reached {max_questions} questions, output ONLY: [END_INTERVIEW]\n"
+
+    prompt = (
+        f"Role: Expert {domain_name} Technical Interviewer.\n"
+        f"Difficulty: {difficulty_instruction}\n"
+        f"Current Stage: Question {q_count} of {max_questions}.\n"
+        f"Stage Objective: {phase_focus}\n\n"
+        f"Candidate's Latest Response:\n\"{latest_answer}\"\n\n"
+        "TOPICS & QUESTIONS ALREADY ASKED (STRICT RULE: NEVER REPEAT ANY OF THESE CONCEPTS OR QUESTIONS):\n"
+        f"{prior_q_list}\n\n"
+        "RULES:\n"
+        f"1. Ask EXACTLY 1 new, concise technical question (1-2 sentences) strictly within '{domain_name}'.\n"
+        "2. ZERO CHATTER: DO NOT say 'Good job', 'Understood', 'Let\\'s move on', 'Sure', or 'Great answer'. Start directly with the question.\n"
+        "3. DIVERSITY: Explore a completely fresh facet of the technology stack without repeating earlier topics.\n"
+        "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
+        f"{completion_option}\n"
+        "Next Question:"
+    )
+    return prompt
+
+
+def clean_generated_question(raw_text):
+    if not raw_text:
+        return "Could you share a key technical challenge you recently solved in your domain? [TYPE: TEXT]", "text"
+    
+    question_type = "text"
+    match = re.search(r'\[TYPE:\s*([A-Z]+)\]', raw_text)
+    if match:
+        tag_type = match.group(1).lower()
+        if tag_type in ["code", "file", "text"]:
+            question_type = tag_type
+        raw_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', raw_text).strip()
+    
+    conversational_patterns = [
+        r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
+        r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
+        r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
+    ]
+    for pattern in conversational_patterns:
+        raw_text = re.sub(pattern, '', raw_text, flags=re.IGNORECASE).strip()
+    if raw_text and raw_text[0].islower():
+        raw_text = raw_text[0].upper() + raw_text[1:]
+    return raw_text, question_type
+
 
 @app.route("/interview/stream", methods=["POST"])
 def interview_stream():
@@ -1514,26 +1540,26 @@ def interview_stream():
     MIN_QUESTIONS = settings.min_questions
     MAX_QUESTIONS = settings.max_questions
     timer_seconds = settings.question_timer_seconds or 90
+    is_practice = bool(session.get("interview_mode"))
 
-    # Load DB progress
+    # Load persistent progress directly from DB
     try:
         _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
         chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
-        if "q_count" not in session:
-            session["q_count"] = _db_progress.q_count if _db_progress else 0
     except Exception as db_err:
         print(f"[STREAM DB LOAD ERROR] {db_err}")
         db.session.rollback()
         chat_history = session.get("chat_history", [])
-
-    q_count = session.get("q_count", 0)
 
     answer = request.form.get("answer", "").strip()
     code_answer = request.form.get("code_answer", "").strip()
     attachment = request.files.get("attachment")
     resume_file = request.files.get("resume")
 
-    if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
+    # Initial question check
+    answers_count = len([e for e in chat_history if e.get("role") == "answer"])
+
+    if answers_count == 0 and not is_practice and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
         try:
             filename = resume_file.filename
             ext = filename.rsplit('.', 1)[1].lower()
@@ -1560,7 +1586,7 @@ def interview_stream():
             db.session.rollback()
 
     if answer or code_answer:
-        if q_count == 0:
+        if answers_count == 0:
             if session.get("interview_mode"):
                 session["interview_domain"] = session.get("practice_topic", "Practice")
             else:
@@ -1582,64 +1608,47 @@ def interview_stream():
 
         try:
             chat_history.append({"role": "answer", "text": full_answer})
-            q_count += 1
-            session["q_count"] = q_count
+            answers_count = len([e for e in chat_history if e.get("role") == "answer"])
+            session["q_count"] = answers_count
             session.modified = True
-            save_progress(user_id, chat_history, q_count)
+            save_progress(user_id, chat_history, answers_count)
         except Exception as save_err:
             print(f"[STREAM SAVE ERROR] {save_err}")
             db.session.rollback()
 
-    is_practice = bool(session.get("interview_mode"))
-    if not is_practice and q_count >= MAX_QUESTIONS:
+    if not is_practice and answers_count >= MAX_QUESTIONS:
         def finish_stream():
             yield f"data: {json.dumps({'status': 'redirect', 'redirect_url': '/interview-result', 'done': True})}\n\n"
         return Response(stream_with_context(finish_stream()), mimetype="text/event-stream")
 
-    # Build prompt
-    conversation_text = ""
-    for entry in chat_history[-6:]:
-        role_tag = "Q" if entry["role"] == "question" else "A"
-        txt = entry["text"]
-        if len(txt) > 200:
-            txt = txt[:200] + "..."
-        conversation_text += f"{role_tag}: {txt}\n"
+    # Resolve domain name safely
+    domain_name = session.get("interview_domain")
+    if not domain_name:
+        all_answers = [e["text"] for e in chat_history if e.get("role") == "answer"]
+        if all_answers:
+            domain_name = all_answers[0].split("\n")[0].strip()
+    if not domain_name:
+        domain_name = "Software Engineering"
 
-    difficulty = session.get("interview_difficulty", "student")
+    difficulty = session.get("interview_difficulty", settings.default_difficulty or "student")
     practice_mode = session.get("interview_mode")
     practice_topic = session.get("practice_topic", "General")
+    lang_target = session.get("lang_target", "English")
+    lang_focus = session.get("lang_focus", "conversation")
+    lang_level = session.get("lang_level", "intermediate")
 
-    if practice_mode == "viva":
-        difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Focus strictly on theory, algorithms, and definitions."
-    elif practice_mode == "lang":
-        target_lang = session.get("lang_target", "English")
-        difficulty_instruction = f"FluentFlow language practice in {target_lang}. Focus on conversation flow and vocabulary."
-    elif practice_mode == "drill":
-        difficulty_instruction = f"Concept drill on {practice_topic}. Challenge logic and reasoning."
-    else:
-        if difficulty == "student":
-            difficulty_instruction = "Junior/Student level. Ask foundational interview questions suitable for a beginner. Explore core fundamentals."
-        elif difficulty == "senior":
-            difficulty_instruction = "Senior/Expert level. Ask challenging architectural, trade-off, and real-world system design questions."
-        else:
-            difficulty_instruction = "Mid-Level. Ask practical engineering, implementation, and problem-solving questions."
-
-    completion_option = ""
-    if q_count >= MIN_QUESTIONS:
-        completion_option = f"If you have gathered enough evaluation data after {MIN_QUESTIONS} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
-
-    domain_name = session.get("interview_domain", "Software Engineering")
-    prompt = (
-        f"Role: Expert {domain_name} Interviewer. Level: {difficulty_instruction}\n"
-        f"STRICT DOMAIN: Ask questions strictly 100% within '{domain_name}'.\n"
-        "RULES:\n"
-        "1. Output ONLY 1 concise next question (1 sentence). ZERO preamble, praise, feedback, or transition phrases.\n"
-        "2. ZERO CHATTER: NEVER say 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start directly with the question.\n"
-        "3. DIVERSITY: Do not repeat any question or topic already asked in the conversation history below.\n"
-        "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
-        f"{completion_option}\n"
-        f"Interview Conversation so far:\n{conversation_text}\n"
-        "Next Question with tag:"
+    prompt = build_interview_prompt(
+        chat_history=chat_history,
+        q_count=answers_count,
+        domain_name=domain_name,
+        difficulty=difficulty,
+        practice_mode=practice_mode,
+        practice_topic=practice_topic,
+        lang_target=lang_target,
+        lang_focus=lang_focus,
+        lang_level=lang_level,
+        min_questions=MIN_QUESTIONS,
+        max_questions=MAX_QUESTIONS
     )
 
     def generate_question_stream():
@@ -1650,51 +1659,35 @@ def interview_stream():
                 response = genai_client.models.generate_content_stream(
                     model=MODEL_NAME,
                     contents=prompt,
-                    config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=60)
+                    config=types.GenerateContentConfig(temperature=0.7, max_output_tokens=70)
                 )
                 for chunk in response:
                     if hasattr(chunk, 'text') and chunk.text:
                         accumulated_text += chunk.text
                         yield f"data: {json.dumps({'status': 'chunk', 'text': chunk.text})}\n\n"
             if not accumulated_text:
-                accumulated_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+                accumulated_text = f"Could you explain how you approach solving complex problems in {domain_name}? [TYPE: TEXT]"
                 yield f"data: {json.dumps({'status': 'chunk', 'text': accumulated_text})}\n\n"
         except Exception as err:
             print(f"[STREAM GENERATION ERROR] {err}")
             if not accumulated_text:
-                accumulated_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
+                accumulated_text = f"Could you explain how you approach solving complex problems in {domain_name}? [TYPE: TEXT]"
                 yield f"data: {json.dumps({'status': 'chunk', 'text': accumulated_text})}\n\n"
 
-        if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in accumulated_text.upper() or "[END_INTERVIEW]" in accumulated_text.upper()):
+        if not is_practice and answers_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in accumulated_text.upper() or "[END_INTERVIEW]" in accumulated_text.upper()):
             yield f"data: {json.dumps({'status': 'redirect', 'redirect_url': '/interview-result', 'done': True})}\n\n"
             return
 
-        question_type = "text"
-        match = re.search(r'\[TYPE:\s*([A-Z]+)\]', accumulated_text)
-        if match:
-            tag_type = match.group(1).lower()
-            if tag_type in ["code", "file", "text"]:
-                question_type = tag_type
-            accumulated_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', accumulated_text).strip()
-
-        conversational_patterns = [
-            r'^(?:let\'?s\s+(?:switch|move|turn|pivot)\s+(?:to|towards)\s+[^:\n]+[:\-]\s*)',
-            r'^(?:no\s+worries|don\'?t\s+worry|no\s+problem|that\'?s\s+(?:fine|okay|alright)|fair\s+enough|understood|sure|okay|alright|great|good|moving\s+on(?:\s+to\s+[^:\n]+)?)\s*[,:\.\-]?\s*',
-            r'^(?:next\s+question|here\s+is\s+your\s+next\s+question|question\s*\d*)\s*[:\-]\s*'
-        ]
-        for pattern in conversational_patterns:
-            accumulated_text = re.sub(pattern, '', accumulated_text, flags=re.IGNORECASE).strip()
-        if accumulated_text and accumulated_text[0].islower():
-            accumulated_text = accumulated_text[0].upper() + accumulated_text[1:]
+        cleaned_q, question_type = clean_generated_question(accumulated_text)
 
         try:
-            chat_history.append({"role": "question", "text": accumulated_text, "type": question_type})
+            chat_history.append({"role": "question", "text": cleaned_q, "type": question_type})
             session.modified = True
-            save_progress(user_id, chat_history, q_count)
+            save_progress(user_id, chat_history, answers_count)
         except Exception as db_err:
             print(f"[STREAM SAVE QUESTION ERROR] {db_err}")
 
-        yield f"data: {json.dumps({'status': 'complete', 'full_question': accumulated_text, 'question_type': question_type, 'q_num': q_count + 1, 'total': MAX_QUESTIONS, 'timer_seconds': timer_seconds, 'done': False})}\n\n"
+        yield f"data: {json.dumps({'status': 'complete', 'full_question': cleaned_q, 'question_type': question_type, 'q_num': answers_count + 1, 'total': MAX_QUESTIONS, 'timer_seconds': timer_seconds, 'done': False})}\n\n"
 
     return Response(stream_with_context(generate_question_stream()), mimetype="text/event-stream")
 
