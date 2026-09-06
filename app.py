@@ -1302,15 +1302,30 @@ def interview():
                 print(f"[SAVE PROGRESS ERROR] {save_err}")
                 db.session.rollback()
 
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.headers.get("Accept", "").find("application/json") != -1
+
     # Practice mode has no question cap — user finishes via the Finish button
     is_practice = bool(session.get("interview_mode"))
     if not is_practice and q_count >= MAX_QUESTIONS:
+        if is_ajax:
+            return jsonify({"status": "redirect", "redirect_url": "/interview-result", "done": True})
         return redirect("/interview-result")
 
     if chat_history and chat_history[-1]["role"] == "question":
         last_question_entry = chat_history[-1]
         last_question = last_question_entry["text"]
         question_type = last_question_entry.get("type", "text")
+        if is_ajax and request.method == "POST":
+            return jsonify({
+                "status": "ok",
+                "question": last_question,
+                "q_num": q_count + 1,
+                "total": MAX_QUESTIONS,
+                "question_type": question_type,
+                "is_practice": is_practice,
+                "timer_seconds": timer_seconds,
+                "done": False
+            })
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
     # Build compact conversation history for ultra-fast Gemini generation
@@ -1418,6 +1433,8 @@ def interview():
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
 
     if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in question_text.upper() or "[END_INTERVIEW]" in question_text.upper()):
+        if is_ajax:
+            return jsonify({"status": "redirect", "redirect_url": "/interview-result", "done": True})
         return redirect("/interview-result")
 
     # Parse TYPE tag
@@ -1444,6 +1461,18 @@ def interview():
     chat_history.append({"role": "question", "text": question_text, "type": question_type})
     session.modified = True
     save_progress(user_id, chat_history, q_count)
+
+    if is_ajax and request.method == "POST":
+        return jsonify({
+            "status": "ok",
+            "question": question_text,
+            "q_num": q_count + 1,
+            "total": MAX_QUESTIONS,
+            "question_type": question_type,
+            "is_practice": is_practice,
+            "timer_seconds": timer_seconds,
+            "done": False
+        })
 
     return render_template("interview.html", question=question_text, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
