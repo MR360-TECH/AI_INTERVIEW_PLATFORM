@@ -1321,10 +1321,9 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build conversation text for Gemini prompt — only last 6 turns to keep prompt small and fast (<1s)
-    recent_history = chat_history[-6:] if len(chat_history) > 6 else chat_history
+    # Build complete conversation text for Gemini prompt — full session context
     conversation_text = ""
-    for entry in recent_history:
+    for entry in chat_history:
         conversation_text += f"{entry['role']}: {entry['text']}\n"
     question_text = ""
     prompt = ""
@@ -2030,10 +2029,8 @@ def interview_submit():
 
     system_prompt = " ".join(p for p in prompt_parts if p)
 
-    # Only send last 8 turns — keeps prompt small and Gemini fast
-    recent_submit = submit_history[-8:] if len(submit_history) > 8 else submit_history
     chat_turns = []
-    for msg in recent_submit:
+    for msg in submit_history:
         role = "user" if msg["role"] == "answer" else "model"
         chat_turns.append({"role": role, "parts": [{"text": msg["text"]}]})
 
