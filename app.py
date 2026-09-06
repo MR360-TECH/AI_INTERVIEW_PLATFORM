@@ -137,8 +137,8 @@ def allowed_resume_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_RESUME_EXTENSIONS
 
 
-PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
-FALLBACK_MODELS = ["gemini-3.5-flash-lite", "gemini-3.6-flash"]
+PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
+FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-3.6-flash"]
 _gemini_client_instance = None
 
 
@@ -290,62 +290,76 @@ class AdminSettings(db.Model):
     default_allowed_interviews = db.Column(db.Integer, default=2)
 
 
+_cached_settings = None
+_cached_settings_time = 0
+
+
+from flask import has_app_context
+
+
 def get_settings():
+    global _cached_settings, _cached_settings_time
+    import time
+    now = time.time()
+    if _cached_settings and (now - _cached_settings_time) < 60:
+        return _cached_settings
+
+    if not has_app_context():
+        with app.app_context():
+            return _fetch_settings_from_db(now)
+    return _fetch_settings_from_db(now)
+
+
+def _fetch_settings_from_db(now):
+    global _cached_settings, _cached_settings_time
     try:
         settings = AdminSettings.query.first()
     except Exception:
-        db.session.rollback()
-        # Auto-migrate missing columns for pre-existing MySQL / SQLite tables
         try:
-            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN question_timer_seconds INT DEFAULT 90"))
-            db.session.commit()
-        except Exception:
             db.session.rollback()
-        try:
-            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN default_difficulty VARCHAR(20) DEFAULT 'student'"))
-            db.session.commit()
         except Exception:
-            db.session.rollback()
-        try:
-            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN enable_attempt_limits BOOLEAN DEFAULT 1"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-        try:
-            db.session.execute(db.text("ALTER TABLE admin_settings ADD COLUMN default_allowed_interviews INT DEFAULT 2"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-        settings = AdminSettings.query.first()
+            pass
+        settings = None
 
     if not settings:
-        settings = AdminSettings(
-            min_questions=3,
-            max_questions=8,
-            pass_score=3,
-            default_difficulty='student',
-            question_timer_seconds=90,
-            enable_attempt_limits=True,
-            default_allowed_interviews=2
-        )
-        db.session.add(settings)
-        db.session.commit()
+        try:
+            settings = AdminSettings(
+                min_questions=3,
+                max_questions=8,
+                pass_score=3,
+                default_difficulty='student',
+                question_timer_seconds=90,
+                enable_attempt_limits=True,
+                default_allowed_interviews=2
+            )
+            db.session.add(settings)
+            db.session.commit()
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+            try:
+                settings = AdminSettings.query.first()
+            except Exception:
+                settings = None
 
-    # Dynamic migrations check
-    try:
-        if getattr(settings, 'question_timer_seconds', None) is None:
-            settings.question_timer_seconds = 90
-        if getattr(settings, 'enable_attempt_limits', None) is None:
-            settings.enable_attempt_limits = True
-        if getattr(settings, 'default_allowed_interviews', None) is None:
-            settings.default_allowed_interviews = 2
-        if not settings.default_difficulty:
-            settings.default_difficulty = 'student'
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
+    if settings:
+        _cached_settings = settings
+        _cached_settings_time = now
+        return settings
 
-    return settings
+    # Safe in-memory fallback object if database is initializing
+    class DefaultSettings:
+        min_questions = 3
+        max_questions = 8
+        pass_score = 3
+        default_difficulty = 'student'
+        question_timer_seconds = 90
+        enable_attempt_limits = True
+        default_allowed_interviews = 2
+
+    return DefaultSettings()
 
 def save_progress(user_id, chat_history, q_count):
     progress = InterviewProgress.query.filter_by(user_id=user_id).first()
@@ -1334,11 +1348,9 @@ def interview():
             practice_topic = session.get("practice_topic", "General")
 
             if practice_mode == "viva":
-                prompt = (
-                    f"You are an academic external examiner starting a Viva Voce exam on the subject: {practice_topic}. "
-                    "Briefly introduce the exam and ask the candidate your very first conceptual question about this subject. "
-                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
+                question_text = f"Welcome to your Academic Viva Voce examination on {practice_topic}. To begin, could you explain the foundational principles and core concepts of this subject? [TYPE: TEXT]"
+            elif practice_mode == "drill":
+                question_text = f"Welcome to your Concept Drill on {practice_topic}. Let's begin: can you explain the core fundamentals and primary applications of {practice_topic}? [TYPE: TEXT]"
             elif practice_mode == "lang":
                 target_lang = session.get("lang_target", "English")
                 focus_cat = session.get("lang_focus", "conversation")
@@ -1350,35 +1362,19 @@ def interview():
                     else f"Format the question STRICTLY as follows: first write the question in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Do NOT skip the English translation. "
                 )
                 prompt = (
-                    f"You are a language validator and native tutor. First, analyze the string: '{target_lang}'. "
-                    "Is this a legitimate language name (e.g. English, French, Spanish, Hindi, Telugu, Sindhi, Japanese, Arabic, Russian, etc.)? "
-                    "If it is NOT a legitimate or real language, respond with exactly: "
-                    "'ERROR: Language not found. Please start a new session and specify a valid language. [TYPE: TEXT]' "
-                    "If it IS a legitimate language, start a language speaking practice session. "
-                    f"The target language is: {target_lang}. The candidate's level is: {level.capitalize()}. "
-                    f"The focus category is: {focus_cat.capitalize()}. "
-                    "Briefly introduce the session with a warm and slightly friendly tone, then ask the first practice question or prompt. "
+                    f"You are a language validator and native tutor. Start a language speaking practice session. "
+                    f"Target language: {target_lang}. Level: {level.capitalize()}. Focus: {focus_cat.capitalize()}. "
+                    "Briefly introduce the session and ask the first practice prompt. "
                     f"{translation_rule_q1}"
-                    "The user can answer in any language they prefer. "
-                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble, no extra commentary."
+                    "Output ONLY the formatted question followed by [TYPE: TEXT] at the end. No preamble."
                 )
-            elif practice_mode == "drill":
-                prompt = (
-                    f"You are a friendly mentor starting a concept drill session on the topic: {practice_topic}. "
-                    "State the topic and ask the candidate their first open conceptual question. "
-                    "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
+                config = types.GenerateContentConfig(temperature=0.3, max_output_tokens=250)
+                question_text = generate_gemini_response(prompt, config=config, fallback_text=f"Welcome to your {target_lang} speaking practice! How are you today? [TYPE: TEXT]")
             else:
                 resume_context = ""
                 if session.get("resume_summary"):
-                    resume_context = "The candidate uploaded their resume, summarized as: " + session["resume_summary"] + " Use this context when useful, but still ask them to confirm their role/domain first. "
-
-                prompt = (
-                    "You are an interviewer starting an interview. "
-                    + resume_context +
-                    "Ask the candidate which specific role or domain they are interviewing for. "
-                    "Output ONLY the question text itself followed by [TYPE: TEXT] at the end. No preamble, no intro."
-                )
+                    resume_context = f" I see your background from your uploaded resume."
+                question_text = f"Welcome to your assessment.{resume_context} Which specific technical role or domain are you interviewing for today? [TYPE: TEXT]"
         else:
             difficulty = session.get("interview_difficulty", "student")
             practice_mode = session.get("interview_mode")
@@ -1471,14 +1467,14 @@ def interview():
                 "Output ONLY the raw question text with its tag below:"
             )
 
-        config = types.GenerateContentConfig(
-            temperature=0.3,
-            max_output_tokens=400
-        )
-        fallback_default = "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]"
-        question_text = generate_gemini_response(prompt, config=config, fallback_text=fallback_default)
-        if not question_text:
-            question_text = fallback_default
+            config = types.GenerateContentConfig(
+                temperature=0.3,
+                max_output_tokens=300
+            )
+            fallback_default = "Could you elaborate on your experience and key achievements in your core domain? [TYPE: TEXT]"
+            question_text = generate_gemini_response(prompt, config=config, fallback_text=fallback_default)
+            if not question_text:
+                question_text = fallback_default
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -1616,7 +1612,7 @@ def interview_result():
 
         config = types.GenerateContentConfig(
             temperature=0.2,
-            max_output_tokens=1500
+            max_output_tokens=600
         )
         evaluation = generate_gemini_response(prompt, config=config, fallback_text="SCORE: 5\nSUMMARY: The candidate completed the interview assessment session.")
 
