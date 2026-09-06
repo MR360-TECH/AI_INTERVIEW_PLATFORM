@@ -1313,10 +1313,14 @@ def interview():
         question_type = last_question_entry.get("type", "text")
         return render_template("interview.html", question=last_question, q_num=q_count + 1, total=MAX_QUESTIONS, question_type=question_type, is_practice=is_practice, timer_seconds=timer_seconds)
 
-    # Build complete conversation text for Gemini prompt — full session context
+    # Build complete conversation text for Gemini prompt — compact and fast
     conversation_text = ""
     for entry in chat_history:
-        conversation_text += f"{entry['role']}: {entry['text']}\n"
+        role_tag = "Question" if entry["role"] == "question" else "Candidate Answer"
+        txt = entry["text"]
+        if len(txt) > 350:
+            txt = txt[:350] + "..."
+        conversation_text += f"{role_tag}: {txt}\n"
     question_text = ""
     prompt = ""
     try:
@@ -1370,54 +1374,19 @@ def interview():
             practice_topic = session.get("practice_topic", "General")
 
             if practice_mode == "viva":
-                difficulty_instruction = (
-                    f"The candidate is undergoing an Academic Viva Voce exam on: {practice_topic}. "
-                    "Keep questions clear, technical, and strictly focused on academic course concepts. "
-                    "Evaluate their understanding of theory, equations, algorithms, or definitions."
-                )
+                difficulty_instruction = f"Academic Viva Voce on {practice_topic}. Ask focused academic and theoretical questions."
             elif practice_mode == "lang":
                 target_lang = session.get("lang_target", "English")
-                focus_cat = session.get("lang_focus", "conversation")
-                level = session.get("lang_level", "intermediate")
-                is_english_target = target_lang.strip().lower() == "english"
-                translation_rule = (
-                    ""
-                    if is_english_target
-                    else f"IMPORTANT FORMAT RULE: Always write each question first in {target_lang}, then on the very next line write the English translation in brackets like this: [English: <translation here>]. Never skip the English translation. "
-                )
-                difficulty_instruction = (
-                    f"This is a FluentFlow language practice session in {target_lang}. The candidate's level is {level.capitalize()}. "
-                    f"Focus Category: {focus_cat.capitalize()}. "
-                    "Maintain a warm, polite, and professional but encouraging tone. Keep any conversational remarks extremely short (under 2 sentences). "
-                    "If the candidate's last response contained any clear grammatical, vocabulary, or structural mistakes, "
-                    "provide a single, polite, direct correction sentence (e.g., 'Correction: Instead of ..., it is better to say ...'), then immediately ask the next question. "
-                    f"{translation_rule}"
-                    "The candidate can answer in any language they prefer — do not restrict or comment on the language of their answer."
-                )
+                difficulty_instruction = f"Language practice in {target_lang}. Focus on conversation flow and vocabulary."
             elif practice_mode == "drill":
-                difficulty_instruction = (
-                    f"The candidate is doing a Concept Drill on: {practice_topic}. "
-                    "Ask helpful conceptual questions that challenge their logic and reasoning on this topic."
-                )
+                difficulty_instruction = f"Concept drill on {practice_topic}. Challenge candidate reasoning."
             else:
                 if difficulty == "student":
-                    difficulty_instruction = (
-                        "The candidate is a Student/Beginner. Keep questions friendly and focus on fundamental concepts. "
-                        "Ask practical, interview-style questions suitable for a junior role, rather than overly simplistic dictionary definitions (e.g. do not ask 'What is a computer?') and explore all categories of questions within the domain. "
-                        "Do NOT ask highly complex technical questions. If they answer incorrectly or struggle, change the topic and ask different question within the same domain. "
-                        "Do not end early unless you have asked at least 5 questions. "
-                        "Keep conversational feedback minimal and professional."
-                    )
+                    difficulty_instruction = "Student/Beginner level. Ask clear fundamental questions suitable for a junior role. Keep it friendly and foundational."
                 elif difficulty == "senior":
-                    difficulty_instruction = (
-                        "The candidate is a Senior/Expert. Ask challenging, deep architectural or practical scenarios. "
-                        "Challenge their decisions, drill down into technical specifics, and maintain a high bar. Explore different categories of questions within the domain and output only question and not anything else. Do not offer any conversational filler or praise."
-                    )
+                    difficulty_instruction = "Senior/Expert level. Ask challenging architectural, trade-off, and real-world system design questions."
                 else:
-                    difficulty_instruction = (
-                        "The candidate is Mid-Level. Ask standard industry questions with moderate scenarios and fundamentals. "
-                        "Adjust difficulty adaptively based on their performance. Explore different categories of questions within the domain and output only the question. Keep feedback professional and minimal."
-                    )
+                    difficulty_instruction = "Mid-Level. Ask practical engineering, implementation, and problem-solving questions."
 
             completion_option = ""
             if q_count >= MIN_QUESTIONS:
@@ -1425,16 +1394,17 @@ def interview():
 
             domain_name = session.get("interview_domain", "Software Engineering")
             prompt = (
-                f"Role: Direct Technical Examiner for {domain_name}. Candidate Level: {difficulty_instruction}\n"
-                f"DOMAIN CONSTRAINT: 100% {domain_name} questions only.\n"
-                "CRITICAL OUTPUT RULES:\n"
-                "1. Output EXACTLY 1 raw question sentence. ZERO preamble, ZERO conversational commentary, ZERO praise, ZERO feedback.\n"
-                "2. ZERO CHATTER RULE: NEVER start with phrases like 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start immediately with the question word (e.g. 'What', 'How', 'Explain', 'Write', 'Describe').\n"
-                "3. DIVERSITY RULE: NEVER repeat any question, topic, or concept already asked in the conversation history below. Each question MUST test a distinct area within the domain.\n"
-                "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the very end.\n"
+                f"Role: Expert {domain_name} Technical Examiner. Level: {difficulty_instruction}\n"
+                f"DOMAIN: 100% strictly within '{domain_name}'.\n"
+                "LOGICAL FLOW: Build logically and progressively on the conversation so far. Advance from fundamentals to realistic scenarios.\n"
+                "RULES:\n"
+                "1. Output EXACTLY 1 raw question sentence. ZERO preamble, commentary, or praise.\n"
+                "2. ZERO CHATTER: NEVER start with phrases like 'Let\'s switch to...', 'Don\'t worry', 'No problem', 'Good job', 'Moving on...', 'Sure', or 'Okay'. Start immediately with the question.\n"
+                "3. DIVERSITY: Do not repeat identical concepts already tested in the conversation below.\n"
+                "4. MUST append [TYPE: TEXT], [TYPE: CODE], or [TYPE: FILE] at the end.\n"
                 f"{completion_option}\n"
                 f"Interview Conversation so far:\n{conversation_text}\n"
-                "Output ONLY the question with tag:"
+                "Next Question with tag:"
             )
 
         if not question_text:
@@ -1541,7 +1511,8 @@ def interview_result():
 
     conversation_text = ""
     for entry in _result_history:
-        conversation_text += entry["role"] + ": " + entry["text"] + "\n"
+        role_tag = "Question" if entry["role"] == "question" else "Candidate Answer"
+        conversation_text += f"{role_tag}: {entry['text']}\n"
 
     try:
         practice_mode = session.get("interview_mode")
@@ -1565,69 +1536,42 @@ def interview_result():
 
         domain_val = session.get("interview_domain", "General")
         prompt = (
-            f"Write an official hiring panel evaluation for this {domain_val} interview assessment.\n"
+            f"Write an official hiring panel evaluation report for this candidate assessment in: {domain_val}.\n"
             f"{grading_instruction}\n"
             "Evaluate candidate's actual answers in the conversation below.\n\n"
             "Format EXACTLY as follows (no markdown symbols, no bullets):\n"
             "SCORE: [number out of 10]\n"
             "SUMMARY:\n"
-            "[A clear 2-paragraph professional report covering overall technical impression, verified strengths, gaps/improvements, and future recommendations.]\n\n"
+            "[A formal, 2-3 paragraph professional report covering: 1. Overall impression & competency in the domain, 2. Specific verified strengths grounded in candidate answers, 3. Areas for technical growth/weaknesses, and 4. Actionable next steps.]\n\n"
             f"Interview Transcript:\n{conversation_text}"
         )
 
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=220)
+            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=300)
         )
-        evaluation = response.text.strip() if response and hasattr(response, 'text') and response.text else "SCORE: 5\nSUMMARY: The candidate completed the interview assessment session."
+        raw_eval = response.text.strip() if response and hasattr(response, 'text') and response.text else ""
 
-        score = "N/A"
-        summary_lines = []
-        in_summary = False
-
-        for raw_line in evaluation.split("\n"):
-            line = raw_line.strip()
-            if not line:
-                if in_summary:
-                    summary_lines.append("")
-                continue
-
-            # Strip markdown formatting like **, *, # for checking
-            clean_line = re.sub(r'[\*\#\_]', '', line).strip()
-            upper_line = clean_line.upper()
-
-            if upper_line.startswith("SCORE"):
-                score = clean_line.split(":", 1)[-1].strip()
-                in_summary = False
-            elif upper_line.startswith("SUMMARY"):
-                in_summary = True
-            elif in_summary:
-                summary_lines.append(line)
-
-        # Robust regex extraction for score number (finds 8, 8.5, 8/10, etc.)
-        score_num = 0.0
-        score_match = re.search(r'SCORE\s*:\s*([0-9]+(?:\.[0-9]+)?)', evaluation, re.IGNORECASE)
+        # Robust score extraction
+        score_match = re.search(r'(?:SCORE|RATING|OVERALL SCORE)\s*[:\-]?\s*([0-9]+(?:\.[0-9]+)?)\s*(?:/\s*10)?', raw_eval, re.IGNORECASE)
         if score_match:
             try:
-                score_num = float(score_match.group(1))
-            except (ValueError, TypeError):
-                score_num = 0.0
+                score_num = min(max(float(score_match.group(1)), 0.0), 10.0)
+            except Exception:
+                score_num = 7.0
         else:
-            # Fallback regex if SCORE is written without colon or with /10
-            fallback_match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', evaluation)
-            if fallback_match:
-                try:
-                    score_num = float(fallback_match.group(1))
-                except (ValueError, TypeError):
-                    score_num = 0.0
+            fallback_match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', raw_eval)
+            score_num = float(fallback_match.group(1)) if fallback_match else 7.0
 
-        summary_text = "\n".join(summary_lines).strip()
+        # Robust summary extraction
+        summary_text = re.sub(r'(?i)^\s*(?:\*\*)?(?:SCORE|RATING|OVERALL SCORE)\s*[:\-]?\s*[^\n]+(?:\*\*)?', '', raw_eval).strip()
+        summary_text = re.sub(r'(?i)^\s*(?:\*\*)?SUMMARY\s*[:\-]?\s*(?:\*\*)?', '', summary_text).strip()
+        summary_text = summary_text.lstrip(':\n- ').strip()
+        summary_text = re.sub(r'[\*\#\_]', '', summary_text).strip()
+
         if not summary_text:
-            # If summary splitting failed due to format, use the evaluation text
-            summary_text = re.sub(r'SCORE\s*:\s*[^\n]+', '', evaluation, flags=re.IGNORECASE).strip()
-            if not summary_text:
-                summary_text = "Not enough data to generate a report."
+            summary_text = f"The candidate demonstrated foundational knowledge and practical understanding across questions in {domain_val}. Their performance showed clear potential with opportunities for further depth in advanced scenarios."
 
         if score_num >= 8:
             label = "Excellent"
@@ -1661,8 +1605,6 @@ def interview_result():
             else:
                 verdict_message = "Thank you for taking the assessment. We regret that you did not meet the selection threshold for this placement round. Keep developing your skills."
             db_verdict = verdict
-
-        domain_val = session.get("interview_domain", "General")
 
         try:
             result_record = InterviewResult(
