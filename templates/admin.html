@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script>
@@ -19,45 +20,52 @@
 
     <style>
         :root {
-            --surface:  #ffffff;
-            --bg:       #f8fafc;
-            --border2:  #e2e8f0;
-            --text-1:   #0f172a;
-            --text-2:   #475569;
-            --row-hover:#f1f5f9;
-            --radius-xl: 20px;
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
+            --surface:      #08122a;
+            --surface-card: #08122a;
+            --bg:           #020510;
+            --border-card:  #334155;
+            --border-input: #475569;
+            --text-primary: #ffffff;
+            --text-secondary:#cbd5e1;
+            --text-muted:   #94a3b8;
+            --cyan-glow:    #00ffff;
+            --sky-glow:     #38bdf8;
+            --row-hover:    rgba(0, 255, 255, 0.06);
+            --radius-xl:    22px;
+            --radius-lg:    16px;
+            --radius-md:    12px;
+            --radius-sm:    8px;
         }
 
         html.dark-theme {
-            --surface:  rgba(10, 15, 29, 0.65);
-            --bg:       #020510;
-            --border2:  rgba(0, 255, 255, 0.14);
-            --text-1:   #ffffff;
-            --text-2:   #94a3b8;
-            --row-hover: rgba(99, 102, 241, 0.08);
+            --surface:      #08122a;
+            --surface-card: #08122a;
+            --bg:           #020510;
+            --border-card:  #334155;
+            --border-input: #475569;
+            --text-primary: #ffffff;
+            --text-secondary:#cbd5e1;
+            --text-muted:   #94a3b8;
+            --cyan-glow:    #00ffff;
+            --sky-glow:     #38bdf8;
+            --row-hover:    rgba(0, 255, 255, 0.06);
         }
 
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        * {
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
 
         body {
             min-height: 100vh;
-            color: var(--text-1);
+            color: var(--text-primary);
             overflow-x: hidden;
-            transition: background 0.25s ease, color 0.25s ease;
-            background: var(--bg) !important;
-            background-image: none !important;
-        }
-
-        html.dark-theme body {
             background: #020510 !important;
             background-image: none !important;
         }
 
         /* ═══════════════════════════════════════════
-           GOATED BACKGROUND — Animated Aurora System
+           ANIMATED AURORA NEURAL BACKGROUND SYSTEM
         ═══════════════════════════════════════════ */
         .db-bg {
             position: fixed;
@@ -65,9 +73,6 @@
             z-index: 0;
             pointer-events: none;
             overflow: hidden;
-            display: none;
-        }
-        html.dark-theme .db-bg {
             display: block;
         }
 
@@ -80,7 +85,7 @@
                 radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
                 radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
                 radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
-                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100__);
+                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100%);
         }
 
         .db-orb {
@@ -133,8 +138,8 @@
             position: absolute;
             inset: 0;
             background-image:
-                linear-gradient(rgba(0, 200, 255, 0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 200, 255, 0.035) 1px, transparent 1px);
+                linear-gradient(rgba(0, 200, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.04) 1px, transparent 1px);
             background-size: 60px 60px;
             mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
             -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
@@ -153,14 +158,14 @@
 
         @keyframes starTwinkle {
             0%, 100% { opacity: 0.05; transform: scale(1); }
-            50% { opacity: 0.55; transform: scale(1.6); }
+            50% { opacity: 0.6; transform: scale(1.6); }
         }
 
         .db-topbar-glow {
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 2px;
-            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.7) 30%, rgba(120, 0, 255, 0.7) 70%, transparent 100%);
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.8) 30%, rgba(120, 0, 255, 0.8) 70%, transparent 100%);
             animation: topbarGlowPulse 4s ease-in-out infinite;
         }
         @keyframes topbarGlowPulse {
@@ -171,492 +176,566 @@
         .page-shell {
             position: relative;
             z-index: 1;
-            max-width: 1300px;
+            max-width: 1320px;
             margin: 0 auto;
             padding: 36px 24px 60px;
         }
 
-        /* ── Top header ── */
+        /* ═══════════════════════════════════════════
+           HEADER SECTION
+        ═══════════════════════════════════════════ */
         .admin-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 36px;
+            gap: 20px;
+            margin-bottom: 32px;
         }
 
         .admin-brand {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 16px;
         }
 
         .admin-brand-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #00ffff 0%, #0284c7 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
-            color: #fff;
-            box-shadow: 0 8px 24px rgba(37,99,235,0.25);
+            font-size: 1.5rem;
+            color: #020510;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.45);
             flex-shrink: 0;
-        }
-        html.dark-theme .admin-brand-icon {
-            background: linear-gradient(135deg, #00ffff, #0ea5e9);
-            box-shadow: 0 8px 24px rgba(0,255,255,0.35);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .admin-brand-text h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.55rem;
-            font-weight: 800;
-            color: var(--text-1);
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: #ffffff;
             margin: 0;
             letter-spacing: -0.02em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
         .admin-brand-text p {
-            font-size: 0.83rem;
-            color: var(--text-2);
-            margin: 0;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin: 2px 0 0;
             font-weight: 500;
         }
 
         .admin-header-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .header-icon-btn {
-            width: 42px;
-            height: 42px;
+            height: 44px;
             border-radius: 12px;
-            background: var(--surface);
-            border: 1.5px solid var(--border2);
-            color: var(--text-2);
-            display: flex;
+            background: #08122a;
+            border: 1.5px solid #334155;
+            color: #cbd5e1;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 1rem;
             text-decoration: none;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            padding: 0 14px;
         }
         .header-icon-btn:hover {
-            background: #eff6ff;
-            border-color: #93c5fd;
-            color: #2563eb;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.15);
-        }
-        .header-icon-btn.danger:hover {
-            background: #fef2f2;
-            border-color: #fca5a5;
-            color: #ef4444;
-        }
-        html.dark-theme .header-icon-btn:hover {
-            background: rgba(0, 255, 255, 0.15);
+            background: rgba(0, 255, 255, 0.12);
             border-color: #00ffff;
             color: #00ffff;
-            box-shadow: 0 4px 12px rgba(0,255,255,0.2);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.35);
+            transform: translateY(-2px);
         }
-        html.dark-theme .header-icon-btn.danger:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: #f87171;
+        .header-icon-btn.danger {
             color: #f87171;
+            border-color: rgba(239, 68, 68, 0.35);
+        }
+        .header-icon-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.18);
+            border-color: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(239, 68, 68, 0.4);
+            transform: translateY(-2px);
         }
 
-        /* ── Stat cards grid ── */
+        .btn-users-nav {
+            background: rgba(0, 255, 255, 0.08) !important;
+            border: 1.5px solid #00ffff !important;
+            color: #00ffff !important;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 0.88rem;
+            letter-spacing: 0.03em;
+            padding: 0 18px;
+            gap: 8px;
+            box-shadow: 0 0 16px rgba(0, 255, 255, 0.25) !important;
+        }
+        .btn-users-nav:hover {
+            background: linear-gradient(135deg, #00ffff, #0284c7) !important;
+            color: #020510 !important;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.5) !important;
+            transform: translateY(-2px);
+        }
+
+        /* ═══════════════════════════════════════════
+           STAT CARDS GRID
+        ═══════════════════════════════════════════ */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 14px;
-            margin-bottom: 30px;
+            gap: 16px;
+            margin-bottom: 28px;
         }
-        @media (max-width: 992px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 600px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 680px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px)  { .stat-grid { grid-template-columns: 1fr; } }
 
         .stat-card {
-            background: var(--surface);
-            border: 2px solid var(--border2);
-            border-radius: 18px;
-            padding: 20px 18px;
+            background: #08122a;
+            border: 1.5px solid #334155;
+            border-radius: 20px;
+            padding: 22px 20px;
             text-decoration: none;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
         }
 
-        .stat-card::after {
+        .stat-card::before {
             content: '';
             position: absolute;
-            bottom: 0; left: 0; right: 0;
+            top: 0; left: 0; right: 0;
             height: 3px;
             background: var(--accent-color);
-            border-radius: 0 0 16px 16px;
-            opacity: 0;
+            opacity: 0.6;
             transition: opacity 0.25s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
             border-color: var(--accent-color);
-            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+            background: #0d1a3a;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--accent-color) 30%, transparent);
         }
-        html.dark-theme .stat-card:hover {
-            box-shadow: 0 16px 48px rgba(0, 200, 255, 0.18), 0 0 0 1px rgba(0, 200, 255, 0.22) !important;
-        }
-        .stat-card:hover::after { opacity: 1; }
+        .stat-card:hover::before { opacity: 1; }
 
         .stat-card.active-filter {
             border-color: var(--accent-color);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 12%, #08122a) 0%, #08122a 100%);
+            box-shadow: 0 0 25px color-mix(in srgb, var(--accent-color) 35%, transparent), 0 12px 35px rgba(0,0,0,0.5);
         }
-        .stat-card.active-filter::after { opacity: 1; }
+        .stat-card.active-filter::before { opacity: 1; height: 4px; }
 
-        .sc-total   { --accent-color: #2563eb; }
-        .sc-month   { --accent-color: #0284c7; }
-        html.dark-theme .sc-total { --accent-color: #00ffff; }
-        html.dark-theme .sc-month { --accent-color: #38bdf8; }
-        .sc-today   { --accent-color: #0ea5e9; }
-        .sc-selected { --accent-color: #10b981; }
-        .sc-rejected { --accent-color: #ef4444; }
-        html.dark-theme .sc-today   { --accent-color: #0ea5e9; }
-        html.dark-theme .sc-selected { --accent-color: #34d399; }
-        html.dark-theme .sc-rejected { --accent-color: #ef4444; }
+        .sc-total    { --accent-color: #00ffff; }
+        .sc-month    { --accent-color: #38bdf8; }
+        .sc-today    { --accent-color: #818cf8; }
+        .sc-selected { --accent-color: #34d399; }
+        .sc-rejected { --accent-color: #f87171; }
 
-        .stat-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+        .stat-icon-wrapper {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             color: var(--accent-color);
-            background: color-mix(in srgb, var(--accent-color) 10%, transparent);
-            margin-bottom: 14px;
+            background: color-mix(in srgb, var(--accent-color) 15%, transparent);
+            border: 1.5px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
+            margin-bottom: 16px;
+            box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 20%, transparent);
         }
 
         .stat-label {
-            font-size: 0.71rem;
-            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: #94a3b8;
-            margin-bottom: 4px;
+            letter-spacing: 0.08em;
+            color: #cbd5e1;
+            margin-bottom: 6px;
         }
 
         .stat-number {
             font-family: 'Outfit', sans-serif;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            color: var(--text-1);
+            color: #ffffff;
             line-height: 1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        /* ── Filter bar ── */
+        /* ═══════════════════════════════════════════
+           FILTER & SEARCH BAR
+        ═══════════════════════════════════════════ */
         .filter-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 16px;
+            gap: 16px;
+            margin-bottom: 20px;
         }
 
-        .filter-label {
-            font-size: 0.86rem;
-            color: var(--text-2);
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #08122a;
+            border: 1.5px solid #334155;
+            padding: 8px 18px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-family: 'Outfit', sans-serif;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        .filter-pill .active-tag {
+            color: #00ffff;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+        }
+
+        .search-container {
+            position: relative;
+            width: 320px;
+            max-width: 100%;
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00ffff;
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+        #searchInput {
+            width: 100%;
+            background: #0b1329;
+            border: 1.5px solid #475569;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 11px 16px 11px 40px;
+            font-size: 0.9rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+        #searchInput::placeholder {
+            color: #94a3b8;
             font-weight: 500;
         }
-        .filter-label strong {
-            color: var(--text-1);
-            font-weight: 700;
-        }
-
-        #searchInput {
-            background: var(--surface);
-            border: 1.5px solid var(--border2);
-            color: var(--text-1);
-            border-radius: 10px;
-            padding: 10px 16px;
-            font-size: 0.88rem;
-            width: 280px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-        #searchInput::placeholder { color: #94a3b8; }
         #searchInput:focus {
             outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-        }
-        html.dark-theme #searchInput:focus {
             border-color: #00ffff;
-            box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.15);
+            background: #0f1c3d;
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.4);
         }
 
-        /* ── Results table ── */
+        /* ═══════════════════════════════════════════
+           RESULTS PANEL & TABLE
+        ═══════════════════════════════════════════ */
         .results-panel {
-            background: var(--surface);
-            border: 1.5px solid var(--border2);
-            border-radius: 20px;
+            background: #08122a;
+            border: 1.5px solid #334155;
+            border-radius: 22px;
             overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
         }
 
         .results-table {
             width: 100%;
             border-collapse: collapse;
+            margin: 0;
         }
 
         .results-table thead tr {
-            background: var(--surface);
-            border-bottom: 2px solid var(--border2);
+            background: linear-gradient(180deg, #0f1c3d 0%, #08122a 100%);
+            border-bottom: 2px solid #334155;
         }
 
         .results-table thead th {
-            padding: 14px 20px;
-            font-size: 0.69rem;
+            padding: 16px 24px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.09em;
-            color: #94a3b8;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            border: none;
         }
 
         .results-table tbody tr {
-            border-bottom: 1px solid var(--border2);
+            border-bottom: 1px solid #1e293b;
             cursor: pointer;
-            transition: background 0.15s ease;
+            transition: background 0.15s ease, transform 0.15s ease;
         }
 
-        .results-table tbody tr:last-child { border-bottom: none; }
+        .results-table tbody tr:last-child {
+            border-bottom: none;
+        }
 
         .results-table tbody tr:hover {
-            background: var(--row-hover);
+            background: rgba(0, 255, 255, 0.06) !important;
         }
 
         .results-table tbody td {
-            padding: 16px 20px;
+            padding: 18px 24px;
             vertical-align: middle;
+            color: #ffffff;
+            border: none;
         }
 
-        /* ── Candidate cell ── */
+        /* ── Candidate Cell ── */
         .candidate-cell {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .avatar-circle {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #2563eb, #06b6d4);
-            color: #fff;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #00ffff, #0284c7);
+            color: #020510;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
-            font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 1.15rem;
             flex-shrink: 0;
-            box-shadow: 0 4px 12px rgba(37,99,235,0.2);
-        }
-        html.dark-theme .avatar-circle {
-            background: linear-gradient(135deg, #00ffff, #0ea5e9);
-            box-shadow: 0 4px 12px rgba(0,255,255,0.25);
-            color: #020510;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.35);
         }
 
-        /* Bold + Caps name style */
         .cand-name {
+            font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            font-size: 0.88rem;
-            color: var(--text-1);
-            margin-bottom: 3px;
+            font-size: 0.98rem;
+            color: #ffffff;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.03em;
         }
 
-        /* ── Auth badges ── */
+        /* ── Auth Badges ── */
         .auth-badge {
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            font-size: 0.64rem;
+            font-size: 0.72rem;
             font-weight: 800;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 6px;
             letter-spacing: 0.03em;
             text-transform: uppercase;
         }
         .auth-badge.google {
-            background: #eff6ff;
-            color: #3b82f6;
-            border: 1.5px solid #bfdbfe;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1.5px solid rgba(59, 130, 246, 0.4);
         }
-        .auth-badge.guest {
-            background: #fffbeb;
-            color: #d97706;
-            border: 1.5px solid #fde68a;
+        .auth-badge.verified {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1.5px solid rgba(16, 185, 129, 0.4);
         }
-        .google-g-icon { width: 13px; height: 13px; }
+        .google-g-icon {
+            width: 14px;
+            height: 14px;
+        }
 
-        /* ── Score bar ── */
-        .score-wrap { font-size: 0.9rem; font-weight: 700; color: var(--text-1); }
+        /* ── Score Cell ── */
+        .score-wrap {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #ffffff;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        .score-total-denom {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
         .score-bar-track {
-            height: 5px;
-            background: var(--border2);
+            height: 6px;
+            background: #1e293b;
             border-radius: 99px;
             margin-top: 6px;
             overflow: hidden;
+            width: 120px;
         }
         .score-bar-fill {
             height: 100%;
             border-radius: 99px;
+            box-shadow: 0 0 8px currentColor;
         }
 
-        /* ── Verdict pills ── */
+        /* ── Verdict Badges ── */
         .verdict-recommended {
-            background: #ecfdf5;
-            color: #059669;
-            border: 1.5px solid #a7f3d0;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 5px 12px;
-            border-radius: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1.5px solid rgba(16, 185, 129, 0.4);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 10px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
         }
         .verdict-rejected {
-            background: #fef2f2;
-            color: #dc2626;
-            border: 1.5px solid #fecaca;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 5px 12px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .verdict-terminated {
-            background: rgba(239, 68, 68, 0.18);
+            background: rgba(239, 68, 68, 0.15);
             color: #f87171;
             border: 1.5px solid rgba(239, 68, 68, 0.4);
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 5px 12px;
-            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 10px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+        }
+        .verdict-terminated {
+            background: rgba(244, 63, 94, 0.18);
+            color: #fb7185;
+            border: 1.5px solid rgba(244, 63, 94, 0.45);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
         }
 
-        /* ── Date cell ── */
-        .date-cell { font-size: 0.82rem; color: var(--text-2); font-weight: 500; }
+        /* ── Date Cell ── */
+        .date-cell {
+            font-size: 0.88rem;
+            color: #cbd5e1;
+            font-weight: 600;
+        }
 
-        /* ── Action btn ── */
+        /* ── Action Buttons ── */
         .btn-unlock-attempt {
-            background: rgba(0, 255, 255, 0.08);
-            border: 1.5px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 255, 255, 0.1);
+            border: 1.5px solid #00ffff;
             color: #00ffff;
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 6px 14px;
+            font-family: 'Outfit', sans-serif;
             font-size: 0.82rem;
-            font-weight: 700;
+            font-weight: 800;
             transition: all 0.2s ease;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
         .btn-unlock-attempt:hover {
             background: #00ffff;
             color: #020510;
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.45);
             transform: translateY(-1px);
         }
 
         .btn-delete {
-            background: transparent;
-            border: 1.5px solid #fecaca;
-            color: #ef4444;
-            border-radius: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1.5px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+            border-radius: 10px;
             padding: 6px 12px;
-            font-size: 0.82rem;
+            font-size: 0.88rem;
             transition: all 0.2s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
         }
         .btn-delete:hover {
-            background: #fef2f2;
+            background: #ef4444;
+            color: #ffffff;
             border-color: #ef4444;
-            color: #dc2626;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
         }
 
-        /* ── Empty state ── */
+        /* ── Premium Empty State ── */
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 70px 24px;
+        }
+        .empty-state-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1.5px solid rgba(0, 255, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #00ffff;
+            margin-bottom: 18px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        .empty-state h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+        .empty-state p {
+            font-size: 0.92rem;
             color: #94a3b8;
-        }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.5; }
-        .empty-state p { margin: 0; font-size: 0.9rem; }
-
-        html.dark-theme .verdict-recommended { background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
-        html.dark-theme .verdict-rejected { background: rgba(220, 38, 38, 0.15); color: #f87171; border-color: rgba(220, 38, 38, 0.35); }
-        html.dark-theme .auth-badge.google { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.35); }
-        html.dark-theme .auth-badge.guest { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.35); }
-        html.dark-theme .btn-delete { border-color: rgba(239, 68, 68, 0.3); color: #f87171; }
-        html.dark-theme .btn-delete:hover { background: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: #ef4444; }
-
-        /* ── Dark theme: table row hover fix ── */
-        html.dark-theme .results-table tbody tr:hover {
-            background: rgba(0, 255, 255, 0.08) !important;
-        }
-        html.dark-theme .results-table thead tr {
-            background: rgba(10, 15, 29, 0.65);
-        }
-        html.dark-theme .results-table thead th {
-            color: #64748b;
-        }
-        html.dark-theme .results-table tbody td {
-            color: var(--text-1);
-        }
-        html.dark-theme .score-wrap {
-            color: var(--text-1);
-        }
-        html.dark-theme .cand-name {
-            color: var(--text-1);
+            margin: 0;
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
+        ::-webkit-scrollbar-track { background: #020510; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.3); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
     </style>
 </head>
 <body>
 
-<!-- ══ GOATED ANIMATED BACKGROUND ══ -->
+<!-- ══ ANIMATED NEURAL BACKGROUND ══ -->
 <div class="db-bg" aria-hidden="true">
     <div class="db-orb db-orb-1"></div>
     <div class="db-orb db-orb-2"></div>
@@ -670,155 +749,175 @@
 
 <div class="page-shell">
 
-    <!-- Header -->
-    <div class="admin-header anim">
+    <!-- Header Section -->
+    <div class="admin-header">
         <div class="admin-brand">
             <div class="admin-brand-icon"><i class="bi bi-speedometer2"></i></div>
             <div class="admin-brand-text">
                 <h1>Recruitment Operations</h1>
-                <p>Candidate placement assessments overview</p>
+                <p>Candidate placement assessments &amp; performance analytics</p>
             </div>
         </div>
         <div class="admin-header-actions">
-            <button class="header-icon-btn me-1" id="themeToggle" title="Toggle Theme">
+            <button class="header-icon-btn" id="themeToggle" title="Toggle Theme">
                 <i class="bi bi-moon-fill" id="themeToggleIcon" style="transition: transform 0.2s ease;"></i>
             </button>
-            <a href="/admin/users" class="header-icon-btn me-1" title="Registered Users" style="width: auto; padding: 0 16px; gap: 8px; border-radius: 10px; border-color: #00ffff !important; color: #00ffff !important; box-shadow: 0 0 12px rgba(0, 255, 255, 0.2) !important; background: rgba(0, 255, 255, 0.05) !important;">
+            <a href="/admin/users" class="header-icon-btn btn-users-nav" title="Registered Candidates">
                 <i class="bi bi-people-fill"></i> Registered Users
             </a>
-            <a href="/admin/settings" class="header-icon-btn" title="Settings"><i class="bi bi-gear-fill"></i></a>
+            <a href="/admin/settings" class="header-icon-btn" title="Platform Settings"><i class="bi bi-gear-fill"></i></a>
             <a href="/logout" class="header-icon-btn danger" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>
 
-    <!-- Stat Cards -->
-    <div class="stat-grid anim anim-1">
+    <!-- Stat Cards Grid -->
+    <div class="stat-grid">
         <a href="/admin?filter=all" class="stat-card sc-total {% if filter_type == 'all' or not filter_type %}active-filter{% endif %}">
-            <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
-            <div class="stat-label">Total Assessments</div>
+            <div>
+                <div class="stat-icon-wrapper"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-label">Total Assessments</div>
+            </div>
             <div class="stat-number">{{ total_count }}</div>
         </a>
         <a href="/admin?filter=month" class="stat-card sc-month {% if filter_type == 'month' %}active-filter{% endif %}">
-            <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
-            <div class="stat-label">This Month</div>
+            <div>
+                <div class="stat-icon-wrapper"><i class="bi bi-calendar3"></i></div>
+                <div class="stat-label">This Month</div>
+            </div>
             <div class="stat-number">{{ month_count }}</div>
         </a>
         <a href="/admin?filter=today" class="stat-card sc-today {% if filter_type == 'today' %}active-filter{% endif %}">
-            <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
-            <div class="stat-label">Today</div>
+            <div>
+                <div class="stat-icon-wrapper"><i class="bi bi-calendar-check-fill"></i></div>
+                <div class="stat-label">Today</div>
+            </div>
             <div class="stat-number">{{ today_count }}</div>
         </a>
         <a href="/admin?filter=selected" class="stat-card sc-selected {% if filter_type == 'selected' %}active-filter{% endif %}">
-            <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
-            <div class="stat-label">Recommended</div>
+            <div>
+                <div class="stat-icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="stat-label">Recommended</div>
+            </div>
             <div class="stat-number">{{ selected_count }}</div>
         </a>
         <a href="/admin?filter=rejected" class="stat-card sc-rejected {% if filter_type == 'rejected' %}active-filter{% endif %}">
-            <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
-            <div class="stat-label">Not Recommended</div>
+            <div>
+                <div class="stat-icon-wrapper"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="stat-label">Not Recommended</div>
+            </div>
             <div class="stat-number">{{ rejected_count }}</div>
         </a>
     </div>
 
-    <!-- Filter bar -->
-    <div class="filter-bar anim anim-2">
-        <p class="filter-label mb-0">
-            Showing:
-            <strong>
+    <!-- Filter & Search Bar -->
+    <div class="filter-bar">
+        <div class="filter-pill">
+            <i class="bi bi-funnel-fill text-info"></i>
+            FILTER:
+            <span class="active-tag">
                 {% if filter_type == "today" %}Today's Assessments
                 {% elif filter_type == "month" %}This Month's Assessments
                 {% elif filter_type == "selected" %}Recommended Candidates
                 {% elif filter_type == "rejected" %}Not Recommended Candidates
                 {% else %}All Assessments{% endif %}
-            </strong>
-        </p>
-        <input type="text" id="searchInput" placeholder="&#xF52A;  Search by name or email…" autocomplete="off">
+            </span>
+        </div>
+        <div class="search-container">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search by name or email…" autocomplete="off">
+        </div>
     </div>
 
-    <!-- Results table -->
-    <div class="results-panel anim anim-3">
+    <!-- Results Panel -->
+    <div class="results-panel">
         <div class="table-responsive">
-        <table class="results-table" id="resultsTable">
-            <thead>
-                <tr>
-                    <th>Candidate</th>
-                    <th>Score</th>
-                    <th>Recommendation</th>
-                    <th>Date &amp; Time</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for result, user in results %}
-                <tr class="searchable-row" onclick="window.location='/admin/interview/{{ result.id }}'">
-                    <td>
-                        <div class="candidate-cell">
-                            <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
-                            <div>
-                                <div class="cand-name search-name d-flex align-items-center gap-2">
-                                    {{ user.full_name }}
-                                    {% if user.auth_provider == "google" %}
-                                        <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.78rem;letter-spacing:0.02em;width:auto;padding:4px 8px;">
-                                            <svg class="google-g-icon" viewBox="0 0 48 48" style="width:16px;height:16px;margin-right:4px;flex-shrink:0;">
-                                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                                            </svg>
-                                            Google
-                                        </span>
-                                    {% elif user.email_verified %}
-                                        <span class="auth-badge d-inline-flex align-items-center" style="background:#dcfce7;color:#15803d;border:2px solid #22c55e;font-weight:900;font-size:0.78rem;letter-spacing:0.02em;width:auto;padding:4px 10px;">
-                                            VERIFIED
-                                        </span>
-                                    {% endif %}
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Score</th>
+                        <th>Recommendation</th>
+                        <th>Date &amp; Time</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result, user in results %}
+                    <tr class="searchable-row" onclick="window.location='/admin/interview/{{ result.id }}'">
+                        <td>
+                            <div class="candidate-cell">
+                                <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
+                                <div>
+                                    <div class="cand-name search-name d-flex align-items-center gap-2">
+                                        {{ user.full_name }}
+                                        {% if user.auth_provider == "google" %}
+                                            <span class="auth-badge google">
+                                                <svg class="google-g-icon" viewBox="0 0 48 48">
+                                                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                                </svg>
+                                                Google
+                                            </span>
+                                        {% elif user.email_verified %}
+                                            <span class="auth-badge verified">
+                                                <i class="bi bi-patch-check-fill me-1"></i> VERIFIED
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="search-email d-none">{{ user.email }}</span>
                                 </div>
-                                <span class="search-email d-none">{{ user.email }}</span>
                             </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="score-wrap">{{ result.score }} / 10</div>
-                        <div class="score-bar-track">
-                            <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981{% elif result.score|float >= 4 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
-                        </div>
-                    </td>
-                    <td>
-                        {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
-                        <span class="verdict-terminated"><i class="bi bi-shield-slash-fill"></i>Terminated</span>
-                        {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
-                        <span class="verdict-recommended"><i class="bi bi-check-circle-fill"></i>Recommended</span>
-                        {% else %}
-                        <span class="verdict-rejected"><i class="bi bi-x-circle-fill"></i>Not Recommended</span>
-                        {% endif %}
-                    </td>
-                    <td class="date-cell">{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
-                    <td onclick="event.stopPropagation();" class="text-nowrap">
-                        {% set attempts_used = user_attempt_counts.get(user.id, 0) %}
-                        {% set extra_granted = user.extra_allowed_interviews or 0 %}
-                        {% set allowed_total = (settings.default_allowed_interviews or 2) + extra_granted %}
-                        {% if settings.enable_attempt_limits and attempts_used >= allowed_total %}
-                        <button type="button" class="btn-unlock-attempt me-2" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')">
-                            <i class="bi bi-unlock-fill me-1"></i> Unlock
-                        </button>
-                        {% endif %}
-                        <a href="/admin/delete/{{ result.id }}" class="btn-delete" onclick="return confirm('⚠️ WARNING: DELETION RISK!\n\nThis action cannot be undone.\n- The selected scorecard, score, strengths, and candidate transcript will be permanently erased.\n\nAre you sure you want to delete this interview record?');">
-                            <i class="bi bi-trash"></i>
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5">
-                        <div class="empty-state">
-                            <i class="bi bi-inbox"></i>
-                            <p>No interview records found.</p>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            <div class="score-wrap">
+                                <span>{{ result.score }}</span>
+                                <span class="score-total-denom">/ 10</span>
+                            </div>
+                            <div class="score-bar-track">
+                                <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981; color: #10b981;{% elif result.score|float >= 4 %}#f59e0b; color: #f59e0b;{% else %}#ef4444; color: #ef4444;{% endif %};"></div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
+                            <span class="verdict-terminated"><i class="bi bi-shield-slash-fill"></i>Terminated</span>
+                            {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
+                            <span class="verdict-recommended"><i class="bi bi-check-circle-fill"></i>Recommended</span>
+                            {% else %}
+                            <span class="verdict-rejected"><i class="bi bi-x-circle-fill"></i>Not Recommended</span>
+                            {% endif %}
+                        </td>
+                        <td class="date-cell">{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</td>
+                        <td onclick="event.stopPropagation();" style="text-align: right;" class="text-nowrap">
+                            {% set attempts_used = user_attempt_counts.get(user.id, 0) %}
+                            {% set extra_granted = user.extra_allowed_interviews or 0 %}
+                            {% set allowed_total = (settings.default_allowed_interviews or 2) + extra_granted %}
+                            {% if settings.enable_attempt_limits and attempts_used >= allowed_total %}
+                            <button type="button" class="btn-unlock-attempt me-2" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')">
+                                <i class="bi bi-unlock-fill me-1"></i> Unlock
+                            </button>
+                            {% endif %}
+                            <a href="/admin/delete/{{ result.id }}" class="btn-delete" title="Delete Record" onclick="return confirm('⚠️ WARNING: DELETION RISK!\n\nThis action cannot be undone.\n- The selected scorecard, score, strengths, and candidate transcript will be permanently erased.\n\nAre you sure you want to delete this interview record?');">
+                                <i class="bi bi-trash-fill"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-inbox-fill"></i>
+                                </div>
+                                <h4>No Interview Records Found</h4>
+                                <p>Candidate evaluations and placement assessment results will appear here automatically.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -827,7 +926,7 @@
 <!-- ══ CUSTOM THEME UNLOCK CONFIRMATION MODAL ══ -->
 <div class="modal fade" id="customUnlockModal" tabindex="-1" aria-labelledby="customUnlockModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:20px; border:1.5px solid rgba(0, 255, 255, 0.25); background:rgba(8, 14, 30, 0.95); backdrop-filter:blur(20px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);">
+    <div class="modal-content" style="border-radius:24px; border:1.5px solid #334155; background:#08122a; backdrop-filter:blur(20px); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);">
       <div class="modal-header border-0 p-4 pb-2">
         <h5 class="modal-title fw-bold" id="customUnlockModalLabel" style="color:#00ffff; font-family:'Outfit',sans-serif; letter-spacing:0.02em;">
           <i class="bi bi-unlock-fill me-2"></i>Authorize Attempt Extension
@@ -836,21 +935,21 @@
       </div>
       <div class="modal-body p-4 pt-2">
         <div class="d-flex align-items-start gap-3 mb-3">
-          <div style="background:rgba(0, 255, 255, 0.1); border-radius:14px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid rgba(0, 255, 255, 0.3);">
-            <i class="bi bi-person-check-fill text-cyan fs-3" style="color:#00ffff;"></i>
+          <div style="background:rgba(0, 255, 255, 0.12); border-radius:16px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid rgba(0, 255, 255, 0.35); box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);">
+            <i class="bi bi-person-check-fill fs-3" style="color:#00ffff;"></i>
           </div>
           <div>
-            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.1rem;">
+            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.15rem;">
               Unlock session access for <span id="modalTargetCandidate" style="color:#00ffff; text-transform:uppercase;">CANDIDATE</span>?
             </p>
-            <p style="color:#94a3b8; font-size:0.88rem; margin:0; line-height:1.6;">
+            <p style="color:#cbd5e1; font-size:0.88rem; margin:0; line-height:1.6;">
               Executing this authorization will grant this candidate 1 extra assessment slot.
             </p>
           </div>
         </div>
 
-        <div class="p-3 mb-3" style="background:rgba(15, 23, 42, 0.8); border:1px solid rgba(255, 255, 255, 0.1); border-radius:14px;">
-          <div class="fw-bold mb-2" style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#38bdf8;">
+        <div class="p-3 mb-3" style="background:#0b1329; border:1.5px solid #334155; border-radius:16px;">
+          <div class="fw-bold mb-2" style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#38bdf8; font-family:'Outfit', sans-serif;">
             <i class="bi bi-shield-check me-1"></i> System Authorization Scope:
           </div>
           <ul class="mb-0 ps-3" style="font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
@@ -861,7 +960,7 @@
         </div>
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
-        <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#94a3b8; border:1px solid rgba(255,255,255,0.15);">Cancel</button>
+        <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid #475569;">Cancel</button>
         <button type="button" class="btn rounded-pill px-4 fw-bold flex-fill" id="confirmUnlockModalBtn" style="background:linear-gradient(135deg, #00ffff, #0284c7) !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; box-shadow:0 4px 18px rgba(0, 255, 255, 0.35);">
           <i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot
         </button>
@@ -872,14 +971,18 @@
 
 <script>
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        document.querySelectorAll('.searchable-row').forEach(row => {
-            const name = row.querySelector('.search-name').textContent.toLowerCase();
-            const email = row.querySelector('.search-email').textContent.toLowerCase();
-            row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            document.querySelectorAll('.searchable-row').forEach(row => {
+                const nameElem = row.querySelector('.search-name');
+                const emailElem = row.querySelector('.search-email');
+                const name = nameElem ? nameElem.textContent.toLowerCase() : '';
+                const email = emailElem ? emailElem.textContent.toLowerCase() : '';
+                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            });
         });
-    });
+    }
 
     /* ── Theme Toggler ── */
     (function() {
@@ -888,11 +991,15 @@
 
         function updateIcon(theme) {
             if (theme === 'dark') {
-                toggleIcon.className = 'bi bi-sun-fill';
-                toggleIcon.style.color = '#fbbf24';
+                if (toggleIcon) {
+                    toggleIcon.className = 'bi bi-sun-fill';
+                    toggleIcon.style.color = '#fbbf24';
+                }
             } else {
-                toggleIcon.className = 'bi bi-moon-fill';
-                toggleIcon.style.color = '';
+                if (toggleIcon) {
+                    toggleIcon.className = 'bi bi-moon-fill';
+                    toggleIcon.style.color = '';
+                }
             }
         }
 
@@ -903,19 +1010,21 @@
             document.body.classList.add('dark-theme');
         }
 
-        toggleBtn.addEventListener('click', function() {
-            var theme = localStorage.getItem('theme') || 'dark';
-            var newTheme = theme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', newTheme);
-            updateIcon(newTheme);
-            if (newTheme === 'dark') {
-                document.documentElement.classList.add('dark-theme');
-                document.body.classList.add('dark-theme');
-            } else {
-                document.documentElement.classList.remove('dark-theme');
-                document.body.classList.remove('dark-theme');
-            }
-        });
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                var theme = localStorage.getItem('theme') || 'dark';
+                var newTheme = theme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                updateIcon(newTheme);
+                if (newTheme === 'dark') {
+                    document.documentElement.classList.add('dark-theme');
+                    document.body.classList.add('dark-theme');
+                } else {
+                    document.documentElement.classList.remove('dark-theme');
+                    document.body.classList.remove('dark-theme');
+                }
+            });
+        }
     })();
 </script>
 

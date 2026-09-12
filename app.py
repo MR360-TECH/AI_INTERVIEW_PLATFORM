@@ -1101,6 +1101,8 @@ def admin_users():
             (User.course.ilike(f"%{q}%")) |
             (User.skills.ilike(f"%{q}%"))
         ).order_by(User.registered_at.desc()).all()
+    else:
+        users = User.query.order_by(User.registered_at.desc()).all()
     settings = get_settings()
 
     attempt_counts_raw = db.session.query(
