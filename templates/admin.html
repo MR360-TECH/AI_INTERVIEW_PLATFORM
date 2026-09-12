@@ -30,9 +30,7 @@
             --text-muted:   #94a3b8;
             --cyan-glow:    #00ffff;
             --sky-glow:     #38bdf8;
-            --row-hover:    rgba(0, 255, 255, 0.06);
-            --radius-xl:    22px;
-            --radius-lg:    16px;
+            --row-hover:    rgba(0, 255, 255, 0.04);
             --radius-md:    12px;
             --radius-sm:    8px;
         }
@@ -48,7 +46,7 @@
             --text-muted:   #94a3b8;
             --cyan-glow:    #00ffff;
             --sky-glow:     #38bdf8;
-            --row-hover:    rgba(0, 255, 255, 0.06);
+            --row-hover:    rgba(0, 255, 255, 0.04);
         }
 
         * {
@@ -65,7 +63,7 @@
         }
 
         /* ═══════════════════════════════════════════
-           ANIMATED AURORA NEURAL BACKGROUND SYSTEM
+           CLEAN CRISP BACKGROUND (NO BUBBLE ORBS)
         ═══════════════════════════════════════════ */
         .db-bg {
             position: fixed;
@@ -73,104 +71,24 @@
             z-index: 0;
             pointer-events: none;
             overflow: hidden;
-            display: block;
-        }
-
-        .db-bg::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0, 150, 255, 0.18) 0%, transparent 55%),
-                radial-gradient(ellipse 60% 50% at 85% 10%, rgba(100, 0, 255, 0.14) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0, 255, 220, 0.10) 0%, transparent 55%),
-                radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0, 80, 255, 0.12) 0%, transparent 50%),
-                linear-gradient(160deg, #02060f 0%, #010416 30%, #020820 60%, #010512 100%);
-        }
-
-        .db-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0;
-            animation: orbDrift 18s ease-in-out infinite;
-        }
-        .db-orb-1 {
-            width: 520px; height: 520px;
-            top: -120px; left: -100px;
-            background: radial-gradient(circle, rgba(0, 120, 255, 0.30) 0%, transparent 70%);
-            animation-delay: 0s; animation-duration: 20s;
-        }
-        .db-orb-2 {
-            width: 400px; height: 400px;
-            top: 10%; right: -80px;
-            background: radial-gradient(circle, rgba(120, 0, 255, 0.22) 0%, transparent 70%);
-            animation-delay: -7s; animation-duration: 24s;
-        }
-        .db-orb-3 {
-            width: 480px; height: 480px;
-            bottom: -80px; left: 30%;
-            background: radial-gradient(circle, rgba(0, 200, 255, 0.18) 0%, transparent 70%);
-            animation-delay: -13s; animation-duration: 22s;
-        }
-        .db-orb-4 {
-            width: 300px; height: 300px;
-            top: 45%; right: 25%;
-            background: radial-gradient(circle, rgba(60, 0, 180, 0.16) 0%, transparent 70%);
-            animation-delay: -4s; animation-duration: 19s;
-        }
-        .db-orb-5 {
-            width: 350px; height: 350px;
-            bottom: 10%; right: -50px;
-            background: radial-gradient(circle, rgba(0, 255, 180, 0.12) 0%, transparent 70%);
-            animation-delay: -9s; animation-duration: 26s;
-        }
-
-        @keyframes orbDrift {
-            0%   { opacity: 0.6; transform: translate(0, 0) scale(1); }
-            25%  { opacity: 0.8; transform: translate(30px, -20px) scale(1.05); }
-            50%  { opacity: 0.55; transform: translate(-20px, 30px) scale(0.97); }
-            75%  { opacity: 0.75; transform: translate(15px, 10px) scale(1.03); }
-            100% { opacity: 0.6; transform: translate(0, 0) scale(1); }
+            background: #020510;
         }
 
         .db-grid {
             position: absolute;
             inset: 0;
             background-image:
-                linear-gradient(rgba(0, 200, 255, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 200, 255, 0.04) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
-            -webkit-mask-image: radial-gradient(ellipse 100% 100% at 50% 50%, black 20%, transparent 80%);
-        }
-
-        .db-particles {
-            position: absolute;
-            inset: 0;
-        }
-        .db-star {
-            position: absolute;
-            border-radius: 50%;
-            background: #ffffff;
-            animation: starTwinkle linear infinite;
-        }
-
-        @keyframes starTwinkle {
-            0%, 100% { opacity: 0.05; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.6); }
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
         }
 
         .db-topbar-glow {
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 2px;
-            background: linear-gradient(90deg, transparent 0%, rgba(0, 200, 255, 0.8) 30%, rgba(120, 0, 255, 0.8) 70%, transparent 100%);
-            animation: topbarGlowPulse 4s ease-in-out infinite;
-        }
-        @keyframes topbarGlowPulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
+            background: linear-gradient(90deg, transparent 0%, #00ffff 50%, transparent 100%);
+            opacity: 0.8;
         }
 
         .page-shell {
@@ -178,7 +96,7 @@
             z-index: 1;
             max-width: 1320px;
             margin: 0 auto;
-            padding: 36px 24px 60px;
+            padding: 32px 24px 60px;
         }
 
         /* ═══════════════════════════════════════════
@@ -190,7 +108,12 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 20px;
-            margin-bottom: 32px;
+            margin-bottom: 28px;
+            background: #08122a;
+            border: 1.5px solid #334155;
+            border-radius: 14px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
         }
 
         .admin-brand {
@@ -200,32 +123,30 @@
         }
 
         .admin-brand-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, #00ffff 0%, #0284c7 100%);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: #0b1329;
+            border: 1.5px solid #00ffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            color: #020510;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.45);
+            font-size: 1.4rem;
+            color: #00ffff;
             flex-shrink: 0;
-            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .admin-brand-text h1 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 900;
+            font-size: 1.55rem;
+            font-weight: 800;
             color: #ffffff;
             margin: 0;
-            letter-spacing: -0.02em;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            letter-spacing: -0.01em;
         }
 
         .admin-brand-text p {
-            font-size: 0.9rem;
+            font-size: 0.86rem;
             color: #cbd5e1;
             margin: 2px 0 0;
             font-weight: 500;
@@ -234,71 +155,63 @@
         .admin-header-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .header-icon-btn {
-            height: 44px;
-            border-radius: 12px;
-            background: #08122a;
+            height: 40px;
+            border-radius: 8px;
+            background: #0b1329;
             border: 1.5px solid #334155;
             color: #cbd5e1;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             text-decoration: none;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-            backdrop-filter: blur(16px);
+            transition: all 0.2s ease;
             padding: 0 14px;
+            font-weight: 600;
         }
         .header-icon-btn:hover {
-            background: rgba(0, 255, 255, 0.12);
+            background: #0f1c3d;
             border-color: #00ffff;
             color: #00ffff;
-            box-shadow: 0 0 18px rgba(0, 255, 255, 0.35);
-            transform: translateY(-2px);
         }
         .header-icon-btn.danger {
             color: #f87171;
-            border-color: rgba(239, 68, 68, 0.35);
+            border-color: rgba(239, 68, 68, 0.4);
         }
         .header-icon-btn.danger:hover {
-            background: rgba(239, 68, 68, 0.18);
+            background: rgba(239, 68, 68, 0.15);
             border-color: #ef4444;
             color: #ffffff;
-            box-shadow: 0 0 18px rgba(239, 68, 68, 0.4);
-            transform: translateY(-2px);
         }
 
         .btn-users-nav {
-            background: rgba(0, 255, 255, 0.08) !important;
-            border: 1.5px solid #00ffff !important;
+            border-color: #00ffff !important;
             color: #00ffff !important;
+            background: rgba(0, 255, 255, 0.08) !important;
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             letter-spacing: 0.03em;
-            padding: 0 18px;
+            padding: 0 16px;
             gap: 8px;
-            box-shadow: 0 0 16px rgba(0, 255, 255, 0.25) !important;
         }
         .btn-users-nav:hover {
-            background: linear-gradient(135deg, #00ffff, #0284c7) !important;
+            background: #00ffff !important;
             color: #020510 !important;
-            box-shadow: 0 0 24px rgba(0, 255, 255, 0.5) !important;
-            transform: translateY(-2px);
         }
 
         /* ═══════════════════════════════════════════
-           STAT CARDS GRID
+           STAT CARDS GRID (CLEAN OBSIDIAN — NO BUBBLES)
         ═══════════════════════════════════════════ */
         .stat-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 16px;
-            margin-bottom: 28px;
+            gap: 14px;
+            margin-bottom: 24px;
         }
         @media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 680px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -307,42 +220,29 @@
         .stat-card {
             background: #08122a;
             border: 1.5px solid #334155;
-            border-radius: 20px;
-            padding: 22px 20px;
+            border-radius: 12px;
+            padding: 18px 20px;
             text-decoration: none;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.2s ease;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--accent-color);
-            opacity: 0.6;
-            transition: opacity 0.25s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            border-top: 3px solid var(--accent-color);
         }
 
         .stat-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
             border-color: var(--accent-color);
-            background: #0d1a3a;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 20px color-mix(in srgb, var(--accent-color) 30%, transparent);
+            background: #0c1836;
         }
-        .stat-card:hover::before { opacity: 1; }
 
         .stat-card.active-filter {
             border-color: var(--accent-color);
-            background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 12%, #08122a) 0%, #08122a 100%);
-            box-shadow: 0 0 25px color-mix(in srgb, var(--accent-color) 35%, transparent), 0 12px 35px rgba(0,0,0,0.5);
+            background: #0d1b3e;
+            box-shadow: 0 0 15px color-mix(in srgb, var(--accent-color) 25%, transparent);
         }
-        .stat-card.active-filter::before { opacity: 1; height: 4px; }
 
         .sc-total    { --accent-color: #00ffff; }
         .sc-month    { --accent-color: #38bdf8; }
@@ -350,29 +250,26 @@
         .sc-selected { --accent-color: #34d399; }
         .sc-rejected { --accent-color: #f87171; }
 
-        .stat-icon-wrapper {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+        .stat-card-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            color: var(--accent-color);
-            background: color-mix(in srgb, var(--accent-color) 15%, transparent);
-            border: 1.5px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
-            margin-bottom: 16px;
-            box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 20%, transparent);
+            justify-content: space-between;
+            margin-bottom: 12px;
         }
 
         .stat-label {
             font-family: 'Outfit', sans-serif;
-            font-size: 0.78rem;
+            font-size: 0.74rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             color: #cbd5e1;
-            margin-bottom: 6px;
+            margin: 0;
+        }
+
+        .stat-icon {
+            font-size: 1.15rem;
+            color: var(--accent-color);
         }
 
         .stat-number {
@@ -381,7 +278,7 @@
             font-weight: 900;
             color: #ffffff;
             line-height: 1;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            margin: 0;
         }
 
         /* ═══════════════════════════════════════════
@@ -392,30 +289,28 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .filter-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            gap: 14px;
+            margin-bottom: 18px;
             background: #08122a;
             border: 1.5px solid #334155;
-            padding: 8px 18px;
-            border-radius: 99px;
-            font-size: 0.85rem;
-            color: #94a3b8;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            font-family: 'Outfit', sans-serif;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 12px 18px;
         }
-        .filter-pill .active-tag {
+
+        .filter-status {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-status .active-tag {
             color: #00ffff;
             font-weight: 800;
-            letter-spacing: 0.02em;
         }
 
         .search-container {
@@ -425,11 +320,11 @@
         }
         .search-icon {
             position: absolute;
-            left: 14px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
             color: #00ffff;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             pointer-events: none;
         }
         #searchInput {
@@ -438,11 +333,10 @@
             border: 1.5px solid #475569;
             color: #ffffff;
             font-weight: 600;
-            border-radius: 12px;
-            padding: 11px 16px 11px 40px;
-            font-size: 0.9rem;
-            transition: all 0.25s ease;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 9px 14px 9px 36px;
+            font-size: 0.88rem;
+            transition: all 0.2s ease;
         }
         #searchInput::placeholder {
             color: #94a3b8;
@@ -452,7 +346,6 @@
             outline: none;
             border-color: #00ffff;
             background: #0f1c3d;
-            box-shadow: 0 0 18px rgba(0, 255, 255, 0.4);
         }
 
         /* ═══════════════════════════════════════════
@@ -461,10 +354,9 @@
         .results-panel {
             background: #08122a;
             border: 1.5px solid #334155;
-            border-radius: 22px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(16px);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
         }
 
         .results-table {
@@ -474,26 +366,25 @@
         }
 
         .results-table thead tr {
-            background: linear-gradient(180deg, #0f1c3d 0%, #08122a 100%);
+            background: #0b1329;
             border-bottom: 2px solid #334155;
         }
 
         .results-table thead th {
-            padding: 16px 24px;
+            padding: 14px 20px;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.09em;
+            letter-spacing: 0.08em;
             color: #00ffff;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
             border: none;
         }
 
         .results-table tbody tr {
             border-bottom: 1px solid #1e293b;
             cursor: pointer;
-            transition: background 0.15s ease, transform 0.15s ease;
+            transition: background 0.15s ease;
         }
 
         .results-table tbody tr:last-child {
@@ -501,11 +392,11 @@
         }
 
         .results-table tbody tr:hover {
-            background: rgba(0, 255, 255, 0.06) !important;
+            background: rgba(0, 255, 255, 0.04) !important;
         }
 
         .results-table tbody td {
-            padding: 18px 24px;
+            padding: 16px 20px;
             vertical-align: middle;
             color: #ffffff;
             border: none;
@@ -515,43 +406,43 @@
         .candidate-cell {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 12px;
         }
 
-        .avatar-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #00ffff, #0284c7);
-            color: #020510;
+        .avatar-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: #0b1329;
+            border: 1.5px solid #00ffff;
+            color: #00ffff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-family: 'Outfit', sans-serif;
             font-weight: 900;
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             flex-shrink: 0;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.35);
         }
 
         .cand-name {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            font-size: 0.98rem;
+            font-size: 0.95rem;
             color: #ffffff;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             text-transform: uppercase;
-            letter-spacing: 0.03em;
+            letter-spacing: 0.02em;
         }
 
         /* ── Auth Badges ── */
         .auth-badge {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            font-size: 0.72rem;
+            gap: 4px;
+            font-size: 0.7rem;
             font-weight: 800;
-            padding: 3px 8px;
+            padding: 2px 7px;
             border-radius: 6px;
             letter-spacing: 0.03em;
             text-transform: uppercase;
@@ -567,14 +458,14 @@
             border: 1.5px solid rgba(16, 185, 129, 0.4);
         }
         .google-g-icon {
-            width: 14px;
-            height: 14px;
+            width: 13px;
+            height: 13px;
         }
 
         /* ── Score Cell ── */
         .score-wrap {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 800;
             color: #ffffff;
             display: flex;
@@ -582,22 +473,21 @@
             gap: 4px;
         }
         .score-total-denom {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #94a3b8;
             font-weight: 600;
         }
         .score-bar-track {
-            height: 6px;
+            height: 5px;
             background: #1e293b;
-            border-radius: 99px;
-            margin-top: 6px;
+            border-radius: 4px;
+            margin-top: 5px;
             overflow: hidden;
-            width: 120px;
+            width: 110px;
         }
         .score-bar-fill {
             height: 100%;
-            border-radius: 99px;
-            box-shadow: 0 0 8px currentColor;
+            border-radius: 4px;
         }
 
         /* ── Verdict Badges ── */
@@ -606,47 +496,44 @@
             color: #34d399;
             border: 1.5px solid rgba(16, 185, 129, 0.4);
             font-family: 'Outfit', sans-serif;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+            gap: 5px;
         }
         .verdict-rejected {
             background: rgba(239, 68, 68, 0.15);
             color: #f87171;
             border: 1.5px solid rgba(239, 68, 68, 0.4);
             font-family: 'Outfit', sans-serif;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+            gap: 5px;
         }
         .verdict-terminated {
             background: rgba(244, 63, 94, 0.18);
             color: #fb7185;
             border: 1.5px solid rgba(244, 63, 94, 0.45);
             font-family: 'Outfit', sans-serif;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
-            padding: 6px 14px;
-            border-radius: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
+            gap: 5px;
         }
 
         /* ── Date Cell ── */
         .date-cell {
-            font-size: 0.88rem;
+            font-size: 0.86rem;
             color: #cbd5e1;
             font-weight: 600;
         }
@@ -656,31 +543,28 @@
             background: rgba(0, 255, 255, 0.1);
             border: 1.5px solid #00ffff;
             color: #00ffff;
-            border-radius: 10px;
-            padding: 6px 14px;
+            border-radius: 6px;
+            padding: 5px 12px;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
             transition: all 0.2s ease;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
         .btn-unlock-attempt:hover {
             background: #00ffff;
             color: #020510;
-            box-shadow: 0 0 18px rgba(0, 255, 255, 0.45);
-            transform: translateY(-1px);
         }
 
         .btn-delete {
             background: rgba(239, 68, 68, 0.1);
             border: 1.5px solid rgba(239, 68, 68, 0.4);
             color: #f87171;
-            border-radius: 10px;
-            padding: 6px 12px;
-            font-size: 0.88rem;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.85rem;
             transition: all 0.2s ease;
             text-decoration: none;
             display: inline-flex;
@@ -690,38 +574,27 @@
             background: #ef4444;
             color: #ffffff;
             border-color: #ef4444;
-            box-shadow: 0 0 14px rgba(239, 68, 68, 0.4);
-            transform: translateY(-1px);
         }
 
-        /* ── Premium Empty State ── */
+        /* ── Clean Empty State ── */
         .empty-state {
             text-align: center;
-            padding: 70px 24px;
+            padding: 60px 24px;
         }
         .empty-state-icon {
-            width: 72px;
-            height: 72px;
-            border-radius: 20px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1.5px solid rgba(0, 255, 255, 0.3);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             font-size: 2.2rem;
             color: #00ffff;
-            margin-bottom: 18px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            margin-bottom: 12px;
         }
         .empty-state h4 {
             font-family: 'Outfit', sans-serif;
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: #ffffff;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .empty-state p {
-            font-size: 0.92rem;
+            font-size: 0.88rem;
             color: #94a3b8;
             margin: 0;
         }
@@ -729,21 +602,15 @@
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #020510; }
-        ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.3); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
     </style>
 </head>
 <body>
 
-<!-- ══ ANIMATED NEURAL BACKGROUND ══ -->
+<!-- ══ CLEAN CRISP BACKGROUND ══ -->
 <div class="db-bg" aria-hidden="true">
-    <div class="db-orb db-orb-1"></div>
-    <div class="db-orb db-orb-2"></div>
-    <div class="db-orb db-orb-3"></div>
-    <div class="db-orb db-orb-4"></div>
-    <div class="db-orb db-orb-5"></div>
     <div class="db-grid"></div>
-    <div class="db-particles" id="dbParticles"></div>
     <div class="db-topbar-glow"></div>
 </div>
 
@@ -770,40 +637,40 @@
         </div>
     </div>
 
-    <!-- Stat Cards Grid -->
+    <!-- Stat Cards Grid (Clean Obsidian — No Bubbles) -->
     <div class="stat-grid">
         <a href="/admin?filter=all" class="stat-card sc-total {% if filter_type == 'all' or not filter_type %}active-filter{% endif %}">
-            <div>
-                <div class="stat-icon-wrapper"><i class="bi bi-people-fill"></i></div>
-                <div class="stat-label">Total Assessments</div>
+            <div class="stat-card-header">
+                <span class="stat-label">Total Assessments</span>
+                <i class="bi bi-people-fill stat-icon"></i>
             </div>
             <div class="stat-number">{{ total_count }}</div>
         </a>
         <a href="/admin?filter=month" class="stat-card sc-month {% if filter_type == 'month' %}active-filter{% endif %}">
-            <div>
-                <div class="stat-icon-wrapper"><i class="bi bi-calendar3"></i></div>
-                <div class="stat-label">This Month</div>
+            <div class="stat-card-header">
+                <span class="stat-label">This Month</span>
+                <i class="bi bi-calendar3 stat-icon"></i>
             </div>
             <div class="stat-number">{{ month_count }}</div>
         </a>
         <a href="/admin?filter=today" class="stat-card sc-today {% if filter_type == 'today' %}active-filter{% endif %}">
-            <div>
-                <div class="stat-icon-wrapper"><i class="bi bi-calendar-check-fill"></i></div>
-                <div class="stat-label">Today</div>
+            <div class="stat-card-header">
+                <span class="stat-label">Today</span>
+                <i class="bi bi-calendar-check-fill stat-icon"></i>
             </div>
             <div class="stat-number">{{ today_count }}</div>
         </a>
         <a href="/admin?filter=selected" class="stat-card sc-selected {% if filter_type == 'selected' %}active-filter{% endif %}">
-            <div>
-                <div class="stat-icon-wrapper"><i class="bi bi-check-circle-fill"></i></div>
-                <div class="stat-label">Recommended</div>
+            <div class="stat-card-header">
+                <span class="stat-label">Recommended</span>
+                <i class="bi bi-check-circle-fill stat-icon"></i>
             </div>
             <div class="stat-number">{{ selected_count }}</div>
         </a>
         <a href="/admin?filter=rejected" class="stat-card sc-rejected {% if filter_type == 'rejected' %}active-filter{% endif %}">
-            <div>
-                <div class="stat-icon-wrapper"><i class="bi bi-x-circle-fill"></i></div>
-                <div class="stat-label">Not Recommended</div>
+            <div class="stat-card-header">
+                <span class="stat-label">Not Recommended</span>
+                <i class="bi bi-x-circle-fill stat-icon"></i>
             </div>
             <div class="stat-number">{{ rejected_count }}</div>
         </a>
@@ -811,7 +678,7 @@
 
     <!-- Filter & Search Bar -->
     <div class="filter-bar">
-        <div class="filter-pill">
+        <div class="filter-status">
             <i class="bi bi-funnel-fill text-info"></i>
             FILTER:
             <span class="active-tag">
@@ -846,7 +713,7 @@
                     <tr class="searchable-row" onclick="window.location='/admin/interview/{{ result.id }}'">
                         <td>
                             <div class="candidate-cell">
-                                <div class="avatar-circle">{{ user.full_name[0]|upper }}</div>
+                                <div class="avatar-box">{{ user.full_name[0]|upper if user and user.full_name else 'C' }}</div>
                                 <div>
                                     <div class="cand-name search-name d-flex align-items-center gap-2">
                                         {{ user.full_name }}
@@ -876,7 +743,7 @@
                                 <span class="score-total-denom">/ 10</span>
                             </div>
                             <div class="score-bar-track">
-                                <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981; color: #10b981;{% elif result.score|float >= 4 %}#f59e0b; color: #f59e0b;{% else %}#ef4444; color: #ef4444;{% endif %};"></div>
+                                <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981;{% elif result.score|float >= 4 %}#f59e0b;{% else %}#ef4444;{% endif %};"></div>
                             </div>
                         </td>
                         <td>
@@ -926,7 +793,7 @@
 <!-- ══ CUSTOM THEME UNLOCK CONFIRMATION MODAL ══ -->
 <div class="modal fade" id="customUnlockModal" tabindex="-1" aria-labelledby="customUnlockModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:24px; border:1.5px solid #334155; background:#08122a; backdrop-filter:blur(20px); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);">
+    <div class="modal-content" style="border-radius:14px; border:1.5px solid #334155; background:#08122a; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);">
       <div class="modal-header border-0 p-4 pb-2">
         <h5 class="modal-title fw-bold" id="customUnlockModalLabel" style="color:#00ffff; font-family:'Outfit',sans-serif; letter-spacing:0.02em;">
           <i class="bi bi-unlock-fill me-2"></i>Authorize Attempt Extension
@@ -935,11 +802,11 @@
       </div>
       <div class="modal-body p-4 pt-2">
         <div class="d-flex align-items-start gap-3 mb-3">
-          <div style="background:rgba(0, 255, 255, 0.12); border-radius:16px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid rgba(0, 255, 255, 0.35); box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);">
-            <i class="bi bi-person-check-fill fs-3" style="color:#00ffff;"></i>
+          <div style="background:#0b1329; border-radius:10px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid #00ffff;">
+            <i class="bi bi-person-check-fill fs-4" style="color:#00ffff;"></i>
           </div>
           <div>
-            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.15rem;">
+            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.1rem;">
               Unlock session access for <span id="modalTargetCandidate" style="color:#00ffff; text-transform:uppercase;">CANDIDATE</span>?
             </p>
             <p style="color:#cbd5e1; font-size:0.88rem; margin:0; line-height:1.6;">
@@ -948,7 +815,7 @@
           </div>
         </div>
 
-        <div class="p-3 mb-3" style="background:#0b1329; border:1.5px solid #334155; border-radius:16px;">
+        <div class="p-3 mb-3" style="background:#0b1329; border:1.5px solid #334155; border-radius:10px;">
           <div class="fw-bold mb-2" style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#38bdf8; font-family:'Outfit', sans-serif;">
             <i class="bi bi-shield-check me-1"></i> System Authorization Scope:
           </div>
@@ -961,7 +828,7 @@
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
         <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid #475569;">Cancel</button>
-        <button type="button" class="btn rounded-pill px-4 fw-bold flex-fill" id="confirmUnlockModalBtn" style="background:linear-gradient(135deg, #00ffff, #0284c7) !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; box-shadow:0 4px 18px rgba(0, 255, 255, 0.35);">
+        <button type="button" class="btn rounded-pill px-4 fw-bold flex-fill" id="confirmUnlockModalBtn" style="background:#00ffff !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; font-weight: 800;">
           <i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot
         </button>
       </div>
@@ -1026,29 +893,6 @@
             });
         }
     })();
-</script>
-
-<script>
-/* ── Admin background particle spawner ── */
-(function() {
-    var container = document.getElementById('dbParticles');
-    if (!container) return;
-    var count = 60;
-    for (var i = 0; i < count; i++) {
-        var star = document.createElement('div');
-        star.className = 'db-star';
-        var size = Math.random() * 2 + 1;
-        star.style.cssText = [
-            'width:' + size + 'px',
-            'height:' + size + 'px',
-            'left:' + (Math.random() * 100) + '%',
-            'top:' + (Math.random() * 100) + '%',
-            'animation-duration:' + (Math.random() * 4 + 2) + 's',
-            'animation-delay:' + (Math.random() * 6) + 's'
-        ].join(';');
-        container.appendChild(star);
-    }
-})();
 </script>
 
 <script>
