@@ -888,7 +888,12 @@
                                             </span>
                                         {% endif %}
                                     </div>
-                                    <div class="cand-email search-email">{{ user.email if user and user.email else 'No email recorded' }}</div>
+                                    <div class="cand-email search-email d-flex align-items-center gap-2 flex-wrap mt-1">
+                                        <span>{{ user.email if user and user.email else 'No email recorded' }}</span>
+                                        <span class="session-code-badge" onclick="event.stopPropagation(); copySessionId('{{ result.session_code }}', this);" title="Click to copy Assessment Session ID">
+                                            <i class="bi bi-copy copy-icon"></i> {{ result.session_code }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </td>
@@ -898,7 +903,7 @@
                                 <span class="score-total-denom">/ 10</span>
                             </div>
                             <div class="score-bar-track">
-                                <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {% if result.score|float >= 6 %}#10b981;{% elif result.score|float >= 4 %}#f59e0b;{% else %}#ef4444;{% endif %};"></div>
+                                <div class="score-bar-fill" style="width: {{ (result.score|float / 10 * 100)|round|int }}%; background: {{ '#10b981' if result.score|float >= 6 else ('#f59e0b' if result.score|float >= 4 else '#ef4444') }};"></div>
                             </div>
                         </td>
                         <td>

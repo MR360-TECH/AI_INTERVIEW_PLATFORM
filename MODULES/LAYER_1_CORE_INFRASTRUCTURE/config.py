@@ -2,8 +2,14 @@ import os
 import re
 import secrets
 from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+from authlib.integrations.flask_client import OAuth
 
 load_dotenv()
+
+# Core extensions instances
+db = SQLAlchemy()
+oauth = OAuth()
 
 IS_PRODUCTION = bool(
     os.environ.get("DATABASE_URL")

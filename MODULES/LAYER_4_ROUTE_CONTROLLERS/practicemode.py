@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.extensions import db
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import InterviewResult
-from MODULES.LAYER_2_DATA_PERSISTENCE.helpers import clear_progress
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import InterviewResult, clear_progress
 
 practice_bp = Blueprint('practice_bp', __name__)
 

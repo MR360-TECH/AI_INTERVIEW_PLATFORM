@@ -1,10 +1,16 @@
 import os
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.extensions import db
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress
-from MODULES.LAYER_2_DATA_PERSISTENCE.validators import profile_is_complete, allowed_resume_file
-from MODULES.LAYER_2_DATA_PERSISTENCE.helpers import get_settings, clear_progress
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
+    User,
+    InterviewResult,
+    InterviewProgress,
+    profile_is_complete,
+    allowed_resume_file,
+    get_settings,
+    clear_progress
+)
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)

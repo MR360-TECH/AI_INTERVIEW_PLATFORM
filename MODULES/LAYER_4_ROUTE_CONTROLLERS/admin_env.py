@@ -1,9 +1,15 @@
 from datetime import date
 from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, current_app
 from sqlalchemy import func
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.extensions import db
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, AdminSettings
-from MODULES.LAYER_2_DATA_PERSISTENCE.helpers import get_settings, invalidate_settings_cache
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
+    User,
+    InterviewResult,
+    InterviewProgress,
+    AdminSettings,
+    get_settings,
+    invalidate_settings_cache
+)
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
 
 admin_bp = Blueprint('admin_bp', __name__)
