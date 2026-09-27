@@ -4,13 +4,20 @@ import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for, current_app
 from google.genai import types
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.extensions import db
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import MODEL_NAME
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress
-from MODULES.LAYER_2_DATA_PERSISTENCE.validators import allowed_file, allowed_resume_file
-from MODULES.LAYER_2_DATA_PERSISTENCE.helpers import get_settings, save_progress, clear_progress
-from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment, get_ai_client
-from MODULES.LAYER_3_BUSINESS_SERVICES.prompt_builder import (
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, MODEL_NAME
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
+    User,
+    InterviewResult,
+    InterviewProgress,
+    allowed_file,
+    allowed_resume_file,
+    get_settings,
+    save_progress,
+    clear_progress
+)
+from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import (
+    analyze_attachment,
+    get_ai_client,
     build_initial_question_prompt,
     build_subsequent_question_prompt,
     build_ajax_system_prompt,
@@ -400,7 +407,18 @@ def interview_result():
     _result_history = json.loads(_result_progress.chat_history or '[]') if _result_progress else []
 
     if not _result_history:
-        latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).first()
+        # Prefer the latest COMPLETED result (PASS/FAIL) — never show a Terminated/Abandoned
+        # record as the result page for a genuine completion.
+        completed_res = InterviewResult.query.filter(
+            InterviewResult.user_id == session["user_id"],
+            InterviewResult.is_terminated == False,
+            ~InterviewResult.status.in_(["Abandoned (Reset)", "Terminated (Breach)"])
+        ).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).first()
+
+        latest_res = completed_res or InterviewResult.query.filter_by(
+            user_id=session["user_id"]
+        ).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).first()
+
         if latest_res:
             is_term = bool(latest_res.is_terminated or (latest_res.status and "Terminated" in latest_res.status))
             score_pct = int((latest_res.score / 10.0) * 100) if latest_res.score else 0
