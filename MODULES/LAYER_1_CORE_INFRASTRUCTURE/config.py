@@ -38,17 +38,12 @@ if not ADMIN_PASSWORD:
     print(f" * SECURE WARNING: ADMIN_PASSWORD environment variable was not set.")
     print(f" * A random temporary password has been generated for this session: {ADMIN_PASSWORD}")
 
-# Database URL configuration and fallback
-db_url = os.environ.get("DATABASE_URL")
-if db_url:
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-else:
-    db_user = os.environ.get("DB_USER", "root")
-    db_pass = os.environ.get("DB_PASSWORD", "1817")
-    db_host = os.environ.get("DB_HOST", "localhost")
-    db_name = os.environ.get("DB_NAME", "ai_interview_platform")
-    db_url = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}'
+# Database URL configuration - default to permanent Neon PostgreSQL
+NEON_DATABASE_URL = "postgresql://neondb_owner:npg_79kecEGsbdRa@ep-falling-butterfly-b4awwaky-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
+db_url = os.environ.get("DATABASE_URL") or NEON_DATABASE_URL
+
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 
 if db_url.startswith("mysql"):
     try:
@@ -71,12 +66,10 @@ if db_url.startswith("mysql"):
         else:
             raise ValueError("Invalid MySQL URI format")
     except Exception as e:
-        print(f"MySQL database connection failed ({e}). Falling back to SQLite.")
-        render_persistent_dir = "/var/data"
-        if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
-            db_url = f"sqlite:///{os.path.join(render_persistent_dir, 'ai_interview_platform.db')}"
-        else:
-            db_url = "sqlite:///ai_interview_platform.db"
+        print(f"MySQL database connection failed ({e}). Falling back to Neon PostgreSQL.")
+        db_url = NEON_DATABASE_URL
+elif not db_url.startswith("postgresql") and not db_url.startswith("sqlite"):
+    db_url = NEON_DATABASE_URL
 
 SQLALCHEMY_DATABASE_URI = db_url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
