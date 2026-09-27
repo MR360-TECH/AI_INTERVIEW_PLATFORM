@@ -15,6 +15,24 @@ from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
 admin_bp = Blueprint('admin_bp', __name__)
 
 
+@admin_bp.route("/admin/db-check")
+def db_check():
+    try:
+        engine = db.engine
+        dialect_name = engine.dialect.name
+        user_count = User.query.count()
+        result_count = InterviewResult.query.count()
+        return jsonify({
+            "status": "connected",
+            "database_engine": dialect_name,
+            "is_postgres": bool("postgres" in dialect_name),
+            "users_in_db": user_count,
+            "interview_results_in_db": result_count
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @admin_bp.route("/admin")
 def admin():
     if "user_id" in session:
