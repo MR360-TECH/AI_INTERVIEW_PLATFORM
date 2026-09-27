@@ -5,7 +5,13 @@ from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
 from authlib.integrations.flask_client import OAuth
 
-load_dotenv()
+# Locate and load root .env explicitly
+_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+_env_file = os.path.join(_root_dir, '.env')
+if os.path.exists(_env_file):
+    load_dotenv(_env_file, override=True)
+else:
+    load_dotenv(override=True)
 
 # Core extensions instances
 db = SQLAlchemy()
