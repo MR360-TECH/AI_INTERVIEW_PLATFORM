@@ -38,12 +38,18 @@ if not ADMIN_PASSWORD:
     print(f" * SECURE WARNING: ADMIN_PASSWORD environment variable was not set.")
     print(f" * A random temporary password has been generated for this session: {ADMIN_PASSWORD}")
 
-# Database URL configuration - default to permanent Neon PostgreSQL
-NEON_DATABASE_URL = "postgresql://neondb_owner:npg_79kecEGsbdRa@ep-falling-butterfly-b4awwaky-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require"
-db_url = os.environ.get("DATABASE_URL") or NEON_DATABASE_URL
+# Database URL configuration
+db_url = os.environ.get("DATABASE_URL")
 
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+if db_url:
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+else:
+    db_user = os.environ.get("DB_USER", "root")
+    db_pass = os.environ.get("DB_PASSWORD", "1817")
+    db_host = os.environ.get("DB_HOST", "localhost")
+    db_name = os.environ.get("DB_NAME", "ai_interview_platform")
+    db_url = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}'
 
 if db_url.startswith("mysql"):
     try:
