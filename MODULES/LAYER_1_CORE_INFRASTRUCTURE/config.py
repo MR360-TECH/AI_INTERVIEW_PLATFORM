@@ -72,10 +72,12 @@ if db_url.startswith("mysql"):
         else:
             raise ValueError("Invalid MySQL URI format")
     except Exception as e:
-        print(f"MySQL database connection failed ({e}). Falling back to Neon PostgreSQL.")
-        db_url = NEON_DATABASE_URL
-elif not db_url.startswith("postgresql") and not db_url.startswith("sqlite"):
-    db_url = NEON_DATABASE_URL
+        print(f"MySQL database connection failed ({e}). Falling back to SQLite.")
+        render_persistent_dir = "/var/data"
+        if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
+            db_url = f"sqlite:///{os.path.join(render_persistent_dir, 'ai_interview_platform.db')}"
+        else:
+            db_url = "sqlite:///ai_interview_platform.db"
 
 SQLALCHEMY_DATABASE_URI = db_url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
