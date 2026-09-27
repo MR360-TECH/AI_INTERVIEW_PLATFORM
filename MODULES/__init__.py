@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, redirect, session, jsonify
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE import config
+from MODULES.LAYER_2_DATA_PERSISTENCE import models
 from MODULES.LAYER_4_ROUTE_CONTROLLERS import register_blueprints
 
 def create_app():
