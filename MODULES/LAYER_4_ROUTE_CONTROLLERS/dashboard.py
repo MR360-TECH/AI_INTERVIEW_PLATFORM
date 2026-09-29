@@ -64,10 +64,7 @@ def dashboard():
     remaining_tokens = allowed_total
 
     if settings.enable_attempt_limits:
-        attempts_used = InterviewResult.query.filter(
-            InterviewResult.user_id == session["user_id"],
-            InterviewResult.real_attempt_filter()
-        ).count()
+        attempts_used = current_user.get_attempts_used() if current_user else 0
         remaining_tokens = max(0, allowed_total - attempts_used)
         if attempts_used >= allowed_total and not has_progress:
             is_locked = True

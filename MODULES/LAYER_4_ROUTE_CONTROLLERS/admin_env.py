@@ -69,12 +69,8 @@ def admin():
 
     settings = get_settings()
 
-    attempt_counts_raw = db.session.query(
-        InterviewResult.user_id, func.count(InterviewResult.id)
-    ).filter(
-        InterviewResult.real_attempt_filter()
-    ).group_by(InterviewResult.user_id).all()
-    user_attempt_counts = {u_id: count for u_id, count in attempt_counts_raw}
+    all_users = User.query.all()
+    user_attempt_counts = {u.id: u.get_attempts_used() for u in all_users}
 
     return render_template(
         "admin.html",
@@ -186,10 +182,7 @@ def admin_unlock_attempt(user_id):
     default_allowed = settings.default_allowed_interviews or 2
 
     # Count actual token-consuming attempts (excludes Practice, Abandoned)
-    attempts_used = InterviewResult.query.filter(
-        InterviewResult.user_id == user_id,
-        InterviewResult.real_attempt_filter()
-    ).count()
+    attempts_used = user_obj.get_attempts_used()
 
     current_extra = user_obj.extra_allowed_interviews or 0
     # Ensure extra grants at least +1 usable token beyond whatever attempts were consumed
@@ -250,13 +243,7 @@ def admin_users():
     else:
         users = User.query.order_by(User.registered_at.desc()).all()
     settings = get_settings()
-
-    attempt_counts_raw = db.session.query(
-        InterviewResult.user_id, func.count(InterviewResult.id)
-    ).filter(
-        InterviewResult.real_attempt_filter()
-    ).group_by(InterviewResult.user_id).all()
-    user_attempt_counts = {u_id: count for u_id, count in attempt_counts_raw}
+    user_attempt_counts = {u.id: u.get_attempts_used() for u in users}
 
     return render_template("admin_users.html", users=users, q=q, settings=settings, user_attempt_counts=user_attempt_counts)
 
@@ -276,7 +263,7 @@ def admin_user_detail(user_id):
     ).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all()
 
     settings = get_settings()
-    attempts_used = sum(1 for inv in interviews if inv.status not in InterviewResult.NON_COUNTING_STATUSES)
+    attempts_used = user.get_attempts_used()
     extra_granted = user.extra_allowed_interviews or 0
     allowed_total = (settings.default_allowed_interviews or 2) + extra_granted
     remaining_tokens = max(0, allowed_total - attempts_used)

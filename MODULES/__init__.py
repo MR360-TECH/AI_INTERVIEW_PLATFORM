@@ -128,6 +128,10 @@ def create_app():
                             conn.execute(text("ALTER TABLE users ADD COLUMN extra_allowed_interviews INT DEFAULT 0"))
                             conn.commit()
                             print("Added column 'extra_allowed_interviews' dynamically to users table.")
+                        if 'attempts_count' not in columns:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN attempts_count INT DEFAULT 0"))
+                            conn.commit()
+                            print("Added column 'attempts_count' dynamically to users table.")
                     if inspector.has_table('interview_results'):
                         res_columns = [c['name'] for c in inspector.get_columns('interview_results')]
                         if 'is_terminated' not in res_columns:

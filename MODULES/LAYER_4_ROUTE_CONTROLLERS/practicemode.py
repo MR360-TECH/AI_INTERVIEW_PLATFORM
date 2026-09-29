@@ -133,6 +133,9 @@ def terminate_proctoring():
             termination_reason=reason
         )
         db.session.add(result_record)
+        user_obj = db.session.get(User, user_id)
+        if user_obj:
+            user_obj.attempts_count = max(user_obj.attempts_count or 0, user_obj.get_attempts_used()) + 1
         db.session.commit()
     except Exception as db_err:
         print(f"Error recording proctoring termination: {db_err}")

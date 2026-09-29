@@ -115,10 +115,7 @@ def interview():
     is_practice = bool(session.get("interview_mode") or request.args.get("practice") == "1")
     if not is_practice and settings.enable_attempt_limits:
         current_user = db.session.get(User, user_id)
-        attempts_used = InterviewResult.query.filter(
-            InterviewResult.user_id == user_id,
-            InterviewResult.real_attempt_filter()
-        ).count()
+        attempts_used = current_user.get_attempts_used() if current_user else 0
         extra_granted = current_user.extra_allowed_interviews or 0 if current_user else 0
         allowed_total = (settings.default_allowed_interviews or 2) + extra_granted
         _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
@@ -621,6 +618,10 @@ def interview_result():
                 domain=domain_val
             )
             db.session.add(result_record)
+            if not is_practice:
+                user_obj = db.session.get(User, session["user_id"])
+                if user_obj:
+                    user_obj.attempts_count = max(user_obj.attempts_count or 0, user_obj.get_attempts_used()) + 1
             db.session.commit()
             session_code_val = result_record.session_code
         except Exception as db_ex:
@@ -649,6 +650,10 @@ def interview_result():
                 domain=domain_val
             )
             db.session.add(result_record)
+            if not is_practice:
+                user_obj = db.session.get(User, session["user_id"])
+                if user_obj:
+                    user_obj.attempts_count = max(user_obj.attempts_count or 0, user_obj.get_attempts_used()) + 1
             db.session.commit()
             session_code_val = result_record.session_code
         except Exception as db_save_err:

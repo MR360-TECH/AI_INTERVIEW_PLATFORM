@@ -341,8 +341,8 @@
                             <div style="font-size: 0.84rem; color: #cbd5e1; font-weight: 600; margin-top: 2px;">{{ user.registered_at.strftime('%I:%M %p')|upper if user.registered_at else '—' }}</div>
                         </td>
                         <td style="text-align: right;" onclick="event.stopPropagation();" class="text-nowrap">
-                            {% if settings.enable_attempt_limits and remaining_tokens <= 0 %}
-                            <button type="button" class="btn-unlock-attempt me-1" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')" title="Grant +1 Assessment Token">
+                            {% if settings.enable_attempt_limits %}
+                            <button type="button" class="btn-unlock-attempt me-1" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')" title="{% if remaining_tokens <= 0 %}Candidate is locked (0 tokens). Click to grant +1 token.{% else %}Candidate has {{ remaining_tokens }} token(s) remaining. Click to grant +1 extra token.{% endif %}">
                                 <i class="bi bi-unlock-fill me-1"></i> Unlock
                             </button>
                             {% endif %}

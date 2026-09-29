@@ -34,6 +34,18 @@ class User(db.Model):
     resume_text = db.Column(db.Text)
     resume_filename = db.Column(db.String(255))
     extra_allowed_interviews = db.Column(db.Integer, default=0)
+    attempts_count = db.Column(db.Integer, default=0)
+
+    def get_attempts_used(self):
+        try:
+            curr_count = self.attempts_count or 0
+        except Exception:
+            curr_count = 0
+        results_count = InterviewResult.query.filter(
+            InterviewResult.user_id == self.id,
+            InterviewResult.real_attempt_filter()
+        ).count()
+        return max(curr_count, results_count)
 
 
 class InterviewResult(db.Model):
