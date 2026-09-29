@@ -228,6 +228,34 @@ def send_slot_unlocked_email(to_email, candidate_name):
             except Exception as e:
                 print(f"[UNLOCK EMAIL] Resend error: {e}")
 
+        sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
+        if sg_key:
+            try:
+                from_addr = os.environ.get("MAIL_FROM", "noreply@yourdomain.com")
+                payload = json.dumps({
+                    "personalizations": [{"to": [{"email": to_email}]}],
+                    "from": {"email": from_addr, "name": "AI Assessment Studio"},
+                    "subject": subject,
+                    "content": [
+                        {"type": "text/plain", "value": text_content},
+                        {"type": "text/html",  "value": html_content},
+                    ]
+                }).encode("utf-8")
+                req = urllib.request.Request(
+                    "https://api.sendgrid.com/v3/mail/send",
+                    data=payload,
+                    headers={
+                        "Authorization": f"Bearer {sg_key}",
+                        "Content-Type": "application/json",
+                    },
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    print(f"[UNLOCK EMAIL] SendGrid status: {resp.status}")
+                    return
+            except Exception as e:
+                print(f"[UNLOCK EMAIL] SendGrid error: {e}")
+
     t = threading.Thread(target=_dispatch, daemon=True)
     t.start()
 

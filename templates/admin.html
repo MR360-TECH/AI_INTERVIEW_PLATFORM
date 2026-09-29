@@ -926,8 +926,8 @@
                                     {% set extra_granted = user.extra_allowed_interviews or 0 %}
                                     {% set allowed_total = (settings.default_allowed_interviews or 2) + extra_granted %}
                                     {% set remaining_tokens = allowed_total - attempts_used %}
-                                    {% if settings.enable_attempt_limits %}
-                                    <button type="button" class="btn-unlock-attempt" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')" title="{% if remaining_tokens <= 0 %}Candidate is locked (0 tokens). Click to grant +1 attempt token.{% else %}Candidate has {{ remaining_tokens }} token(s) remaining. Click to grant +1 extra token.{% endif %}">
+                                    {% if settings.enable_attempt_limits and remaining_tokens <= 0 %}
+                                    <button type="button" class="btn-unlock-attempt" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')" title="Candidate is locked (0 tokens). Click to grant +1 attempt token.">
                                         <i class="bi bi-unlock-fill me-1"></i> Unlock
                                     </button>
                                     {% endif %}
