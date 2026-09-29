@@ -7,6 +7,7 @@ import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+
 def _otp_html_body(otp):
     return f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #080e1e; color: #e2e8f0; border-radius: 16px; border: 1px solid rgba(0, 255, 255, 0.25);">
@@ -39,16 +40,60 @@ def _otp_html_body(otp):
     </div>
     """
 
-def _send_via_resend(to_email, otp, api_key):
-    """Send via Resend HTTP API (port 443 - works on Render free tier)."""
-    from_addr = os.environ.get("MAIL_FROM", f"AI Assessment Studio <onboarding@{os.environ.get('RESEND_DOMAIN', 'resend.dev')}>")
+
+def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass):
+    """Sends email via Gmail SMTP (port 587 TLS or port 465 SSL)."""
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"AI Assessment Studio <{mail_user}>"
+    msg["To"] = to_email
+    msg["Auto-Submitted"] = "auto-generated"
+    msg.attach(MIMEText(text_content, "plain"))
+    msg.attach(MIMEText(html_content, "html"))
+
+    # Try Port 587 (TLS)
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=6) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(mail_user, mail_pass)
+            server.sendmail(mail_user, [to_email], msg.as_string())
+        print(f"[MAIL] Gmail SMTP (587) sent successfully to {to_email}")
+        return True
+    except Exception as e587:
+        print(f"[MAIL] Gmail SMTP (587) notice: {e587}")
+
+    # Try Port 465 (SSL)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=6) as server:
+            server.ehlo()
+            server.login(mail_user, mail_pass)
+            server.sendmail(mail_user, [to_email], msg.as_string())
+        print(f"[MAIL] Gmail SMTP (465) sent successfully to {to_email}")
+        return True
+    except Exception as e465:
+        print(f"[MAIL] Gmail SMTP (465) notice: {e465}")
+
+    return False
+
+
+def _send_via_resend(to_email, subject, text_content, html_content, api_key):
+    """Send via Resend HTTP API (port 443 HTTPS)."""
+    resend_domain = (os.environ.get("RESEND_DOMAIN") or "").strip()
+    if resend_domain and resend_domain != "resend.dev":
+        from_addr = f"AI Assessment Studio <notifications@{resend_domain}>"
+    else:
+        from_addr = "AI Assessment Studio <onboarding@resend.dev>"
+
     payload = json.dumps({
         "from": from_addr,
         "to": [to_email],
-        "subject": "Your AI Assessment Studio login code",
-        "html": _otp_html_body(otp),
-        "text": f"Hi there,\n\nYou recently requested to access the AI Assessment Studio. Please use the secure code below to complete your login securely.\n\nCode: {otp}\n\nThis code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.\n\nVisit: https://ai-interview-platform-3-vdic.onrender.com"
+        "subject": subject,
+        "html": html_content,
+        "text": text_content
     }).encode("utf-8")
+
     req = urllib.request.Request(
         "https://api.resend.com/emails",
         data=payload,
@@ -59,31 +104,32 @@ def _send_via_resend(to_email, otp, api_key):
         method="POST"
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=12) as resp:
             body = resp.read().decode()
-            print(f"[OTP] Resend response: {resp.status} {body[:120]}")
+            print(f"[MAIL] Resend HTTP response: {resp.status} {body[:100]}")
             return resp.status in (200, 201)
     except urllib.error.HTTPError as http_err:
         err_body = http_err.read().decode() if http_err.fp else ""
-        print(f"[OTP] Resend HTTP error {http_err.code}: {err_body[:200]}")
+        print(f"[MAIL] Resend HTTP error {http_err.code}: {err_body[:200]}")
         return False
     except urllib.error.URLError as url_err:
-        print(f"[OTP] Resend URL error: {url_err.reason}")
+        print(f"[MAIL] Resend URL error: {url_err.reason}")
         return False
 
 
-def _send_via_sendgrid(to_email, otp, api_key):
-    """Send via SendGrid HTTP API (port 443 - works on Render free tier)."""
-    from_addr = os.environ.get("MAIL_FROM", "noreply@yourdomain.com")
+def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key):
+    """Send via SendGrid HTTP API (port 443 HTTPS)."""
+    from_addr = (os.environ.get("MAIL_USERNAME") or "aiinterviewplatform26@gmail.com").strip()
     payload = json.dumps({
         "personalizations": [{"to": [{"email": to_email}]}],
         "from": {"email": from_addr, "name": "AI Assessment Studio"},
-        "subject": "Your AI Assessment Studio login code",
+        "subject": subject,
         "content": [
-            {"type": "text/plain", "value": f"Hi there,\n\nYou recently requested to access the AI Assessment Studio. Please use the secure code below to complete your login securely.\n\nCode: {otp}\n\nThis code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.\n\nVisit: https://ai-interview-platform-3-vdic.onrender.com"},
-            {"type": "text/html",  "value": _otp_html_body(otp)},
+            {"type": "text/plain", "value": text_content},
+            {"type": "text/html",  "value": html_content},
         ]
     }).encode("utf-8")
+
     req = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
         data=payload,
@@ -94,58 +140,72 @@ def _send_via_sendgrid(to_email, otp, api_key):
         method="POST"
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            print(f"[OTP] SendGrid response: {resp.status}")
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            print(f"[MAIL] SendGrid HTTP response: {resp.status}")
             return resp.status == 202
     except urllib.error.HTTPError as http_err:
         err_body = http_err.read().decode() if http_err.fp else ""
-        print(f"[OTP] SendGrid HTTP error {http_err.code}: {err_body[:200]}")
+        print(f"[MAIL] SendGrid HTTP error {http_err.code}: {err_body[:200]}")
         return False
     except urllib.error.URLError as url_err:
-        print(f"[OTP] SendGrid URL error: {url_err.reason}")
+        print(f"[MAIL] SendGrid URL error: {url_err.reason}")
         return False
 
 
-def _send_via_smtp(to_email, otp, mail_user, mail_pass):
-    """SMTP fallback - may be blocked on Render free tier."""
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Your AI Assessment Studio login code"
-    msg["From"] = f"AI Assessment Studio <{mail_user}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(f"Hi there,\n\nYou recently requested to access the AI Assessment Studio. Please use the secure code below to complete your login securely.\n\nCode: {otp}\n\nThis code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.\n\nVisit: https://ai-interview-platform-3-vdic.onrender.com", "plain"))
-    msg.attach(MIMEText(_otp_html_body(otp), "html"))
+def send_email_notification(to_email, subject, text_content, html_content):
+    """
+    Master email dispatcher with multi-provider failover:
+      1. Gmail SMTP (port 587 TLS / port 465 SSL)
+      2. Resend HTTP API (port 443 HTTPS)
+      3. SendGrid HTTP API (port 443 HTTPS)
+    """
+    to_email = (to_email or "").strip()
+    if not to_email:
+        return False
 
-    import socket
-    result = {"ok": False}
+    # 1. Try Gmail SMTP
+    mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
+    mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
+    if mail_user and mail_pass:
+        if _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass):
+            return True
 
-    def _smtp_thread():
-        try:
-            old_to = socket.getdefaulttimeout()
-            socket.setdefaulttimeout(15)
-            with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(mail_user, mail_pass)
-                server.sendmail(mail_user, [to_email], msg.as_string())
-            result["ok"] = True
-            print(f"[OTP] SMTP sent to {to_email} successfully.")
-        except Exception as exc:
-            print(f"[OTP] SMTP error: {exc}")
-        finally:
-            socket.setdefaulttimeout(old_to if 'old_to' in dir() else None)
+    # 2. Try Resend HTTP API
+    resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+    if resend_key:
+        if _send_via_resend(to_email, subject, text_content, html_content, resend_key):
+            return True
 
-    t = threading.Thread(target=_smtp_thread, daemon=True)
-    t.start()
-    t.join(timeout=8)
-    return result["ok"]
+    # 3. Try SendGrid HTTP API
+    sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
+    if sg_key:
+        if _send_via_sendgrid(to_email, subject, text_content, html_content, sg_key):
+            return True
+
+    print(f"[MAIL] All dispatch methods exhausted for {to_email}")
+    return False
+
+
+def send_otp_email(to_email, otp):
+    """Sends login OTP verification email."""
+    subject = "Your AI Assessment Studio login code"
+    text_content = (
+        f"Hi there,\n\n"
+        f"You recently requested to access the AI Assessment Studio. "
+        f"Please use the secure code below to complete your login securely.\n\n"
+        f"Code: {otp}\n\n"
+        f"This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.\n\n"
+        f"Visit: https://ai-interview-platform-3-vdic.onrender.com"
+    )
+    html_content = _otp_html_body(otp)
+    return send_email_notification(to_email, subject, text_content, html_content)
 
 
 def send_slot_unlocked_email(to_email, candidate_name):
-    """Send an automated HTML notification email when candidate slot is unlocked."""
+    """Sends assessment slot unlocked notification email in a background thread."""
     subject = "Your Assessment Slot Has Been Unlocked - AI Assessment Studio"
     candidate_display = (candidate_name or "Candidate").strip()
-    
+
     html_content = f"""
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #080e1e; color: #e2e8f0; border-radius: 16px; border: 1px solid rgba(0, 255, 255, 0.25);">
       <div style="text-align: center; margin-bottom: 24px;">
@@ -177,142 +237,15 @@ def send_slot_unlocked_email(to_email, candidate_name):
       </p>
     </div>
     """
-    
-    text_content = f"Hello {candidate_display},\n\nYour standard assessment slot has been unlocked! Log in to your workspace to begin your new evaluation session.\n\nOpen AI Assessment Studio: https://ai-interview-platform-3-vdic.onrender.com"
+
+    text_content = (
+        f"Hello {candidate_display},\n\n"
+        f"Your standard assessment slot has been unlocked! Log in to your workspace to begin your new evaluation session.\n\n"
+        f"Open AI Assessment Studio: https://ai-interview-platform-3-vdic.onrender.com"
+    )
 
     def _dispatch():
-        mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
-        mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
-        if mail_user and mail_pass:
-            try:
-                msg = MIMEMultipart("alternative")
-                msg["Subject"] = subject
-                msg["From"] = f"AI Assessment Studio <{mail_user}>"
-                msg["To"] = to_email
-                msg["Auto-Submitted"] = "auto-generated"
-                msg.attach(MIMEText(text_content, "plain"))
-                msg.attach(MIMEText(html_content, "html"))
-                with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                    server.ehlo()
-                    server.starttls()
-                    server.login(mail_user, mail_pass)
-                    server.sendmail(mail_user, [to_email], msg.as_string())
-                print(f"[UNLOCK EMAIL] SMTP sent to {to_email}")
-                return
-            except Exception as exc:
-                print(f"[UNLOCK EMAIL] SMTP error: {exc}")
-
-        resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
-        if resend_key:
-            try:
-                from_addr = os.environ.get("MAIL_FROM", f"AI Assessment Studio <{mail_user if mail_user else 'onboarding@resend.dev'}>")
-                payload = json.dumps({
-                    "from": from_addr,
-                    "to": [to_email],
-                    "subject": subject,
-                    "html": html_content,
-                    "text": text_content
-                }).encode("utf-8")
-                req = urllib.request.Request(
-                    "https://api.resend.com/emails",
-                    data=payload,
-                    headers={
-                        "Authorization": f"Bearer {resend_key}",
-                        "Content-Type": "application/json",
-                    },
-                    method="POST"
-                )
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    print(f"[UNLOCK EMAIL] Resend status: {resp.status}")
-                    return
-            except Exception as e:
-                print(f"[UNLOCK EMAIL] Resend error: {e}")
-
-        sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
-        if sg_key:
-            try:
-                from_addr = os.environ.get("MAIL_FROM", "noreply@yourdomain.com")
-                payload = json.dumps({
-                    "personalizations": [{"to": [{"email": to_email}]}],
-                    "from": {"email": from_addr, "name": "AI Assessment Studio"},
-                    "subject": subject,
-                    "content": [
-                        {"type": "text/plain", "value": text_content},
-                        {"type": "text/html",  "value": html_content},
-                    ]
-                }).encode("utf-8")
-                req = urllib.request.Request(
-                    "https://api.sendgrid.com/v3/mail/send",
-                    data=payload,
-                    headers={
-                        "Authorization": f"Bearer {sg_key}",
-                        "Content-Type": "application/json",
-                    },
-                    method="POST"
-                )
-                with urllib.request.urlopen(req, timeout=15) as resp:
-                    print(f"[UNLOCK EMAIL] SendGrid status: {resp.status}")
-                    return
-            except Exception as e:
-                print(f"[UNLOCK EMAIL] SendGrid error: {e}")
+        send_email_notification(to_email, subject, text_content, html_content)
 
     t = threading.Thread(target=_dispatch, daemon=True)
     t.start()
-
-
-def send_otp_email(to_email, otp):
-    """
-    Send OTP email. Tries providers in priority order:
-      1. Gmail SMTP (MAIL_USERNAME + MAIL_PASSWORD - primary sender)
-      2. Resend  (fallback - set RESEND_API_KEY)
-      3. SendGrid (fallback - set SENDGRID_API_KEY)
-    If none are configured, prints OTP to logs (dev/local fallback).
-    """
-    print(f"[OTP] -- Sending OTP to {to_email} --")
-
-    # 1. Gmail SMTP (primary)
-    mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
-    mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
-    if mail_user and mail_pass:
-        print(f"[OTP] Trying Gmail SMTP ({mail_user})...")
-        try:
-            result = _send_via_smtp(to_email, otp, mail_user, mail_pass)
-            if result:
-                print(f"[OTP] Gmail SMTP: sent to {to_email}")
-                return True
-            else:
-                print(f"[OTP] Gmail SMTP returned False, trying next provider...")
-        except Exception as e:
-            print(f"[OTP] Gmail SMTP exception: {e}")
-
-    # 2. Resend (fallback)
-    resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
-    if resend_key:
-        print(f"[OTP] Trying Resend...")
-        try:
-            ok = _send_via_resend(to_email, otp, resend_key)
-            if ok:
-                print(f"[OTP] Resend: sent to {to_email}")
-                return True
-            else:
-                print(f"[OTP] Resend returned False, trying next provider...")
-        except Exception as e:
-            print(f"[OTP] Resend exception: {e}")
-
-    # 3. SendGrid (fallback)
-    sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
-    if sg_key:
-        print(f"[OTP] Trying SendGrid...")
-        try:
-            ok = _send_via_sendgrid(to_email, otp, sg_key)
-            if ok:
-                print(f"[OTP] SendGrid: sent to {to_email}")
-                return True
-            else:
-                print(f"[OTP] SendGrid returned False")
-        except Exception as e:
-            print(f"[OTP] SendGrid exception: {e}")
-
-    # Dev fallback
-    print(f"[OTP] No email provider configured. OTP for {to_email}: {otp}")
-    return True
