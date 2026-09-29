@@ -27,6 +27,39 @@ from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import (
 interview_bp = Blueprint('interview_bp', __name__)
 
 
+def extract_ai_text(response, default_fallback=""):
+    """Safely extracts text content from Google GenAI response object."""
+    if not response:
+        return default_fallback
+    try:
+        if hasattr(response, 'text') and response.text:
+            return response.text.strip()
+    except Exception:
+        pass
+    try:
+        if hasattr(response, 'candidates') and response.candidates:
+            cand = response.candidates[0]
+            if cand.content and cand.content.parts:
+                txt = "".join(p.text for p in cand.content.parts if hasattr(p, 'text') and p.text).strip()
+                if txt:
+                    return txt
+    except Exception:
+        pass
+    return default_fallback
+
+
+def extract_domain_from_history(history, fallback="General"):
+    """Recovers the candidate's chosen domain/role from their first answer in chat history."""
+    for entry in history:
+        if entry.get("role") == "answer" and entry.get("text"):
+            first_ans = entry["text"].split("\n")[0].strip()
+            first_ans = re.sub(r'\[Candidate Code.*?\]', '', first_ans, flags=re.DOTALL).strip()
+            first_ans = re.sub(r'\[Attached file.*?\]', '', first_ans, flags=re.DOTALL).strip()
+            if first_ans:
+                return first_ans
+    return fallback
+
+
 @interview_bp.route("/interview", methods=["GET", "POST"])
 def interview():
     if session.get("is_admin"):
@@ -67,9 +100,16 @@ def interview():
         session.pop("chat_history", None)
         session.pop("q_count", None)
         session.pop("resume_summary", None)
+        session.pop("resume_choice", None)
+        session.pop("interview_domain", None)
+        session.pop("interview_difficulty", None)
         if request.args.get("practice") != "1":
             session.pop("interview_mode", None)
             session.pop("practice_topic", None)
+            session.pop("lang_target", None)
+            session.pop("lang_focus", None)
+            session.pop("lang_level", None)
+        session.modified = True
 
     # Enforce attempt limit AFTER restart (so cleared progress is seen correctly)
     is_practice = bool(session.get("interview_mode") or request.args.get("practice") == "1")
@@ -82,8 +122,15 @@ def interview():
         extra_granted = current_user.extra_allowed_interviews or 0 if current_user else 0
         allowed_total = (settings.default_allowed_interviews or 2) + extra_granted
         _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
+        _has_active_prog = False
+        if _existing_prog:
+            try:
+                _h = json.loads(_existing_prog.chat_history or '[]')
+                _has_active_prog = bool(len(_h) > 0 or (_existing_prog.q_count is not None and _existing_prog.q_count > 0))
+            except Exception:
+                _has_active_prog = bool(_existing_prog.q_count and _existing_prog.q_count > 0)
         # Only block if no active in-progress interview
-        if attempts_used >= allowed_total and (not _existing_prog or _existing_prog.q_count == 0):
+        if attempts_used >= allowed_total and not _has_active_prog:
             return redirect("/dashboard?error=attempts_exceeded")
 
     # Load chat history from DB
@@ -97,6 +144,13 @@ def interview():
         db.session.rollback()
         chat_history = session.get("chat_history", [])
     q_count = session.get("q_count", 0)
+
+    # Recover domain and difficulty if missing from session
+    if not session.get("interview_domain") and chat_history:
+        current_user = db.session.get(User, user_id)
+        session["interview_domain"] = extract_domain_from_history(chat_history, current_user.course if current_user and current_user.course else "General")
+    if not session.get("interview_difficulty"):
+        session["interview_difficulty"] = settings.default_difficulty or "student"
 
     if request.method == "POST":
         answer = request.form.get("answer", "").strip()
@@ -194,6 +248,10 @@ def interview():
     question_text = ""
     prompt = ""
     try:
+        current_user = db.session.get(User, user_id)
+        if not session.get("resume_summary") and current_user and current_user.resume_text:
+            session["resume_summary"] = current_user.resume_text
+
         if q_count == 0:
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
@@ -212,7 +270,7 @@ def interview():
                 else:
                     question_text = "Which specific role or domain are you interviewing for? [TYPE: TEXT]"
         else:
-            difficulty = session.get("interview_difficulty", "student")
+            difficulty = session.get("interview_difficulty") or (settings.default_difficulty or "student")
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
 
@@ -235,7 +293,7 @@ def interview():
                 contents=prompt,
                 config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=80)
             )
-            question_text = (response.text.strip() if response and hasattr(response, 'text') and response.text else "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
+            question_text = extract_ai_text(response, "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]")
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         question_text = "Could you share a key challenge you solved in your field recently? [TYPE: TEXT]"
@@ -308,9 +366,17 @@ def interview_submit():
         save_progress(user_id, submit_history, submit_q_count)
         return jsonify({"done": True, "redirect": "/interview-result"})
 
-    domain = session.get("interview_domain", "Software Engineering")
-    difficulty = session.get("interview_difficulty", "student")
-    resume_summary = session.get("resume_summary", "")
+    current_user = db.session.get(User, user_id)
+    if submit_q_count == 1:
+        if session.get("interview_mode"):
+            session["interview_domain"] = session.get("practice_topic", "Practice")
+        else:
+            session["interview_domain"] = answer.strip() if answer else (current_user.course if current_user and current_user.course else "Software Engineering")
+        session["interview_difficulty"] = settings.default_difficulty or "student"
+
+    domain = session.get("interview_domain") or (current_user.course if current_user and current_user.course else "Software Engineering")
+    difficulty = session.get("interview_difficulty") or (settings.default_difficulty or "student")
+    resume_summary = session.get("resume_summary") or (current_user.resume_text if current_user and current_user.resume_text else "")
 
     system_prompt = build_ajax_system_prompt(
         domain=domain,
@@ -334,7 +400,7 @@ def interview_submit():
             contents=chat_turns,
             config=types.GenerateContentConfig(system_instruction=system_prompt, temperature=0.3, max_output_tokens=120),
         )
-        question_text = response.text.strip() if response.text else "Tell me about yourself."
+        question_text = extract_ai_text(response, "Tell me about yourself.")
         
         if not is_practice and "[END_INTERVIEW]" in question_text.upper() and submit_q_count >= MIN_QUESTIONS:
             save_progress(user_id, submit_history, submit_q_count)
@@ -574,6 +640,20 @@ def interview_result():
         domain_val = session.get("interview_domain", "General")
         is_practice = bool(session.get("interview_mode"))
         session_code_val = None
+        try:
+            result_record = InterviewResult(
+                user_id=session["user_id"],
+                score=score_num,
+                status=f"{verdict} (Practice)" if is_practice else verdict,
+                summary=summary_text,
+                domain=domain_val
+            )
+            db.session.add(result_record)
+            db.session.commit()
+            session_code_val = result_record.session_code
+        except Exception as db_save_err:
+            print(f"[FALLBACK RESULT DB ERROR] {db_save_err}")
+            db.session.rollback()
 
     user_id = session["user_id"]
     session.pop("chat_history", None)

@@ -1,4 +1,4 @@
-import os
+import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
@@ -31,13 +31,14 @@ def dashboard():
     if not profile_is_complete(current_user):
         return redirect("/register")
 
-    latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc()).first()
-    if latest_res and latest_res.is_terminated:
-        clear_progress(session["user_id"])
-        has_progress = False
-    else:
-        progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
-        has_progress = bool(progress and progress.q_count > 0)
+    progress = InterviewProgress.query.filter_by(user_id=session["user_id"]).first()
+    has_progress = False
+    if progress:
+        try:
+            chat_hist = json.loads(progress.chat_history or '[]')
+            has_progress = bool(len(chat_hist) > 0 or (progress.q_count is not None and progress.q_count > 0))
+        except Exception:
+            has_progress = bool(progress.q_count and progress.q_count > 0)
 
     recent_results = InterviewResult.query.filter(
         InterviewResult.user_id == session["user_id"],
@@ -51,6 +52,8 @@ def dashboard():
         error_msg = "Uploaded file is too large. The maximum size limit is 10MB."
     elif err_code == "api_key_missing":
         error_msg = "AI Placement evaluation is not configured. Please set the GEMINI_API_KEY environment variable."
+    elif err_code == "attempts_exceeded":
+        error_msg = "You have reached your allocated assessment attempt limit. Please contact the administrator to request an attempt extension."
 
     # Check attempt limit status (for UI button state)
     settings = get_settings()
@@ -66,7 +69,7 @@ def dashboard():
             InterviewResult.real_attempt_filter()
         ).count()
         remaining_tokens = max(0, allowed_total - attempts_used)
-        if attempts_used >= allowed_total:
+        if attempts_used >= allowed_total and not has_progress:
             is_locked = True
 
     return render_template("dashboard.html", name=session["user_name"], user=current_user,

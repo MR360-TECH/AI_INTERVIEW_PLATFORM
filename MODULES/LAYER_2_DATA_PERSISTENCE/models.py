@@ -53,8 +53,7 @@ class InterviewResult(db.Model):
     # Statuses that should NOT consume a token slot:
     #   - anything with 'Practice' in name
     #   - 'Abandoned (Reset)' — user reset before finishing
-    #   - 'Terminated (Breach)' — auto-terminated by proctoring
-    NON_COUNTING_STATUSES = ['Abandoned (Reset)', 'Terminated (Breach)']
+    NON_COUNTING_STATUSES = ['Abandoned (Reset)']
 
     @property
     def session_code(self):
@@ -66,7 +65,7 @@ class InterviewResult(db.Model):
     @classmethod
     def real_attempt_filter(cls):
         """Returns SQLAlchemy filter conditions for attempts that count against the token limit.
-        Only completed assessments (passed, failed, selected, rejected) consume a token."""
+        Only completed or terminated assessments consume a token."""
         from sqlalchemy import and_
         return and_(
             ~cls.status.like('%Practice%'),

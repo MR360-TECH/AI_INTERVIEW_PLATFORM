@@ -185,25 +185,26 @@ def admin_unlock_attempt(user_id):
     settings = get_settings()
     default_allowed = settings.default_allowed_interviews or 2
 
-    # Count actual token-consuming attempts (excludes Practice, Abandoned, Terminated)
+    # Count actual token-consuming attempts (excludes Practice, Abandoned)
     attempts_used = InterviewResult.query.filter(
         InterviewResult.user_id == user_id,
         InterviewResult.real_attempt_filter()
     ).count()
 
-    # Calculate exactly how much extra we need so remaining = 1
-    # remaining = (default_allowed + extra) - attempts_used = 1
-    # => extra = attempts_used - default_allowed + 1
-    # But extra must never go below 0
-    required_extra = max(0, attempts_used - default_allowed + 1)
-    user_obj.extra_allowed_interviews = required_extra
+    current_extra = user_obj.extra_allowed_interviews or 0
+    # Ensure extra grants at least +1 usable token beyond whatever attempts were consumed
+    required_extra = max(current_extra + 1, attempts_used - default_allowed + 1)
+    user_obj.extra_allowed_interviews = max(0, required_extra)
     db.session.commit()
 
     allowed_total = default_allowed + user_obj.extra_allowed_interviews
-    remaining_tokens = max(0, allowed_total - attempts_used)  # will be exactly 1
+    remaining_tokens = max(0, allowed_total - attempts_used)
 
     if user_obj.email:
-        send_slot_unlocked_email(user_obj.email, user_obj.full_name)
+        try:
+            send_slot_unlocked_email(user_obj.email, user_obj.full_name)
+        except Exception as mail_err:
+            print(f"[MAIL ERROR] {mail_err}")
 
     return jsonify({
         "status": "success",
