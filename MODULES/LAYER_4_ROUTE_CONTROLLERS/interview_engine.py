@@ -444,24 +444,28 @@ def interview_result():
     # If redirected from proctoring termination
     if request.args.get("terminated") == "1":
         latest_res = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).first()
-        if latest_res and (latest_res.is_terminated or (latest_res.status and "Terminated" in latest_res.status)):
-            return render_template(
-                "interview_result.html",
-                score=0,
-                score_percent=0,
-                label="Disqualified",
-                label_color="#e74a3b",
-                summary=latest_res.summary,
-                verdict="Terminated (Breach)",
-                verdict_message="This assessment session was automatically terminated by the automated security proctoring system due to a breach of the Candidate Code of Conduct.",
-                is_practice=False,
-                candidate_name=session.get("user_name", "Candidate"),
-                report_date=latest_res.interview_datetime.strftime("%B %d, %Y") if latest_res.interview_datetime else datetime.now().strftime("%B %d, %Y"),
-                domain=latest_res.domain or "General",
-                is_terminated=True,
-                termination_reason=latest_res.termination_reason or "Repeated window focus loss / tab switching detected during active assessment",
-                session_code=latest_res.session_code
-            )
+        summary_val = latest_res.summary if latest_res else "This assessment session was automatically terminated by the automated security proctoring system due to repeated tab switching / window focus loss."
+        report_date_val = latest_res.interview_datetime.strftime("%B %d, %Y") if (latest_res and latest_res.interview_datetime) else datetime.now().strftime("%B %d, %Y")
+        domain_val = latest_res.domain if (latest_res and latest_res.domain) else "General"
+        reason_val = latest_res.termination_reason if (latest_res and latest_res.termination_reason) else "Repeated window focus loss / tab switching detected during active assessment"
+        session_code_val = latest_res.session_code if latest_res else "AIS-TERMINATED"
+        return render_template(
+            "interview_result.html",
+            score=0,
+            score_percent=0,
+            label="Disqualified",
+            label_color="#e74a3b",
+            summary=summary_val,
+            verdict="Terminated (Breach)",
+            verdict_message="This assessment session was automatically terminated by the automated security proctoring system due to a breach of the Candidate Code of Conduct.",
+            is_practice=False,
+            candidate_name=session.get("user_name", "Candidate"),
+            report_date=report_date_val,
+            domain=domain_val,
+            is_terminated=True,
+            termination_reason=reason_val,
+            session_code=session_code_val
+        )
 
     settings = get_settings()
     PASS_SCORE = settings.pass_score
