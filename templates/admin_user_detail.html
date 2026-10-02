@@ -715,7 +715,7 @@ html.dark-theme .db-bg { display: block; }
           <i class="bi bi-file-earmark-person-fill me-2" style="color:#00ffff;"></i>Candidate Resume — {{ user.full_name | upper }}
         </h5>
         <div class="d-flex align-items-center gap-2">
-          {% if user.resume_filename %}
+          {% if resume_file_exists %}
           <a href="/uploads/resumes/{{ user.resume_filename }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
             <i class="bi bi-box-arrow-up-right me-1"></i> Open Original File
           </a>
@@ -724,8 +724,8 @@ html.dark-theme .db-bg { display: block; }
         </div>
       </div>
       <div class="modal-body p-4 pt-2">
-        {% if user.resume_filename %}
-          {% set ext = user.resume_filename.rsplit('.', 1)[1].lower() %}
+        {% if resume_file_exists %}
+          {% set ext = user.resume_filename.rsplit('.', 1)[-1].lower() %}
           {% if ext in ['png', 'jpg', 'jpeg'] %}
             <!-- Image resume view -->
             <div style="text-align:center;background:#0b1633;border:1px solid #334155;border-radius:12px;padding:16px;max-height:70vh;overflow-y:auto;">
@@ -754,12 +754,17 @@ html.dark-theme .db-bg { display: block; }
             {% endif %}
           {% endif %}
         {% elif user.resume_text %}
+          {% if user.resume_filename %}
+          <div style="background:rgba(246,194,62,0.12);border:1px solid rgba(246,194,62,0.45);color:#f6c23e;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.82rem;font-weight:600;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> The original resume file is no longer on the server. Showing the AI-extracted text instead.
+          </div>
+          {% endif %}
           <div style="background:#0b1633;border:1px solid #334155;border-radius:12px;padding:20px;font-family:'Inter',sans-serif;font-size:0.9rem;line-height:1.7;color:#cbd5e1;white-space:pre-wrap;max-height:60vh;overflow-y:auto;">{{ user.resume_text }}</div>
         {% else %}
           <div style="background:#0b1633;border:1px dashed #334155;border-radius:12px;padding:40px 20px;text-align:center;">
             <i class="bi bi-file-earmark-x" style="font-size:2.5rem;color:#94a3b8;display:block;margin-bottom:10px;"></i>
             <h6 class="fw-bold" style="color:#ffffff;">No Resume Available</h6>
-            <p style="font-size:0.85rem;color:#94a3b8;margin:0;">This candidate has not uploaded a resume document yet.</p>
+            <p style="font-size:0.85rem;color:#94a3b8;margin:0;">{% if user.resume_filename %}A resume was uploaded, but the file is missing from the server. Ask the candidate to upload it again.{% else %}This candidate has not uploaded a resume document yet.{% endif %}</p>
           </div>
         {% endif %}
       </div>

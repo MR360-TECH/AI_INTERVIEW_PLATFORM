@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, current_app
 from sqlalchemy import func
@@ -8,7 +9,8 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     InterviewProgress,
     AdminSettings,
     get_settings,
-    invalidate_settings_cache
+    invalidate_settings_cache,
+    resume_file_exists
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
 
@@ -17,6 +19,8 @@ admin_bp = Blueprint('admin_bp', __name__)
 
 @admin_bp.route("/admin/db-check")
 def db_check():
+    if not session.get("is_admin"):
+        return redirect("/login")
     try:
         engine = db.engine
         dialect_name = engine.dialect.name
@@ -136,6 +140,11 @@ def admin_settings():
             except (ValueError, TypeError):
                 pass
 
+        # Keep the interview bounds consistent: min >= 1 and max >= min
+        db_settings.min_questions = max(1, db_settings.min_questions or 1)
+        db_settings.max_questions = max(db_settings.min_questions, db_settings.max_questions or 1)
+        db_settings.pass_score = max(0, min(10, db_settings.pass_score or 0))
+
         db.session.commit()
 
         # ✅ Force-clear the in-memory cache so the new settings apply immediately
@@ -214,16 +223,27 @@ def delete_user(user_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
+    user = db.session.get(User, user_id)
+    resume_path = None
+    if user and user.resume_filename:
+        resume_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), user.resume_filename)
+
     InterviewResult.query.filter_by(user_id=user_id).delete()
     InterviewProgress.query.filter_by(user_id=user_id).delete()
-
-    user = db.session.get(User, user_id)
     if user:
         db.session.delete(user)
-
     db.session.commit()
 
+    if resume_path and os.path.isfile(resume_path):
+        try:
+            os.remove(resume_path)
+        except OSError as e:
+            print(f"Error removing resume file of deleted user: {e}")
+
+    # Only allow redirects to local admin pages (no open redirect)
     next_url = request.args.get("next") or "/admin"
+    if not next_url.startswith("/") or next_url.startswith("//"):
+        next_url = "/admin"
     return redirect(next_url)
 
 
@@ -278,7 +298,8 @@ def admin_user_detail(user_id):
         extra_granted=extra_granted,
         allowed_total=allowed_total,
         remaining_tokens=remaining_tokens,
-        is_locked=is_locked
+        is_locked=is_locked,
+        resume_file_exists=resume_file_exists(user)
     )
 
 
@@ -287,7 +308,7 @@ def admin_view_user_resume(user_id):
     if not session.get("is_admin"):
         return redirect("/login")
     user = db.session.get(User, user_id)
-    if not user or not user.resume_filename:
+    if not user or not resume_file_exists(user):
         return redirect(f"/admin/user/{user_id}")
     upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     return send_from_directory(upload_folder, user.resume_filename)
@@ -306,7 +327,8 @@ def admin_interview_detail(result_id):
 
     try:
         score_percent = min(int((float(result.score) / 10) * 100), 100)
-    except:
+    except (TypeError, ValueError):
         score_percent = 0
 
-    return render_template("admin_interview_detail.html", result=result, candidate=candidate, score_percent=score_percent)
+    return render_template("admin_interview_detail.html", result=result, candidate=candidate, score_percent=score_percent,
+                           resume_file_exists=resume_file_exists(candidate))

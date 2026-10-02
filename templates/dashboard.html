@@ -1055,9 +1055,9 @@
                 Assessment Locked
             </a>
             {% else %}
-            <a href="/interview" class="nav-item">
-                <span class="nav-icon"><i class="bi bi-{% if has_progress %}play-circle-fill text-primary{% else %}rocket-takeoff-fill{% endif %}"></i></span>
-                {% if has_progress %}Continue Assessment{% else %}Start Assessment{% endif %}
+            <a href="/interview?restart=1" class="nav-item">
+                <span class="nav-icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
+                Start Assessment
             </a>
             {% endif %}
             <a href="/practice-setup" class="nav-item">
@@ -1113,7 +1113,9 @@
         <div class="page-content">
 
             {% if error %}
-            <div class="alert alert-danger mb-4 anim d0"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}</div>
+            <div class="alert alert-danger mb-4 anim d0"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+                {% if eval_retry %}<a href="/interview-result" class="btn btn-sm btn-outline-light rounded-pill ms-2 fw-semibold">Retry now</a>{% endif %}
+            </div>
             {% endif %}
 
             <!-- ══ PAGE HEADER ══ -->
@@ -1190,15 +1192,6 @@
                         <button type="button" class="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#attemptLimitReachedModal" id="assessmentMainBtn" style="background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: #ffffff !important; border: none; border-radius: 12px; padding: 12px 20px; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);">
                             <i class="bi bi-lock-fill fs-5"></i> Session Limit Reached &rarr;
                         </button>
-                        {% elif has_progress %}
-                        <div class="d-flex flex-column gap-2">
-                            <button type="button" class="btn-primary-grad w-100" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
-                                <i class="bi bi-play-circle-fill"></i> Continue Assessment &rarr;
-                            </button>
-                            <button type="button" class="btn-reset-ghost w-100" id="resetAssessmentBtn">
-                                <i class="bi bi-arrow-clockwise"></i> Restart Assessment
-                            </button>
-                        </div>
                         {% else %}
                         <button type="button" class="btn-primary-grad w-100" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
                             <i class="bi bi-rocket-takeoff-fill"></i> Launch Assessment Studio &rarr;
@@ -1332,17 +1325,13 @@
                 <!-- Quick Stats Column -->
                 <div class="stats-column">
                     <div class="stat-card">
-                        <div class="stat-icon {% if has_progress %}si-sky{% else %}si-blue{% endif %}">
-                            <i class="bi bi-{% if has_progress %}play-circle-fill{% else %}shield-check{% endif %}"></i>
+                        <div class="stat-icon si-blue">
+                            <i class="bi bi-shield-check"></i>
                         </div>
                         <div>
                             <div class="stat-label">Assessment Status</div>
-                            <div class="stat-value">{% if has_progress %}In Progress{% else %}Ready{% endif %}</div>
-                            {% if has_progress %}
-                            <div class="stat-badge sb-blue"><i class="bi bi-clock-history"></i> Active Session</div>
-                            {% else %}
+                            <div class="stat-value">Ready</div>
                             <div class="stat-badge sb-grey"><i class="bi bi-circle"></i> Not Started</div>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -1423,39 +1412,6 @@
 </div><!-- /layout -->
 
 
-<!-- ══ RESET ASSESSMENT MODAL ══ -->
-{% if has_progress %}
-<div class="modal fade" id="resetAssessmentModal" tabindex="-1" aria-labelledby="resetAssessmentModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header border-0 p-4 pb-2">
-        <h5 class="modal-title fw-bold" id="resetAssessmentModalLabel" style="color:#ef4444;font-family:'Outfit',sans-serif;">
-          <i class="bi bi-arrow-clockwise me-2"></i>Restart Assessment?
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4 pt-2">
-        <div class="d-flex align-items-start gap-3">
-          <div style="background:rgba(239,68,68,0.10);border-radius:12px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-          </div>
-          <div>
-            <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;">This will discard your in-progress answers.</p>
-            <p style="color:var(--text-desc);font-size:0.88rem;margin:0;">All answers from your current active session will be discarded, and a fresh assessment session will begin from Question 1.</p>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
-        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" id="confirmResetBtn">
-          <i class="bi bi-arrow-clockwise me-1"></i> Yes, Restart Assessment
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
-
 <!-- ══ ATTEMPT LIMIT REACHED EXPLANATION MODAL ══ -->
 <div class="modal fade" id="attemptLimitReachedModal" tabindex="-1" aria-labelledby="attemptLimitReachedLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -1503,7 +1459,7 @@
     <div class="modal-content" style="border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface-elevated);">
       <div class="modal-header border-0 p-4 pb-2">
         <h5 class="modal-title fw-bold" id="confirmStartAssessmentModalLabel" style="color:var(--primary);font-family:'Outfit',sans-serif;">
-          <i class="bi bi-shield-check me-2"></i>{% if has_progress %}Resume Recruitment Assessment?{% else %}Start Recruitment Assessment?{% endif %}
+          <i class="bi bi-shield-check me-2"></i>Start Recruitment Assessment?
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -1514,14 +1470,12 @@
           </div>
           <div>
             <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;font-size:0.98rem;">
-              {% if has_progress %}Continue your saved recruitment assessment session{% else %}Begin formal AI evaluation session{% endif %}
+              Begin formal AI evaluation session
             </p>
             <p style="color:var(--text-desc);font-size:0.88rem;margin:0;line-height:1.6;">
-              {% if has_progress %}
-              You will be re-connected to your current evaluation where you left off.
-              {% else %}
               You are about to start a formal, adaptive AI-driven technical assessment. Ensure you are in a quiet environment and your microphone is ready.
-              {% endif %}
+              Once started, the assessment must be completed in one sitting and cannot be resumed if you leave.
+              {% if has_progress %}<strong style="color:#f59e0b;">Your previous unfinished session will be discarded.</strong>{% endif %}
             </p>
           </div>
         </div>
@@ -1540,8 +1494,8 @@
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
         <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
-        <a href="/interview" class="btn btn-primary-grad rounded-pill px-4 fw-bold text-white text-decoration-none">
-          {% if has_progress %}<i class="bi bi-play-circle-fill me-1"></i> Resume Assessment{% else %}<i class="bi bi-rocket-takeoff-fill me-1"></i> Begin Assessment Now{% endif %}
+        <a href="/interview?restart=1" class="btn btn-primary-grad rounded-pill px-4 fw-bold text-white text-decoration-none">
+          <i class="bi bi-rocket-takeoff-fill me-1"></i> Begin Assessment Now
         </a>
       </div>
     </div>
@@ -1673,11 +1627,11 @@
 
             <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;">
               <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#f59e0b;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">
-                Step 04 &bull; Autosave &amp; Exit
+                Step 04 &bull; One Sitting
               </div>
-              <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Continuous Sync</div>
+              <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Single Session</div>
               <p style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;margin:0;">
-                Every answered turn is automatically saved. If disconnected, you can safely return and click <strong>Resume Assessment Studio</strong> anytime.
+                Complete the assessment in one sitting. A formal session cannot be resumed once you leave it, and an unfinished session is never counted as a completed attempt.
               </p>
             </div>
 
@@ -1687,7 +1641,7 @@
               </div>
               <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Rubric Analysis &amp; Report</div>
               <p style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;margin:0;">
-                Receive a score out of 10.0, placement hiring recommendation (Selected / Needs Work), key strengths analysis, and targeted growth feedback.
+                Receive a score out of 10.0, a detailed written evaluation report, and a printable scorecard.
               </p>
             </div>
           </div>
@@ -1758,7 +1712,7 @@
               </h2>
               <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
-                  Yes! Your assessment progress is continuously saved question-by-question. If you close your browser, lose power, or navigate away, you can return to your dashboard and click <strong>Resume Assessment Studio</strong> to continue from the exact question you left off.
+                  Formal assessments must be completed in a single sitting and cannot be resumed once you leave, so please start only when you have uninterrupted time. If the platform itself hits an error, your attempt is never counted against you.
                 </div>
               </div>
             </div>
@@ -1795,13 +1749,12 @@
             <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
               <h2 class="accordion-header" id="faqHeadingFour">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFour" aria-expanded="false" aria-controls="faqCollapseFour" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
-                  <i class="bi bi-arrow-clockwise me-2 text-primary"></i> What is the difference between Resuming and Starting a Fresh Session?
+                  <i class="bi bi-arrow-clockwise me-2 text-primary"></i> What happens if I leave an assessment midway?
                 </button>
               </h2>
               <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
-                  <strong>Resume Assessment:</strong> Picks up directly where you left off without discarding previous answers.<br>
-                  <strong>Start Fresh Session:</strong> Discards active in-progress state and resets you back to Question 1. Note: Resetting an in-progress session does not consume your completed evaluation attempts.
+                  A formal assessment cannot be resumed. If you leave, the unfinished session is discarded and the next start begins fresh from Question 1. An unfinished session does not consume one of your completed evaluation attempts.
                 </div>
               </div>
             </div>
@@ -2137,38 +2090,6 @@
     makeCardClickable(historyPanel, function() { window.location.href = '/my-history'; });
 })();
 </script>
-
-{% if has_progress %}
-<script>
-(function() {
-    var resetBtn   = document.getElementById('resetAssessmentBtn');
-    var confirmBtn = document.getElementById('confirmResetBtn');
-    var modalEl    = document.getElementById('resetAssessmentModal');
-    var resetModal = modalEl ? new bootstrap.Modal(modalEl) : null;
-
-    if (resetBtn && resetModal) resetBtn.addEventListener('click', function() { resetModal.show(); });
-
-    if (confirmBtn) confirmBtn.addEventListener('click', function() {
-        confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Starting Fresh...';
-        fetch('/reset-assessment', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' }
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            if (d.status === 'ok') { window.location.href = '/interview?restart=1'; }
-            else { throw new Error('fail'); }
-        })
-        .catch(function() {
-            confirmBtn.disabled = false;
-            confirmBtn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Yes, Restart Assessment';
-            alert('Failed to reset. Please try again.');
-        });
-    });
-})();
-</script>
-{% endif %}
 
 <script>
 function onFileSelect(input) {

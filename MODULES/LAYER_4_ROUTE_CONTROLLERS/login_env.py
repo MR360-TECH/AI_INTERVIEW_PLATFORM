@@ -5,9 +5,24 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth, ADMIN_EMAIL, ADMIN_PASSWORD, has_google_oauth
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, is_valid_email, profile_is_complete
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_otp_email
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_welcome_email
 
 login_bp = Blueprint('login_bp', __name__)
 register_bp = login_bp  # Alias for backward compatibility
+
+
+def send_welcome_once(user, via_google=False):
+    """Queues the one-time welcome email. The flag is saved first, so it can never be sent twice,
+    and any failure here must never break registration."""
+    try:
+        if user.welcome_sent:
+            return
+        user.welcome_sent = True
+        db.session.commit()
+        queue_welcome_email(user.email, user.full_name, via_google=via_google)
+    except Exception as e:
+        db.session.rollback()
+        print(f"[WELCOME] could not queue welcome email: {e}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -109,7 +124,7 @@ def auth_google_callback():
         return redirect("/login")
 
     google_id = user_info["sub"]
-    email = user_info["email"]
+    email = (user_info["email"] or "").strip().lower()
     name = user_info.get("name", email.split("@")[0])
 
     user = User.query.filter_by(google_id=google_id).first()
@@ -406,6 +421,7 @@ def register():
         if "user_id" in session:
             user = db.session.get(User, session["user_id"])
             if user:
+                was_complete = profile_is_complete(user)
                 user.full_name = full_name
                 user.gender = gender
                 user.education = education
@@ -419,6 +435,8 @@ def register():
                 user.current_designation = current_designation
                 db.session.commit()
                 session["user_name"] = user.full_name
+                if not was_complete:
+                    send_welcome_once(user, via_google=(user.auth_provider == "google"))
                 return redirect("/dashboard")
 
         # Google OAuth new user
@@ -439,6 +457,7 @@ def register():
             session["user_id"] = new_user.id
             session["user_name"] = new_user.full_name
             session["user_email"] = new_user.email
+            send_welcome_once(new_user, via_google=True)
             return redirect("/dashboard")
 
         # Local signup (email verified via OTP, password already set)
@@ -458,6 +477,7 @@ def register():
             session["user_id"] = new_user.id
             session["user_name"] = new_user.full_name
             session["user_email"] = new_user.email
+            send_welcome_once(new_user)
             return redirect("/dashboard")
 
         return redirect("/login")
@@ -493,7 +513,14 @@ def edit_profile():
         return redirect("/login")
 
     if request.method == "POST":
-        user.full_name = request.form.get("full_name")
+        full_name = request.form.get("full_name", "").strip()
+        if not full_name:
+            return render_template("edit_profile.html", user=user, error="Full name cannot be empty.")
+        name_taken = User.query.filter(User.full_name.ilike(full_name), User.id != user.id).first()
+        if name_taken:
+            return render_template("edit_profile.html", user=user, error="This name is already taken. Please use a different name.")
+
+        user.full_name = full_name
         user.gender = request.form.get("gender")
         user.education = request.form.get("education")
         user.course = request.form.get("course")

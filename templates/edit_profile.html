@@ -172,6 +172,7 @@
             display: flex; align-items: center; gap: 10px;
             padding: 12px 16px; border-radius: 10px; font-size: 0.87rem; margin-bottom: 24px;
         }
+        .auth-alert.error { background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.3); color:#fca5a5; }
         .auth-alert.success { background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); color:#6ee7b7; }
 
         /* ── Type toggle ── */
@@ -358,6 +359,9 @@
 
             {% if success %}
             <div class="auth-alert success"><i class="bi bi-check-circle-fill"></i> {{ success }}</div>
+            {% endif %}
+            {% if error %}
+            <div class="auth-alert error"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
             {% endif %}
 
             <form method="POST">

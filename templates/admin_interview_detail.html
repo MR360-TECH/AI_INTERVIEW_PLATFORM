@@ -585,7 +585,7 @@
             <div class="d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em;">
                 <i class="bi bi-person-badge-fill" style="color: #00ffff;"></i> Candidate Profile
             </div>
-            {% if candidate and candidate.resume_filename %}
+            {% if candidate and (candidate.resume_filename or candidate.resume_text) %}
             <button class="btn" data-bs-toggle="modal" data-bs-target="#userResumeModal" style="border: 1.5px solid rgba(0, 255, 255, 0.35); background: rgba(0, 255, 255, 0.08); color: #00ffff; font-weight: 700; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
                 <i class="bi bi-file-earmark-text"></i> User Resume
             </button>
@@ -789,7 +789,7 @@
           <i class="bi bi-file-earmark-person-fill me-2" style="color:var(--indigo);"></i>Candidate Resume — {{ candidate.full_name | upper }}
         </h5>
         <div class="d-flex align-items-center gap-2">
-          {% if candidate.resume_filename %}
+          {% if resume_file_exists %}
           <a href="/uploads/resumes/{{ candidate.resume_filename }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
             <i class="bi bi-box-arrow-up-right me-1"></i> Open Original File
           </a>
@@ -798,8 +798,8 @@
         </div>
       </div>
       <div class="modal-body p-4 pt-2">
-        {% if candidate.resume_filename %}
-          {% set ext = candidate.resume_filename.rsplit('.', 1)[1].lower() %}
+        {% if resume_file_exists %}
+          {% set ext = candidate.resume_filename.rsplit('.', 1)[-1].lower() %}
           {% if ext in ['png', 'jpg', 'jpeg'] %}
             <!-- Image resume view -->
             <div style="text-align:center;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px;max-height:70vh;overflow-y:auto;">
@@ -828,12 +828,17 @@
             {% endif %}
           {% endif %}
         {% elif candidate.resume_text %}
+          {% if candidate.resume_filename %}
+          <div style="background:rgba(246,194,62,0.12);border:1px solid rgba(246,194,62,0.45);color:#f6c23e;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:0.82rem;font-weight:600;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> The original resume file is no longer on the server. Showing the AI-extracted text instead.
+          </div>
+          {% endif %}
           <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:20px;font-family:'Inter',sans-serif;font-size:0.9rem;line-height:1.7;color:var(--text-1);white-space:pre-wrap;max-height:60vh;overflow-y:auto;">{{ candidate.resume_text }}</div>
         {% else %}
           <div style="background:var(--bg2);border:1px dashed var(--border2);border-radius:12px;padding:40px 20px;text-align:center;">
             <i class="bi bi-file-earmark-x" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:10px;"></i>
             <h6 class="fw-bold" style="color:var(--text-1);">No Resume Available</h6>
-            <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">This candidate has not uploaded a resume document yet.</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);margin:0;">{% if candidate.resume_filename %}A resume was uploaded, but the file is missing from the server. Ask the candidate to upload it again.{% else %}This candidate has not uploaded a resume document yet.{% endif %}</p>
           </div>
         {% endif %}
       </div>

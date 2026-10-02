@@ -1,8 +1,12 @@
+import os
 import re
 import json
 import time
+from flask import current_app
+from sqlalchemy import String, event
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import (
     db,
+    UPLOAD_FOLDER,
     ALLOWED_EXTENSIONS,
     ALLOWED_RESUME_EXTENSIONS
 )
@@ -35,6 +39,7 @@ class User(db.Model):
     resume_filename = db.Column(db.String(255))
     extra_allowed_interviews = db.Column(db.Integer, default=0)
     attempts_count = db.Column(db.Integer, default=0)
+    welcome_sent = db.Column(db.Boolean, default=False)
 
     def get_attempts_used(self):
         try:
@@ -123,6 +128,20 @@ class SettingsSnapshot:
             self.enable_warning_strikes = True
 
 
+def _clamp_strings(mapper, connection, target):
+    """PostgreSQL rejects text longer than a VARCHAR(n) column (MySQL used to cut it silently), which would make
+    saving fail for free-text values such as the domain a candidate types as their first answer. Trim to fit."""
+    for column in mapper.columns:
+        if isinstance(column.type, String) and column.type.length:
+            value = getattr(target, column.key, None)
+            if isinstance(value, str) and len(value) > column.type.length:
+                setattr(target, column.key, value[:column.type.length])
+
+
+event.listen(db.Model, "before_insert", _clamp_strings, propagate=True)
+event.listen(db.Model, "before_update", _clamp_strings, propagate=True)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SETTINGS CACHE & PERSISTENCE HELPERS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -200,6 +219,28 @@ def clear_progress(user_id):
         db.session.commit()
     except Exception:
         db.session.rollback()
+
+
+
+def record_counted_attempt(user, result_record):
+    """Adds a result that consumes one attempt token and bumps the user's cached counter by exactly 1.
+
+    The current usage must be read BEFORE the new row is added: querying afterwards autoflushes the
+    pending result, so it would be counted twice (once as a row, once by the +1).
+    Caller commits (or rolls back) — nothing is consumed unless the commit succeeds."""
+    with db.session.no_autoflush:
+        used_so_far = user.get_attempts_used() if user else 0
+    db.session.add(result_record)
+    if user:
+        user.attempts_count = used_so_far + 1
+
+
+def resume_file_exists(user):
+    """True only if the candidate's original resume file is actually present on disk."""
+    if not user or not user.resume_filename:
+        return False
+    folder = current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER)
+    return os.path.isfile(os.path.join(folder, user.resume_filename))
 
 
 # ══════════════════════════════════════════════════════════════════════════════

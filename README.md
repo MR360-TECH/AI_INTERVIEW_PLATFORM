@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Google Gemini](https://img.shields.io/badge/Google%20Gemini-Flash%20Lite%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL%20%7C%20SQLite-00758F?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Database](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![Deployment](https://img.shields.io/badge/Deployment-Render%20Cloud-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 
@@ -180,7 +180,7 @@ flowchart TD
     ResultGen --> Scorecard[Performance Evaluation Report & PDF]
     Scorecard --> History[Candidate Attempt Progression & History]
     
-    Scorecard -.-> DB[(Relational Database: MySQL / PostgreSQL / SQLite)]
+    Scorecard -.-> DB[(Neon PostgreSQL)]
     History -.-> DB
     
     AdminUser([Recruiter / Administrator]) --> AdminPanel[Admin Operations Control Center]
@@ -539,7 +539,7 @@ ai_interview_platform/
 |---|---|---|
 | **Backend Framework** | Python 3.11+ / Flask 3.0+ | Core application server, routing, and session management |
 | **Application Architecture** | 4-Layer MODULES package | Config → Models → Services → Controllers with Blueprint registration |
-| **Database ORM** | Flask-SQLAlchemy 3.1+ | Unified relational ORM supporting MySQL, PostgreSQL, and SQLite |
+| **Database ORM** | Flask-SQLAlchemy 3.1+ | Relational ORM on Neon PostgreSQL (SQLite only as a local fallback) |
 | **AI Assessment Engine** | Google Gemini (`gemini-flash-lite-latest`) | High-speed, context-aware conversational questioning & grading |
 | **Authentication & Security** | Werkzeug / Authlib / PyCryptodome | PBKDF2-SHA256 password hashing, Google OAuth 2.0 OpenID Connect |
 | **Email Delivery Engine** | Resend API / SendGrid API / SMTP | Multi-provider fallback delivery system for verification codes |
@@ -593,22 +593,23 @@ SECRET_KEY=your_secure_random_flask_secret_key_here
 FLASK_ENV=production
 
 # -------------------------------------------------------------
-# DATABASE CONFIGURATION
-# (Leave empty or unset to automatically fallback to local SQLite)
-# MySQL is attempted first; falls back to SQLite if unreachable.
+# DATABASE CONFIGURATION - Neon PostgreSQL (use the SAME value locally and on Render)
+# Copy the *pooled* connection string from the Neon dashboard.
+# On Render the app refuses to start without it; locally, a missing value falls back
+# to a throw-away SQLite file with a warning.
 # -------------------------------------------------------------
-DATABASE_URL=mysql+pymysql://username:password@hostname:3306/database_name
-
-# Override individual MySQL credentials (if DATABASE_URL is not set):
-DB_USER=root
-DB_PASSWORD=your_db_password
-DB_HOST=localhost
-DB_NAME=ai_interview_platform
+DATABASE_URL=postgresql://user:password@ep-xxxx-pooler.region.aws.neon.tech/neondb?sslmode=require
 
 # -------------------------------------------------------------
 # GOOGLE GEMINI AI ENGINE
 # -------------------------------------------------------------
 GEMINI_API_KEY=your_gemini_api_key_here
+# Optional reliability helpers (all safe to leave unset):
+#   GEMINI_BACKUP_KEYS     comma-separated keys from OTHER Google projects; used when the main key is rate-limited
+#   GEMINI_FALLBACK_MODELS comma-separated backup models (default: gemini-3.5-flash-lite,gemini-3.1-flash-lite);
+#                          set it to an empty value to disable. The main model is always tried first.
+#   APP_BASE_URL           public site URL used for links inside emails, e.g. https://your-app.onrender.com
+#   UPLOAD_FOLDER          override the folder where resumes are stored
 
 # -------------------------------------------------------------
 # GOOGLE OAUTH 2.0 (Optional - for Google Single Sign-On)
@@ -736,8 +737,8 @@ A: The proctoring system detects it immediately. The first violation shows a war
 **Q: Is an internet connection required for the code editor?**  
 A: Yes — the Monaco Editor is loaded from CDN. However, the code editor is purely for input; Python code is not executed on the server — it is submitted as text and evaluated by the AI.
 
-**Q: What databases are supported?**  
-A: The platform supports **MySQL**, **PostgreSQL**, and **SQLite** out of the box. MySQL is tried first at startup; if unreachable, it automatically falls back to SQLite. If no `DATABASE_URL` is configured, it connects to a local MySQL instance, then falls back to SQLite.
+**Q: What database does the platform use?**
+A: **Neon PostgreSQL**, configured with the `DATABASE_URL` environment variable (the same value for local development and production). Tables and missing columns are created automatically at startup. If `DATABASE_URL` is not set, local runs fall back to a temporary SQLite file with a warning, and a Render deployment refuses to start so data is never lost silently.
 
 **Q: Is a paid API key required to run the platform?**  
 A: The Google Gemini API has a generous free tier that covers typical usage. Email delivery via Resend and SendGrid also offer free tiers. The platform is designed to be **fully operational at zero cost** for personal and small-scale use.

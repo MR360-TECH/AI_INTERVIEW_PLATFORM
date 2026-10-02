@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app
@@ -11,7 +12,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     get_settings,
     clear_progress
 )
-from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment
+from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment, attachment_analysis_failed
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)
 
@@ -54,6 +55,14 @@ def dashboard():
         error_msg = "AI Placement evaluation is not configured. Please set the GEMINI_API_KEY environment variable."
     elif err_code == "attempts_exceeded":
         error_msg = "You have reached your allocated assessment attempt limit. Please contact the administrator to request an attempt extension."
+    elif err_code == "invalid_file_type":
+        error_msg = "Unsupported resume file type. Please upload a PDF, DOC, DOCX, PNG or JPG file."
+    elif err_code == "resume_save_failed":
+        error_msg = "Your resume could not be saved on the server. Please try again."
+    elif err_code == "resume_text_failed":
+        error_msg = "Your resume was uploaded, but the AI could not read its text. Recruiters can still open the file; try a clearer PDF if you want the AI interviewer to use it."
+    elif err_code == "evaluation_failed":
+        error_msg = "The AI evaluation is temporarily unavailable. Your answers are saved and no attempt has been used. Please retry in a moment to get your result."
 
     # Check attempt limit status (for UI button state)
     settings = get_settings()
@@ -69,12 +78,12 @@ def dashboard():
         if attempts_used >= allowed_total and not has_progress:
             is_locked = True
 
-    return render_template("dashboard.html", name=session["user_name"], user=current_user,
+    return render_template("dashboard.html", name=session.get("user_name") or current_user.full_name, user=current_user,
                            has_progress=has_progress, has_result=has_result,
                            recent_results=recent_results, error=error_msg,
                            is_locked=is_locked, attempts_used=attempts_used,
                            allowed_total=allowed_total, remaining_tokens=remaining_tokens,
-                           settings=settings)
+                           settings=settings, eval_retry=(err_code == "evaluation_failed"))
 
 
 @dashboard_bp.route("/dashboard/update-resume", methods=["POST"])
@@ -87,36 +96,47 @@ def dashboard_update_resume():
         return redirect("/dashboard")
         
     resume_file = request.files.get("resume_file")
-    
+
     if resume_file and resume_file.filename:
         filename = resume_file.filename
-        if allowed_resume_file(filename):
-            try:
-                upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-                ext = filename.rsplit('.', 1)[1].lower()
-                saved_filename = f"user_{user.id}_resume.{ext}"
-                file_path = os.path.join(upload_folder, saved_filename)
-                
-                resume_file.seek(0)
-                file_bytes = resume_file.read()
-                with open(file_path, "wb") as f:
-                    f.write(file_bytes)
-                
-                user.resume_filename = saved_filename
-
-                resume_file.seek(0)
-                extracted_text = analyze_attachment(
-                    file_bytes, resume_file.mimetype,
-                    context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
-                )
-                user.resume_text = extracted_text
-                db.session.commit()
-            except Exception as e:
-                print(f"Error extracting text from uploaded resume: {e}")
-                return redirect("/dashboard?error=resume_extraction_failed")
-        else:
+        if not allowed_resume_file(filename):
             return redirect("/dashboard?error=invalid_file_type")
-            
+
+        ext = filename.rsplit('.', 1)[1].lower()
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+        saved_filename = f"user_{user.id}_resume.{ext}"
+        file_bytes = resume_file.read()
+
+        try:
+            os.makedirs(upload_folder, exist_ok=True)
+            # A new upload replaces the old one (the extension may differ, e.g. .pdf -> .png)
+            if user.resume_filename and user.resume_filename != saved_filename:
+                old_path = os.path.join(upload_folder, user.resume_filename)
+                if os.path.isfile(old_path):
+                    os.remove(old_path)
+            with open(os.path.join(upload_folder, saved_filename), "wb") as f:
+                f.write(file_bytes)
+        except OSError as e:
+            print(f"Error saving uploaded resume: {e}")
+            return redirect("/dashboard?error=resume_save_failed")
+
+        # The original file is the source of truth for admins, so record it even if text extraction fails.
+        user.resume_filename = saved_filename
+        extracted_text = analyze_attachment(
+            file_bytes, resume_file.mimetype,
+            context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+        )
+        text_ok = not attachment_analysis_failed(extracted_text)
+        user.resume_text = extracted_text if text_ok else None
+        try:
+            db.session.commit()
+        except Exception as e:
+            print(f"Error recording uploaded resume: {e}")
+            db.session.rollback()
+            return redirect("/dashboard?error=resume_save_failed")
+        if not text_ok:
+            return redirect("/dashboard?error=resume_text_failed")
+
     return redirect("/dashboard")
 
 
@@ -149,6 +169,8 @@ def view_original_resume(filename):
         if not user or user.resume_filename != filename:
             return "Unauthorized", 403
     upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    if not os.path.isfile(os.path.join(upload_folder, filename)):
+        return "Resume file not found on the server.", 404
     return send_from_directory(upload_folder, filename)
 
 
@@ -203,7 +225,7 @@ def my_history():
 
     attempts = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all()
 
-    chart_labels = [a.interview_datetime.strftime('%d %b') for a in reversed(attempts)]
+    chart_labels = [a.interview_datetime.strftime('%d %b') if a.interview_datetime else '' for a in reversed(attempts)]
     chart_scores = [float(a.score) if a.score is not None else 0 for a in reversed(attempts)]
 
     return render_template("my_history.html", attempts=attempts, chart_labels=chart_labels, chart_scores=chart_scores)

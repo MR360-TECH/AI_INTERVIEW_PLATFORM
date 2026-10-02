@@ -323,8 +323,8 @@
 
             <div class="mb-4">
                 <label class="form-label"><i class="bi bi-award"></i> Passing Score Threshold (out of 10)</label>
-                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="0.5" value="{{ settings.pass_score }}" required>
-                <div class="form-text">Candidates scoring at or above this overall threshold pass the assessment round.</div>
+                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="1" value="{{ settings.pass_score }}" required>
+                <div class="form-text">Candidates scoring at or above this whole-number threshold pass the assessment round. This mark also sets the tone of the feedback email each candidate receives after an assessment. It applies to assessments evaluated after you save; earlier results and emails are not changed.</div>
             </div>
 
             <div class="mb-4">

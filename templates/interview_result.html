@@ -763,6 +763,58 @@
     pre  { background: #000 !important; border: 1px solid rgba(0,255,255,0.25) !important; border-radius: 8px !important; padding: 16px !important; color: #00ff9d !important; }
     pre code { background: transparent !important; border: none !important; padding: 0 !important; }
 </style>
+{% if is_terminated %}
+<style>
+    .term-wrap { padding: 8px 40px 8px; }
+    .term-status {
+        display: flex; gap: 20px; align-items: flex-start;
+        background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35);
+        border-radius: 18px; padding: 26px 28px; margin: 8px 0 26px;
+    }
+    .term-icon {
+        flex-shrink: 0; width: 54px; height: 54px; border-radius: 16px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.7rem;
+        background: rgba(245, 158, 11, 0.16); color: #fbbf24;
+    }
+    .term-eyebrow { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #fbbf24; margin-bottom: 6px; }
+    .term-title { font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 800; color: #ffffff; margin-bottom: 8px; }
+    .term-lead { font-size: 0.97rem; line-height: 1.7; color: #cbd5e1; margin: 0; }
+    .term-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 30px; }
+    .term-card { background: rgba(255, 255, 255, 0.03); border: 1px solid #334155; border-radius: 14px; padding: 16px 18px; }
+    .term-card-label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 6px; }
+    .term-card-value { font-size: 0.92rem; font-weight: 600; color: #f1f5f9; line-height: 1.5; }
+    .term-steps { list-style: none; margin: 0 0 30px; padding: 0; }
+    .term-steps li { position: relative; padding: 0 0 22px 38px; color: #cbd5e1; font-size: 0.94rem; line-height: 1.6; }
+    .term-steps li:last-child { padding-bottom: 0; }
+    .term-steps li::before {
+        content: ''; position: absolute; left: 7px; top: 22px; bottom: 2px; width: 2px; background: #334155;
+    }
+    .term-steps li:last-child::before { display: none; }
+    .term-steps li::after {
+        content: ''; position: absolute; left: 0; top: 4px; width: 16px; height: 16px; border-radius: 50%;
+        background: #0b1633; border: 3px solid #fbbf24;
+    }
+    .term-steps strong { color: #ffffff; display: block; font-weight: 700; }
+    .term-next { display: grid; gap: 12px; margin-bottom: 26px; }
+    .term-next-item {
+        display: flex; gap: 14px; align-items: flex-start; padding: 15px 18px; border-radius: 14px;
+        background: rgba(0, 255, 255, 0.04); border: 1px solid rgba(0, 255, 255, 0.18);
+        color: #cbd5e1; font-size: 0.93rem; line-height: 1.6;
+    }
+    .term-next-item i { color: #22d3ee; font-size: 1.15rem; margin-top: 2px; }
+    .term-next-item strong { color: #ffffff; }
+    .term-cta {
+        display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 12px;
+        background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510 !important; font-weight: 800;
+        text-decoration: none; font-size: 0.92rem; margin-bottom: 10px;
+    }
+    @media (max-width: 720px) {
+        .term-wrap { padding: 8px 18px; }
+        .term-grid { grid-template-columns: 1fr; }
+        .term-status { flex-direction: column; }
+    }
+</style>
+{% endif %}
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -802,10 +854,10 @@
                 {% endif %}
             </div>
             <h1 class="lh-title">
-                Performance Assessment Report
+                {% if is_terminated %}Assessment Session Report{% else %}Performance Assessment Report{% endif %}
             </h1>
             <p class="lh-subtitle">
-                Official competency evaluation summary and dynamic analysis
+                {% if is_terminated %}Summary of a session that ended before completion{% else %}Official competency evaluation summary and dynamic analysis{% endif %}
             </p>
 
             <div class="meta-grid">
@@ -823,6 +875,12 @@
                     <div class="meta-label">Date Issued</div>
                     <div class="meta-value">{{ report_date }}</div>
                 </div>
+                {% if is_terminated %}
+                <div class="meta-card">
+                    <div class="meta-label">Status</div>
+                    <div class="meta-value">Ended early</div>
+                </div>
+                {% else %}
                 <div class="meta-card">
                     <div class="meta-label">Evaluation Score</div>
                     <div class="meta-value score-val">
@@ -835,9 +893,60 @@
                         &thinsp;/ 10
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
 
+        {% if is_terminated %}
+        <div class="term-wrap">
+            <div class="term-status">
+                <div class="term-icon"><i class="bi bi-pause-circle-fill"></i></div>
+                <div>
+                    <div class="term-eyebrow">Session status</div>
+                    <div class="term-title">This session ended early</div>
+                    <p class="term-lead">The automated proctoring system closed this assessment because activity outside the exam window was detected more than once. No evaluation score was generated for this session.</p>
+                </div>
+            </div>
+
+            <div class="term-grid">
+                <div class="term-card">
+                    <div class="term-card-label">What was recorded</div>
+                    <div class="term-card-value">{{ termination_reason or "Repeated window focus loss during the assessment" }}</div>
+                </div>
+                <div class="term-card">
+                    <div class="term-card-label">Evaluation</div>
+                    <div class="term-card-value">Not scored</div>
+                </div>
+                <div class="term-card">
+                    <div class="term-card-label">Session ID</div>
+                    <div class="term-card-value">{{ session_code or "-" }}</div>
+                </div>
+            </div>
+
+            <div class="section-head">
+                <div class="section-eyebrow"><i class="bi bi-clock-history"></i> What happened</div>
+                <div class="section-title">Session timeline</div>
+                <div class="section-rule"></div>
+            </div>
+            <ol class="term-steps">
+                <li><strong>Assessment started</strong>The session began and window monitoring was active.</li>
+                <li><strong>Focus left the exam window</strong>A warning was shown to remind you to stay on the assessment screen.</li>
+                <li><strong>Focus left the exam window again</strong>The session was closed automatically and recorded on your account.</li>
+            </ol>
+
+            <div class="section-head">
+                <div class="section-eyebrow"><i class="bi bi-signpost-split-fill"></i> Moving forward</div>
+                <div class="section-title">What you can do next</div>
+                <div class="section-rule"></div>
+            </div>
+            <div class="term-next">
+                <div class="term-next-item"><i class="bi bi-mortarboard-fill"></i><div><strong>Get comfortable with the format.</strong> The practice lab is not monitored and lets you rehearse interviews, viva sessions and concept drills.</div></div>
+                <div class="term-next-item"><i class="bi bi-window-stack"></i><div><strong>Prepare your environment.</strong> Before your next assessment, close other tabs and applications and silence notifications so the exam window keeps focus.</div></div>
+                <div class="term-next-item"><i class="bi bi-life-preserver"></i><div><strong>Think this was a mistake?</strong> If a technical issue caused it, contact your administrator and mention Session ID <strong style="white-space:nowrap;">{{ session_code or "above" }}</strong>.</div></div>
+            </div>
+            <a href="/practice-setup" class="term-cta"><i class="bi bi-mortarboard-fill"></i> Open the practice lab</a>
+        </div>
+        {% else %}
         <div class="score-dashboard">
             <div class="ring-wrap" aria-label="Score: {{ score | default(0) }} out of 10">
                 <svg class="ring-svg" viewBox="0 0 125 125">
@@ -943,6 +1052,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
     </div>
 

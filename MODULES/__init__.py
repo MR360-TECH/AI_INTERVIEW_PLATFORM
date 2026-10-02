@@ -5,6 +5,49 @@ from MODULES.LAYER_1_CORE_INFRASTRUCTURE import config
 from MODULES.LAYER_2_DATA_PERSISTENCE import models
 from MODULES.LAYER_4_ROUTE_CONTROLLERS import register_blueprints
 
+# Columns added after the first release. db.create_all() never alters existing tables, so older
+# databases get them here. Defaults are portable (SQLite, MySQL and PostgreSQL all accept TRUE/FALSE).
+_REQUIRED_COLUMNS = {
+    'users': [
+        ('resume_text', 'TEXT'),
+        ('resume_filename', 'VARCHAR(255)'),
+        ('extra_allowed_interviews', 'INTEGER DEFAULT 0'),
+        ('attempts_count', 'INTEGER DEFAULT 0'),
+        ('welcome_sent', 'BOOLEAN DEFAULT FALSE'),
+    ],
+    'interview_results': [
+        ('is_terminated', 'BOOLEAN DEFAULT FALSE'),
+        ('termination_reason', 'TEXT'),
+    ],
+    'admin_settings': [
+        ('enable_warning_strikes', 'BOOLEAN DEFAULT TRUE'),
+    ],
+}
+
+
+def ensure_columns():
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+    for table, columns in _REQUIRED_COLUMNS.items():
+        if not inspector.has_table(table):
+            continue
+        existing = {c['name'] for c in inspector.get_columns(table)}
+        for column_name, ddl in columns:
+            if column_name in existing:
+                continue
+            # One transaction per column: on PostgreSQL a failed statement would otherwise abort the rest.
+            try:
+                with db.engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column_name} {ddl}"))
+                print(f"Added column '{column_name}' dynamically to {table} table.")
+                if (table, column_name) == ('users', 'welcome_sent'):
+                    # Accounts that existed before this feature must never receive a "welcome" email.
+                    with db.engine.begin() as conn:
+                        conn.execute(text("UPDATE users SET welcome_sent = TRUE"))
+            except Exception as schema_err:
+                print(f"Schema check notice ({table}.{column_name}): {schema_err}")
+
+
 def create_app():
     # Set template and static folders relative to project root
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -109,47 +152,7 @@ def create_app():
     with app.app_context():
         try:
             db.create_all()
-            try:
-                engine = db.engine
-                with engine.connect() as conn:
-                    from sqlalchemy import inspect, text
-                    inspector = inspect(engine)
-                    if inspector.has_table('users'):
-                        columns = [c['name'] for c in inspector.get_columns('users')]
-                        if 'resume_text' not in columns:
-                            conn.execute(text("ALTER TABLE users ADD COLUMN resume_text TEXT"))
-                            conn.commit()
-                            print("Added column 'resume_text' dynamically to users table.")
-                        if 'resume_filename' not in columns:
-                            conn.execute(text("ALTER TABLE users ADD COLUMN resume_filename VARCHAR(255)"))
-                            conn.commit()
-                            print("Added column 'resume_filename' dynamically to users table.")
-                        if 'extra_allowed_interviews' not in columns:
-                            conn.execute(text("ALTER TABLE users ADD COLUMN extra_allowed_interviews INT DEFAULT 0"))
-                            conn.commit()
-                            print("Added column 'extra_allowed_interviews' dynamically to users table.")
-                        if 'attempts_count' not in columns:
-                            conn.execute(text("ALTER TABLE users ADD COLUMN attempts_count INT DEFAULT 0"))
-                            conn.commit()
-                            print("Added column 'attempts_count' dynamically to users table.")
-                    if inspector.has_table('interview_results'):
-                        res_columns = [c['name'] for c in inspector.get_columns('interview_results')]
-                        if 'is_terminated' not in res_columns:
-                            conn.execute(text("ALTER TABLE interview_results ADD COLUMN is_terminated BOOLEAN DEFAULT 0"))
-                            conn.commit()
-                            print("Added column 'is_terminated' dynamically to interview_results table.")
-                        if 'termination_reason' not in res_columns:
-                            conn.execute(text("ALTER TABLE interview_results ADD COLUMN termination_reason TEXT"))
-                            conn.commit()
-                            print("Added column 'termination_reason' dynamically to interview_results table.")
-                    if inspector.has_table('admin_settings'):
-                        settings_columns = [c['name'] for c in inspector.get_columns('admin_settings')]
-                        if 'enable_warning_strikes' not in settings_columns:
-                            conn.execute(text("ALTER TABLE admin_settings ADD COLUMN enable_warning_strikes BOOLEAN DEFAULT 1"))
-                            conn.commit()
-                            print("Added column 'enable_warning_strikes' dynamically to admin_settings table.")
-            except Exception as schema_err:
-                print(f"Schema check notice: {schema_err}")
+            ensure_columns()
             print("Database tables verified/created successfully.")
         except Exception as e:
             print(f"Error creating/verifying database tables: {e}")

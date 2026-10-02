@@ -6,39 +6,8 @@ import urllib.request
 import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
-
-def _otp_html_body(otp):
-    return f"""
-    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #080e1e; color: #e2e8f0; border-radius: 16px; border: 1px solid rgba(0, 255, 255, 0.25);">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <span style="background: rgba(0, 255, 255, 0.12); color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 100px; padding: 6px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
-          Platform Access Code
-        </span>
-      </div>
-      <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-bottom: 8px; text-align: center;">
-        Your Temporary Login Code
-      </h2>
-      <p style="color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
-        Hi there, <br><br>
-        You recently requested to access the AI Assessment Studio. Please use the secure code below to complete your login securely.
-      </p>
-      <div style="background: rgba(0, 255, 255, 0.06); border: 1.5px solid rgba(0, 255, 255, 0.3); border-radius: 14px; text-align: center; padding: 28px 0; margin-bottom: 24px;">
-        <span style="font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #00ffff;">{otp}</span>
-      </div>
-      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 28px;">
-        <div style="color: #00ffff; font-weight: 700; font-size: 14px; margin-bottom: 6px;">
-          ✓ Important Security Note
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-          This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.
-        </div>
-      </div>
-      <p style="color: #475569; font-size: 11px; text-align: center; margin: 0;">
-        This is an automated notification from AI Assessment Studio. Please do not reply.
-      </p>
-    </div>
-    """
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import APP_BASE_URL
+from MODULES.LAYER_3_BUSINESS_SERVICES import email_templates
 
 
 def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass):
@@ -187,62 +156,14 @@ def send_email_notification(to_email, subject, text_content, html_content):
 
 
 def send_otp_email(to_email, otp):
-    """Sends login OTP verification email."""
-    subject = "Your AI Assessment Studio login code"
-    text_content = (
-        f"Hi there,\n\n"
-        f"You recently requested to access the AI Assessment Studio. "
-        f"Please use the secure code below to complete your login securely.\n\n"
-        f"Code: {otp}\n\n"
-        f"This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.\n\n"
-        f"Visit: https://ai-interview-platform-3-vdic.onrender.com"
-    )
-    html_content = _otp_html_body(otp)
+    """Sends login / verification OTP email."""
+    subject, text_content, html_content = email_templates.otp_email(otp, APP_BASE_URL)
     return send_email_notification(to_email, subject, text_content, html_content)
 
 
 def send_slot_unlocked_email(to_email, candidate_name):
     """Sends assessment slot unlocked notification email in a background thread."""
-    subject = "Your Assessment Slot Has Been Unlocked - AI Assessment Studio"
-    candidate_display = (candidate_name or "Candidate").strip()
-
-    html_content = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px; background: #080e1e; color: #e2e8f0; border-radius: 16px; border: 1px solid rgba(0, 255, 255, 0.25);">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <span style="background: rgba(0, 255, 255, 0.12); color: #00ffff; border: 1px solid rgba(0, 255, 255, 0.3); border-radius: 100px; padding: 6px 18px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">
-          Assessment Status Update
-        </span>
-      </div>
-      <h2 style="color: #ffffff; font-size: 22px; font-weight: 800; margin-bottom: 8px; text-align: center;">
-        New Interview Slot Authorized!
-      </h2>
-      <p style="color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 24px; text-align: center;">
-        Great news, <strong>{candidate_display}</strong>! An additional standard evaluation slot has been unlocked for your account on AI Assessment Studio.
-      </p>
-      <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 255, 255, 0.2); border-radius: 12px; padding: 20px; margin-bottom: 28px;">
-        <div style="color: #00ffff; font-weight: 700; font-size: 14px; margin-bottom: 6px;">
-          What is Next?
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-          Log in to your workspace dashboard to launch your new assessment session. Ensure your camera, microphone, and quiet environment are ready.
-        </div>
-      </div>
-      <div style="text-align: center; margin-bottom: 24px;">
-        <a href="https://ai-interview-platform-3-vdic.onrender.com" style="background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; text-decoration: none; padding: 12px 32px; border-radius: 10px; font-weight: 800; font-size: 15px; display: inline-block;">
-          Open AI Assessment Studio &rarr;
-        </a>
-      </div>
-      <p style="color: #475569; font-size: 11px; text-align: center; margin: 0;">
-        This is an automated notification from AI Assessment Studio. Please do not reply.
-      </p>
-    </div>
-    """
-
-    text_content = (
-        f"Hello {candidate_display},\n\n"
-        f"Your standard assessment slot has been unlocked! Log in to your workspace to begin your new evaluation session.\n\n"
-        f"Open AI Assessment Studio: https://ai-interview-platform-3-vdic.onrender.com"
-    )
+    subject, text_content, html_content = email_templates.slot_unlocked_email(candidate_name, APP_BASE_URL)
 
     def _dispatch():
         send_email_notification(to_email, subject, text_content, html_content)

@@ -1,6 +1,9 @@
+import json
+from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_terminated_notice
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress, record_counted_attempt
 
 practice_bp = Blueprint('practice_bp', __name__)
 
@@ -16,29 +19,32 @@ def practice_setup():
 
 @practice_bp.route("/practice-start", methods=["POST"])
 def practice_start():
+    if session.get("is_admin"):
+        return redirect("/admin")
     if "user_id" not in session:
         return redirect("/login")
-    
+
     mode = request.form.get("mode")
+    if mode not in ("viva", "lang", "drill"):
+        return redirect("/practice-setup")
+
     viva_subject = request.form.get("viva_subject", "").strip()
     drill_subject = request.form.get("drill_subject", "").strip()
-    
+
     session["interview_mode"] = mode
-    if mode == "viva" and viva_subject:
-        session["practice_topic"] = viva_subject
-    elif mode == "drill" and drill_subject:
-        session["practice_topic"] = drill_subject
-    elif mode == "lang":
+    if mode == "viva":
+        session["practice_topic"] = viva_subject or "General Knowledge"
+    elif mode == "drill":
+        session["practice_topic"] = drill_subject or "General Concepts"
+    else:
         lang_target = request.form.get("lang_target", "").strip()
-        lang_focus = request.form.get("lang_focus", "conversation").strip()
-        lang_level = request.form.get("lang_level", "intermediate").strip()
-        
+        lang_focus = request.form.get("lang_focus", "conversation").strip() or "conversation"
+        lang_level = request.form.get("lang_level", "intermediate").strip() or "intermediate"
+
         session["lang_target"] = lang_target or "English"
         session["lang_focus"] = lang_focus
         session["lang_level"] = lang_level
         session["practice_topic"] = f"{session['lang_target']} ({lang_focus.capitalize()})"
-    else:
-        session["practice_topic"] = "General English Speaking"
 
     return redirect(url_for("interview_bp.interview", restart="1", practice="1"))
 
@@ -108,20 +114,30 @@ def reset_assessment():
 def terminate_proctoring():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "unauthorized"}), 401
-    
+
     user_id = session["user_id"]
+
+    # Only a live, scored assessment can be terminated. Practice sessions are never proctored, and a repeated
+    # call (second tab, double-fired event) finds the progress already cleared, so nothing is charged twice.
+    progress = InterviewProgress.query.filter_by(user_id=user_id).first()
+    try:
+        has_active_interview = bool(progress and json.loads(progress.chat_history or '[]'))
+    except Exception:
+        has_active_interview = bool(progress)
+    if session.get("interview_mode") or not has_active_interview:
+        return jsonify({"status": "ignored", "redirect": "/dashboard"})
+
     domain_val = session.get("interview_domain", "General")
-    
+
     reason = "Repeated window focus loss / tab switching detected during active assessment"
     summary_msg = (
-        "OFFICIAL DISQUALIFICATION NOTICE:\n\n"
-        "This assessment session was automatically terminated by the automated security proctoring system "
-        "due to a breach of the Candidate Code of Conduct. Specifically, unauthorized application tab switching "
-        "or window focus loss was detected on multiple occasions during an active examination session.\n\n"
-        "In accordance with evaluation security standards, all progress has been recorded as terminated "
-        "and flagged for administrator audit review."
+        "SESSION ENDED EARLY:\n\n"
+        "This assessment session was closed automatically by the proctoring system because window focus loss "
+        "or tab switching was detected on multiple occasions during the session.\n\n"
+        "The session has been recorded as terminated and no evaluation score was generated. "
+        "It remains available for administrator review."
     )
-    
+
     try:
         result_record = InterviewResult(
             user_id=user_id,
@@ -132,11 +148,13 @@ def terminate_proctoring():
             is_terminated=True,
             termination_reason=reason
         )
-        db.session.add(result_record)
         user_obj = db.session.get(User, user_id)
-        if user_obj:
-            user_obj.attempts_count = max(user_obj.attempts_count or 0, user_obj.get_attempts_used()) + 1
+        record_counted_attempt(user_obj, result_record)
         db.session.commit()
+        if user_obj and user_obj.email:
+            queue_terminated_notice(
+                user_obj.email, full_name=user_obj.full_name, domain=domain_val,
+                session_code=result_record.session_code, result_id=result_record.id, when=datetime.now())
     except Exception as db_err:
         print(f"Error recording proctoring termination: {db_err}")
         db.session.rollback()

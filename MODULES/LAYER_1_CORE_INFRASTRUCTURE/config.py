@@ -1,5 +1,4 @@
 import os
-import re
 import secrets
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
@@ -38,46 +37,19 @@ if not ADMIN_PASSWORD:
     print(f" * SECURE WARNING: ADMIN_PASSWORD environment variable was not set.")
     print(f" * A random temporary password has been generated for this session: {ADMIN_PASSWORD}")
 
-# Database URL configuration
-db_url = os.environ.get("DATABASE_URL")
+# Database: Neon PostgreSQL, selected with DATABASE_URL (the same database for local development and production).
+db_url = (os.environ.get("DATABASE_URL") or "").strip()
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-if db_url:
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-else:
-    db_user = os.environ.get("DB_USER", "root")
-    db_pass = os.environ.get("DB_PASSWORD", "1817")
-    db_host = os.environ.get("DB_HOST", "localhost")
-    db_name = os.environ.get("DB_NAME", "ai_interview_platform")
-    db_url = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}/{db_name}'
-
-if db_url.startswith("mysql"):
-    try:
-        import pymysql
-        match = re.match(r'mysql\+pymysql://([^:]+):([^@]+)@([^/:]+)(?::(\d+))?/([^?]+)', db_url)
-        if match:
-            user, password, host, port, db_name_parsed = match.groups()
-            port = int(port) if port else 3306
-            conn = pymysql.connect(
-                host=host,
-                user=user,
-                password=password,
-                port=port,
-                connect_timeout=3
-            )
-            with conn.cursor() as cursor:
-                cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name_parsed}")
-            conn.close()
-            print(f"Verified/Created MySQL database '{db_name_parsed}' successfully.")
-        else:
-            raise ValueError("Invalid MySQL URI format")
-    except Exception as e:
-        print(f"MySQL database connection failed ({e}). Falling back to SQLite.")
-        render_persistent_dir = "/var/data"
-        if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
-            db_url = f"sqlite:///{os.path.join(render_persistent_dir, 'ai_interview_platform.db')}"
-        else:
-            db_url = "sqlite:///ai_interview_platform.db"
+if not db_url:
+    if os.environ.get("RENDER"):
+        # A silent SQLite fallback on Render would lose all data on the next deploy, so refuse to start.
+        raise RuntimeError("DATABASE_URL is not set. Add your Neon connection string to the Render environment variables.")
+    print(" * WARNING: DATABASE_URL is not set - using a local SQLite file. Data will NOT be stored in Neon.")
+    db_url = "sqlite:///ai_interview_platform.db"
+elif "neon.tech" in db_url and "sslmode=" not in db_url:
+    db_url += ("&" if "?" in db_url else "?") + "sslmode=require"
 
 SQLALCHEMY_DATABASE_URI = db_url
 SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -85,18 +57,27 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_ENGINE_OPTIONS = {}
 if not db_url.startswith("sqlite"):
     SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
+        'pool_pre_ping': True,      # Neon suspends idle compute and drops connections: test a connection before using it
         'pool_recycle': 280,
         'pool_timeout': 20,
-        'max_overflow': 5
+        'pool_size': 5,
+        'max_overflow': 5,
     }
+    if db_url.startswith(("postgresql://", "postgresql+psycopg2://")):
+        SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {
+            'connect_timeout': 15,  # a sleeping Neon database needs a few seconds to wake up
+            'keepalives': 1, 'keepalives_idle': 30, 'keepalives_interval': 10, 'keepalives_count': 5,
+        }
 
-# File uploads
+# File uploads — always an absolute path. A relative folder is resolved against the Flask
+# package directory by send_from_directory(), so saved resumes could never be served back.
 render_persistent_dir = "/var/data"
-if os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
+if os.environ.get("UPLOAD_FOLDER"):
+    UPLOAD_FOLDER = os.path.abspath(os.environ["UPLOAD_FOLDER"])
+elif os.environ.get("RENDER") and os.path.exists(render_persistent_dir):
     UPLOAD_FOLDER = os.path.join(render_persistent_dir, 'uploads')
 else:
-    UPLOAD_FOLDER = 'uploads'
+    UPLOAD_FOLDER = os.path.join(_root_dir, 'uploads')
 
 MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB limit
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -108,6 +89,9 @@ ALLOWED_RESUME_EXTENSIONS = {'pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'}
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
+
+# Public base URL used for links inside emails (set APP_BASE_URL in production)
+APP_BASE_URL = (os.environ.get("APP_BASE_URL") or "https://ai-interview-platform-3-vdic.onrender.com").strip().rstrip("/")
 
 # Gemini API
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
