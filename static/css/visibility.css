@@ -1,0 +1,128 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   SHARED VISIBILITY LAYER
+   Loaded LAST on every page, so it wins over each page's own inline styles.
+   It only uses the application's own theme colours (navy surfaces, cyan accent, white text) and exists
+   to guarantee readable text: minimum contrast 4.5:1 for body text, 3:1 for large text.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+    --v-bg: #020510;
+    --v-surface: #08122a;
+    --v-panel: #0b1633;
+    --v-border: #2b4a68;
+    --v-text: #ffffff;
+    --v-text-2: #e2e8f0;
+    --v-muted: #cbd5e1;
+    --v-soft: #a9b8cc;
+    --v-cyan: #00ffff;
+    --v-blue: #38bdf8;
+    --v-ink: #020510;
+}
+
+/* 1. Gradient headline words: the old cyan -> purple -> pink gradient went dark in the middle on a dark background.
+      Bright cyan -> white keeps the same accent look and stays readable end to end. */
+.left-heading .grad,
+h1.hero-title span,
+.grad-text {
+    background-image: linear-gradient(90deg, #00ffff 0%, #7dd3fc 55%, #ffffff 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    text-shadow: none !important;   /* the heading's dark shadow would otherwise paint over the transparent gradient letters */
+    color: #00ffff;
+}
+
+/* 2. Buttons painted with the bright cyan gradient always carry dark ink (white on cyan is ~1.3:1). */
+.btn-hero-primary,
+.btn-primary-auth {
+    color: var(--v-ink) !important;
+}
+.btn-hero-primary {
+    background-image: linear-gradient(135deg, #00ffff, #38bdf8) !important;
+}
+.btn-hero-primary:hover { color: var(--v-ink) !important; }
+
+/* 3. Dim greys (#334155 / #475569 / #64748b on near-black were 2:1 - 4:1) lifted to a readable soft grey. */
+.brand-sub,
+.left-footer,
+.step-indicator,
+.auth-footer-note,
+.footer-copy,
+.footer-legal,
+.footer-tagline,
+.form-text {
+    color: var(--v-soft) !important;
+}
+.footer-link { color: var(--v-muted) !important; }
+.brand-sub, .left-footer, .step-indicator { font-size: 0.8rem !important; }
+.form-text { font-size: 0.86rem; }
+input::placeholder, textarea::placeholder { color: #8fa1b8 !important; opacity: 1; }
+
+/* 4. Bootstrap coloured badges: light text on yellow / cyan / green was ~1.4:1. */
+.badge.bg-warning, .badge.bg-info, .badge.bg-success, .badge.bg-light,
+.badge.text-bg-warning, .badge.text-bg-info, .badge.text-bg-success {
+    color: var(--v-ink) !important;
+}
+
+/* 5. Always show where the keyboard focus is. */
+:focus-visible {
+    outline: 2px solid var(--v-cyan);
+    outline-offset: 2px;
+}
+
+/* 6. Admin tables and stat cards: a little larger and brighter so rows scan quickly. */
+.stat-label { font-size: 0.82rem !important; color: var(--v-muted) !important; }
+.results-table thead th { font-size: 0.85rem !important; }
+.results-table tbody td { font-size: 0.95rem; }
+.results-table tbody tr { border-bottom-color: #2a3b55 !important; }
+#searchInput { border-color: #5b7a99 !important; }
+#searchInput::placeholder { color: #a9b8cc !important; }
+
+/* 7. Small text never goes below 12px. */
+.fs-7 { font-size: 0.9rem !important; }
+.category-badge-chip, .card-explore-pill { font-size: 0.8rem !important; }
+
+/* 8. Respect users who ask for less motion. */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* 9. Company Prep cards: brand colour is an ACCENT; the text uses the lightened --brand-text so it is always readable. */
+.card-explore-pill { color: var(--brand-text, var(--brand-color)) !important; }
+.item-card:hover .card-explore-pill { color: var(--brand-ink, #020510) !important; }
+.category-badge-chip { color: var(--brand-text, #e2e8f0); border-color: var(--brand-text, #334155); }
+
+/* 10. Phones: long headings must wrap instead of being clipped. */
+@media (max-width: 600px) {
+    .catalog-title { font-size: 1.7rem !important; overflow-wrap: anywhere; line-height: 1.25; }
+    .catalog-subtitle { font-size: 0.97rem !important; }
+    .section-header-box { flex-direction: column; align-items: flex-start; gap: 8px; }
+    h1, h2 { overflow-wrap: anywhere; }
+}
+
+/* 11. Buttons painted with a bright gradient (cyan / emerald) use dark ink; purple / blue ones get a deeper gradient so white
+       text passes 4.5:1. Selectors are prefixed (html body) so they beat the pages' own !important rules. */
+html body .btn-emerald-grad,
+html body .btn-submit,
+html body .btn-login,
+html body .btn-cyan-grad,
+html body .btn-primary-grad {
+    color: var(--v-ink) !important;
+}
+html body .btn-purple-grad {
+    background-image: linear-gradient(135deg, #6d28d9, #4338ca) !important;
+    color: #ffffff !important;
+}
+html body .btn-emerald-grad i, html body .btn-submit i, html body .btn-login i, html body .btn-cyan-grad i { color: var(--v-ink) !important; }
+
+/* 12. Bootstrap badges on dark backgrounds, and dim labels. */
+html body .badge.bg-warning, html body .badge.bg-info, html body .badge.bg-success, html body .badge.bg-light {
+    color: var(--v-ink) !important;
+}
+html body .badge.text-success { color: #4ade80 !important; }
+html body .badge.text-danger  { color: #f87171 !important; }
+html body .badge.text-primary { color: #7db7ff !important; }
+html body .badge.text-warning { color: #fbbf24 !important; }
+.avatar-email, .pstep-label, .score-denom, .section-tag { color: var(--v-soft) !important; }
+
+/* delete actions are POST forms now: make the buttons look like the links they replaced */
+button.btn-delete, button.btn-del-user { font-family: inherit; cursor: pointer; line-height: inherit; }

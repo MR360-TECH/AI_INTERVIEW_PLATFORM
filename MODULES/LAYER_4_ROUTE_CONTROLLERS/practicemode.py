@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_terminated_notice
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress, record_counted_attempt
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress, record_counted_attempt, attach_violations
 
 practice_bp = Blueprint('practice_bp', __name__)
 
@@ -25,7 +25,7 @@ def practice_start():
         return redirect("/login")
 
     mode = request.form.get("mode")
-    if mode not in ("viva", "lang", "drill"):
+    if mode not in ("viva", "lang", "drill", "debate", "convo"):
         return redirect("/practice-setup")
 
     viva_subject = request.form.get("viva_subject", "").strip()
@@ -36,6 +36,10 @@ def practice_start():
         session["practice_topic"] = viva_subject or "General Knowledge"
     elif mode == "drill":
         session["practice_topic"] = drill_subject or "General Concepts"
+    elif mode == "debate":
+        session["practice_topic"] = "Debate Practice"        # the AI asks for the topic and side in its opening line
+    elif mode == "convo":
+        session["practice_topic"] = "Healthy Conversation"   # the AI asks what to talk about in its opening line
     else:
         lang_target = request.form.get("lang_target", "").strip()
         lang_focus = request.form.get("lang_focus", "conversation").strip() or "conversation"
@@ -49,7 +53,7 @@ def practice_start():
     return redirect(url_for("interview_bp.interview", restart="1", practice="1"))
 
 
-@practice_bp.route("/quit-interview")
+@practice_bp.route("/quit-interview", methods=["POST"])
 def quit_interview():
     if "user_id" not in session:
         return redirect("/login")
@@ -90,6 +94,7 @@ def reset_assessment():
             )
             db.session.add(res_rec)
             db.session.commit()
+            attach_violations(user_id, res_rec.id)
         except Exception as e:
             print(f"[RESET ASSESSMENT LOG ERROR] {e}")
             db.session.rollback()
@@ -151,6 +156,7 @@ def terminate_proctoring():
         user_obj = db.session.get(User, user_id)
         record_counted_attempt(user_obj, result_record)
         db.session.commit()
+        attach_violations(user_id, result_record.id)
         if user_obj and user_obj.email:
             queue_terminated_notice(
                 user_obj.email, full_name=user_obj.full_name, domain=domain_val,

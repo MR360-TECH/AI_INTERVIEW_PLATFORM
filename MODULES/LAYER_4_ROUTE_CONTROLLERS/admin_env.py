@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, current_app
 from sqlalchemy import func
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
@@ -10,7 +10,11 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     AdminSettings,
     get_settings,
     invalidate_settings_cache,
-    resume_file_exists
+    resume_file_exists,
+    INTEGRITY_SWITCHES,
+    InterviewViolation,
+    ResourceBookmark,
+    Feedback
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
 
@@ -108,7 +112,8 @@ def admin_settings():
                 question_timer_seconds=90,
                 enable_attempt_limits=True,
                 default_allowed_interviews=2,
-                enable_warning_strikes=True
+                enable_warning_strikes=True,
+                enable_feedback_emails=True
             )
             db.session.add(db_settings)
 
@@ -134,6 +139,15 @@ def admin_settings():
         # Checkboxes: present = True, absent = False
         db_settings.enable_attempt_limits = bool(request.form.get("enable_attempt_limits"))
         db_settings.enable_warning_strikes = bool(request.form.get("enable_warning_strikes"))
+        db_settings.enable_feedback_emails = bool(request.form.get("enable_feedback_emails"))
+        # Integrity switches (only when the grouped form was submitted, so older posts never switch them off by accident)
+        if request.form.get("integrity_form"):
+            for switch in INTEGRITY_SWITCHES:
+                setattr(db_settings, switch, bool(request.form.get(switch)))
+            try:
+                db_settings.max_strikes = max(1, min(5, int(float(request.form.get("max_strikes", 2)))))
+            except (ValueError, TypeError):
+                db_settings.max_strikes = 2
         if "default_allowed_interviews" in request.form:
             try:
                 db_settings.default_allowed_interviews = int(float(request.form["default_allowed_interviews"]))
@@ -165,13 +179,14 @@ def admin_guide():
     return render_template("admin_guide.html", settings=settings)
 
 
-@admin_bp.route("/admin/delete/<int:result_id>")
+@admin_bp.route("/admin/delete/<int:result_id>", methods=["POST"])
 def delete_result(result_id):
     if not session.get("is_admin"):
         return redirect("/login")
 
     record = db.session.get(InterviewResult, result_id)
     if record:
+        InterviewViolation.query.filter_by(result_id=result_id).delete()
         db.session.delete(record)
         db.session.commit()
 
@@ -218,7 +233,7 @@ def admin_unlock_attempt(user_id):
     })
 
 
-@admin_bp.route("/admin/delete-user/<int:user_id>")
+@admin_bp.route("/admin/delete-user/<int:user_id>", methods=["POST"])
 def delete_user(user_id):
     if not session.get("is_admin"):
         return redirect("/login")
@@ -228,6 +243,9 @@ def delete_user(user_id):
     if user and user.resume_filename:
         resume_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), user.resume_filename)
 
+    InterviewViolation.query.filter_by(user_id=user_id).delete()
+    ResourceBookmark.query.filter_by(user_id=user_id).delete()
+    Feedback.query.filter_by(user_id=user_id).update({"user_id": None})      # keep the message, drop the link
     InterviewResult.query.filter_by(user_id=user_id).delete()
     InterviewProgress.query.filter_by(user_id=user_id).delete()
     if user:
@@ -241,10 +259,24 @@ def delete_user(user_id):
             print(f"Error removing resume file of deleted user: {e}")
 
     # Only allow redirects to local admin pages (no open redirect)
-    next_url = request.args.get("next") or "/admin"
+    next_url = request.args.get("next") or request.form.get("next") or "/admin"
     if not next_url.startswith("/") or next_url.startswith("//"):
         next_url = "/admin"
     return redirect(next_url)
+
+
+USERS_PER_PAGE = 20
+USER_FILTERS = ("all", "locked", "no_resume", "google", "never_assessed")
+USER_SORTS = ("newest", "oldest", "name", "attempts")
+
+
+def _is_recommended(result, settings):
+    """Same rule the dashboard uses: at or above the passing score and not ended by proctoring."""
+    try:
+        return (not result.is_terminated and "Terminated" not in (result.status or "")
+                and float(result.score) >= float(settings.pass_score or 0))
+    except (TypeError, ValueError):
+        return False
 
 
 @admin_bp.route("/admin/users")
@@ -253,19 +285,80 @@ def admin_users():
         return redirect("/login")
 
     q = request.args.get("q", "").strip()
-    if q:
-        users = User.query.filter(
-            (User.full_name.ilike(f"%{q}%")) |
-            (User.email.ilike(f"%{q}%")) |
-            (User.course.ilike(f"%{q}%")) |
-            (User.skills.ilike(f"%{q}%"))
-        ).order_by(User.registered_at.desc()).all()
-    else:
-        users = User.query.order_by(User.registered_at.desc()).all()
-    settings = get_settings()
-    user_attempt_counts = {u.id: u.get_attempts_used() for u in users}
+    filter_type = request.args.get("filter", "all")
+    sort = request.args.get("sort", "newest")
+    if filter_type not in USER_FILTERS:
+        filter_type = "all"
+    if sort not in USER_SORTS:
+        sort = "newest"
+    try:
+        page = max(1, int(request.args.get("page", "1")))
+    except ValueError:
+        page = 1
 
-    return render_template("admin_users.html", users=users, q=q, settings=settings, user_attempt_counts=user_attempt_counts)
+    settings = get_settings()
+    query = User.query
+    if q:
+        query = query.filter(
+            (User.full_name.ilike(f"%{q}%")) | (User.email.ilike(f"%{q}%")) |
+            (User.course.ilike(f"%{q}%")) | (User.skills.ilike(f"%{q}%")))
+    users = query.order_by(User.registered_at.desc()).all()
+
+    # newest assessment (practice excluded) and the number of assessments per candidate
+    latest, taken = {}, {}
+    for r in (InterviewResult.query.filter(~InterviewResult.status.like('%Practice%'))
+              .order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all()):
+        latest.setdefault(r.user_id, r)
+        taken[r.user_id] = taken.get(r.user_id, 0) + 1
+
+    default_allowed = settings.default_allowed_interviews or 2
+    rows = []
+    for u in users:
+        used = u.get_attempts_used()
+        allowed = default_allowed + (u.extra_allowed_interviews or 0)
+        remaining = allowed - used
+        last = latest.get(u.id)
+        rows.append({
+            "user": u, "used": used,
+            "locked": bool(settings.enable_attempt_limits and remaining <= 0),
+            "has_resume": bool(u.resume_filename or u.resume_text),
+            "taken": taken.get(u.id, 0), "last": last,
+            "last_ok": bool(last and _is_recommended(last, settings)),
+        })
+
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    stats = {
+        "total": len(rows),
+        "locked": sum(1 for r in rows if r["locked"]),
+        "new_week": sum(1 for r in rows if r["user"].registered_at and r["user"].registered_at >= week_ago),
+        "with_resume": sum(1 for r in rows if r["has_resume"]),
+        "assessed": sum(1 for r in rows if r["taken"]),
+    }
+
+    if filter_type == "locked":
+        rows = [r for r in rows if r["locked"]]
+    elif filter_type == "no_resume":
+        rows = [r for r in rows if not r["has_resume"]]
+    elif filter_type == "google":
+        rows = [r for r in rows if r["user"].auth_provider == "google"]
+    elif filter_type == "never_assessed":
+        rows = [r for r in rows if not r["taken"]]
+
+    if sort == "oldest":
+        rows.sort(key=lambda r: r["user"].registered_at or datetime.min)
+    elif sort == "name":
+        rows.sort(key=lambda r: (r["user"].full_name or "").lower())
+    elif sort == "attempts":
+        rows.sort(key=lambda r: r["used"], reverse=True)
+
+    total_filtered = len(rows)
+    pages = max(1, -(-total_filtered // USERS_PER_PAGE))
+    page = min(page, pages)
+    rows = rows[(page - 1) * USERS_PER_PAGE: page * USERS_PER_PAGE]
+
+    return render_template("admin_users.html", rows=rows, users=[r["user"] for r in rows], q=q, settings=settings, stats=stats,
+                           filter_type=filter_type, sort=sort, page=page, pages=pages, total_filtered=total_filtered,
+                           now=datetime.utcnow())
 
 
 @admin_bp.route("/admin/user/<int:user_id>")
@@ -324,11 +417,115 @@ def admin_interview_detail(result_id):
         return redirect("/admin")
 
     candidate = db.session.get(User, result.user_id)
+    settings = get_settings()
 
     try:
         score_percent = min(int((float(result.score) / 10) * 100), 100)
     except (TypeError, ValueError):
         score_percent = 0
 
+    others, attempts_used, allowed_total, is_locked = [], 0, 0, False
+    if candidate:
+        others = (InterviewResult.query
+                  .filter(InterviewResult.user_id == candidate.id, InterviewResult.id != result.id,
+                          ~InterviewResult.status.like('%Practice%'))
+                  .order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all())
+        attempts_used = candidate.get_attempts_used()
+        allowed_total = (settings.default_allowed_interviews or 2) + (candidate.extra_allowed_interviews or 0)
+        is_locked = bool(settings.enable_attempt_limits and attempts_used >= allowed_total)
+
+    terminated = bool(result.is_terminated or "Terminated" in (result.status or ""))
+    paragraphs = [p.strip() for p in (result.summary or "").split("\n") if p.strip()]
+    violations = []
+    if settings.proctor_integrity_log:
+        violations = (InterviewViolation.query.filter_by(result_id=result.id)
+                      .order_by(InterviewViolation.created_at, InterviewViolation.id).all())
+
     return render_template("admin_interview_detail.html", result=result, candidate=candidate, score_percent=score_percent,
-                           resume_file_exists=resume_file_exists(candidate))
+                           resume_file_exists=resume_file_exists(candidate), settings=settings, others=others,
+                           recommended=_is_recommended(result, settings), terminated=terminated, paragraphs=paragraphs,
+                           attempts_used=attempts_used, allowed_total=allowed_total, is_locked=is_locked,
+                           violations=violations, strike_count=sum(1 for v in violations if v.strike_no),
+                           flag_count=sum(1 for v in violations if not v.strike_no),
+                           other_ok={o.id: _is_recommended(o, settings) for o in others})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LINK HEALTH (admin only): the only place the "last checked" dates are shown
+# ══════════════════════════════════════════════════════════════════════════════
+
+LINK_FILTERS = ("all", "broken", "blocked", "unchecked", "hidden")
+
+
+@admin_bp.route("/admin/links")
+def admin_links():
+    if not session.get("is_admin"):
+        return redirect("/login")
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import LinkCheck
+
+    filter_type = request.args.get("filter", "all")
+    if filter_type not in LINK_FILTERS:
+        filter_type = "all"
+    checks = {c.url: c for c in LinkCheck.query.all()}
+    rows = [{"item": i, "check": checks.get(i["url"])} for i in LIBRARY]
+
+    stats = {
+        "total": len(rows),
+        "ok": sum(1 for r in rows if r["check"] and r["check"].kind == "ok"),
+        "blocked": sum(1 for r in rows if r["check"] and r["check"].kind == "blocked"),
+        "broken": sum(1 for r in rows if r["check"] and r["check"].kind == "broken"),
+        "unchecked": sum(1 for r in rows if not r["check"] or not r["check"].checked_at),
+        "hidden": sum(1 for r in rows if r["check"] and r["check"].hidden),
+    }
+    times = [r["check"].checked_at for r in rows if r["check"] and r["check"].checked_at]
+    last_run = max(times) if times else None
+
+    if filter_type == "broken":
+        rows = [r for r in rows if r["check"] and r["check"].kind == "broken"]
+    elif filter_type == "blocked":
+        rows = [r for r in rows if r["check"] and r["check"].kind == "blocked"]
+    elif filter_type == "unchecked":
+        rows = [r for r in rows if not r["check"] or not r["check"].checked_at]
+    elif filter_type == "hidden":
+        rows = [r for r in rows if r["check"] and r["check"].hidden]
+
+    progress, running = 0, False
+    started = request.args.get("started", "")
+    if started.isdigit():
+        since = datetime.utcfromtimestamp(int(started))
+        progress = sum(1 for c in checks.values() if c.checked_at and c.checked_at >= since)
+        running = progress < stats["total"] and (datetime.utcnow() - since).total_seconds() < 240
+
+    return render_template("admin_links.html", rows=rows, stats=stats, last_run=last_run, filter_type=filter_type,
+                           running=running, progress=progress, busy=request.args.get("busy") == "1")
+
+
+@admin_bp.route("/admin/links/check", methods=["POST"])
+def admin_links_check():
+    if not session.get("is_admin"):
+        return redirect("/login")
+    import time
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY
+    from MODULES.LAYER_3_BUSINESS_SERVICES.link_checker import start_check
+    started = int(time.time())
+    if not start_check(current_app._get_current_object(), [i["url"] for i in LIBRARY]):
+        return redirect("/admin/links?busy=1")
+    return redirect(f"/admin/links?started={started}")
+
+
+@admin_bp.route("/admin/links/hide", methods=["POST"])
+def admin_links_hide():
+    """Hides (or shows again) one library link for candidates."""
+    if not session.get("is_admin"):
+        return redirect("/login")
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY_URLS
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import LinkCheck
+    url = request.form.get("url", "")
+    if url in LIBRARY_URLS:
+        row = LinkCheck.query.filter_by(url=url).first() or LinkCheck(url=url)
+        row.hidden = not bool(row.hidden)
+        db.session.add(row)
+        db.session.commit()
+    filter_type = request.form.get("filter", "all")
+    return redirect(f"/admin/links?filter={filter_type if filter_type in LINK_FILTERS else 'all'}")

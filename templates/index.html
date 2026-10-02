@@ -168,7 +168,7 @@
         /* ── Feature Cards (Glassmorphic) ── */
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 24px;
             max-width: 1040px;
             width: 100%;
@@ -350,7 +350,19 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.2); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
+
+        /* ── How it works ── */
+        .how-section { max-width: 1040px; width: 100%; margin: 0 auto 90px; padding: 0 24px; text-align: center; }
+        .how-eyebrow { font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #00ffff; }
+        .how-section h2 { font-family: 'Outfit', sans-serif; font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 800; color: #ffffff; margin: 8px 0 32px; letter-spacing: -0.02em; }
+        .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+        .how-step { background: #08122a; border: 1px solid #2b4a68; border-radius: 18px; padding: 28px 24px; text-align: left; }
+        .how-num { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; margin-bottom: 14px;
+                   background: linear-gradient(135deg, #00ffff, #38bdf8); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.1rem; }
+        .how-step h3 { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; color: #ffffff; margin: 0 0 8px; }
+        .how-step p { color: #cbd5e1; font-size: 0.98rem; line-height: 1.65; margin: 0; }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -420,6 +432,28 @@
         <p>Explore specialized question modules tailored for Wipro, Capgemini, Infosys, and more.</p>
     </div>
 </div>
+
+<section class="how-section" aria-labelledby="how-title">
+    <div class="how-eyebrow">How it works</div>
+    <h2 id="how-title">Practise, interview, improve</h2>
+    <div class="how-grid">
+        <div class="how-step">
+            <span class="how-num">1</span>
+            <h3>Warm up in the practice labs</h3>
+            <p>Try viva, language, concept drill, debate or conversation practice. Practice is free to repeat and never uses up an assessment attempt.</p>
+        </div>
+        <div class="how-step">
+            <span class="how-num">2</span>
+            <h3>Take the AI interview</h3>
+            <p>Answer adaptive questions for your chosen role, by typing or by voice, in one focused session.</p>
+        </div>
+        <div class="how-step">
+            <span class="how-num">3</span>
+            <h3>Review, then keep improving</h3>
+            <p>Get a written report and scorecard you can print, then use the preparation library of company and topic question banks to close the gaps.</p>
+        </div>
+    </div>
+</section>
 
 <footer>
     <div class="footer-inner">

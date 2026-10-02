@@ -32,7 +32,7 @@ The platform was designed with the needs of **tier-2 and tier-3 engineering coll
 ## 🎯 Key Capabilities & Highlights
 
 * 🧠 **Adaptive AI Examiner**: Evaluates technical depth, analytical reasoning, and communication clarity in real-time, dynamically adjusting questions based on candidate performance.
-* 🛡️ **Automated Security Proctoring**: Real-time window focus tracking, tab-switch breach detection, two-strike disciplinary warning modals, and automatic session disqualification for code of conduct breaches.
+* 🛡️ **Interview Integrity & Strikes**: Server-side strikes for every violation (tab switch, paste/copy, second session, late answer, optional fullscreen), a clear violation box showing the exact mistake, an admin-set strike limit, an admin-only integrity log, and an individual on/off switch for every rule plus a master switch.
 * 🎓 **Multi-Track Practice Hub**:
   * **Academic Viva Voce**: Oral university exam simulations testing definitions, theoretical rigor, and algorithms.
   * **FluentFlow Language Practice**: Conversational multilingual practice with instant grammatical corrections and translations.
@@ -45,6 +45,9 @@ The platform was designed with the needs of **tier-2 and tier-3 engineering coll
 * 🔐 **Triple-Redundant OTP Delivery**: Resend HTTP API, SendGrid HTTP API, and SMTP failover routing for ultra-reliable email authentication.
 * ⚙️ **Executive Operations Dashboard**: Administrative candidate management, live assessment monitoring, candidate resume viewers, per-user attempt unlock, and real-time pass-score threshold configuration.
 * 🔑 **Three Authentication Pathways**: Classic password login, Google OAuth 2.0 Single Sign-On, and passwordless OTP login — all under one unified session layer.
+* 📚 **Preparation Library**: 92 curated links in one searchable page with track and format filters, bookmarks and three 7-day study plans. An admin-only Link Health checker finds broken links and can hide them.
+* 🧭 **Interactive Admin Guide**: A 38-step guided tour with spotlight and pointer over illustrated admin screens, plus an 11-module manual.
+* 🔁 **Error Recovery**: A server error never uses an attempt; the interview is saved on the server, and a professional error page with one Back button resumes it at the next question.
 * 🏗️ **Clean 4-Layer Modular Architecture**: Codebase fully refactored into `MODULES/` with clear separation of Config, Models, Services, and Controllers for maintainability at scale.
 
 ---
@@ -553,31 +556,35 @@ ai_interview_platform/
 
 ## 🔐 Security & Anti-Cheat System
 
+Scored assessments are protected by integrity rules that are **counted and stored on the server**, so clearing browser data or editing the page cannot reset them. Practice labs are never proctored. Every rule has its own switch under **Admin → Settings → Interview Settings → Integrity & proctoring**, with a master "All integrity features" switch and a strike limit (1 to 5, default 2).
+
 ```
-                      PROCTORING LIFECYCLE
-                     
-  [Active Interview] ────── Tab Switch / Focus Lost ──────► [Strike 1 Recorded]
-          ▲                                                         │
-          │                        Dismiss Modal                    ▼
-          └──────────────────────── (Warning Only) ◄───── [Proctor Warning Modal]
-                                                                    │
-                                   Second Tab Switch                ▼
-                             ─────────────────────────────► [Strike 2 Triggered]
-                                                                    │
-                                                                    ▼
-                                                         [Immediate Disqualification]
-                                                                    │
-                                                                    ▼
-                                                         [Record Flagged in DB]
+   Violation (browser or server)  ──►  Strike counted on the server  ──►  Box shown to the candidate
+                                                │                         (exact mistake, Strike x of y, warning)
+                                                ▼
+                                   Limit reached?  ── yes ──►  Session ended (Terminated), counts as an attempt,
+                                                │                events attached to the stored result
+                                                no
+                                                ▼
+                                   Interview continues  ·  every event is listed in the admin-only integrity log
 ```
 
-* **Window Focus Detection**: Uses the browser Page Visibility API and `window.onblur` event listeners to monitor candidate window focus.
-* **Two-Strike Escalation**: First focus violation triggers a full-screen red warning modal; second violation immediately disqualifies the session.
-* **Admin Toggle**: `enable_warning_strikes` can be disabled platform-wide from the Admin Settings panel.
-* **Encrypted Sessions**: Server-signed cryptographic session cookies (`HttpOnly`, `SameSite=Lax`, `Secure` in production).
-* **Role-Based Access Control**: Strict multi-tier authentication barriers isolating administrative dashboards, user modification tools, and scoring metrics from standard users.
-* **Admin Credential Hardening**: If `ADMIN_PASSWORD` is not set, a cryptographically random 24-character token is auto-generated and printed to the startup log — no predictable default is ever used.
-* **Security Headers**: All responses include `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`, and HSTS (in production).
+| Rule (admin switch) | What it does | Strike |
+|---|---|---|
+| Proctoring & warning strikes (main switch) | Turns all integrity rules on or off | - |
+| Server-side strikes | Counts every violation on the server | Yes |
+| Leaving the exam window | Tab, window or app switch (with time away) | Yes |
+| One active session | Another browser or device is refused and counted | Yes |
+| Server-side timer | The clock lives on the server; a reload cannot reset it; late answers counted | Late answers |
+| Block copy and paste | Paste into the answer box and copying the question are blocked | Yes |
+| Require fullscreen (off by default) | Leaving fullscreen is a violation | Yes |
+| Typing-pattern flags | Instant or inserted long answers are flagged for the admin | Review only |
+| Integrity log on the report | Admin sees every event with time, question and details | Display |
+
+* **Web protection**: CSRF token on every form and request, session idle timeout (admin 30 min, candidate 2 h, 12 h maximum), Content-Security-Policy, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` and HSTS in production, `HttpOnly` / `SameSite=Lax` / `Secure` cookies, no signed-in page caching.
+* **Sign-in protection**: one-time codes stored only as keyed hashes with expiry and attempt limits, brute-force lockouts, password strength rules, one generic login error (no account enumeration), POST-only destructive actions, no hard-coded secret key (the server refuses to start on Render without `SECRET_KEY`), optional admin two-step sign-in with `ADMIN_2FA=true`.
+* **Admin Credential Hardening**: If `ADMIN_PASSWORD` is not set, a random token is generated and printed once to the startup log; no predictable default is ever used.
+* **Role-Based Access Control**: administrative pages and tools are separated from candidate pages by session checks.
 
 ---
 
@@ -609,6 +616,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 #   GEMINI_FALLBACK_MODELS comma-separated backup models (default: gemini-3.5-flash-lite,gemini-3.1-flash-lite);
 #                          set it to an empty value to disable. The main model is always tried first.
 #   APP_BASE_URL           public site URL used for links inside emails, e.g. https://your-app.onrender.com
+#   FEEDBACK_TO_EMAIL      where feedback from the in-app feedback box is e-mailed (default: MAIL_USERNAME)
 #   UPLOAD_FOLDER          override the folder where resumes are stored
 
 # -------------------------------------------------------------
@@ -768,4 +776,4 @@ Distributed under the **MIT License**. Developed and maintained by **MR360-TECH*
 
 ---
 
-**Developed by [Gowtham V](https://github.com/MR360-TECH)**
+**Developed by Gowtham V, Akash S and Charitha M** · [MR360-TECH](https://github.com/MR360-TECH)

@@ -426,6 +426,7 @@
             .section-title { font-size: 1.25rem; }
         }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 
@@ -450,7 +451,7 @@
         </div>
         <div class="guide-header-actions">
             <a href="/admin" class="header-btn primary">
-                <i class="bi bi-arrow-left"></i> Back to Dashboard
+                <i class="bi bi-arrow-left"></i> Back
             </a>
             <a href="/admin/users" class="header-btn">
                 <i class="bi bi-people-fill"></i> Registered Candidates
@@ -464,15 +465,22 @@
         </div>
     </div>
 
+    {% include '_admin_tour.html' %}
+
     <!-- ══ QUICK JUMP PILLS ══ -->
     <div class="jump-nav">
+        <a href="#section-tour" class="jump-pill"><i class="bi bi-cursor-fill text-info"></i> Guided Tour</a>
         <a href="#section-overview" class="jump-pill"><i class="bi bi-speedometer2 text-info"></i> 1. Dashboard Overview</a>
         <a href="#section-tokens" class="jump-pill"><i class="bi bi-key-fill text-warning"></i> 2. Token Quota &amp; Unlock</a>
-        <a href="#section-proctoring" class="jump-pill"><i class="bi bi-shield-exclamation text-danger"></i> 3. 2-Strike Proctoring</a>
+        <a href="#section-proctoring" class="jump-pill"><i class="bi bi-shield-exclamation text-danger"></i> 3. Interview Integrity</a>
         <a href="#section-settings" class="jump-pill"><i class="bi bi-sliders text-success"></i> 4. Settings Configuration</a>
         <a href="#section-evaluation" class="jump-pill"><i class="bi bi-mortarboard-fill text-primary"></i> 5. AI Scoring Engine</a>
         <a href="#section-users" class="jump-pill"><i class="bi bi-person-lines-fill text-info"></i> 6. Candidate Management</a>
         <a href="#section-practice" class="jump-pill"><i class="bi bi-journal-code text-warning"></i> 7. Practice Mode Rules</a>
+        <a href="#section-feedback" class="jump-pill"><i class="bi bi-chat-heart-fill text-info"></i> 8. Feedback &amp; Reviews</a>
+        <a href="#section-security" class="jump-pill"><i class="bi bi-shield-lock-fill text-success"></i> 9. Emails &amp; Sign-in Security</a>
+        <a href="#section-environment" class="jump-pill"><i class="bi bi-gear-wide-connected text-warning"></i> 10. AI &amp; Configuration</a>
+        <a href="#section-library" class="jump-pill"><i class="bi bi-link-45deg text-info"></i> 11. Library &amp; Link Health</a>
     </div>
 
     <!-- ══ SECTION 1: DASHBOARD OVERVIEW ══ -->
@@ -529,7 +537,7 @@
             <div class="step-item">
                 <div class="step-num">Phase 2</div>
                 <div class="step-title">Quota Depletion</div>
-                <p class="step-desc">Each completed formal assessment consumes 1 token. When remaining tokens reach 0, candidate dashboard locks.</p>
+                <p class="step-desc">Each completed formal assessment consumes 1 token. Platform or AI errors, exiting and restarting never do. When remaining tokens reach 0, the candidate dashboard locks.</p>
             </div>
             <div class="step-item">
                 <div class="step-num">Phase 3</div>
@@ -554,28 +562,53 @@
         </div>
     </section>
 
-    <!-- ══ SECTION 3: 2-STRIKE AUTOMATED PROCTORING ══ -->
+    <!-- ══ SECTION 3: INTERVIEW INTEGRITY ══ -->
     <section class="guide-section" id="section-proctoring">
         <span class="section-tag rose"><i class="bi bi-shield-exclamation"></i> Module 03</span>
         <h2 class="section-title">
-            <i class="bi bi-camera-video-fill text-danger"></i> 2-Strike Automated Proctoring Protocol
+            <i class="bi bi-shield-check text-danger"></i> Interview Integrity &amp; Strikes
         </h2>
         <p class="section-lead">
-            Standard placement assessments enforce automated tab-switch and focus-loss tracking via browser visibility APIs to ensure academic and recruitment integrity.
+            Scored assessments are protected by a set of integrity rules. Everything is counted and stored on the server, so clearing browser data
+            or editing the page cannot reset it. Practice labs are never proctored. You control every rule from <strong>Settings &rarr; Interview Settings &rarr; Integrity &amp; proctoring</strong>.
         </p>
 
         <div class="feature-grid">
             <div class="feature-card" style="border-color: rgba(245, 158, 11, 0.4);">
-                <h4 style="color: #f59e0b;"><i class="bi bi-exclamation-triangle-fill"></i> Strike 1: Modal Warning</h4>
-                <p>When a candidate navigates away or minimizes the exam tab, a full-screen warning modal locks their screen. The candidate must explicitly click <em>"I Understand &amp; Resume Assessment"</em> to acknowledge.</p>
+                <h4 style="color: #f59e0b;"><i class="bi bi-exclamation-triangle-fill"></i> Every violation is a strike</h4>
+                <p>You set the strike limit (1 to 5, default 2). Each violation is one strike. The candidate sees a box for every strike that names the exact mistake, the strike count (for example <em>Strike 1 of 2</em>) and a warning. Their live counter <em>Strikes 1 / 2</em> stays visible.</p>
             </div>
             <div class="feature-card" style="border-color: rgba(239, 68, 68, 0.4);">
-                <h4 style="color: #ef4444;"><i class="bi bi-x-octagon-fill"></i> Strike 2: Session Termination</h4>
-                <p>A second focus-loss event triggers immediate session termination, recording an official <strong>Terminated (Breach)</strong> status with 0/10 score and code-of-conduct infraction logs.</p>
+                <h4 style="color: #ef4444;"><i class="bi bi-x-octagon-fill"></i> Reaching the limit ends the session</h4>
+                <p>The session is recorded as <strong>Terminated (Breach)</strong> with a 0/10 score and the reason. It counts as one attempt, and the candidate receives a neutral email. Exiting, restarting or a platform error never counts.</p>
             </div>
             <div class="feature-card" style="border-color: rgba(16, 185, 129, 0.4);">
-                <h4 style="color: #34d399;"><i class="bi bi-shield-check"></i> Quota Token Protection</h4>
-                <p>To prevent malicious locks, terminated sessions are automatically filtered by <code style="color:#00ffff;">real_attempt_filter()</code> so they do NOT burn candidate quota tokens.</p>
+                <h4 style="color: #34d399;"><i class="bi bi-journal-check"></i> Integrity log (only you see it)</h4>
+                <p>The admin report lists every violation and review flag with the time, question number and exact details, plus the strike total. Candidates never see this log. You can switch it off in settings.</p>
+            </div>
+        </div>
+
+        <table class="guide-table" style="margin-top: 22px;">
+            <thead><tr><th style="width: 26%;">Rule (switch)</th><th>What it does</th><th style="width: 16%;">Strike?</th></tr></thead>
+            <tbody>
+                <tr><td class="setting-name">Server-side strikes</td><td>Counts and stores every violation on the server. When off, only the older browser-side tab-switch rule applies.</td><td><span class="badge bg-danger">Yes</span></td></tr>
+                <tr><td class="setting-name">Leaving the exam window</td><td>Switching tab, window or app counts when the candidate comes back (includes how long they were away). Part of the main proctoring switch.</td><td><span class="badge bg-danger">Yes</span></td></tr>
+                <tr><td class="setting-name">One active session</td><td>An interview open in another browser or device is refused and counted while the first one is active. After about two quiet minutes the other browser may take over.</td><td><span class="badge bg-danger">Yes</span></td></tr>
+                <tr><td class="setting-name">Server-side timer</td><td>The server keeps the time left, so a reload cannot reset the clock. An empty answer after time runs out simply moves on; a real answer far past the limit is counted.</td><td><span class="badge bg-danger">Late answers</span></td></tr>
+                <tr><td class="setting-name">Block copy and paste</td><td>Pasting into the answer box or copying the question is blocked, and every attempt is counted. Typing and voice input still work.</td><td><span class="badge bg-danger">Yes</span></td></tr>
+                <tr><td class="setting-name">Require fullscreen</td><td>Candidates start in fullscreen and leaving it is counted. Off by default because some phones and browsers do not support fullscreen.</td><td><span class="badge bg-danger">Yes</span></td></tr>
+                <tr><td class="setting-name">Typing-pattern flags</td><td>Long answers that arrive instantly or were inserted instead of typed are flagged for you. Voice dictation is excluded. Candidates are not told.</td><td><span class="badge bg-info text-dark">Review only</span></td></tr>
+                <tr><td class="setting-name">Integrity log on the report</td><td>Shows the list above on the admin report.</td><td><span class="badge bg-secondary">Display</span></td></tr>
+            </tbody>
+        </table>
+        <div class="feature-grid" style="margin-top: 22px;">
+            <div class="feature-card">
+                <h4><i class="bi bi-toggles2 text-info"></i> One master switch</h4>
+                <p>At the top of the integrity group, <strong>All integrity features</strong> turns every option on or off in one click. You can also switch each option yourself; the master then shows a mixed state such as <em>6 of 8 on</em>.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-exclamation-octagon text-danger"></i> If a server error happens mid-interview</h4>
+                <p>The interview is saved on the server. The candidate sees a clear page with one <strong>Back</strong> button, and Back resumes at the next question. No attempt is used. See Module 11.</p>
             </div>
         </div>
     </section>
@@ -612,7 +645,7 @@
                 <tr>
                     <td class="setting-name">pass_score</td>
                     <td><span class="badge bg-success">3.00 / 10</span></td>
-                    <td>Hiring benchmark cutoff. Scores &ge; pass_score receive <strong>Selected (PASS)</strong>; lower scores receive <strong>Rejected (FAIL)</strong>.</td>
+                    <td>Hiring benchmark cutoff (a whole number). It also sets the tone of the candidate's feedback email. Scores &ge; pass_score receive <strong>Selected (PASS)</strong>; lower scores receive <strong>Rejected (FAIL)</strong>.</td>
                 </tr>
                 <tr>
                     <td class="setting-name">question_timer_seconds</td>
@@ -634,6 +667,31 @@
                     <td><span class="badge bg-secondary">2</span></td>
                     <td>Initial token allotment assigned to every newly registered candidate profile upon account creation.</td>
                 </tr>
+                <tr>
+                    <td class="setting-name">enable_warning_strikes</td>
+                    <td><span class="badge bg-warning text-dark">Enabled</span></td>
+                    <td>The main proctoring switch for formal assessments. When off, none of the integrity rules in Module 03 apply.</td>
+                </tr>
+                <tr>
+                    <td class="setting-name">max_strikes</td>
+                    <td><span class="badge bg-secondary">2</span></td>
+                    <td>How many strikes end an assessment (1 to 5). Every violation is one strike.</td>
+                </tr>
+                <tr>
+                    <td class="setting-name">proctor_server_strikes, proctor_single_session, proctor_server_timer, proctor_block_copy_paste, proctor_typing_flags, proctor_integrity_log</td>
+                    <td><span class="badge bg-warning text-dark">Enabled</span></td>
+                    <td>One switch for each integrity rule described in Module 03.</td>
+                </tr>
+                <tr>
+                    <td class="setting-name">proctor_fullscreen</td>
+                    <td><span class="badge bg-secondary">Disabled</span></td>
+                    <td>Requires fullscreen during a scored assessment; leaving it is a violation.</td>
+                </tr>
+                <tr>
+                    <td class="setting-name">enable_feedback_emails</td>
+                    <td><span class="badge bg-warning text-dark">Enabled</span></td>
+                    <td>Controls ONLY the feedback email each candidate receives after a formal assessment. Welcome emails, login codes, unlock notices and session notices are not affected.</td>
+                </tr>
             </tbody>
         </table>
     </section>
@@ -654,16 +712,24 @@
                 <p>Synthesized rating based on technical depth, problem-solving accuracy, clarity, and communication effectiveness.</p>
             </div>
             <div class="feature-card">
-                <h4><i class="bi bi-lightning-charge-fill text-info"></i> Strengths Analysis</h4>
-                <p>Identifies candidate's strongest domain competencies, algorithmic approaches, and structured explanation skills.</p>
+                <h4><i class="bi bi-file-earmark-text-fill text-info"></i> Written Evaluation Report</h4>
+                <p>Three professional paragraphs: overall performance, a technical critique of the answers, and guidance for improvement. Shown on the scorecard and printable as PDF.</p>
             </div>
             <div class="feature-card">
-                <h4><i class="bi bi-arrow-up-right-circle-fill text-success"></i> Growth Opportunities</h4>
-                <p>Actionable feedback detailing specific technical gaps, missed edge cases, and architectural considerations.</p>
+                <h4><i class="bi bi-hash text-success"></i> Session Code</h4>
+                <p>Every result has a unique code such as <code style="color:#00ffff;">AIS-000042</code>, searchable on the dashboard and quoted in emails and feedback.</p>
             </div>
             <div class="feature-card">
-                <h4><i class="bi bi-file-earmark-code-fill text-purple"></i> Transcript Audit</h4>
-                <p>Full record of questions, candidate text answers, code submissions, and file attachments preserved for admin audit.</p>
+                <h4><i class="bi bi-envelope-paper-fill text-purple"></i> Feedback Email</h4>
+                <p>After each result the candidate is emailed their score and three next steps. A failed AI evaluation stores nothing, uses no attempt, and can be retried.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-file-earmark-person-fill text-warning"></i> Resume-Aware Questions</h4>
+                <p>The candidate's resume is given to the AI each turn of a formal assessment, so questions can refer to their real projects and skills. Practice modes do not use it.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-database-lock text-danger"></i> Data Retention</h4>
+                <p>The raw question-and-answer transcript is kept only while an assessment is in progress. After evaluation only the score, report and metadata are stored.</p>
             </div>
         </div>
     </section>
@@ -709,7 +775,7 @@
                 <tr>
                     <th style="width: 30%;">Feature Comparison</th>
                     <th style="width: 35%;">Formal Recruitment Assessment</th>
-                    <th style="width: 35%;">Practice Modes (Viva, Drill, Lang)</th>
+                    <th style="width: 35%;">Practice Modes (Viva, FluentFlow, Debate, Convo)</th>
                 </tr>
             </thead>
             <tbody>
@@ -720,7 +786,7 @@
                 </tr>
                 <tr>
                     <td class="setting-name">Proctoring &amp; Anti-Cheating</td>
-                    <td><span class="badge bg-danger">Active (2 Strikes)</span></td>
+                    <td><span class="badge bg-danger">Active (your strike limit)</span></td>
                     <td><span class="badge bg-secondary">Disabled (Open Notes)</span></td>
                 </tr>
                 <tr>
@@ -735,6 +801,178 @@
                 </tr>
             </tbody>
         </table>
+    </section>
+
+    <!-- ══ SECTION 8: FEEDBACK & REVIEWS ══ -->
+    <section class="guide-section" id="section-feedback">
+        <span class="section-tag cyan"><i class="bi bi-chat-heart-fill"></i> Module 08</span>
+        <h2 class="section-title">
+            <i class="bi bi-chat-heart-fill text-info"></i> Feedback &amp; Reviews Inbox
+        </h2>
+        <p class="section-lead">
+            Candidates can send a rating and a message from the <strong>Feedback</strong> item in their dashboard menu, or from the
+            <strong>Give Feedback</strong> button on every interview report. It arrives in your mailbox, and a copy is saved in the database.
+        </p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4><i class="bi bi-envelope-at-fill text-info"></i> Where it is delivered</h4>
+                <p>To the address in <code style="color:#00ffff;">FEEDBACK_TO_EMAIL</code>. If that is not set, the mailbox the platform sends from (<code style="color:#00ffff;">MAIL_USERNAME</code>) is used.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-person-vcard-fill text-success"></i> Sender details included</h4>
+                <p>Name, email address, account type, course or role, member-since date, sign-in method and user ID. Passwords and tokens are never included.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-card-text text-warning"></i> Feedback details</h4>
+                <p>Topic, star rating, the page it was sent from, the interview session code (from a report), the time, and whether replies are allowed.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-reply-fill text-purple"></i> Reply directly</h4>
+                <p>When the candidate allows contact, the email's Reply-To is their address, so pressing Reply reaches them. Otherwise the email says contact is not allowed.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-shield-check text-success"></i> Limits &amp; safety</h4>
+                <p>10 to 1000 characters, 5 messages per candidate per hour, logged-in candidates only. All text is HTML-escaped. A mail failure never loses a message.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ SECTION 9: EMAILS & SIGN-IN SECURITY ══ -->
+    <section class="guide-section" id="section-security">
+        <span class="section-tag emerald"><i class="bi bi-shield-lock-fill"></i> Module 09</span>
+        <h2 class="section-title">
+            <i class="bi bi-envelope-check-fill text-success"></i> Emails &amp; Sign-in Security
+        </h2>
+        <p class="section-lead">What the platform emails, and how login codes and sign-in attempts are protected.</p>
+        <table class="guide-table">
+            <thead>
+                <tr><th style="width: 28%;">Email</th><th style="width: 24%;">When it is sent</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                <tr><td class="setting-name">Welcome</td><td>Once, when a profile is first completed</td><td>Covers password, Google and email-code signups. Existing users never receive it.</td></tr>
+                <tr><td class="setting-name">Assessment feedback</td><td>After each formal assessment</td><td>Score, session code, three next steps. Tone depends on the pass mark. Can be switched off in Settings.</td></tr>
+                <tr><td class="setting-name">Session ended notice</td><td>When proctoring ends a session</td><td>Neutral wording, no AI note.</td></tr>
+                <tr><td class="setting-name">Slot unlocked</td><td>When you press Authorize &amp; Unlock</td><td>Sent to the candidate in the background.</td></tr>
+                <tr><td class="setting-name">Login / verification code</td><td>Signup, email-code login, password reset</td><td>Six digits, valid 10 minutes, usable once.</td></tr>
+                <tr><td class="setting-name">New feedback (to you)</td><td>When a candidate sends feedback</td><td>See Module 08.</td></tr>
+            </tbody>
+        </table>
+        <div class="feature-grid" style="margin-top: 22px;">
+            <div class="feature-card">
+                <h4><i class="bi bi-key-fill text-warning"></i> One-time codes</h4>
+                <p>Stored only as a keyed hash on the server (never in the browser). 5 wrong attempts cancel the code, a new one can be requested after 30 seconds, and at most 5 per hour per email.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-lock-fill text-danger"></i> Sign-in lockout</h4>
+                <p>5 wrong passwords for the same email and device lock sign-in for 15 minutes. This protects the admin account too. A locked user simply waits, or uses the email-code login.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-person-check-fill text-success"></i> Verified accounts</h4>
+                <p>Signup requires the emailed code before a password can be set, and an email-code login only creates an account after the code is verified. Reset forms never reveal whether an email exists.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-google text-info"></i> Google sign-in</h4>
+                <p>Always shows Google's account chooser, so users pick which Gmail to use. Your OAuth client needs this site's <code style="color:#00ffff;">/auth/google/callback</code> as an authorised redirect URI.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-shield-check text-success"></i> Forged-request protection</h4>
+                <p>Every form and every background request carries a secret per-session token, so another website cannot make your browser delete a user or change settings. If a page sits open for a long time you may be asked to reload it.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-hourglass-split text-warning"></i> Automatic sign-out</h4>
+                <p>An idle admin session ends after 30 minutes, a candidate session after 2 hours, and no session lasts longer than 12 hours. Signed-in pages are never cached by the browser.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-trash3-fill text-danger"></i> Deletes are deliberate</h4>
+                <p>Deleting a record or a user is a confirmed button press (never a plain link), so it cannot be triggered by a stray click or a malicious web page.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-person-lock text-info"></i> Passwords and sign-in messages</h4>
+                <p>New passwords need 8+ characters with a letter and a number, and common or email-based passwords are refused. Wrong sign-ins always show one identical message, so nobody can discover which emails are registered.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-phone-fill text-success"></i> Optional admin two-step sign-in</h4>
+                <p>Set <code style="color:#00ffff;">ADMIN_2FA=true</code> and the admin password is followed by a six-digit code emailed to the admin address. Leave it off if your email delivery is not reliable yet.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ SECTION 10: AI ENGINE & CONFIGURATION ══ -->
+    <section class="guide-section" id="section-environment">
+        <span class="section-tag amber"><i class="bi bi-gear-wide-connected"></i> Module 10</span>
+        <h2 class="section-title">
+            <i class="bi bi-cpu-fill text-warning"></i> AI Reliability &amp; Configuration Reference
+        </h2>
+        <p class="section-lead">
+            How the AI engine protects live interviews, and every environment variable the platform reads. Only names and purposes are
+            listed here: secret values live in your hosting dashboard (or the local <code style="color:#00ffff;">.env</code> file) and are never shown in the app.
+        </p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4><i class="bi bi-lightning-charge-fill text-warning"></i> Resilient AI calls</h4>
+                <p>Each AI call has a short time limit, automatic retries, and optional backup keys and models. If everything fails, a non-repeating fallback question is used and no attempt is consumed.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-mortarboard-fill text-info"></i> Five practice modes</h4>
+                <p>Viva Voce, FluentFlow, Debate with AI, Healthy Convo and Concept Drill each have their own prompts and encouraging evaluation criteria.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-database-fill text-success"></i> Database</h4>
+                <p>Neon PostgreSQL through <code style="color:#00ffff;">DATABASE_URL</code>. On Render the app refuses to start without it, so data is never silently written to a temporary file.</p>
+            </div>
+        </div>
+        <table class="guide-table" style="margin-top: 22px;">
+            <thead>
+                <tr><th style="width: 30%;">Variable</th><th style="width: 14%;">Needed</th><th>Purpose</th></tr>
+            </thead>
+            <tbody>
+                <tr><td class="setting-name">DATABASE_URL</td><td><span class="badge bg-danger">Required</span></td><td>Neon PostgreSQL connection string (use the pooled one).</td></tr>
+                <tr><td class="setting-name">SECRET_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Signs sessions and keys the one-time-code hashes. Use a long random value. The server refuses to start on Render without it.</td></tr>
+                <tr><td class="setting-name">ADMIN_2FA</td><td><span class="badge bg-secondary">Optional</span></td><td>Set to <code>true</code> to require an emailed code after the admin password.</td></tr>
+                <tr><td class="setting-name">GEMINI_API_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Main Gemini key for questions, evaluation and feedback notes.</td></tr>
+                <tr><td class="setting-name">ADMIN_EMAIL / ADMIN_PASSWORD</td><td><span class="badge bg-danger">Required</span></td><td>The administrator login for this console.</td></tr>
+                <tr><td class="setting-name">APP_BASE_URL</td><td><span class="badge bg-warning text-dark">Recommended</span></td><td>Public site address used for links inside emails.</td></tr>
+                <tr><td class="setting-name">RENDER</td><td><span class="badge bg-warning text-dark">Recommended</span></td><td>Set to <code>true</code> on Render to enable the database safety check and persistent storage.</td></tr>
+                <tr><td class="setting-name">FEEDBACK_TO_EMAIL</td><td><span class="badge bg-secondary">Optional</span></td><td>Mailbox that receives user feedback (default: MAIL_USERNAME).</td></tr>
+                <tr><td class="setting-name">GEMINI_BACKUP_KEYS</td><td><span class="badge bg-secondary">Optional</span></td><td>Comma-separated extra keys from other Google projects; used when the main key is rate-limited.</td></tr>
+                <tr><td class="setting-name">GEMINI_FALLBACK_MODELS</td><td><span class="badge bg-secondary">Optional</span></td><td>Backup Gemini models tried only if the main model fails (sensible defaults are built in).</td></tr>
+                <tr><td class="setting-name">GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET</td><td><span class="badge bg-secondary">Optional</span></td><td>Enable &ldquo;Continue with Google&rdquo;.</td></tr>
+                <tr><td class="setting-name">MAIL_USERNAME / MAIL_PASSWORD</td><td><span class="badge bg-secondary">Optional</span></td><td>Gmail address and app password used to send email over SMTP.</td></tr>
+                <tr><td class="setting-name">RESEND_API_KEY / SENDGRID_API_KEY</td><td><span class="badge bg-secondary">Optional</span></td><td>Email providers used when SMTP is unavailable (for example on free hosting tiers).</td></tr>
+                <tr><td class="setting-name">UPLOAD_FOLDER</td><td><span class="badge bg-secondary">Optional</span></td><td>Where resumes are stored (default: the project's uploads folder).</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ══ SECTION 11: LIBRARY, LINK HEALTH & ERROR RECOVERY ══ -->
+    <section class="guide-section" id="section-library">
+        <span class="section-tag cyan"><i class="bi bi-link-45deg"></i> Module 11</span>
+        <h2 class="section-title">
+            <i class="bi bi-collection-fill text-info"></i> Preparation Library, Link Health &amp; Error Recovery
+        </h2>
+        <p class="section-lead">What candidates can search and save, how you keep every link working, and what happens if a server error ever interrupts an interview.</p>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4><i class="bi bi-search text-info"></i> Searchable library</h4>
+                <p>Candidates open <strong>Search all resources</strong> from the Resources page. They can filter by track and format, search by topic, save links with a bookmark, and follow three 7-day study plans. Study-plan ticks stay on their own device.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-activity text-success"></i> Link Health (admin only)</h4>
+                <p>Open <strong>Links</strong> in the top bar, then press <strong>Run check now</strong>. About 90 links are tested in the background in roughly half a minute. Dates and statuses are shown only here, never to candidates.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-shield-exclamation text-warning"></i> Refused is not broken</h4>
+                <p>Some sites turn away automatic visitors (they answer 403 or 429). Those are marked <em>Refused</em> and usually open fine for a person. Only <em>Broken</em> links need action.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-eye-slash text-danger"></i> Hide a bad link</h4>
+                <p>Press <strong>Hide</strong> on any link and it disappears from the library and the question pages straight away, with no code change. Press <strong>Show</strong> to bring it back.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-tools text-success"></i> If a server error happens</h4>
+                <p>Candidates see a clear page that says their interview is safe and no attempt was used, with one <strong>Back</strong> button. Back reopens the saved interview at the next question. The page shows a short reference code (for example ERR-4F2A91); the same code appears in the server log so you can find the cause.</p>
+            </div>
+        </div>
     </section>
 
     <!-- ══ FOOTER ══ -->

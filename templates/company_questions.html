@@ -286,6 +286,7 @@
         ::-webkit-scrollbar-thumb{background:rgba(0,220,255,0.25);border-radius:99px;}
         ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 
@@ -431,7 +432,7 @@
                 {% if logo_url %}
                 <img src="{{ logo_url }}" alt="{{ company.name }} logo" style="width: 50px; height: 50px; object-fit: contain;">
                 {% else %}
-                <span style="color: {{ company.color }}; font-size: 2.6rem;">
+                <span style="color: {{ company.color|readable }}; font-size: 2.6rem;">
                     <i class="bi {{ generic_icon_map.get(company_key, 'bi-code-slash') }}"></i>
                 </span>
                 {% endif %}
@@ -439,7 +440,7 @@
 
             <div class="flex-grow-1">
                 {% if company.category %}
-                <span class="badge px-3 py-1 mb-2 rounded-pill" style="background: rgba(255,255,255,0.06); color: {{ company.color }}; border: 1px solid {{ company.color }}35; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                <span class="badge px-3 py-1 mb-2 rounded-pill" style="background: rgba(255,255,255,0.06); color: {{ company.color|readable }}; border: 1px solid {{ company.color }}35; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.05em;">
                     {{ company.category }}
                 </span>
                 {% endif %}
@@ -448,7 +449,7 @@
             </div>
 
             <a href="/tech-questions" class="btn btn-back-detail rounded-pill px-4 py-2 border shadow-sm align-self-start flex-shrink-0">
-                <i class="bi bi-arrow-left me-1"></i> BACK TO HUB
+                <i class="bi bi-arrow-left me-1"></i> Back
             </a>
         </div>
     </div>
@@ -484,7 +485,7 @@
                 </div>
 
                 <a href="{{ r.url }}" target="_blank" rel="noopener noreferrer" class="btn-direct-access">
-                    <span>Open Question Bank on {{ r.site }}</span>
+                    <span>{{ r.cta or ('Open Question Bank on ' ~ r.site) }}</span>
                     <i class="bi bi-box-arrow-up-right"></i>
                 </a>
             </div>

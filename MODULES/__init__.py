@@ -21,6 +21,21 @@ _REQUIRED_COLUMNS = {
     ],
     'admin_settings': [
         ('enable_warning_strikes', 'BOOLEAN DEFAULT TRUE'),
+        ('enable_feedback_emails', 'BOOLEAN DEFAULT TRUE'),
+        ('max_strikes', 'INTEGER DEFAULT 2'),
+        ('proctor_server_strikes', 'BOOLEAN DEFAULT TRUE'),
+        ('proctor_single_session', 'BOOLEAN DEFAULT TRUE'),
+        ('proctor_server_timer', 'BOOLEAN DEFAULT TRUE'),
+        ('proctor_block_copy_paste', 'BOOLEAN DEFAULT TRUE'),
+        ('proctor_fullscreen', 'BOOLEAN DEFAULT FALSE'),
+        ('proctor_typing_flags', 'BOOLEAN DEFAULT TRUE'),
+        ('proctor_integrity_log', 'BOOLEAN DEFAULT TRUE'),
+    ],
+    'interview_progress': [
+        ('strikes', 'INTEGER DEFAULT 0'),
+        ('sid', 'VARCHAR(40)'),
+        ('last_seen_at', 'TIMESTAMP'),
+        ('question_shown_at', 'TIMESTAMP'),
     ],
 }
 
@@ -48,6 +63,44 @@ def ensure_columns():
                 print(f"Schema check notice ({table}.{column_name}): {schema_err}")
 
 
+def _rgb(hex_color):
+    h = (hex_color or "").strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(ch * 2 for ch in h)
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _luminance(rgb):
+    def channel(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (channel(v) for v in rgb)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def readable_color(hex_color, background="#08122a", minimum=5.2):
+    """A company's brand colour is often dark navy/black. Used as TEXT on the app's dark cards it vanishes, so lighten
+    it step by step until it reaches the minimum contrast against the card background (brand hue is preserved)."""
+    try:
+        rgb, bg = _rgb(hex_color), _rgb(background)
+    except (ValueError, TypeError):
+        return "#e2e8f0"
+    for _ in range(25):
+        lighter, darker = sorted((_luminance(rgb), _luminance(bg)), reverse=True)
+        if (lighter + 0.05) / (darker + 0.05) >= minimum:
+            break
+        rgb = tuple(int(c + (255 - c) * 0.15) for c in rgb)
+    return "#%02x%02x%02x" % rgb
+
+
+def ink_on(hex_color):
+    """Dark or white text, whichever is readable on a solid brand-colour background."""
+    try:
+        return "#020510" if _luminance(_rgb(hex_color)) > 0.35 else "#ffffff"
+    except (ValueError, TypeError):
+        return "#ffffff"
+
+
 def create_app():
     # Set template and static folders relative to project root
     root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -60,6 +113,8 @@ def create_app():
         static_folder=static_folder
     )
     app.secret_key = config.SECRET_KEY
+    app.jinja_env.filters["readable"] = readable_color
+    app.jinja_env.filters["ink_on"] = ink_on
 
     # Session cookie security
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -114,6 +169,10 @@ def create_app():
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
+    # CSRF tokens, idle/absolute session timeout, Content-Security-Policy, no caching of signed-in pages
+    from MODULES.LAYER_3_BUSINESS_SERVICES.web_security import init_web_security
+    init_web_security(app)
+
     # Error handlers
     @app.errorhandler(413)
     def request_entity_too_large(error):
@@ -121,29 +180,63 @@ def create_app():
             return redirect("/dashboard?error=file_too_large")
         return redirect("/login?error=file_too_large")
 
+    def _error_context():
+        """Where the Back button should lead, and whether the person is in the middle of an interview."""
+        path = request.path
+        in_interview = ("user_id" in session and not session.get("is_admin") and path != "/interview-result"
+                        and path.startswith(("/interview", "/finish-interview", "/practice", "/terminate-proctoring", "/quit-interview")))
+        if in_interview:
+            back_url = "/interview"                      # resumes the saved interview, never restarts it
+        elif session.get("is_admin"):
+            back_url = "/admin"
+        elif "user_id" in session:
+            back_url = "/dashboard"
+        else:
+            back_url = "/login"
+        return in_interview, back_url
+
+    def _wants_json():
+        return (request.is_json or "X-CSRF-Token" in request.headers or path_is_ajax())
+
+    def path_is_ajax():
+        return request.path == "/interview/submit" or "application/json" in request.headers.get("Accept", "")
+
     @app.errorhandler(500)
     def internal_server_error(error):
         try:
             db.session.rollback()
         except Exception:
             pass
-        print(f"[Internal Server Error]: {error}")
-        if request.path == "/interview/submit" or request.headers.get("Content-Type", "").startswith("application/json"):
-            return jsonify({
-                "error": "server_error",
-                "question": "Can you walk me through a challenging problem you solved recently?",
-                "q_num": session.get("q_count", 0) + 1,
-                "total": 10,
-                "question_type": "text",
-                "done": False
-            }), 200
-        back_url = "/dashboard" if "user_id" in session else "/login"
-        return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title>
-        <style>body{{font-family:sans-serif;background:#0a0f1e;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;flex-direction:column;gap:16px}}
-        h2{{color:#00ffff}}a{{color:#00ffff;font-weight:bold}}</style></head>
-        <body><h2>⚠️ Something went wrong</h2>
-        <p>A temporary server error occurred. Your interview progress is saved.</p>
-        <a href="{back_url}">← Return to Dashboard</a></body></html>""", 500
+        import secrets as _secrets
+        reference = "ERR-" + _secrets.token_hex(3).upper()
+        print(f"[Internal Server Error {reference}] {request.method} {request.path}: {error}")
+        in_interview, back_url = _error_context()
+        message = ("Something went wrong on our side while loading this page." if not in_interview
+                   else "Something went wrong on our side while processing your last step.")
+        if _wants_json():
+            # nothing is invented for the client: the saved interview is the source of truth, and Back resumes it
+            return jsonify({"error": "server_error", "message": message, "back_url": back_url, "reference": reference,
+                            "progress_saved": in_interview}), 500
+        return render_template("error.html", code=500, title="We hit a problem", eyebrow="Server error", icon="bi-tools",
+                               message=message, in_interview=in_interview, back_url=back_url, reference=reference), 500
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        _, back_url = _error_context()
+        if _wants_json():
+            return jsonify({"error": "not_found", "message": "That page does not exist.", "back_url": back_url}), 404
+        return render_template("error.html", code=404, title="Page not found", eyebrow="Error 404", icon="bi-compass",
+                               message="The page you are looking for does not exist or has moved.", in_interview=False,
+                               back_url=back_url, reference=None), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(error):
+        _, back_url = _error_context()
+        if _wants_json():
+            return jsonify({"error": "method_not_allowed", "message": "That action is not available.", "back_url": back_url}), 405
+        return render_template("error.html", code=405, title="That action is not available", eyebrow="Error 405", icon="bi-slash-circle",
+                               message="This link cannot be opened directly. Please go back and use the buttons on the page instead.",
+                               in_interview=False, back_url=back_url, reference=None), 405
 
     # Register blueprints
     register_blueprints(app)

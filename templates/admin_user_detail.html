@@ -434,6 +434,7 @@ html.dark-theme .db-bg { display: block; }
 ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
 ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -451,12 +452,11 @@ html.dark-theme .db-bg { display: block; }
 
     <div class="top-bar">
         <a href="/admin/users" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> BACK
+            <i class="bi bi-arrow-left"></i> Back
         </a>
-        <a href="/admin/delete-user/{{ user.id }}?next=/admin/users" class="btn-del-user"
-           onclick="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
-            <i class="bi bi-trash"></i> Delete User
-        </a>
+        <form method="post" action="/admin/delete-user/{{ user.id }}?next=/admin/users" style="display:inline;margin:0" onsubmit="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
+            <button type="submit" class="btn-del-user"><i class="bi bi-trash"></i> Delete User</button>
+        </form>
     </div>
 
     <!-- Profile Hero -->
@@ -596,9 +596,9 @@ html.dark-theme .db-bg { display: block; }
     <!-- Assessment Token Status & Access Management -->
     <div class="info-section" style="border-color: rgba(0, 255, 255, 0.3) !important;">
         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-            <div class="section-title mb-0" style="color: #00ffff;"><i class="bi bi-shield-lock-fill"></i> Assessment Token &amp; Quota Status</div>
+            <div class="section-title mb-0" style="color: #00ffff;"><i class="bi bi-shield-lock-fill"></i> Assessment Attempts</div>
             {% if settings.enable_attempt_limits and remaining_tokens <= 0 %}
-            <button type="button" class="btn-unlock-attempt" onclick="triggerUnlockCandidate({{ user.id }}, '{{ user.full_name | escape }}')" style="background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; font-weight: 800; border: none; padding: 8px 20px; border-radius: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);">
+            <button type="button" class="btn-unlock-attempt" data-name="{{ user.full_name }}" onclick="triggerUnlockCandidate({{ user.id }}, this.dataset.name)" style="background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; font-weight: 800; border: none; padding: 8px 20px; border-radius: 10px; font-family: 'Outfit', sans-serif; box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);">
                 <i class="bi bi-unlock-fill me-1"></i> Authorize &amp; Unlock +1 Token
             </button>
             {% endif %}
@@ -611,11 +611,11 @@ html.dark-theme .db-bg { display: block; }
                     {% if settings.enable_attempt_limits %}
                         {% if remaining_tokens <= 0 %}
                         <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1.5px solid rgba(239, 68, 68, 0.4); font-weight: 800; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;">
-                            <i class="bi bi-lock-fill me-1"></i> LOCKED (0 Left)
+                            <i class="bi bi-lock-fill me-1"></i> LOCKED
                         </span>
                         {% else %}
                         <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.4); font-weight: 800; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;">
-                            <i class="bi bi-check-circle-fill me-1"></i> ACTIVE ({{ remaining_tokens }} Left)
+                            <i class="bi bi-check-circle-fill me-1"></i> ACTIVE
                         </span>
                         {% endif %}
                     {% else %}
@@ -627,26 +627,8 @@ html.dark-theme .db-bg { display: block; }
             </div>
             <div class="col-md-3 col-sm-6">
                 <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 16px;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Tokens Remaining</div>
-                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 900; color: {% if remaining_tokens > 0 %}#00ffff{% else %}#ef4444{% endif %};">
-                        {{ remaining_tokens if settings.enable_attempt_limits else '∞' }}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 16px;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Attempts Used / Allowed</div>
-                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #ffffff;">
-                        {{ attempts_used }} <span style="font-size: 0.85rem; color: #94a3b8;">/ {{ allowed_total }} Total</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 16px;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Extra Granted by Admin</div>
-                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #38bdf8;">
-                        +{{ user.extra_allowed_interviews or 0 }} Slot(s)
-                    </div>
+                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Attempts Taken</div>
+                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 900; color: #ffffff;">{{ attempts_used }}</div>
                 </div>
             </div>
         </div>

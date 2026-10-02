@@ -1,18 +1,21 @@
 import os
+import re
 import json
-from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
+from datetime import datetime, timedelta
+from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app, jsonify
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, FEEDBACK_TO_EMAIL
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     User,
     InterviewResult,
     InterviewProgress,
+    Feedback,
     profile_is_complete,
     allowed_resume_file,
     get_settings,
     clear_progress
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment, attachment_analysis_failed
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_feedback_notification
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)
 
@@ -124,7 +127,8 @@ def dashboard_update_resume():
         user.resume_filename = saved_filename
         extracted_text = analyze_attachment(
             file_bytes, resume_file.mimetype,
-            context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription."
+            context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription.",
+            max_output_tokens=3000
         )
         text_ok = not attachment_analysis_failed(extracted_text)
         user.resume_text = extracted_text if text_ok else None
@@ -140,7 +144,7 @@ def dashboard_update_resume():
     return redirect("/dashboard")
 
 
-@dashboard_bp.route("/dashboard/remove-resume", methods=["GET", "POST"])
+@dashboard_bp.route("/dashboard/remove-resume", methods=["POST"])
 def dashboard_remove_resume():
     if "user_id" not in session:
         return redirect("/login")
@@ -293,3 +297,83 @@ def view_past_result(result_id):
         session_code=result.session_code,
         back_url="/my-history"
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FEEDBACK / REVIEWS (sent from the feedback box on the dashboard and on the result pages)
+# ══════════════════════════════════════════════════════════════════════════════
+
+FEEDBACK_CATEGORIES = {
+    "experience": "My interview experience",
+    "suggestion": "A suggestion or new feature",
+    "bug": "Something is not working",
+    "content": "Questions & prep resources",
+    "praise": "A compliment",
+    "other": "Something else",
+}
+FEEDBACK_PAGES = {"dashboard": "Dashboard", "result": "Interview result page"}
+FEEDBACK_MIN_CHARS, FEEDBACK_MAX_CHARS, FEEDBACK_MAX_PER_HOUR = 10, 1000, 5
+
+
+def _feedback_error(message, status):
+    return jsonify({"status": "error", "message": message}), status
+
+
+@dashboard_bp.route("/feedback", methods=["POST"])
+def submit_feedback():
+    if "user_id" not in session or session.get("is_admin"):
+        return _feedback_error("Please log in to send feedback.", 401)
+    user = db.session.get(User, session["user_id"])
+    if not user:
+        return _feedback_error("Please log in to send feedback.", 401)
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _feedback_error("Invalid request.", 400)
+
+    message = str(data.get("message") or "").strip()
+    if not FEEDBACK_MIN_CHARS <= len(message) <= FEEDBACK_MAX_CHARS:
+        return _feedback_error(f"Please write between {FEEDBACK_MIN_CHARS} and {FEEDBACK_MAX_CHARS} characters.", 400)
+    category = data.get("category")
+    if category not in FEEDBACK_CATEGORIES:
+        return _feedback_error("Please choose what your feedback is about.", 400)
+    rating = data.get("rating")
+    if rating in (None, "", 0):
+        rating = None
+    else:
+        try:
+            rating = int(rating)
+        except (TypeError, ValueError):
+            return _feedback_error("Invalid rating.", 400)
+        if not 1 <= rating <= 5:
+            return _feedback_error("Invalid rating.", 400)
+    page = data.get("page") if data.get("page") in FEEDBACK_PAGES else "dashboard"
+    session_code = re.sub(r"[^A-Z0-9\-]", "", str(data.get("session_code") or "").upper())[:20]
+    contact_ok = bool(data.get("contact_ok", True))
+
+    now = datetime.utcnow()
+    recent = Feedback.query.filter(Feedback.user_id == user.id, Feedback.created_at >= now - timedelta(hours=1)).count()
+    if recent >= FEEDBACK_MAX_PER_HOUR:
+        return _feedback_error("You have sent several messages recently. Please try again a little later.", 429)
+
+    try:
+        db.session.add(Feedback(user_id=user.id, rating=rating, category=category, message=message, contact_ok=contact_ok,
+                                page=page, session_code=session_code or None, created_at=now))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[FEEDBACK] could not save: {e}")
+        return _feedback_error("Could not save your feedback right now. Please try again.", 500)
+
+    # The e-mail is a bonus: the feedback is already saved, and a mail problem must never fail the request.
+    queue_feedback_notification(
+        FEEDBACK_TO_EMAIL, user_name=user.full_name, user_email=user.email, rating=rating,
+        category_label=FEEDBACK_CATEGORIES[category], message=message, page_label=FEEDBACK_PAGES[page],
+        session_code=session_code, when_text=now.strftime("%d %B %Y, %H:%M UTC"), contact_ok=contact_ok,
+        user_id=user.id,
+        account_type="Professional" if user.user_type == "professional" else "Student",
+        course_or_role=(user.current_designation if user.user_type == "professional" else user.course) or "",
+        member_since=user.registered_at.strftime("%d %B %Y") if user.registered_at else "",
+        sign_in_method={"local": "Email and password", "google": "Google", "otp": "Email code"}.get(user.auth_provider, ""),
+        reply_to=(user.email if contact_ok else None))
+    return jsonify({"status": "ok"})

@@ -1,0 +1,515 @@
+{# Interactive admin guide: illustrated copies of every admin screen + a spotlight/pointer walkthrough.
+   Self-contained (CSS prefix tour-/m-), no external libraries. Included at the top of admin_guide.html. #}
+<style>
+    /* ═══════════ Interactive Admin Guide ═══════════ */
+    .tour { margin: 0 0 56px; }
+    .tour-welcome {
+        display: flex; gap: 22px; align-items: center; flex-wrap: wrap; padding: 24px 26px; margin-bottom: 22px;
+        background: linear-gradient(135deg, rgba(0,255,255,0.10), rgba(2,132,199,0.16)); border: 1.5px solid #0e7490; border-radius: 20px;
+    }
+    .tour-welcome h2 { font-family: 'Outfit', sans-serif; font-size: 1.55rem; font-weight: 800; color: #fff; margin: 0 0 6px; }
+    .tour-welcome p { color: #cbd5e1; margin: 0; max-width: 640px; line-height: 1.6; }
+    .tour-welcome .tw-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+    .tour-btn {
+        padding: 11px 20px; border-radius: 12px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.95rem; cursor: pointer;
+        border: 1.5px solid #2b4a68; background: #0b1633; color: #e2e8f0; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .tour-btn:hover { border-color: #00ffff; color: #00ffff; }
+    .tour-btn.primary { background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; border-color: transparent; box-shadow: 0 6px 22px rgba(0,255,255,0.25); }
+    .tour-btn.primary:hover { color: #020510; filter: brightness(1.08); }
+    .tour-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .tour-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tour-tab {
+        padding: 9px 14px; border-radius: 999px; background: #0b1633; border: 1.5px solid #2b4a68; color: #cbd5e1; font-size: 0.86rem; font-weight: 700; cursor: pointer;
+        font-family: 'Outfit', sans-serif;
+    }
+    .tour-tab:hover { border-color: #00ffff; color: #fff; }
+    .tour-tab.on { background: #00ffff; border-color: #00ffff; color: #020510; }
+
+    .tour-stage-wrap { background: #050b1c; border: 1.5px solid #2b4a68; border-radius: 20px; padding: 14px; overflow: hidden; }
+    .tour-stage { position: relative; width: 100%; max-width: 960px; margin: 0 auto; overflow: hidden; border-radius: 14px; }
+    .tour-scale { position: absolute; left: 0; top: 0; width: 960px; transform-origin: 0 0; }
+    .tour-screen { position: relative; width: 960px; background: #020510; border-radius: 14px; overflow: hidden; font-family: 'Inter', 'Segoe UI', sans-serif; color: #fff; display: none; }
+    .tour-screen.on { display: block; }
+    .tour-spot {
+        position: absolute; z-index: 20; border-radius: 12px; pointer-events: none;
+        box-shadow: 0 0 0 4000px rgba(2,5,16,0.78), 0 0 0 2.5px #00ffff, 0 0 26px rgba(0,255,255,0.55);
+        transition: left .5s cubic-bezier(.16,1,.3,1), top .5s cubic-bezier(.16,1,.3,1), width .5s cubic-bezier(.16,1,.3,1), height .5s cubic-bezier(.16,1,.3,1);
+    }
+    .tour-spot::after { content: ''; position: absolute; inset: -7px; border-radius: 16px; border: 2px solid #00ffff; opacity: 0; animation: tourPulse 1.8s ease-out infinite; }
+    @keyframes tourPulse { 0% { transform: scale(0.96); opacity: 0.8; } 100% { transform: scale(1.08); opacity: 0; } }
+    .tour-pin {
+        position: absolute; z-index: 22; width: 34px; height: 34px; border-radius: 50%; background: #00ffff; color: #020510; font-weight: 900; font-size: 15px;
+        display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(0,0,0,0.6); pointer-events: none;
+        transition: left .5s cubic-bezier(.16,1,.3,1), top .5s cubic-bezier(.16,1,.3,1); font-family: 'Outfit', sans-serif;
+    }
+    .tour-cursor {
+        position: absolute; z-index: 23; width: 34px; height: 34px; pointer-events: none; font-size: 30px; line-height: 1; color: #fff;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.7)); transition: left .75s cubic-bezier(.16,1,.3,1), top .75s cubic-bezier(.16,1,.3,1);
+    }
+    .tour-cursor.click { animation: tourClick .5s .7s ease 1; }
+    @keyframes tourClick { 50% { transform: scale(0.8); } }
+
+    .tour-card { margin-top: 16px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 20px; align-items: start; }
+    .tour-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.35rem; font-weight: 800; color: #fff; margin: 4px 0 12px; }
+    .tour-kicker { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #00ffff; }
+    .tour-rows { display: grid; gap: 10px; }
+    .tour-row { background: #0b1633; border: 1px solid #2b4a68; border-radius: 12px; padding: 12px 14px; display: flex; gap: 12px; }
+    .tour-row i { font-size: 1.15rem; margin-top: 2px; flex-shrink: 0; }
+    .tour-row b { display: block; font-size: 0.72rem; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 3px; }
+    .tour-row p { margin: 0; color: #e2e8f0; font-size: 0.95rem; line-height: 1.55; }
+    .tour-row.what i, .tour-row.what b { color: #38bdf8; }
+    .tour-row.do i, .tour-row.do b { color: #fbbf24; }
+    .tour-row.then i, .tour-row.then b { color: #34d399; }
+    .tour-side { background: #08122a; border: 1.5px solid #2b4a68; border-radius: 16px; padding: 16px; }
+    .tour-progress { height: 6px; border-radius: 6px; background: #1e293b; overflow: hidden; margin: 10px 0 14px; }
+    .tour-progress > div { height: 100%; width: 0; background: linear-gradient(90deg, #00ffff, #0284c7); transition: width .4s ease; }
+    .tour-dots { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 14px; }
+    .tour-dot { width: 12px; height: 12px; border-radius: 50%; background: #334155; border: 0; padding: 0; cursor: pointer; }
+    .tour-dot.done { background: #0e7490; }
+    .tour-dot.now { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
+    .tour-controls { display: flex; gap: 10px; flex-wrap: wrap; }
+    .tour-hint { color: #a9b8cc; font-size: 0.82rem; margin-top: 12px; line-height: 1.5; }
+    kbd { background: #1e293b; border: 1px solid #475569; border-radius: 6px; padding: 1px 7px; font-size: 0.8rem; color: #e2e8f0; }
+    @media (max-width: 860px) { .tour-card { grid-template-columns: 1fr; } .tour-welcome .tw-actions { margin-left: 0; } }
+    @media (prefers-reduced-motion: reduce) { .tour-spot, .tour-pin, .tour-cursor { transition: none; } .tour-spot::after { animation: none; } }
+
+    /* ──────── the illustrated admin screens (miniature copies of the real pages) ──────── */
+    .m-wrap { padding: 22px 26px 26px; background: radial-gradient(ellipse at 15% 0%, rgba(0,120,255,0.18), transparent 55%), #020510; }
+    .m-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 14px; }
+    .m-brand { display: flex; align-items: center; gap: 12px; }
+    .m-logo { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(135deg, #00ffff, #0284c7); display: flex; align-items: center; justify-content: center; color: #020510; font-size: 22px; }
+    .m-brand b { display: block; font-family: 'Outfit', sans-serif; font-size: 21px; font-weight: 800; }
+    .m-brand small { color: #cbd5e1; font-size: 12.5px; }
+    .m-btns { display: flex; gap: 8px; }
+    .m-btn { padding: 9px 14px; border-radius: 11px; border: 1.5px solid #2b4a68; background: #0b1633; font-size: 13px; font-weight: 700; color: #e2e8f0; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+    .m-btn.cyan { border-color: #00ffff; color: #00ffff; background: rgba(0,255,255,0.07); }
+    .m-btn.red { color: #f87171; border-color: rgba(239,68,68,0.5); }
+    .m-btn.solid { background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; border-color: transparent; }
+    .m-btn.danger { color: #f87171; border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); }
+    .m-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+    .m-stat { background: #08122a; border: 1.5px solid #2b4a68; border-top: 3px solid var(--c, #38bdf8); border-radius: 14px; padding: 13px 14px; }
+    .m-stat small { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #cbd5e1; font-family: 'Outfit', sans-serif; }
+    .m-stat b { font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 900; }
+    .m-filter { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .m-pill { padding: 8px 15px; border-radius: 999px; border: 1.5px solid #2b4a68; background: #0b1633; font-size: 12.5px; font-weight: 700; }
+    .m-pill span { color: #00ffff; }
+    .m-search { width: 300px; padding: 9px 14px; border-radius: 11px; border: 1.5px solid #5b7a99; background: #0b1329; color: #a9b8cc; font-size: 13px; }
+    .m-table { background: #08122a; border: 1.5px solid #2b4a68; border-radius: 16px; overflow: hidden; }
+    .m-tr { display: grid; align-items: center; padding: 11px 18px; border-bottom: 1px solid #1e293b; gap: 10px; font-size: 13px; }
+    .m-tr.head { background: #0f1c3d; color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; border-bottom: 2px solid #334155; }
+    .m-tr:last-child { border-bottom: 0; }
+    .m-cols-dash { grid-template-columns: 2.3fr 1.2fr 1.5fr 1.4fr 2fr; }
+    .m-cols-users { grid-template-columns: 2fr 2.4fr 1.2fr 1.3fr 1.5fr; }
+    .m-person { display: flex; gap: 10px; align-items: center; }
+    .m-avatar { width: 36px; height: 36px; border-radius: 11px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .m-person b { display: block; font-size: 13.5px; }
+    .m-person small { color: #cbd5e1; font-size: 11.5px; }
+    .m-chip { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; border: 1px solid #0e7490; color: #00ffff; font-size: 11px; font-weight: 800; background: rgba(0,255,255,0.06); }
+    .m-bar { height: 6px; border-radius: 6px; background: #1e293b; margin-top: 5px; width: 90px; overflow: hidden; }
+    .m-bar i { display: block; height: 100%; background: #10b981; }
+    .m-badge { display: inline-block; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; }
+    .m-badge.ok { background: rgba(16,185,129,0.14); color: #34d399; border: 1px solid rgba(16,185,129,0.4); }
+    .m-badge.no { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+    .m-badge.lock { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+    .m-badge.free { background: rgba(0,255,255,0.08); color: #00ffff; border: 1px solid #0e7490; }
+    .m-acts { display: flex; gap: 6px; justify-content: flex-end; }
+    .m-act { padding: 6px 11px; border-radius: 9px; border: 1.5px solid #475569; background: #0b1633; font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .m-act.cy { border-color: #00ffff; color: #00ffff; }
+    .m-act.rd { border-color: rgba(239,68,68,0.55); color: #f87171; background: rgba(239,68,68,0.08); }
+    .m-panel { background: #08122a; border: 1.5px solid #2b4a68; border-radius: 16px; padding: 18px 20px; }
+    .m-h { font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #00ffff; margin-bottom: 10px; }
+    .m-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .m-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .m-kv { background: #0b1633; border: 1px solid #2b4a68; border-radius: 11px; padding: 10px 12px; }
+    .m-kv small { display: block; color: #a9b8cc; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    .m-kv b { font-size: 15px; }
+    .m-ring { width: 118px; height: 118px; border-radius: 50%; background: conic-gradient(#10b981 0 75%, #1e293b 0); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .m-ring div { width: 92px; height: 92px; border-radius: 50%; background: #08122a; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 900; }
+    .m-ring small { font-size: 9.5px; color: #a9b8cc; letter-spacing: .08em; }
+    .m-text p { color: #e2e8f0; font-size: 13.5px; line-height: 1.6; margin: 0 0 8px; }
+    .m-field { display: grid; grid-template-columns: 1.3fr 1fr; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid #1e293b; }
+    .m-field:last-child { border-bottom: 0; }
+    .m-field b { font-size: 14px; display: block; }
+    .m-field small { color: #cbd5e1; font-size: 12px; }
+    .m-input { padding: 9px 12px; border-radius: 10px; border: 1.5px solid #5b7a99; background: #0b1329; font-size: 13.5px; font-weight: 700; }
+    .m-switch { width: 46px; height: 25px; border-radius: 25px; background: #00ffff; position: relative; display: inline-block; }
+    .m-switch::after { content: ''; position: absolute; right: 3px; top: 3px; width: 19px; height: 19px; border-radius: 50%; background: #020510; }
+    .m-mail { background: #08122a; border: 1px solid #1e3a52; border-radius: 16px; overflow: hidden; }
+    .m-mail-head { background: #0a1a35; padding: 14px 20px; border-bottom: 3px solid #00ffff; font-weight: 800; font-family: 'Outfit', sans-serif; }
+    .m-mail-body { padding: 18px 22px; }
+    .m-quote { background: #0b1633; border: 1px solid #1e3a52; border-left: 4px solid #00ffff; border-radius: 10px; padding: 12px 14px; color: #e2e8f0; font-size: 13.5px; line-height: 1.6; }
+    .m-note { font-size: 12px; color: #a9b8cc; margin-top: 8px; }
+</style>
+
+<section class="tour" id="section-tour" aria-label="Interactive admin guide">
+    <div class="tour-welcome" id="tourWelcome">
+        <div>
+            <span class="tour-kicker">Admin Guide</span>
+            <h2>Welcome, Administrator. Let us show you around.</h2>
+            <p>This guided tour walks through every screen of your admin area. A spotlight points at each control, and a short note explains what it is,
+               what you do, and what happens next. It takes about 6 minutes, and you can leave and come back at any time. Nothing here changes any real data.</p>
+        </div>
+        <div class="tw-actions">
+            <button type="button" class="tour-btn primary" id="tourStart"><i class="bi bi-play-circle-fill"></i> Start the guided tour</button>
+            <a class="tour-btn" href="#section-overview"><i class="bi bi-book"></i> Skip to the manual</a>
+        </div>
+    </div>
+
+    <div class="tour-tabs" id="tourTabs" role="tablist" aria-label="Guide chapters"></div>
+
+    <div class="tour-stage-wrap">
+        <div class="tour-stage" id="tourStage">
+            <div class="tour-scale" id="tourScale">
+
+                <!-- ═════ 1. DASHBOARD ═════ -->
+                <div class="tour-screen" data-screen="dashboard"><div class="m-wrap">
+                    <div class="m-top">
+                        <div class="m-brand"><span class="m-logo"><i class="bi bi-speedometer2"></i></span><div><b>Recruitment Operations</b><small>Candidate placement assessments &amp; performance analytics</small></div></div>
+                        <div class="m-btns" data-t="topbtns">
+                            <span class="m-btn cyan"><i class="bi bi-people-fill"></i> Registered Users</span>
+                            <span class="m-btn"><i class="bi bi-info-circle-fill"></i> Info</span>
+                            <span class="m-btn"><i class="bi bi-gear-fill"></i></span>
+                            <span class="m-btn red"><i class="bi bi-box-arrow-right"></i></span>
+                        </div>
+                    </div>
+                    <div class="m-stats" data-t="stats">
+                        <div class="m-stat" style="--c:#00ffff"><small>Total assessments</small><b>24</b></div>
+                        <div class="m-stat" style="--c:#38bdf8"><small>This month</small><b>9</b></div>
+                        <div class="m-stat" style="--c:#818cf8"><small>Today</small><b>2</b></div>
+                        <div class="m-stat" style="--c:#34d399"><small>Recommended</small><b>15</b></div>
+                        <div class="m-stat" style="--c:#f87171"><small>Not recommended</small><b>9</b></div>
+                    </div>
+                    <div class="m-filter">
+                        <span class="m-pill" data-t="filter"><i class="bi bi-funnel-fill"></i> FILTER: <span>ALL ASSESSMENTS</span></span>
+                        <span class="m-search" data-t="search"><i class="bi bi-search"></i>&nbsp; Search by name, email, or session ID..</span>
+                    </div>
+                    <div class="m-table">
+                        <div class="m-tr head m-cols-dash"><span>Candidate</span><span>Score</span><span>Recommendation</span><span>Date &amp; time</span><span style="text-align:right">Action</span></div>
+                        <div class="m-tr m-cols-dash" data-t="row">
+                            <span class="m-person" data-t="cand"><span class="m-avatar">A</span><span><b>ANITA ROY</b><small>anita@college.edu <span class="m-chip">AIS-000042</span></small></span></span>
+                            <span data-t="score"><b>7.50</b> / 10<div class="m-bar"><i style="width:75%"></i></div></span>
+                            <span data-t="badge"><span class="m-badge ok">Recommended</span></span>
+                            <span>02 Oct 2026, 04:51 PM</span>
+                            <span class="m-acts" data-t="actions"><span class="m-act" data-t="act-report">Report</span><span class="m-act cy" data-t="act-unlock"><i class="bi bi-unlock"></i> Unlock</span><span class="m-act rd" data-t="act-delete"><i class="bi bi-trash"></i></span></span>
+                        </div>
+                        <div class="m-tr m-cols-dash">
+                            <span class="m-person"><span class="m-avatar">R</span><span><b>RAHUL MEHTA</b><small>rahul@college.edu <span class="m-chip">AIS-000041</span></small></span></span>
+                            <span><b>2.50</b> / 10<div class="m-bar"><i style="width:25%;background:#ef4444"></i></div></span>
+                            <span><span class="m-badge no">Not Recommended</span></span><span>02 Oct 2026, 03:10 PM</span>
+                            <span class="m-acts"><span class="m-act">Report</span><span class="m-act cy"><i class="bi bi-unlock"></i> Unlock</span><span class="m-act rd"><i class="bi bi-trash"></i></span></span>
+                        </div>
+                        <div class="m-tr m-cols-dash">
+                            <span class="m-person"><span class="m-avatar">S</span><span><b>SARA KHAN</b><small>sara@college.edu <span class="m-chip">AIS-000040</span></small></span></span>
+                            <span><b>0.00</b> / 10<div class="m-bar"><i style="width:0"></i></div></span>
+                            <span><span class="m-badge no">Terminated (Breach)</span></span><span>01 Oct 2026, 11:42 AM</span>
+                            <span class="m-acts"><span class="m-act">Report</span><span class="m-act cy"><i class="bi bi-unlock"></i> Unlock</span><span class="m-act rd"><i class="bi bi-trash"></i></span></span>
+                        </div>
+                    </div>
+                </div></div>
+
+                <!-- ═════ 2. CANDIDATE REPORT ═════ -->
+                <div class="tour-screen" data-screen="report"><div class="m-wrap">
+                    <div class="m-top">
+                        <div class="m-btns" data-t="r-top"><span class="m-btn solid"><i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report</span><span class="m-btn"><i class="bi bi-moon-fill"></i></span></div>
+                        <span class="m-btn"><i class="bi bi-arrow-left"></i> Back</span>
+                    </div>
+                    <div class="m-panel" style="margin-bottom:14px" data-t="r-profile">
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:14px">
+                            <div class="m-person"><span class="m-avatar" style="width:58px;height:58px;font-size:22px">A</span><span><b style="font-size:20px;color:#00ffff">ANITA ROY</b><small style="font-size:13px">anita@college.edu &nbsp;<span class="m-badge free">VERIFIED</span></small></span></div>
+                            <span class="m-btn cyan" data-t="r-resume"><i class="bi bi-file-earmark-text"></i> User Resume</span>
+                        </div>
+                    </div>
+                    <div class="m-grid2" style="grid-template-columns:1fr auto;align-items:stretch">
+                        <div class="m-panel"><div class="m-grid4" data-t="r-meta">
+                            <div class="m-kv"><small>Candidate</small><b>ANITA ROY</b></div><div class="m-kv"><small>Domain / track</small><b>PYTHON BACKEND</b></div>
+                            <div class="m-kv"><small>Date issued</small><b>Oct 02, 2026</b></div><div class="m-kv"><small>Session ID</small><b style="color:#00ffff">AIS-000042</b></div>
+                        </div>
+                        <div class="m-h" style="margin:16px 0 8px">Detailed performance analysis</div>
+                        <div class="m-text" data-t="r-text"><p>The candidate showed a solid grasp of the fundamentals and explained their reasoning clearly.</p><p>Some answers lacked depth on error handling and performance trade-offs.</p><p>Focus on advanced topics and practise explaining design decisions aloud.</p></div></div>
+                        <div class="m-panel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px" data-t="r-score"><div class="m-ring"><div>7.5<small>OUT OF 10</small></div></div><span class="m-badge ok">Good</span></div>
+                    </div>
+                </div></div>
+
+                <!-- ═════ 3. REGISTERED USERS ═════ -->
+                <div class="tour-screen" data-screen="users"><div class="m-wrap">
+                    <div class="m-top">
+                        <div class="m-brand"><span class="m-logo"><i class="bi bi-people-fill"></i></span><div><b>Registered Candidates</b><small>Every account on the platform</small></div></div>
+                        <span class="m-search" style="width:340px" data-t="u-search"><i class="bi bi-search"></i>&nbsp; Search name, email, course or skills..</span>
+                    </div>
+                    <div class="m-table">
+                        <div class="m-tr head m-cols-users"><span>Candidate</span><span>Email</span><span>Course</span><span>Attempts</span><span style="text-align:right">Action</span></div>
+                        <div class="m-tr m-cols-users" data-t="u-row">
+                            <span class="m-person"><span class="m-avatar">A</span><b>ANITA ROY</b></span><span>anita@college.edu</span><span>B.Tech CSE</span>
+                            <span data-t="u-attempts"><span class="m-badge lock"><i class="bi bi-lock-fill"></i> 2 / 2 used</span></span>
+                            <span class="m-acts"><span class="m-act cy" data-t="u-unlock"><i class="bi bi-unlock"></i> Unlock</span></span>
+                        </div>
+                        <div class="m-tr m-cols-users"><span class="m-person"><span class="m-avatar">R</span><b>RAHUL MEHTA</b></span><span>rahul@college.edu</span><span>B.Tech IT</span><span><span class="m-badge free">1 / 2 used</span></span><span class="m-acts"></span></div>
+                        <div class="m-tr m-cols-users"><span class="m-person"><span class="m-avatar">S</span><b>SARA KHAN</b></span><span>sara@college.edu</span><span>MCA</span><span><span class="m-badge free">0 / 2 used</span></span><span class="m-acts"></span></div>
+                    </div>
+                </div></div>
+
+                <!-- ═════ 4. CANDIDATE PROFILE ═════ -->
+                <div class="tour-screen" data-screen="profile"><div class="m-wrap">
+                    <div class="m-top"><span class="m-btn"><i class="bi bi-arrow-left"></i> Back</span><span class="m-btn danger" data-t="d-delete"><i class="bi bi-trash"></i> Delete User</span></div>
+                    <div class="m-panel" style="margin-bottom:14px" data-t="d-hero">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="m-person"><span class="m-avatar" style="width:58px;height:58px;font-size:22px">A</span><span><b style="font-size:20px;color:#00ffff">ANITA ROY</b><small style="font-size:13px">anita@college.edu</small></span></div><span class="m-btn cyan" data-t="d-resume"><i class="bi bi-file-earmark-text"></i> User Resume</span></div>
+                        <div class="m-grid4"><div class="m-kv"><small>Gender</small><b>FEMALE</b></div><div class="m-kv"><small>Education</small><b>B.TECH</b></div><div class="m-kv"><small>Course</small><b>CSE</b></div><div class="m-kv"><small>Semester</small><b>6</b></div></div>
+                    </div>
+                    <div class="m-grid2">
+                        <div class="m-panel" data-t="d-tokens"><div class="m-h">Assessment attempts</div>
+                            <div class="m-grid2" style="gap:8px"><div class="m-kv"><small>Used</small><b>2</b></div><div class="m-kv"><small>Extra granted</small><b>0</b></div><div class="m-kv"><small>Allowed total</small><b>2</b></div><div class="m-kv"><small>Remaining</small><b style="color:#f87171">0</b></div></div>
+                            <div style="margin-top:12px;display:flex;gap:10px;align-items:center"><span class="m-badge lock"><i class="bi bi-lock-fill"></i> LOCKED</span><span class="m-btn solid" data-t="d-unlock"><i class="bi bi-unlock-fill"></i> Authorize &amp; Unlock</span></div></div>
+                        <div class="m-panel" data-t="d-history"><div class="m-h">Assessment history</div>
+                            <div class="m-tr" style="grid-template-columns:1fr auto auto;padding:8px 0"><span>Python backend</span><b>7.5</b><span class="m-badge ok">PASS</span></div>
+                            <div class="m-tr" style="grid-template-columns:1fr auto auto;padding:8px 0"><span>DBMS</span><b>2.5</b><span class="m-badge no">FAIL</span></div>
+                            <div class="m-note">Click a row to open the full report. Practice sessions are not listed here.</div></div>
+                    </div>
+                </div></div>
+
+                <!-- ═════ 5. SETTINGS ═════ -->
+                <div class="tour-screen" data-screen="settings"><div class="m-wrap">
+                    <div class="m-top"><div class="m-brand"><span class="m-logo"><i class="bi bi-gear-fill"></i></span><div><b>Assessment Settings</b><small>Changes apply immediately, no restart needed</small></div></div><span class="m-btn solid" data-t="s-save"><i class="bi bi-check2-circle"></i> Save settings</span></div>
+                    <div class="m-panel">
+                        <div class="m-field" data-t="s-questions"><div><b>Question range</b><small>Minimum before the AI may finish, and the hard maximum</small></div><div style="display:flex;gap:8px"><span class="m-input">3</span><span class="m-input">8</span></div></div>
+                        <div class="m-field" data-t="s-pass"><div><b>Passing score (whole number, out of 10)</b><small>Decides Recommended / Not recommended and the tone of feedback emails</small></div><span class="m-input">3</span></div>
+                        <div class="m-field" data-t="s-timer"><div><b>Question time limit (seconds)</b><small>Countdown shown to the candidate for each question</small></div><span class="m-input">90</span></div>
+                        <div class="m-field" data-t="s-level"><div><b>Default assessment level</b><small>Student, mid-level or senior question difficulty</small></div><span class="m-input">Student / Entry-level</span></div>
+                        <div class="m-field" data-t="s-limits"><div><b>Attempt limits &amp; default attempts</b><small>How many formal assessments each candidate gets</small></div><div style="display:flex;gap:10px;align-items:center"><span class="m-switch"></span><span class="m-input">2</span></div></div>
+                        <div class="m-field" data-t="s-strikes"><div><b>Interview integrity &amp; strikes</b><small>Every violation is a strike; the limit ends the session</small></div><span class="m-switch"></span></div>
+                        <div class="m-field" data-t="s-feedback"><div><b>Send assessment feedback emails</b><small>Only the post-assessment feedback email: nothing else</small></div><span class="m-switch"></span></div>
+                    </div>
+                </div></div>
+
+                <!-- ═════ 6. FEEDBACK EMAIL ═════ -->
+                <div class="tour-screen" data-screen="mail"><div class="m-wrap">
+                    <div class="m-mail">
+                        <div class="m-mail-head">AI Assessment Studio &nbsp;<span class="m-chip">NEW FEEDBACK</span></div>
+                        <div class="m-mail-body">
+                            <div style="font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;margin-bottom:12px">New feedback received</div>
+                            <div class="m-grid2" style="margin-bottom:12px">
+                                <div class="m-panel" style="padding:12px 14px" data-t="e-sender"><div class="m-h" style="margin-bottom:6px">Sender details</div><div class="m-note" style="margin:0;color:#e2e8f0;line-height:1.7">Name: <b>Anita Roy</b><br>Email: anita@college.edu<br>Account: Student &middot; CSE<br>Member since: 12 August 2026<br>Signed in with: Google &middot; User ID 17</div></div>
+                                <div class="m-panel" style="padding:12px 14px" data-t="e-details"><div class="m-h" style="margin-bottom:6px">Feedback details</div><div class="m-note" style="margin:0;color:#e2e8f0;line-height:1.7">Topic: A suggestion<br>Rating: &#9733;&#9733;&#9733;&#9733;&#9734; 4 / 5<br>Sent from: Interview result page<br>Session ID: AIS-000042<br>Reply allowed: Yes</div></div>
+                            </div>
+                            <div class="m-quote" data-t="e-message"><b style="color:#00ffff;font-size:11px;letter-spacing:.08em">MESSAGE</b><br>Please add more mock interview domains for finance roles.</div>
+                            <div style="margin-top:12px"><span class="m-btn solid" data-t="e-reply"><i class="bi bi-reply-fill"></i> Reply to the sender</span></div>
+                        </div>
+                    </div>
+                </div></div>
+
+                <div class="tour-spot" id="tourSpot"></div>
+                <div class="tour-pin" id="tourPin">1</div>
+                <div class="tour-cursor" id="tourCursor"><i class="bi bi-cursor-fill"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tour-card">
+        <div aria-live="polite">
+            <span class="tour-kicker" id="tourKicker">Chapter 1 &middot; Step 1</span>
+            <h3 id="tourTitle">Loading...</h3>
+            <div class="tour-rows">
+                <div class="tour-row what"><i class="bi bi-eye-fill"></i><div><b>What it is</b><p id="tourWhat"></p></div></div>
+                <div class="tour-row do"><i class="bi bi-hand-index-thumb-fill"></i><div><b>What you do</b><p id="tourDo"></p></div></div>
+                <div class="tour-row then"><i class="bi bi-lightning-charge-fill"></i><div><b>What happens</b><p id="tourThen"></p></div></div>
+            </div>
+        </div>
+        <div class="tour-side">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:'Outfit',sans-serif;color:#fff" id="tourCount">Step 1 of 1</b><span style="color:#a9b8cc;font-size:.82rem" id="tourChapterName"></span></div>
+            <div class="tour-progress"><div id="tourBar"></div></div>
+            <div class="tour-dots" id="tourDots"></div>
+            <div class="tour-controls">
+                <button type="button" class="tour-btn" id="tourPrev"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="button" class="tour-btn primary" id="tourNext">Next <i class="bi bi-arrow-right"></i></button>
+                <button type="button" class="tour-btn" id="tourAuto"><i class="bi bi-play-fill"></i> Auto-play</button>
+            </div>
+            <div class="tour-controls" style="margin-top:10px"><a class="tour-btn" id="tourOpen" href="/admin" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i> Open this screen for real</a></div>
+            <div class="tour-hint">Tip: use <kbd>&larr;</kbd> and <kbd>&rarr;</kbd> to move between steps. Everything shown here is an illustration with sample data.</div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+    var CHAPTERS = [
+        { id: 'dashboard', screen: 'dashboard', name: '1 · Dashboard', link: '/admin', steps: [
+            { t: 'topbtns', title: 'The top bar', what: 'Four shortcuts: <strong>Registered Users</strong>, <strong>Info</strong> (this guide), the <strong>gear</strong> for Settings, and the red <strong>exit</strong> icon.',
+              do: 'Click Registered Users to see every account, the gear to change how assessments behave, or the exit icon to log out.', then: 'Settings are saved instantly and apply to every new assessment, so there is no restart.' },
+            { t: 'stats', title: 'Live counters', what: 'Five cards: total assessments, this month, today, <strong>Recommended</strong> (score at or above your passing score) and <strong>Not recommended</strong> (below it, or ended by proctoring).',
+              do: 'Click any card to show only that group in the table below.', then: 'The table filters straight away and the card glows to show the active filter. Practice sessions are never counted here.' },
+            { t: 'filter', title: 'Filter indicator', what: 'A pill that tells you which group the table is currently showing.',
+              do: 'Glance at it before you read the table, and click another card to change it.', then: 'It always matches the highlighted card, so you never mistake a filtered list for the full list.' },
+            { t: 'search', title: 'Instant search', what: 'A search box for names, email addresses and session IDs such as <code>AIS-000042</code>.',
+              do: 'Start typing. You do not need to press Enter.', then: 'Rows that do not match disappear immediately, with no page reload.' },
+            { t: 'cand', title: 'Who took it', what: 'The candidate\'s name, email and a <strong>session ID chip</strong>. The same ID appears in their emails and on the report.',
+              do: 'Click the chip to copy the session ID when a candidate quotes it to you.', then: 'The ID is on your clipboard, ready to paste into the search box.' },
+            { t: 'score', title: 'Score bar', what: 'The score out of 10 with a small bar. Green means at or above the passing score, red means below it.',
+              do: 'Compare the bar against your passing score from Settings.', then: 'Nothing to click here: it is a quick visual read of how each candidate did.' },
+            { t: 'badge', title: 'Recommendation badge', what: '<strong>Recommended</strong>, <strong>Not Recommended</strong>, or <strong>Terminated (Breach)</strong> when the proctoring system ended the session.',
+              do: 'Use it to shortlist quickly. Open the report for the reasoning behind a result.', then: 'Terminated sessions have no AI score (0) and show the reason on their report.' },
+            { t: 'act-report', title: 'Report button', what: 'Opens the full written evaluation for that assessment.',
+              do: 'Click <strong>Report</strong>.', then: 'The candidate report opens (see chapter 2), with the resume, score ring and full analysis.' },
+            { t: 'act-unlock', title: 'Unlock button', what: 'Gives this candidate <strong>one extra assessment attempt</strong>.',
+              do: 'Click <strong>Unlock</strong> and confirm in the small dialog.', then: 'They get +1 attempt and an email telling them a new slot is open. The button disappears until they use that extra attempt.' },
+            { t: 'act-delete', title: 'Delete button', what: 'Permanently removes this single assessment record.',
+              do: 'Click the bin icon, then confirm the warning.', then: 'The record and its report are erased and cannot be recovered. It does not give the candidate a free attempt back.' }
+        ]},
+        { id: 'report', screen: 'report', name: '2 · Candidate report', link: '/admin', steps: [
+            { t: 'r-top', title: 'Report toolbar', what: 'Download the report as a PDF, switch between dark and light display, or go back.',
+              do: 'Click <strong>Download PDF Report</strong>.', then: 'Your browser\'s print dialog opens, so choose <em>Save as PDF</em>. Buttons and the background are hidden in the printout.' },
+            { t: 'r-profile', title: 'Who this is', what: 'The candidate\'s name, email and how they signed in (Google, email code or password).',
+              do: 'Click the name to open their full profile.', then: 'You land on the profile page described in chapter 4.' },
+            { t: 'r-resume', title: 'User Resume', what: 'A viewer for the resume the candidate uploaded.',
+              do: 'Click <strong>User Resume</strong>.', then: 'PDFs and images open inline; Word files offer a download. If the original file is no longer on the server you see the AI-extracted text with a notice.' },
+            { t: 'r-meta', title: 'Report details', what: 'Candidate, domain (what they said they were interviewing for), date and the <strong>session ID</strong>.',
+              do: 'Use the session ID to match this report with an email or a feedback message.', then: 'The same ID is printed on the candidate\'s own scorecard.' },
+            { t: 'r-score', title: 'Score ring', what: 'The overall score out of 10 and a performance label.',
+              do: 'Nothing to click: read it together with your passing score.', then: 'The label is guidance only. Your passing score decides Recommended or not.' },
+            { t: 'r-text', title: 'Written evaluation', what: 'Three paragraphs written by the AI: overall performance, a technical critique, and guidance for improving.',
+              do: 'Read it, or print it with the PDF.', then: 'Only the report is stored. The raw question-and-answer transcript is deleted once the evaluation is created.' }
+        ]},
+        { id: 'users', screen: 'users', name: '3 · Registered users', link: '/admin/users', steps: [
+            { t: 'u-search', title: 'Find a candidate', what: 'Search across names, emails, courses and skills.',
+              do: 'Type a name, an email, a course like <em>MCA</em>, or a skill like <em>Python</em>.', then: 'The list narrows as you type.' },
+            { t: 'u-attempts', title: 'Attempts used', what: 'How many formal assessments the candidate has used out of the number allowed. <strong>LOCKED</strong> means none are left.',
+              do: 'Look for red badges to find candidates waiting for an unlock.', then: 'Practice sessions and abandoned or errored interviews never count here.' },
+            { t: 'u-unlock', title: 'Quick unlock', what: 'The same <strong>+1 attempt</strong> action as on the dashboard, right in the user list.',
+              do: 'Click <strong>Unlock</strong>.', then: 'The candidate gets one more attempt and an automatic email.' },
+            { t: 'u-row', title: 'Open a profile', what: 'Each row is a full account.',
+              do: 'Click anywhere on the row.', then: 'The candidate\'s profile page opens (next chapter).' }
+        ]},
+        { id: 'profile', screen: 'profile', name: '4 · Candidate profile', link: '/admin/users', steps: [
+            { t: 'd-hero', title: 'Profile inspector', what: 'Education, course, semester, GitHub, LinkedIn, skills, experience and sign-in method for this candidate.',
+              do: 'Use it to understand the person behind a score.', then: 'It is read-only: candidates edit their own details.' },
+            { t: 'd-resume', title: 'Resume', what: 'The original resume file, if one was uploaded.',
+              do: 'Click <strong>User Resume</strong>.', then: 'It opens in a viewer. If only extracted text exists, the text is shown instead.' },
+            { t: 'd-tokens', title: 'Attempt tokens', what: 'Used, extra granted, allowed total and remaining. <code>allowed = default + extra</code>, and <code>remaining = allowed − used</code>.',
+              do: 'Check this before you decide to unlock.', then: 'When remaining reaches 0 the candidate\'s dashboard shows Session Limit Reached.' },
+            { t: 'd-unlock', title: 'Authorize &amp; Unlock', what: 'Grants exactly <strong>+1</strong> extra attempt.',
+              do: 'Click <strong>Authorize &amp; Unlock</strong> and confirm.', then: 'The counters update, the candidate is emailed, and the button hides until the new attempt is used.' },
+            { t: 'd-history', title: 'Assessment history', what: 'Every formal assessment this candidate completed, with scores and results.',
+              do: 'Click a row to open that report.', then: 'You jump to the report for that session.' },
+            { t: 'd-delete', title: 'Delete user', what: 'The most powerful action in the system.',
+              do: 'Click <strong>Delete User</strong> and read the warning carefully.', then: 'The account, all results, any in-progress interview and the stored resume file are permanently removed. This cannot be undone.' }
+        ]},
+        { id: 'settings', screen: 'settings', name: '5 · Settings', link: '/admin/settings', steps: [
+            { t: 's-questions', title: 'Question range', what: 'The smallest and largest number of questions in a formal assessment.',
+              do: 'Set the minimum (default 3) and maximum (default 8).', then: 'The AI may finish after the minimum; at the maximum the assessment ends automatically and is evaluated. The minimum can never be above the maximum.' },
+            { t: 's-pass', title: 'Passing score', what: 'The whole-number cutoff out of 10.',
+              do: 'Enter your benchmark, for example 5.', then: 'Scores at or above it are <strong>Recommended</strong>. It also sets the tone of each candidate\'s feedback email. It applies to new results only: old ones keep their outcome.' },
+            { t: 's-timer', title: 'Question timer', what: 'The countdown candidates see for every question.',
+              do: 'Enter seconds (default 90).', then: 'Candidates see the timer bar on their next assessment.' },
+            { t: 's-level', title: 'Default level', what: 'How demanding the AI\'s questions are: student, mid-level or senior.',
+              do: 'Pick the level that matches most of your candidates.', then: 'New assessments use that level\'s style of questions.' },
+            { t: 's-limits', title: 'Attempt limits', what: 'The switch turns the attempt system on or off, and the number is the default allowance for each candidate (default 2).',
+              do: 'Leave it on to control fairness, or turn it off for unlimited attempts.', then: 'With it off, nobody is ever locked. You can still unlock individuals when it is on.' },
+            { t: 's-strikes', title: 'Interview integrity', what: 'A grouped set of switches under <strong>Interview Settings</strong>: server-side strikes, one active session, server timer, copy and paste blocking, optional fullscreen, typing flags and the integrity log, plus a strike limit.',
+              do: 'Use the <strong>All integrity features</strong> master switch to turn everything on or off, or set each option yourself.', then: 'Every violation is one strike and the candidate sees a box naming the exact mistake. Reaching your limit ends the session. You see the full log on the report; candidates never do.' },
+            { t: 's-feedback', title: 'Feedback emails', what: 'Switches <strong>only</strong> the email candidates get after an assessment.',
+              do: 'Turn it off if your mail quota is tight.', then: 'Results still save normally. Welcome emails, login codes, unlock notices and session notices keep working.' },
+            { t: 's-save', title: 'Save', what: 'Applies everything above.',
+              do: 'Click <strong>Save settings</strong>.', then: 'You are returned to the page with a green confirmation. New assessments use the new values immediately.' }
+        ]},
+        { id: 'mail', screen: 'mail', name: '6 · Feedback inbox', link: '/admin/guide', steps: [
+            { t: 'e-sender', title: 'Who sent it', what: 'A <strong>Sender details</strong> block: name, email, account type, course or role, member-since date, sign-in method and user ID.',
+              do: 'Read it first, so you know who you are talking to.', then: 'Passwords and other secrets are never included.' },
+            { t: 'e-details', title: 'What it is about', what: 'Topic, star rating, the page it was sent from, the session ID (when sent from a report) and whether replies are allowed.',
+              do: 'Use the session ID to open that exact report from the dashboard.', then: 'You can see at a glance whether this is praise, a bug or a suggestion.' },
+            { t: 'e-message', title: 'The message', what: 'The candidate\'s own words, shown exactly as written and safely escaped.',
+              do: 'Read it, then act on it.', then: 'A copy is also saved in the database, so nothing is lost if an email fails.' },
+            { t: 'e-reply', title: 'Reply', what: 'If the candidate allowed contact, the email\'s Reply-To is their address.',
+              do: 'Press <strong>Reply</strong> in your mail app.', then: 'Your answer goes straight to the candidate. If they did not allow contact the email says so.' }
+        ]}
+    ];
+
+    var stage = document.getElementById('tourStage'), scaleBox = document.getElementById('tourScale'),
+        spot = document.getElementById('tourSpot'), pin = document.getElementById('tourPin'), cursor = document.getElementById('tourCursor'),
+        tabs = document.getElementById('tourTabs'), dots = document.getElementById('tourDots');
+    var flat = [], c, s;
+    for (c = 0; c < CHAPTERS.length; c++) for (s = 0; s < CHAPTERS[c].steps.length; s++) flat.push({ ch: c, st: s, d: CHAPTERS[c].steps[s] });
+    var idx = 0, auto = null, SCREEN_W = 960;
+
+    function el(id) { return document.getElementById(id); }
+    function screenOf(chIdx) { return scaleBox.querySelector('.tour-screen[data-screen="' + CHAPTERS[chIdx].screen + '"]'); }
+
+    CHAPTERS.forEach(function (ch, i) {
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'tour-tab'; b.textContent = ch.name; b.setAttribute('role', 'tab');
+        b.addEventListener('click', function () { go(flat.findIndex(function (f) { return f.ch === i; })); });
+        tabs.appendChild(b);
+    });
+    flat.forEach(function (f, i) {
+        var d = document.createElement('button');
+        d.type = 'button'; d.className = 'tour-dot'; d.setAttribute('aria-label', 'Go to step ' + (i + 1));
+        d.addEventListener('click', function () { go(i); });
+        dots.appendChild(d);
+    });
+
+    function fit() {
+        var active = scaleBox.querySelector('.tour-screen.on'); if (!active) return;
+        var w = stage.clientWidth, k = Math.min(1, w / SCREEN_W);
+        scaleBox.style.transform = 'scale(' + k + ')';
+        stage.style.height = Math.ceil(active.offsetHeight * k) + 'px';
+        return k;
+    }
+
+    function place(target, number) {
+        var screen = scaleBox.querySelector('.tour-screen.on'), k = fit() || 1;
+        var sr = screen.getBoundingClientRect(), tr = target.getBoundingClientRect();
+        var x = (tr.left - sr.left) / k, y = (tr.top - sr.top) / k, w = tr.width / k, h = tr.height / k, pad = 6;
+        spot.style.left = (x - pad) + 'px'; spot.style.top = (y - pad) + 'px'; spot.style.width = (w + pad * 2) + 'px'; spot.style.height = (h + pad * 2) + 'px';
+        pin.textContent = number;
+        pin.style.left = Math.max(4, x - 17) + 'px'; pin.style.top = Math.max(4, y - 17) + 'px';
+        cursor.style.left = Math.min(SCREEN_W - 40, x + w - 12) + 'px'; cursor.style.top = (y + h - 6) + 'px';
+        cursor.classList.remove('click'); void cursor.offsetWidth; cursor.classList.add('click');
+    }
+
+    function render() {
+        var f = flat[idx], ch = CHAPTERS[f.ch];
+        scaleBox.querySelectorAll('.tour-screen').forEach(function (n) { n.classList.remove('on'); });
+        var scr = screenOf(f.ch); scr.classList.add('on');
+        var target = scr.querySelector('[data-t="' + f.d.t + '"]');
+        if (target) place(target, f.st + 1);
+        el('tourKicker').textContent = 'Chapter ' + (f.ch + 1) + ' · Step ' + (f.st + 1) + ' of ' + ch.steps.length;
+        el('tourTitle').innerHTML = f.d.title;
+        el('tourWhat').innerHTML = f.d.what; el('tourDo').innerHTML = f.d.do; el('tourThen').innerHTML = f.d.then;
+        el('tourCount').textContent = 'Step ' + (idx + 1) + ' of ' + flat.length;
+        el('tourChapterName').textContent = ch.name;
+        el('tourBar').style.width = ((idx + 1) / flat.length * 100) + '%';
+        el('tourPrev').disabled = idx === 0;
+        el('tourNext').innerHTML = idx === flat.length - 1 ? 'Finish <i class="bi bi-check2-circle"></i>' : 'Next <i class="bi bi-arrow-right"></i>';
+        el('tourOpen').href = ch.link;
+        Array.prototype.forEach.call(tabs.children, function (b, i) { b.classList.toggle('on', i === f.ch); b.setAttribute('aria-selected', String(i === f.ch)); });
+        Array.prototype.forEach.call(dots.children, function (d, i) { d.className = 'tour-dot' + (i < idx ? ' done' : '') + (i === idx ? ' now' : ''); });
+    }
+
+    function go(i) { idx = Math.max(0, Math.min(flat.length - 1, i)); render(); }
+    function stopAuto() { if (auto) { clearInterval(auto); auto = null; el('tourAuto').innerHTML = '<i class="bi bi-play-fill"></i> Auto-play'; } }
+    function startAuto() {
+        stopAuto();
+        el('tourAuto').innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+        auto = setInterval(function () { if (idx >= flat.length - 1) { stopAuto(); } else { go(idx + 1); } }, 6500);
+    }
+
+    el('tourPrev').addEventListener('click', function () { stopAuto(); go(idx - 1); });
+    el('tourNext').addEventListener('click', function () { stopAuto(); if (idx === flat.length - 1) { try { localStorage.setItem('adminTourSeen', '1'); } catch (e) {} go(0); } else { go(idx + 1); } });
+    el('tourAuto').addEventListener('click', function () { auto ? stopAuto() : startAuto(); });
+    el('tourStart').addEventListener('click', function () {
+        try { localStorage.setItem('adminTourSeen', '1'); } catch (e) {}
+        go(0); document.getElementById('section-tour').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.addEventListener('keydown', function (e) {
+        var tag = (e.target && e.target.tagName) || '';
+        if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+        if (e.key === 'ArrowRight') { stopAuto(); go(idx + 1); }
+        if (e.key === 'ArrowLeft') { stopAuto(); go(idx - 1); }
+    });
+    window.addEventListener('resize', function () { render(); });
+
+    // first visit: the guide opens with the welcome banner and the tour positioned on step 1; later visits keep it compact
+    try { if (localStorage.getItem('adminTourSeen')) { el('tourWelcome').querySelector('p').textContent = 'Welcome back. Pick up where you left off, jump to any chapter, or start again from step 1.'; } } catch (e) {}
+    go(0);
+    setTimeout(render, 400);                    // re-measure once fonts/icons have loaded
+})();
+</script>

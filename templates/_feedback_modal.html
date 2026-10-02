@@ -1,0 +1,239 @@
+{# Reusable feedback box. Include once per page; open it from any element that has the data-feedback-open attribute.
+   Optional attributes on that element:  data-feedback-page="dashboard|result"   data-feedback-session="AIS-000042" #}
+<style>
+    /* ═══════ Feedback box (application theme: navy surfaces, cyan accent) ═══════ */
+    body.fbk-lock { overflow: hidden; }
+    .fbk-overlay {
+        position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px;
+        background: rgba(2, 5, 16, 0.82); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        opacity: 0; transition: opacity 0.18s ease;
+    }
+    .fbk-overlay[hidden] { display: none; }
+    .fbk-overlay.fbk-open { opacity: 1; }
+    .fbk-modal {
+        position: relative; width: 100%; max-width: 560px; max-height: calc(100vh - 32px); overflow-y: auto;
+        background: #08122a; border: 1.5px solid #2b4a68; border-radius: 22px; padding: 28px 28px 24px;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 255, 255, 0.08);
+        transform: translateY(14px) scale(0.98); transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: 'Inter', 'Segoe UI', sans-serif; color: #e2e8f0;
+    }
+    .fbk-overlay.fbk-open .fbk-modal { transform: none; }
+    .fbk-close {
+        position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border-radius: 12px; cursor: pointer;
+        background: #0b1633; border: 1px solid #2b4a68; color: #e2e8f0; font-size: 1.25rem; line-height: 1;
+    }
+    .fbk-close:hover { border-color: #00ffff; color: #00ffff; }
+    .fbk-badge {
+        display: inline-block; padding: 5px 13px; border-radius: 999px; background: #062a3b; border: 1px solid #0e7490;
+        color: #00ffff; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .fbk-modal h3 { font-family: 'Outfit', 'Segoe UI', sans-serif; font-size: 1.55rem; font-weight: 800; color: #ffffff; margin: 12px 0 6px; }
+    .fbk-sub { color: #cbd5e1; font-size: 0.95rem; line-height: 1.55; margin: 0 0 18px; }
+    .fbk-label { display: flex; justify-content: space-between; align-items: baseline; font-family: 'Outfit', 'Segoe UI', sans-serif;
+                 font-size: 0.8rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: #ffffff; margin: 16px 0 8px; }
+    .fbk-label small { font-size: 0.78rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: #a9b8cc; }
+    .fbk-stars { display: flex; gap: 6px; }
+    .fbk-star { width: 46px; height: 46px; border-radius: 12px; cursor: pointer; background: #0b1329; border: 1.5px solid #475569;
+                color: #7c8ba1; font-size: 1.5rem; line-height: 1; transition: all 0.15s ease; }
+    .fbk-star:hover { border-color: #fbbf24; color: #fbbf24; transform: translateY(-2px); }
+    .fbk-star.fbk-on { background: #3a2c05; border-color: #fbbf24; color: #fbbf24; }
+    .fbk-rating-text { margin-left: 10px; align-self: center; color: #cbd5e1; font-size: 0.9rem; font-weight: 600; }
+    .fbk-field {
+        width: 100%; background: #0b1329; border: 1.5px solid #475569; border-radius: 12px; color: #ffffff; padding: 12px 14px;
+        font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 0.97rem; outline: none; transition: all 0.2s ease;
+    }
+    .fbk-field::placeholder { color: #8fa1b8; }
+    .fbk-field:focus { border-color: #00ffff; background: #0f1c3d; box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.25); }
+    textarea.fbk-field { min-height: 130px; resize: vertical; line-height: 1.55; }
+    .fbk-check { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 4px; color: #cbd5e1; font-size: 0.92rem; line-height: 1.45; cursor: pointer; }
+    .fbk-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: #00ffff; flex-shrink: 0; }
+    .fbk-error { min-height: 22px; margin-top: 10px; color: #fca5a5; font-size: 0.9rem; font-weight: 600; }
+    .fbk-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
+    .fbk-btn { padding: 12px 22px; border-radius: 12px; font-family: 'Outfit', 'Segoe UI', sans-serif; font-weight: 800; font-size: 0.97rem; cursor: pointer; border: 1.5px solid transparent; }
+    .fbk-cancel { background: #0b1633; border-color: #475569; color: #e2e8f0; }
+    .fbk-cancel:hover { border-color: #00ffff; color: #00ffff; }
+    .fbk-send { background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; box-shadow: 0 6px 22px rgba(0, 255, 255, 0.28); min-width: 160px; }
+    .fbk-send:disabled { opacity: 0.7; cursor: wait; }
+    .fbk-send:not(:disabled):hover { transform: translateY(-1px); }
+
+    /* success toast: slides in, check mark draws itself, progress bar counts down, then it leaves */
+    .fbk-toast {
+        position: fixed; top: 20px; right: 20px; z-index: 2100; display: flex; align-items: center; gap: 14px; max-width: min(380px, calc(100vw - 32px));
+        padding: 16px 20px; background: #062a3b; border: 1.5px solid #0e7490; border-radius: 16px; color: #ffffff;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), 0 0 28px rgba(0, 255, 255, 0.18); overflow: hidden;
+        font-family: 'Inter', 'Segoe UI', sans-serif; transform: translateX(120%); opacity: 0;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+    .fbk-toast[hidden] { display: none; }
+    .fbk-toast.fbk-toast-in { transform: translateX(0); opacity: 1; }
+    .fbk-toast-icon { width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; background: #00ffff; display: flex; align-items: center; justify-content: center; }
+    .fbk-toast-icon svg { width: 22px; height: 22px; }
+    .fbk-toast-icon path { stroke: #020510; stroke-width: 3.2; fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 26; stroke-dashoffset: 26; }
+    .fbk-toast.fbk-toast-in .fbk-toast-icon path { animation: fbkDraw 0.5s 0.25s ease forwards; }
+    .fbk-toast strong { display: block; font-family: 'Outfit', 'Segoe UI', sans-serif; font-size: 1rem; }
+    .fbk-toast span.fbk-toast-sub { color: #cbd5e1; font-size: 0.86rem; }
+    .fbk-toast-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: linear-gradient(90deg, #00ffff, #0284c7); transform-origin: left; }
+    .fbk-toast.fbk-toast-in .fbk-toast-bar { animation: fbkBar 3.8s linear forwards; }
+    @keyframes fbkDraw { to { stroke-dashoffset: 0; } }
+    @keyframes fbkBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+    @media (max-width: 520px) {
+        .fbk-modal { padding: 22px 18px 18px; border-radius: 18px; }
+        .fbk-star { width: 42px; height: 42px; }
+        .fbk-actions .fbk-btn { flex: 1; }
+        .fbk-toast { top: 12px; right: 12px; left: 12px; max-width: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { .fbk-toast, .fbk-modal, .fbk-overlay { transition: none; } .fbk-toast-icon path { animation: none !important; stroke-dashoffset: 0; } }
+    @media print { .fbk-overlay, .fbk-toast { display: none !important; } }
+</style>
+
+<div class="fbk-overlay" id="fbkOverlay" hidden aria-hidden="true">
+    <div class="fbk-modal" role="dialog" aria-modal="true" aria-labelledby="fbkTitle">
+        <button type="button" class="fbk-close" id="fbkClose" aria-label="Close feedback box">&times;</button>
+        <span class="fbk-badge">Feedback &amp; Reviews</span>
+        <h3 id="fbkTitle">Share your feedback</h3>
+        <p class="fbk-sub">Tell us what worked, what did not, or what you would like to see next. Every message is read.</p>
+
+        <form id="fbkForm" novalidate>
+            <div class="fbk-label"><span>How was your experience?</span><small>Optional</small></div>
+            <div class="fbk-stars" role="radiogroup" aria-label="Rating out of 5" id="fbkStars">
+                <button type="button" class="fbk-star" role="radio" aria-checked="false" aria-label="1 star" data-v="1">&#9733;</button>
+                <button type="button" class="fbk-star" role="radio" aria-checked="false" aria-label="2 stars" data-v="2">&#9733;</button>
+                <button type="button" class="fbk-star" role="radio" aria-checked="false" aria-label="3 stars" data-v="3">&#9733;</button>
+                <button type="button" class="fbk-star" role="radio" aria-checked="false" aria-label="4 stars" data-v="4">&#9733;</button>
+                <button type="button" class="fbk-star" role="radio" aria-checked="false" aria-label="5 stars" data-v="5">&#9733;</button>
+                <span class="fbk-rating-text" id="fbkRatingText" aria-live="polite"></span>
+            </div>
+
+            <label class="fbk-label" for="fbkCategory"><span>What is it about?</span></label>
+            <select class="fbk-field" id="fbkCategory">
+                <option value="experience">My interview experience</option>
+                <option value="suggestion">A suggestion or new feature</option>
+                <option value="bug">Something is not working</option>
+                <option value="content">Questions &amp; prep resources</option>
+                <option value="praise">A compliment</option>
+                <option value="other">Something else</option>
+            </select>
+
+            <label class="fbk-label" for="fbkMessage"><span>Your message</span><small id="fbkCount">0 / 1000</small></label>
+            <textarea class="fbk-field" id="fbkMessage" maxlength="1000" placeholder="Write your feedback or review here (at least 10 characters)..."></textarea>
+
+            <label class="fbk-check">
+                <input type="checkbox" id="fbkContact" checked>
+                <span>You may contact me by email about this feedback.</span>
+            </label>
+
+            <div class="fbk-error" id="fbkError" role="alert"></div>
+            <div class="fbk-actions">
+                <button type="button" class="fbk-btn fbk-cancel" id="fbkCancel">Cancel</button>
+                <button type="submit" class="fbk-btn fbk-send" id="fbkSend">Send feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="fbk-toast" id="fbkToast" role="status" aria-live="polite" hidden>
+    <div class="fbk-toast-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div><strong>Feedback submitted successfully</strong><span class="fbk-toast-sub">Thank you for helping us improve.</span></div>
+    <div class="fbk-toast-bar"></div>
+</div>
+
+<script>
+(function () {
+    var overlay = document.getElementById('fbkOverlay'), form = document.getElementById('fbkForm'),
+        msg = document.getElementById('fbkMessage'), count = document.getElementById('fbkCount'),
+        err = document.getElementById('fbkError'), send = document.getElementById('fbkSend'),
+        cat = document.getElementById('fbkCategory'), contact = document.getElementById('fbkContact'),
+        toast = document.getElementById('fbkToast'), ratingText = document.getElementById('fbkRatingText'),
+        stars = Array.prototype.slice.call(document.querySelectorAll('#fbkStars .fbk-star'));
+    var labels = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
+    var state = { rating: 0, page: 'dashboard', session: '' }, lastFocus = null, toastTimer = null;
+
+    function paint(value) {
+        stars.forEach(function (s) {
+            var on = parseInt(s.getAttribute('data-v'), 10) <= value;
+            s.classList.toggle('fbk-on', on);
+            s.setAttribute('aria-checked', String(parseInt(s.getAttribute('data-v'), 10) === state.rating));
+        });
+        ratingText.textContent = labels[value] || '';
+    }
+    function openBox(trigger) {
+        lastFocus = document.activeElement;
+        state.page = (trigger && trigger.getAttribute('data-feedback-page')) || 'dashboard';
+        state.session = (trigger && trigger.getAttribute('data-feedback-session')) || '';
+        err.textContent = '';
+        overlay.hidden = false;
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('fbk-lock');
+        requestAnimationFrame(function () { overlay.classList.add('fbk-open'); });
+        setTimeout(function () { msg.focus(); }, 60);
+    }
+    function closeBox() {
+        overlay.classList.remove('fbk-open');
+        overlay.setAttribute('aria-hidden', 'true');
+        setTimeout(function () {
+            overlay.hidden = true;
+            document.body.classList.remove('fbk-lock');
+            if (lastFocus && lastFocus.focus) lastFocus.focus();
+        }, 180);
+    }
+    function showToast() {
+        clearTimeout(toastTimer);
+        toast.hidden = false;
+        toast.classList.remove('fbk-toast-in');
+        void toast.offsetWidth;                                   // restart the animations
+        toast.classList.add('fbk-toast-in');
+        toastTimer = setTimeout(function () {
+            toast.classList.remove('fbk-toast-in');
+            setTimeout(function () { toast.hidden = true; }, 450);
+        }, 3800);
+    }
+
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-feedback-open]') : null;
+        if (t) { e.preventDefault(); openBox(t); }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !overlay.hidden) closeBox(); });
+    overlay.addEventListener('mousedown', function (e) { if (e.target === overlay) closeBox(); });
+    document.getElementById('fbkClose').addEventListener('click', closeBox);
+    document.getElementById('fbkCancel').addEventListener('click', closeBox);
+
+    stars.forEach(function (s, i) {
+        var v = parseInt(s.getAttribute('data-v'), 10);
+        s.addEventListener('click', function () { state.rating = (state.rating === v) ? 0 : v; paint(state.rating); });
+        s.addEventListener('mouseenter', function () { paint(v); });
+        s.addEventListener('mouseleave', function () { paint(state.rating); });
+        s.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowRight' && stars[i + 1]) stars[i + 1].focus();
+            if (e.key === 'ArrowLeft' && stars[i - 1]) stars[i - 1].focus();
+        });
+    });
+    msg.addEventListener('input', function () { count.textContent = msg.value.length + ' / 1000'; err.textContent = ''; });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var text = msg.value.trim();
+        if (text.length < 10) { err.textContent = 'Please write at least 10 characters so we can understand your feedback.'; msg.focus(); return; }
+        send.disabled = true;
+        send.textContent = 'Sending...';
+        fetch('/feedback', {
+            method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rating: state.rating || null, category: cat.value, message: text, contact_ok: contact.checked,
+                                   page: state.page, session_code: state.session })
+        }).then(function (r) {
+            return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, status: r.status, data: d }; });
+        }).then(function (res) {
+            if (res.ok) {
+                form.reset(); state.rating = 0; paint(0); count.textContent = '0 / 1000'; contact.checked = true;
+                closeBox();
+                setTimeout(showToast, 200);
+            } else if (res.status === 401) {
+                err.textContent = 'Your session has expired. Please log in again to send feedback.';
+            } else {
+                err.textContent = (res.data && res.data.message) || 'Something went wrong. Please try again.';
+            }
+        }).catch(function () {
+            err.textContent = 'Could not reach the server. Please check your connection and try again.';
+        }).then(function () { send.disabled = false; send.textContent = 'Send feedback'; });
+    });
+})();
+</script>

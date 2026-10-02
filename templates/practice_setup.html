@@ -365,6 +365,7 @@
             border: 1px solid rgba(0, 255, 255, 0.15) !important;
         }
         </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -394,7 +395,7 @@
                         </p>
                     </div>
                     <a href="/dashboard" class="back-btn-global">
-                        <i class="bi bi-arrow-left"></i> BACK
+                        <i class="bi bi-arrow-left"></i> Back
                     </a>
                 </div>
 
@@ -506,8 +507,8 @@
                     </div>
 
                     <!-- Launch button -->
-                    <button type="submit" class="btn w-100 text-white mt-3 py-3"
-                        style="border-radius:12px; background:linear-gradient(135deg,var(--primary,#00ffff),var(--primary-hover,#0284c7)); font-size:1.05rem; font-weight:700; box-shadow:0 4px 14px rgba(0,255,255,0.25); border:none;">
+                    <button type="submit" class="btn w-100 mt-3 py-3"
+                        style="color:#020510; border-radius:12px; background:linear-gradient(135deg,var(--primary,#00ffff),var(--primary-hover,#0284c7)); font-size:1.05rem; font-weight:700; box-shadow:0 4px 14px rgba(0,255,255,0.25); border:none;">
                         Launch Practice Session <i class="bi bi-rocket-takeoff ms-1"></i>
                     </button>
 
@@ -538,6 +539,7 @@
 
             if (mode === 'viva')  vivaInput.setAttribute('required','required');
             if (mode === 'lang')  langInput.setAttribute('required','required');
+        }
     </script>
 
 <script>

@@ -10,13 +10,15 @@ from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import APP_BASE_URL
 from MODULES.LAYER_3_BUSINESS_SERVICES import email_templates
 
 
-def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass):
+def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass, reply_to=None):
     """Sends email via Gmail SMTP (port 587 TLS or port 465 SSL)."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"AI Assessment Studio <{mail_user}>"
     msg["To"] = to_email
     msg["Auto-Submitted"] = "auto-generated"
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.attach(MIMEText(text_content, "plain"))
     msg.attach(MIMEText(html_content, "html"))
 
@@ -47,7 +49,7 @@ def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mai
     return False
 
 
-def _send_via_resend(to_email, subject, text_content, html_content, api_key):
+def _send_via_resend(to_email, subject, text_content, html_content, api_key, reply_to=None):
     """Send via Resend HTTP API (port 443 HTTPS)."""
     resend_domain = (os.environ.get("RESEND_DOMAIN") or "").strip()
     if resend_domain and resend_domain != "resend.dev":
@@ -55,13 +57,16 @@ def _send_via_resend(to_email, subject, text_content, html_content, api_key):
     else:
         from_addr = "AI Assessment Studio <onboarding@resend.dev>"
 
-    payload = json.dumps({
+    body = {
         "from": from_addr,
         "to": [to_email],
         "subject": subject,
         "html": html_content,
         "text": text_content
-    }).encode("utf-8")
+    }
+    if reply_to:
+        body["reply_to"] = reply_to
+    payload = json.dumps(body).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.resend.com/emails",
@@ -86,10 +91,10 @@ def _send_via_resend(to_email, subject, text_content, html_content, api_key):
         return False
 
 
-def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key):
+def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key, reply_to=None):
     """Send via SendGrid HTTP API (port 443 HTTPS)."""
     from_addr = (os.environ.get("MAIL_USERNAME") or "aiinterviewplatform26@gmail.com").strip()
-    payload = json.dumps({
+    body = {
         "personalizations": [{"to": [{"email": to_email}]}],
         "from": {"email": from_addr, "name": "AI Assessment Studio"},
         "subject": subject,
@@ -97,7 +102,10 @@ def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key):
             {"type": "text/plain", "value": text_content},
             {"type": "text/html",  "value": html_content},
         ]
-    }).encode("utf-8")
+    }
+    if reply_to:
+        body["reply_to"] = {"email": reply_to}
+    payload = json.dumps(body).encode("utf-8")
 
     req = urllib.request.Request(
         "https://api.sendgrid.com/v3/mail/send",
@@ -121,7 +129,7 @@ def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key):
         return False
 
 
-def send_email_notification(to_email, subject, text_content, html_content):
+def send_email_notification(to_email, subject, text_content, html_content, reply_to=None):
     """
     Master email dispatcher with multi-provider failover:
       1. Gmail SMTP (port 587 TLS / port 465 SSL)
@@ -136,19 +144,19 @@ def send_email_notification(to_email, subject, text_content, html_content):
     mail_user = (os.environ.get("MAIL_USERNAME") or "").strip()
     mail_pass = (os.environ.get("MAIL_PASSWORD") or "").replace(" ", "").strip()
     if mail_user and mail_pass:
-        if _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass):
+        if _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass, reply_to):
             return True
 
     # 2. Try Resend HTTP API
     resend_key = (os.environ.get("RESEND_API_KEY") or "").strip()
     if resend_key:
-        if _send_via_resend(to_email, subject, text_content, html_content, resend_key):
+        if _send_via_resend(to_email, subject, text_content, html_content, resend_key, reply_to):
             return True
 
     # 3. Try SendGrid HTTP API
     sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
     if sg_key:
-        if _send_via_sendgrid(to_email, subject, text_content, html_content, sg_key):
+        if _send_via_sendgrid(to_email, subject, text_content, html_content, sg_key, reply_to):
             return True
 
     print(f"[MAIL] All dispatch methods exhausted for {to_email}")

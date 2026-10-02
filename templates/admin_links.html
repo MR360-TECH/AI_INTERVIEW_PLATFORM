@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" class="dark-theme">
 <head>
-    <title>Registered Candidates — AI Interview Platform</title>
+    <title>Link Health — AI Interview Platform</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Admin panel for managing registered candidates.">
+    <meta name="description" content="Admin panel for checking preparation library links.">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -277,11 +277,20 @@
             .um-table td.um-actions::before { display: none; }
         }
 
+
+        .um-tag.warn { color: #fbbf24; background: rgba(251,191,36,.12); border-color: rgba(251,191,36,.4); }
+        .lk-run { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: #08122a; border: 1.5px solid #334155; border-radius: 16px; padding: 16px 20px; margin-bottom: 18px; }
+        .lk-run-btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 12px; border: none; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 800; cursor: pointer; }
+        .lk-run-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .lk-progress { width: 280px; max-width: 100%; height: 8px; border-radius: 8px; background: #1e293b; overflow: hidden; margin-top: 8px; }
+        .lk-progress i { display: block; height: 100%; background: linear-gradient(90deg, #00ffff, #0284c7); }
+        .lk-spin { display: inline-block; animation: lkspin 1s linear infinite; color: #00ffff; }
+        @keyframes lkspin { to { transform: rotate(360deg); } }
+        .lk-url { color: #7f93ad; font-size: .74rem; word-break: break-all; margin-top: 2px; max-width: 520px; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
-<!-- ══ ANIMATED NEURAL BACKGROUND ══ -->
 <div class="db-bg" aria-hidden="true">
     <div class="db-orb db-orb-1"></div>
     <div class="db-orb db-orb-2"></div>
@@ -292,267 +301,95 @@
 </div>
 
 <div class="page-shell">
-    <!-- Header Section -->
     <div class="admin-header">
         <div class="admin-brand">
-            <div class="admin-brand-icon"><i class="bi bi-people-fill"></i></div>
+            <div class="admin-brand-icon"><i class="bi bi-link-45deg"></i></div>
             <div class="admin-brand-text">
-                <h1>Registered Candidates</h1>
-                <p>Manage candidate profiles, education details, and attempt permissions</p>
+                <h1>Link Health</h1>
+                <p>Only you see this page. Candidates never see check dates; hidden links simply disappear for them.</p>
             </div>
         </div>
         <div class="admin-header-actions">
-            <a href="/admin/guide" class="header-icon-btn" style="border-color: #38bdf8 !important; color: #38bdf8 !important; background: rgba(56, 189, 248, 0.08) !important; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.88rem; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2) !important;" title="Platform Information &amp; System Manual">
-                <i class="bi bi-info-circle-fill me-1"></i> Info
-            </a>
-            <a href="/admin/links" class="header-icon-btn" title="Check the preparation library links"><i class="bi bi-link-45deg me-1"></i> Links</a>
-            <a href="/admin/settings" class="header-icon-btn" title="Assessment settings"><i class="bi bi-gear-fill me-1"></i> Settings</a>
-            <a href="/admin" class="header-icon-btn" style="border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.08) !important; font-family: 'Outfit', sans-serif; font-weight: 800; box-shadow: 0 0 16px rgba(0, 255, 255, 0.25) !important;">
-                <i class="bi bi-arrow-left me-1"></i> Back
-            </a>
+            <a href="/admin/guide" class="header-icon-btn" style="border-color: #38bdf8 !important; color: #38bdf8 !important; background: rgba(56, 189, 248, 0.08) !important; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.88rem;"><i class="bi bi-info-circle-fill me-1"></i> Info</a>
+            <a href="/admin" class="header-icon-btn" style="border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.08) !important; font-family: 'Outfit', sans-serif; font-weight: 800;"><i class="bi bi-arrow-left me-1"></i> Back</a>
             <a href="/logout" class="header-icon-btn danger" style="width: 44px; padding: 0;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>
 
-    <!-- Summary cards -->
-    <div class="um-stats" id="userStats">
-        <a class="um-stat" href="/admin/users" style="--c:#00ffff"><span class="um-stat-icon"><i class="bi bi-people-fill"></i></span><div><small>Total candidates</small><b>{{ stats.total }}</b></div></a>
-        <a class="um-stat" href="/admin/users?filter=locked" style="--c:#f87171"><span class="um-stat-icon"><i class="bi bi-lock-fill"></i></span><div><small>Locked (need unlock)</small><b>{{ stats.locked }}</b></div></a>
-        <a class="um-stat" href="/admin/users?filter=never_assessed" style="--c:#38bdf8"><span class="um-stat-icon"><i class="bi bi-clipboard2-check-fill"></i></span><div><small>Assessed at least once</small><b>{{ stats.assessed }}</b></div></a>
-        <a class="um-stat" href="/admin/users?sort=newest" style="--c:#818cf8"><span class="um-stat-icon"><i class="bi bi-person-plus-fill"></i></span><div><small>Joined this week</small><b>{{ stats.new_week }}</b></div></a>
-        <a class="um-stat" href="/admin/users?filter=no_resume" style="--c:#34d399"><span class="um-stat-icon"><i class="bi bi-file-earmark-person-fill"></i></span><div><small>Resume uploaded</small><b>{{ stats.with_resume }}</b></div></a>
+    <div class="um-stats" id="linkStats">
+        <a class="um-stat" href="/admin/links" style="--c:#00ffff"><span class="um-stat-icon"><i class="bi bi-link-45deg"></i></span><div><small>Total links</small><b>{{ stats.total }}</b></div></a>
+        <a class="um-stat" href="/admin/links" style="--c:#34d399"><span class="um-stat-icon"><i class="bi bi-check-circle-fill"></i></span><div><small>Working</small><b>{{ stats.ok }}</b></div></a>
+        <a class="um-stat" href="/admin/links?filter=blocked" style="--c:#fbbf24"><span class="um-stat-icon"><i class="bi bi-shield-exclamation"></i></span><div><small>Refused the checker</small><b>{{ stats.blocked }}</b></div></a>
+        <a class="um-stat" href="/admin/links?filter=broken" style="--c:#f87171"><span class="um-stat-icon"><i class="bi bi-x-octagon-fill"></i></span><div><small>Broken</small><b>{{ stats.broken }}</b></div></a>
+        <a class="um-stat" href="/admin/links?filter=unchecked" style="--c:#818cf8"><span class="um-stat-icon"><i class="bi bi-hourglass-split"></i></span><div><small>Not checked yet</small><b>{{ stats.unchecked }}</b></div></a>
     </div>
 
-    <!-- Filters, sort and search -->
-    <form method="GET" action="/admin/users" class="um-toolbar" id="userToolbar">
-        <input type="hidden" name="filter" value="{{ filter_type }}">
-        <div class="um-chips" role="group" aria-label="Filter candidates">
-            {% for key, label, icon in [('all','All','bi-people'),('locked','Locked','bi-lock'),('never_assessed','Not assessed yet','bi-hourglass'),('no_resume','No resume','bi-file-earmark-x'),('google','Google sign-in','bi-google')] %}
-            <a class="um-chip {{ 'on' if filter_type == key else '' }}" href="/admin/users?filter={{ key }}&amp;sort={{ sort }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"><i class="bi {{ icon }}"></i> {{ label }}</a>
+    <div class="lk-run">
+        <div>
+            {% if running %}
+            <div class="um-main"><i class="bi bi-arrow-repeat lk-spin"></i> Checking links: {{ progress }} of {{ stats.total }}</div>
+            <div class="lk-progress"><i style="width: {{ (progress / stats.total * 100)|int if stats.total else 0 }}%"></i></div>
+            {% else %}
+            <div class="um-main">Last check: {{ last_run.strftime('%d %b %Y, %I:%M %p') ~ ' UTC' if last_run else 'never run yet' }}</div>
+            <div class="um-dim">{% if busy %}A check is already running. Please wait for it to finish.{% else %}A full check takes about half a minute. Some sites refuse automatic visitors; those are marked separately and usually still open fine for a person.{% endif %}</div>
+            {% endif %}
+        </div>
+        <form method="post" action="/admin/links/check">
+            <button type="submit" class="lk-run-btn" {{ 'disabled' if running }}><i class="bi bi-play-circle-fill"></i> Run check now</button>
+        </form>
+    </div>
+
+    <div class="um-toolbar">
+        <div class="um-chips" role="group" aria-label="Filter links">
+            {% for key, label, icon in [('all','All','bi-link-45deg'),('broken','Broken','bi-x-octagon'),('blocked','Refused the checker','bi-shield-exclamation'),('unchecked','Not checked','bi-hourglass'),('hidden','Hidden from candidates','bi-eye-slash')] %}
+            <a class="um-chip {{ 'on' if filter_type == key else '' }}" href="/admin/links?filter={{ key }}"><i class="bi {{ icon }}"></i> {{ label }}</a>
             {% endfor %}
         </div>
-        <div class="um-controls">
-            <label class="um-sort"><span>Sort</span>
-                <select name="sort" onchange="this.form.submit()" aria-label="Sort candidates">
-                    <option value="newest" {{ 'selected' if sort == 'newest' }}>Newest first</option>
-                    <option value="oldest" {{ 'selected' if sort == 'oldest' }}>Oldest first</option>
-                    <option value="name" {{ 'selected' if sort == 'name' }}>Name A–Z</option>
-                    <option value="attempts" {{ 'selected' if sort == 'attempts' }}>Most attempts taken</option>
-                </select>
-            </label>
-            <div class="search-container">
-                <i class="bi bi-search search-icon"></i>
-                <input type="text" name="q" id="searchInput" placeholder="Search by name, email, course, skills..." value="{{ q or '' }}" autocomplete="off">
-            </div>
-        </div>
-    </form>
-    <div class="um-count">Showing <b>{{ rows|length }}</b> of <b>{{ total_filtered }}</b> candidate{{ '' if total_filtered == 1 else 's' }}{% if filter_type != 'all' or q %} <a href="/admin/users" class="um-clear"><i class="bi bi-x-circle"></i> Clear filters</a>{% endif %}</div>
+    </div>
+    <div class="um-count">Showing <b>{{ rows|length }}</b> link{{ '' if rows|length == 1 else 's' }}</div>
 
-    <!-- Users Table Panel -->
     <div class="results-panel">
         <div class="table-responsive">
             <table class="results-table um-table">
                 <thead>
-                    <tr>
-                        <th>Candidate</th>
-                        <th>Profile</th>
-                        <th>Latest assessment</th>
-                        <th>Attempts taken</th>
-                        <th>Joined</th>
-                        <th style="text-align: right;">Actions</th>
-                    </tr>
+                    <tr><th>Link</th><th>Used in</th><th>Status</th><th>Last checked</th><th style="text-align:right;">Actions</th></tr>
                 </thead>
                 <tbody>
                     {% for r in rows %}
-                    {% set user = r.user %}
-                    <tr onclick="window.location='/admin/user/{{ user.id }}'">
-                        <td data-label="Candidate">
-                            <div class="candidate-cell">
-                                <div class="avatar-circle">{{ user.full_name[0]|upper if user.full_name else '?' }}</div>
-                                <div>
-                                    <div class="cand-name d-flex align-items-center gap-2 flex-wrap">
-                                        {{ user.full_name }}
-                                        {% if user.auth_provider == "google" %}
-                                            <span class="auth-badge google"><i class="bi bi-google"></i> GOOGLE</span>
-                                        {% elif user.email_verified %}
-                                            <span class="auth-badge verified"><i class="bi bi-patch-check-fill me-1"></i> VERIFIED</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="cand-email">{{ user.email }}</div>
-                                </div>
-                            </div>
+                    {% set it = r.item %}{% set ck = r.check %}
+                    <tr style="cursor: default;">
+                        <td data-label="Link">
+                            <div class="um-main">{{ it.label }}</div>
+                            <div class="um-dim">{{ it.site }} · {{ it.format }}</div>
+                            <div class="lk-url">{{ it.url }}</div>
                         </td>
-                        <td data-label="Profile">
-                            <div class="um-main">{{ user.education|upper or '—' }}</div>
-                            <div class="um-sub-cyan">{{ user.course|upper or '' }}{% if user.semester %} · {{ user.semester }}{% endif %}</div>
-                            {% if r.has_resume %}
-                            <span class="um-tag ok"><i class="bi bi-file-earmark-check-fill"></i> Resume</span>
-                            {% else %}
-                            <span class="um-tag off"><i class="bi bi-file-earmark-x"></i> No resume</span>
-                            {% endif %}
+                        <td data-label="Used in"><span class="um-dim">{{ it.hubs|length }} page{{ '' if it.hubs|length == 1 else 's' }}</span></td>
+                        <td data-label="Status">
+                            {% if not ck or not ck.checked_at %}<span class="um-tag off">Not checked</span>
+                            {% elif ck.kind == 'ok' %}<span class="um-tag ok"><i class="bi bi-check-circle-fill"></i> Working</span>
+                            {% elif ck.kind == 'blocked' %}<span class="um-tag warn"><i class="bi bi-shield-exclamation"></i> Refused ({{ ck.status_code }})</span>
+                            {% else %}<span class="um-tag bad"><i class="bi bi-x-octagon-fill"></i> Broken{% if ck.note %} · {{ ck.note }}{% endif %}</span>{% endif %}
+                            {% if ck and ck.hidden %}<span class="um-tag off"><i class="bi bi-eye-slash"></i> Hidden</span>{% endif %}
                         </td>
-                        <td data-label="Latest assessment">
-                            {% if r.last %}
-                                <div class="um-main">{{ r.last.score }} <span class="um-dim">/ 10</span>
-                                    {% if r.last.is_terminated or 'Terminated' in (r.last.status or '') %}
-                                    <span class="um-tag bad">Terminated</span>
-                                    {% elif r.last_ok %}<span class="um-tag ok">Recommended</span>
-                                    {% else %}<span class="um-tag bad">Not recommended</span>{% endif %}
-                                </div>
-                                <a class="um-link" href="/admin/interview/{{ r.last.id }}" onclick="event.stopPropagation();"><i class="bi bi-clipboard-data"></i> Open report</a>
-                            {% else %}
-                                <span class="um-dim">Not assessed yet</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Attempts taken">
-                            <div class="um-main">{{ r.used }}</div>
-                            {% if r.locked %}
-                            <span class="um-tag bad"><i class="bi bi-lock-fill"></i> LOCKED</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Joined">
-                            {% if user.registered_at %}
-                            {% set d = (now - user.registered_at).days %}
-                            <div class="um-main">{{ user.registered_at.strftime('%d %b %Y')|upper }}</div>
-                            <div class="um-dim">{{ 'Today' if d <= 0 else ('Yesterday' if d == 1 else (d ~ ' days ago' if d < 60 else user.registered_at.strftime('%I:%M %p')|upper)) }}</div>
-                            {% else %}<div class="um-main">—</div>{% endif %}
-                        </td>
-                        <td data-label="Actions" style="text-align: right;" onclick="event.stopPropagation();" class="text-nowrap um-actions">
-                            {% if r.locked %}
-                            <button type="button" class="btn-unlock-attempt me-1" data-name="{{ user.full_name }}" onclick="triggerUnlockCandidate({{ user.id }}, this.dataset.name)" title="Candidate is locked. Click to grant +1 token.">
-                                <i class="bi bi-unlock-fill me-1"></i> Unlock
-                            </button>
-                            {% endif %}
-                            <a href="/admin/user/{{ user.id }}" class="btn-view">
-                                <i class="bi bi-eye-fill"></i> View
-                            </a>
-                            <form method="post" action="/admin/delete-user/{{ user.id }}?next=/admin/users" style="display:inline;margin:0" onsubmit="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
-                                <button type="submit" class="btn-delete"><i class="bi bi-trash3-fill"></i> Delete</button>
+                        <td data-label="Last checked"><span class="um-dim">{{ ck.checked_at.strftime('%d %b %Y, %I:%M %p') if ck and ck.checked_at else '—' }}</span></td>
+                        <td data-label="Actions" style="text-align:right;" class="text-nowrap um-actions">
+                            <a href="{{ it.url }}" target="_blank" rel="noopener noreferrer" class="btn-view"><i class="bi bi-box-arrow-up-right"></i> Open</a>
+                            <form method="post" action="/admin/links/hide" style="display:inline;margin:0">
+                                <input type="hidden" name="url" value="{{ it.url }}"><input type="hidden" name="filter" value="{{ filter_type }}">
+                                <button type="submit" class="btn-view">{% if ck and ck.hidden %}<i class="bi bi-eye"></i> Show{% else %}<i class="bi bi-eye-slash"></i> Hide{% endif %}</button>
                             </form>
                         </td>
                     </tr>
                     {% else %}
-                    <tr>
-                        <td colspan="6">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">
-                                    <i class="bi bi-people-fill"></i>
-                                </div>
-                                <h4>{% if q or filter_type != 'all' %}No Matching Candidates{% else %}No Candidates Enrolled Yet{% endif %}</h4>
-                                <p>{% if q %}No candidates found matching the query "{{ q }}".{% elif filter_type != 'all' %}No candidates match this filter.{% else %}Candidate registrations will populate here automatically.{% endif %}</p>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon"><i class="bi bi-link-45deg"></i></div><h4>Nothing here</h4><p>No links match this filter.</p></div></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-
-    {% if pages > 1 %}
-    <nav class="um-pager" aria-label="Pages">
-        {% set base = '/admin/users?filter=' ~ filter_type ~ '&sort=' ~ sort ~ ('&q=' ~ (q|urlencode) if q else '') %}
-        <a class="um-chip {{ 'disabled' if page <= 1 }}" href="{{ base }}&amp;page={{ page - 1 if page > 1 else 1 }}"><i class="bi bi-chevron-left"></i> Previous</a>
-        <span class="um-dim">Page {{ page }} of {{ pages }}</span>
-        <a class="um-chip {{ 'disabled' if page >= pages }}" href="{{ base }}&amp;page={{ page + 1 if page < pages else pages }}">Next <i class="bi bi-chevron-right"></i></a>
-    </nav>
-    {% endif %}
 </div>
 
-<!-- ══ CUSTOM THEME UNLOCK CONFIRMATION MODAL ══ -->
-<div class="modal fade" id="customUnlockModal" tabindex="-1" aria-labelledby="customUnlockModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:24px; border:1.5px solid #334155; background:#08122a; backdrop-filter:blur(20px); box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);">
-      <div class="modal-header border-0 p-4 pb-2">
-        <h5 class="modal-title fw-bold" id="customUnlockModalLabel" style="color:#00ffff; font-family:'Outfit',sans-serif; letter-spacing:0.02em;">
-          <i class="bi bi-unlock-fill me-2"></i>Authorize Attempt Extension
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4 pt-2">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div style="background:rgba(0, 255, 255, 0.12); border-radius:16px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid rgba(0, 255, 255, 0.35); box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);">
-            <i class="bi bi-person-check-fill fs-3" style="color:#00ffff;"></i>
-          </div>
-          <div>
-            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.15rem;">
-              Unlock session access for <span id="modalTargetCandidate" style="color:#00ffff; text-transform:uppercase;">CANDIDATE</span>?
-            </p>
-            <p style="color:#cbd5e1; font-size:0.88rem; margin:0; line-height:1.6;">
-              Executing this authorization will grant this candidate 1 extra assessment slot.
-            </p>
-          </div>
-        </div>
-
-        <div class="p-3 mb-3" style="background:#0b1329; border:1.5px solid #334155; border-radius:16px;">
-          <div class="fw-bold mb-2" style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#38bdf8; font-family:'Outfit', sans-serif;">
-            <i class="bi bi-shield-check me-1"></i> System Authorization Scope:
-          </div>
-          <ul class="mb-0 ps-3" style="font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
-            <li>Grants +1 additional evaluation attempt token.</li>
-            <li>Restores standard AI assessment studio access for candidate.</li>
-            <li>Keeps all prior history and evaluation scorecards completely intact.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
-        <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid #475569;">Cancel</button>
-        <button type="button" class="btn rounded-pill px-4 fw-bold flex-fill" id="confirmUnlockModalBtn" style="background:linear-gradient(135deg, #00ffff, #0284c7) !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; box-shadow:0 4px 18px rgba(0, 255, 255, 0.35);">
-          <i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-var pendingUnlockUserId = null;
-
-function triggerUnlockCandidate(userId, candidateName) {
-    pendingUnlockUserId = userId;
-    var nameSpan = document.getElementById('modalTargetCandidate');
-    if (nameSpan) nameSpan.textContent = candidateName || 'Candidate';
-    
-    var modalElem = document.getElementById('customUnlockModal');
-    if (modalElem && typeof bootstrap !== 'undefined') {
-        var bsModal = bootstrap.Modal.getOrCreateInstance(modalElem);
-        bsModal.show();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    var confirmBtn = document.getElementById('confirmUnlockModalBtn');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            if (!pendingUnlockUserId) return;
-            
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Authorizing...';
-
-            fetch('/admin/user/' + pendingUnlockUserId + '/unlock-attempt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'Could not unlock candidate attempt.'));
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot';
-                }
-            })
-            .catch(function(err) {
-                alert('Connection Error: ' + err);
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot';
-            });
-        });
-    }
-});
-</script>
+{% if running %}<script>setTimeout(function () { window.location.reload(); }, 4000);</script>{% endif %}
 <script>
 (function(){
     var c=document.getElementById('dbParticles');

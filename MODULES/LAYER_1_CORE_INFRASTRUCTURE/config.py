@@ -23,7 +23,18 @@ IS_PRODUCTION = bool(
     or os.environ.get("FLASK_ENV") == "production"
 )
 
-SECRET_KEY = os.environ.get("SECRET_KEY") or "supersecretkey_production_fallback_key_2026"
+# Sessions and one-time codes are signed with this key, so it must be secret. A key written in the source code would be
+# public, so there is no built-in fallback: production refuses to start without one, local runs get a random key.
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    # Only a real hosting environment must refuse: a local run that merely uses the Neon DATABASE_URL still starts.
+    if os.environ.get("RENDER") or os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("FLASK_ENV") == "production":
+        raise RuntimeError("SECRET_KEY is not set. Add a long random SECRET_KEY in the hosting dashboard.")
+    SECRET_KEY = secrets.token_hex(32)
+    print(" * NOTE: SECRET_KEY is not set, using a temporary random key (sessions reset when the server restarts).")
+
+# Optional: require an e-mailed code for the admin sign-in as well (set ADMIN_2FA=true)
+ADMIN_2FA = (os.environ.get("ADMIN_2FA") or "").strip().lower() in ("1", "true", "yes", "on")
 
 # Admin credentials
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
@@ -92,6 +103,9 @@ has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
 
 # Public base URL used for links inside emails (set APP_BASE_URL in production)
 APP_BASE_URL = (os.environ.get("APP_BASE_URL") or "https://ai-interview-platform-3-vdic.onrender.com").strip().rstrip("/")
+
+# Where user feedback is e-mailed: FEEDBACK_TO_EMAIL if set, otherwise the mailbox the app already sends from.
+FEEDBACK_TO_EMAIL = (os.environ.get("FEEDBACK_TO_EMAIL") or os.environ.get("MAIL_USERNAME") or os.environ.get("ADMIN_EMAIL") or "").strip()
 
 # Gemini API
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")

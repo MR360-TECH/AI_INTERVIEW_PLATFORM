@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <title>Preparation Library — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Search every preparation resource in one place.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg:#020510; --card:#08122a; --line:#2b4a68; --cyan:#00ffff; --text:#e2e8f0; --soft:#cbd5e1; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; color: #fff; font-family: 'Inter', sans-serif; padding: 0 0 70px;
+               background: radial-gradient(ellipse at 15% 0%, rgba(0,120,255,.18), transparent 55%), radial-gradient(ellipse at 90% 10%, rgba(100,0,255,.12), transparent 50%), var(--bg); }
+        .wrap { max-width: 1180px; margin: 0 auto; padding: 30px 20px 0; }
+        .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+        .top h1 { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 2rem; margin: 0 0 4px; }
+        .top p { color: var(--soft); margin: 0; max-width: 640px; line-height: 1.55; }
+        .btn-back { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; border: 1.5px solid #00ffff; background: rgba(0,255,255,.08); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; text-decoration: none; }
+        .btn-back:hover { background: #00ffff; color: #020510; }
+        .tracks { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+        .track, .chip { cursor: pointer; font-family: 'Outfit', sans-serif; }
+        .track { padding: 9px 16px; border-radius: 999px; background: #0b1633; border: 1.5px solid var(--line); color: var(--soft); font-weight: 700; font-size: .9rem; }
+        .track.on { background: var(--cyan); border-color: var(--cyan); color: #020510; }
+        .filters { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; background: var(--card); border: 1.5px solid var(--line); border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; }
+        .grp { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+        .grp small { color: var(--soft); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; font-size: .68rem; margin-right: 3px; }
+        .chip { padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: #0b1633; color: var(--text); font-size: .82rem; font-weight: 600; }
+        .chip.on { border-color: var(--cyan); color: var(--cyan); background: rgba(0,255,255,.09); }
+        .search { flex: 1; min-width: 200px; padding: 9px 13px; border-radius: 10px; border: 1.5px solid #5b7a99; background: #0b1329; color: #fff; font-size: .9rem; }
+        .search:focus { outline: none; border-color: var(--cyan); }
+        .count { color: var(--soft); font-size: .88rem; margin: 6px 2px 14px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; align-items: stretch; }
+        .res { position: relative; background: linear-gradient(180deg, #0a1733 0%, #08122a 100%); border: 1.5px solid var(--line); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+        .res:hover { border-color: var(--cyan); box-shadow: 0 10px 30px rgba(0,255,255,.12); transform: translateY(-2px); }
+        .res-top { display: flex; align-items: center; gap: 12px; }
+        .res-avatar { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.15rem;
+                      background: hsl(var(--h) 60% 20%); color: hsl(var(--h) 95% 78%); border: 1.5px solid hsl(var(--h) 60% 38%); }
+        .res-site { min-width: 0; flex: 1; }
+        .res-site b { display: block; font-family: 'Outfit', sans-serif; font-size: .95rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .res-site span { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; font-weight: 700; color: #7dd3fc; margin-top: 1px; }
+        .bm { flex-shrink: 0; background: transparent; border: 1.5px solid var(--line); color: var(--soft); border-radius: 11px; width: 38px; height: 38px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all .15s ease; }
+        .bm:hover { border-color: #fbbf24; color: #fbbf24; }
+        .bm.on { color: #fbbf24; border-color: #fbbf24; background: rgba(251,191,36,.12); }
+        .res-title { font-family: 'Outfit', sans-serif; font-size: 1.12rem; font-weight: 800; line-height: 1.3; margin: 2px 0 0; color: #fff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.6em; }
+        .res-desc { margin: 0; color: var(--text); font-size: .9rem; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 4.65em; }
+        .res-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+        .pill { font-size: .72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; border: 1px solid; letter-spacing: .02em; }
+        .pill-free { color: #34d399; border-color: rgba(52,211,153,.5); background: rgba(52,211,153,.1); }
+        .pill-track { color: #cbd5e1; border-color: #334155; background: #0b1329; }
+        .res-used { border-top: 1px solid #1e2f4a; padding-top: 10px; font-size: .78rem; color: #a9b8cc; line-height: 1.7; }
+        .res-used .lbl { color: #7f93ad; font-weight: 700; margin-right: 4px; }
+        .res-used a { display: inline-block; color: var(--cyan); text-decoration: none; font-weight: 700; background: rgba(0,255,255,.07); border: 1px solid rgba(0,255,255,.2); border-radius: 7px; padding: 0 7px; margin: 0 3px 3px 0; }
+        .res-used a:hover { background: rgba(0,255,255,.16); }
+        .res-used .more { color: #7f93ad; font-weight: 700; }
+        .go { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 14px; border-radius: 12px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .92rem; text-decoration: none; }
+        .go:hover { filter: brightness(1.08); color: #020510; }
+        .empty { display: none; text-align: center; color: var(--soft); padding: 30px; border: 1.5px dashed var(--line); border-radius: 14px; margin-top: 10px; }
+        .plans { margin-top: 36px; background: var(--card); border: 1.5px solid var(--line); border-radius: 18px; padding: 20px; }
+        .plans h2 { font-family: 'Outfit', sans-serif; margin: 0 0 4px; color: var(--cyan); font-size: 1.25rem; }
+        .plans .sub { color: var(--soft); font-size: .9rem; margin-bottom: 12px; }
+        .days { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+        .day { display: block; background: #0b1633; border: 1.5px solid var(--line); border-radius: 12px; padding: 11px 12px; font-size: .86rem; color: var(--text); text-decoration: none; position: relative; }
+        .day:hover { border-color: var(--cyan); }
+        .day b { display: block; color: var(--cyan); font-family: 'Outfit', sans-serif; margin-bottom: 3px; }
+        .day.done { border-color: rgba(52,211,153,.6); background: rgba(52,211,153,.07); }
+        .day.done b { color: #34d399; }
+        .day .tick { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; border-radius: 7px; border: 1.5px solid var(--line); background: #08122a; color: #34d399; font-size: .8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .day.done .tick { background: #34d399; color: #020510; border-color: #34d399; }
+        @media (max-width: 600px) { .top h1 { font-size: 1.5rem; } .filters { gap: 12px; } }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+</head>
+<body>
+<div class="wrap">
+    <div class="top">
+        <div>
+            <h1>Preparation Library</h1>
+            <p>Every preparation link in one place. Pick a track, narrow by format, search by topic, and save what you want to study.</p>
+        </div>
+        <a href="/tech-questions" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+
+    <div class="tracks" id="tracks">
+        <button type="button" class="track on" data-track="">All</button>
+        {% for t in tracks %}<button type="button" class="track" data-track="{{ t }}">{{ t }}</button>{% endfor %}
+    </div>
+
+    <div class="filters">
+        <input class="search" id="q" type="search" placeholder="Search by topic, site or title..." aria-label="Search resources" autocomplete="off">
+        <div class="grp" id="gFmt"><small>Format</small>
+            <button type="button" class="chip on" data-fmt="">All</button>
+            {% for f in formats %}<button type="button" class="chip" data-fmt="{{ f }}">{{ f }}</button>{% endfor %}
+        </div>
+        <div class="grp"><button type="button" class="chip" id="savedOnly"><i class="bi bi-bookmark-star-fill"></i> Saved only</button></div>
+    </div>
+    <div class="count" id="count" aria-live="polite"></div>
+
+    <div class="grid" id="grid">
+        {% for it in items %}
+        <article class="res" data-track="{{ it.tracks|join('|') }}" data-format="{{ it.format }}" data-url="{{ it.url }}" style="--h: {{ it.hue }}"
+                 data-text="{{ (it.label ~ ' ' ~ it.site ~ ' ' ~ it.desc ~ ' ' ~ (it.hubs|map(attribute='name')|join(' ')))|lower }}">
+            <div class="res-top">
+                <span class="res-avatar" aria-hidden="true">{{ it.site[0]|upper }}</span>
+                <div class="res-site"><b>{{ it.site }}</b><span><i class="bi {{ it.format_icon }}"></i> {{ it.format }}</span></div>
+                <button type="button" class="bm {{ 'on' if it.url in saved }}" title="Save for later" aria-label="Save for later" aria-pressed="{{ 'true' if it.url in saved else 'false' }}"><i class="bi bi-bookmark-star-fill"></i></button>
+            </div>
+            <h3 class="res-title">{{ it.label }}</h3>
+            <p class="res-desc">{{ it.desc }}</p>
+            <div class="res-meta"><span class="pill pill-free">FREE</span><span class="pill pill-track">{{ it.tracks[0] }}{% if it.tracks|length > 1 %} +{{ it.tracks|length - 1 }}{% endif %}</span></div>
+            <div class="res-used"><span class="lbl">Used for</span>{% for h in it.hubs[:3] %}<a href="/tech-questions/{{ h.key }}">{{ h.name }}</a>{% endfor %}{% if it.hubs|length > 3 %}<span class="more">+{{ it.hubs|length - 3 }} more</span>{% endif %}</div>
+            <a class="go" target="_blank" rel="noopener noreferrer" href="{{ it.url }}">{{ it.cta }} <i class="bi bi-box-arrow-up-right"></i></a>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="empty" id="empty"><i class="bi bi-search" style="font-size:1.6rem"></i><br>Nothing matches these filters. Try removing one.</div>
+
+    <section class="plans" id="plans">
+        <h2><i class="bi bi-calendar-check-fill"></i> 7-day study plans</h2>
+        <div class="sub">Pick a plan, open one page a day, and tick each day when you finish. Your ticks stay on this device.</div>
+        <div class="tracks" id="planTabs">
+            {% for p in plans %}<button type="button" class="track {{ 'on' if loop.first }}" data-plan="{{ p.key }}">{{ p.name }}</button>{% endfor %}
+        </div>
+        {% for p in plans %}
+        <div class="days" data-plan-days="{{ p.key }}" {{ 'hidden' if not loop.first }}>
+            {% for title, href in p.days %}
+            <div class="day" data-key="{{ p.key }}-{{ loop.index }}">
+                <button type="button" class="tick" aria-label="Mark day {{ loop.index }} done"><i class="bi bi-check-lg"></i></button>
+                <b>Day {{ loop.index }}</b>
+                <a href="{{ href }}" style="color:inherit;text-decoration:none;">{{ title }}</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<script>
+(function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#grid .res'));
+    var state = { track: '', fmt: '', q: '', savedOnly: false };
+
+    function render() {
+        var shown = 0;
+        cards.forEach(function (c) {
+            var ok = (!state.track || c.dataset.track.split('|').indexOf(state.track) >= 0)
+                && (!state.fmt || c.dataset.format === state.fmt)
+                && (!state.q || c.dataset.text.indexOf(state.q) >= 0)
+                && (!state.savedOnly || c.querySelector('.bm').classList.contains('on'));
+            c.style.display = ok ? '' : 'none';
+            if (ok) shown++;
+        });
+        document.getElementById('count').textContent = shown + ' of ' + cards.length + ' resources';
+        document.getElementById('empty').style.display = shown ? 'none' : 'block';
+    }
+    function pick(container, attr, key) {
+        container.addEventListener('click', function (e) {
+            var b = e.target.closest('button'); if (!b || !(attr in b.dataset)) return;
+            Array.prototype.forEach.call(container.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); });
+            state[key] = b.dataset[attr]; render();
+        });
+    }
+    pick(document.getElementById('tracks'), 'track', 'track');
+    pick(document.getElementById('gFmt'), 'fmt', 'fmt');
+    document.getElementById('q').addEventListener('input', function (e) { state.q = e.target.value.trim().toLowerCase(); render(); });
+    document.getElementById('savedOnly').addEventListener('click', function (e) {
+        state.savedOnly = !state.savedOnly; e.currentTarget.classList.toggle('on', state.savedOnly); render();
+    });
+
+    document.getElementById('grid').addEventListener('click', function (e) {
+        var b = e.target.closest('.bm'); if (!b) return;
+        var url = b.closest('.res').dataset.url;
+        fetch('/library/bookmark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (d.status === 'ok') { b.classList.toggle('on', d.saved); b.setAttribute('aria-pressed', String(d.saved)); render(); } })
+            .catch(function () {});
+    });
+
+    // study plans: tabs + ticks kept in this browser only
+    var KEY = 'studyPlanDone';
+    var done = {};
+    try { done = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { done = {}; }
+    function paintDays() {
+        Array.prototype.forEach.call(document.querySelectorAll('.day'), function (d) { d.classList.toggle('done', !!done[d.dataset.key]); });
+    }
+    document.getElementById('plans').addEventListener('click', function (e) {
+        var t = e.target.closest('.tick');
+        if (t) {
+            var k = t.closest('.day').dataset.key; done[k] = !done[k];
+            try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (x) {}
+            paintDays(); return;
+        }
+        var tab = e.target.closest('#planTabs button');
+        if (tab) {
+            Array.prototype.forEach.call(document.querySelectorAll('#planTabs button'), function (x) { x.classList.toggle('on', x === tab); });
+            Array.prototype.forEach.call(document.querySelectorAll('[data-plan-days]'), function (g) { g.hidden = g.dataset.planDays !== tab.dataset.plan; });
+        }
+    });
+    paintDays();
+    render();
+})();
+</script>
+</body>
+</html>

@@ -1016,6 +1016,7 @@
         }
 
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 
@@ -1085,6 +1086,10 @@
             <button class="nav-item" data-bs-toggle="modal" data-bs-target="#howItWorksModal" id="helpNavBtn">
                 <span class="nav-icon"><i class="bi bi-question-circle-fill"></i></span>
                 Help / FAQ
+            </button>
+            <button type="button" class="nav-item" data-feedback-open data-feedback-page="dashboard" id="feedbackNavBtn">
+                <span class="nav-icon"><i class="bi bi-chat-heart-fill"></i></span>
+                Feedback
             </button>
             <a href="/logout" class="nav-item danger">
                 <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span>
@@ -1483,12 +1488,13 @@
         <!-- Automated Proctoring Rules Notice -->
         <div class="p-3 mt-3" style="background: rgba(0,255,255,0.06); border: 1.5px solid rgba(0,255,255,0.22); border-radius: 14px; color: #cbd5e1; font-size: 0.84rem;">
           <div class="d-flex align-items-center gap-2 mb-2 fw-bold" style="color: #00ffff; font-family: 'Outfit', sans-serif; font-size: 0.88rem;">
-            <i class="bi bi-shield-lock-fill"></i> Proctoring Security &amp; Examination Regulations
+            <i class="bi bi-shield-lock-fill"></i> Examination Integrity Rules
           </div>
           <ul class="mb-0 ps-3" style="line-height: 1.65; color: #94a3b8;">
-            <li><strong style="color:#f1f5f9;">Continuous Window Focus:</strong> Leaving the examination studio or switching browser tabs is strictly monitored by our automated proctoring system.</li>
-            <li><strong style="color:#f1f5f9;">Security Warning Strike:</strong> Navigating away from the assessment screen will issue a formal security warning strike on your session.</li>
-            <li><strong style="color:#f1f5f9;">Automatic Disqualification:</strong> Switching tabs again after receiving a warning strike will immediately terminate your session and disqualify your attempt on record.</li>
+            <li><strong style="color:#f1f5f9;">Stay in the exam window:</strong> do not switch tabs, windows or apps during the assessment.</li>
+            <li><strong style="color:#f1f5f9;">Type or speak your own answers:</strong> pasting into the answer box and copying the question are blocked.</li>
+            <li><strong style="color:#f1f5f9;">One window only:</strong> keep the interview open in a single browser or device.</li>
+            <li><strong style="color:#f1f5f9;">Every violation is a strike:</strong> a box tells you exactly what happened. Reaching the strike limit ends your session and it is recorded on your account.</li>
           </ul>
         </div>
       </div>
@@ -1525,9 +1531,11 @@
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
         <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Keep Resume</button>
-        <a href="/dashboard/remove-resume" class="btn btn-danger rounded-pill px-4 fw-bold">
-          <i class="bi bi-trash3 me-1"></i> Yes, Remove Resume
-        </a>
+        <form method="post" action="/dashboard/remove-resume" class="m-0">
+          <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+            <i class="bi bi-trash3 me-1"></i> Yes, Remove Resume
+          </button>
+        </form>
       </div>
     </div>
   </div>
@@ -1569,19 +1577,31 @@
             <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#34d399;letter-spacing:0.08em;font-family:'Outfit',sans-serif;margin-bottom:6px;">
               <i class="bi bi-mortarboard-fill me-1"></i> 2. Unlimited Practice Labs
             </div>
-            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">Private, ungraded sandboxes: Academic Viva, Topic Drills, &amp; Multilingual Fluency training.</div>
+            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">Private, ungraded sandboxes: Academic Viva, FluentFlow language practice, Debate with AI and Healthy Convo.</div>
           </div>
           <div style="background:var(--surface-alt);border:1.5px solid rgba(245, 158, 11, 0.3);border-radius:var(--radius-md);padding:16px 18px;position:relative;overflow:hidden;">
             <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#f59e0b;letter-spacing:0.08em;font-family:'Outfit',sans-serif;margin-bottom:6px;">
               <i class="bi bi-file-earmark-person-fill me-1"></i> 3. Resume Intelligence
             </div>
-            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">AI extracts your projects, technical skills, and experience to personalize all question scenarios.</div>
+            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">The AI reads your resume and uses your real projects and skills to personalise your formal assessment questions.</div>
           </div>
           <div style="background:var(--surface-alt);border:1.5px solid rgba(168, 85, 247, 0.3);border-radius:var(--radius-md);padding:16px 18px;position:relative;overflow:hidden;">
             <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#c084fc;letter-spacing:0.08em;font-family:'Outfit',sans-serif;margin-bottom:6px;">
               <i class="bi bi-buildings-fill me-1"></i> 4. Top Company Hub
             </div>
             <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">Curated preparation guides &amp; placement papers for Google, Microsoft, Amazon, TCS, Infosys, and more.</div>
+          </div>
+          <div style="background:var(--surface-alt);border:1.5px solid rgba(52, 211, 153, 0.3);border-radius:var(--radius-md);padding:16px 18px;position:relative;overflow:hidden;">
+            <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#34d399;letter-spacing:0.08em;font-family:'Outfit',sans-serif;margin-bottom:6px;">
+              <i class="bi bi-chat-heart-fill me-1"></i> 5. Feedback &amp; Reviews
+            </div>
+            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">Rate your experience and message us from the <strong>Feedback</strong> menu or from any report. Every message is read.</div>
+          </div>
+          <div style="background:var(--surface-alt);border:1.5px solid rgba(251, 191, 36, 0.3);border-radius:var(--radius-md);padding:16px 18px;position:relative;overflow:hidden;">
+            <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#fbbf24;letter-spacing:0.08em;font-family:'Outfit',sans-serif;margin-bottom:6px;">
+              <i class="bi bi-envelope-check-fill me-1"></i> 6. Emails &amp; Secure Sign-in
+            </div>
+            <div style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;">A welcome email, a feedback email after every assessment, and one-time login codes that expire in 10 minutes.</div>
           </div>
         </div>
 
@@ -1641,7 +1661,16 @@
               </div>
               <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Rubric Analysis &amp; Report</div>
               <p style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;margin:0;">
-                Receive a score out of 10.0, a detailed written evaluation report, and a printable scorecard.
+                Receive a score out of 10.0, a detailed written evaluation report, a printable scorecard and a feedback email with practical next steps.
+              </p>
+            </div>
+            <div style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;">
+              <div style="font-family:'Outfit',sans-serif;font-weight:900;color:#34d399;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">
+                Step 06 &bull; Feedback
+              </div>
+              <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Tell Us How It Went</div>
+              <p style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;margin:0;">
+                Use <strong>Feedback</strong> in the sidebar, or <strong>Give Feedback</strong> on your report, to rate the platform and send us your review.
               </p>
             </div>
           </div>
@@ -1659,13 +1688,21 @@
 
           <div style="background:rgba(239, 68, 68, 0.08);border:1px solid rgba(239, 68, 68, 0.3);border-radius:var(--radius-md);padding:16px 20px;margin-bottom:16px;">
             <div style="font-weight:800;color:#fca5a5;font-size:0.92rem;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
-              <i class="bi bi-camera-video-fill"></i> Automated Window Focus &amp; Proctoring Rule (2 Strikes)
+              <i class="bi bi-shield-exclamation"></i> Integrity Rules and Strikes
             </div>
-            <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;margin:0;">
-              Formal recruitment assessments enforce automated browser focus tracking. 
-              <strong>Strike 1</strong> triggers a high-visibility modal warning upon switching tabs. 
-              Switching tabs or leaving the screen a <strong>second time</strong> results in immediate examination termination and an official disqualification record.
+            <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;margin:0 0 8px;">
+              Formal recruitment assessments are protected by integrity rules. <strong>Every violation is one strike.</strong>
+              You always see a box that names the exact mistake, your strike count (shown on screen as <em>Strikes 1 / 2</em>) and a warning.
+              When you reach the strike limit set by the administrator, the assessment ends and is recorded as terminated.
             </p>
+            <ul style="font-size:0.82rem;color:#cbd5e1;line-height:1.65;margin:0;padding-left:20px;">
+              <li>Leaving the exam window (switching tab, window or app).</li>
+              <li>Pasting into the answer box, or copying the question text.</li>
+              <li>Opening the same interview in another browser or device while it is active.</li>
+              <li>Answering well after the time limit for a question.</li>
+              <li>Leaving fullscreen, when the administrator requires it.</li>
+            </ul>
+            <p style="font-size:0.8rem;color:#94a3b8;line-height:1.6;margin:8px 0 0;">Practice labs are never proctored. The time left on each question is kept by the server, so reloading the page does not give you extra time.</p>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:12px;">
@@ -1768,7 +1805,7 @@
               </h2>
               <div id="faqCollapseFive" class="accordion-collapse collapse" aria-labelledby="faqHeadingFive" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
-                  Practice Labs (Academic Viva, Topic Drills, and Multilingual Speaking) are <strong>100% free, private, and unlimited</strong>. They do NOT affect your official placement assessment scores, have zero time penalties, and are completely exempt from proctoring focus-loss rules.
+                  Practice Labs (Academic Viva Voce, FluentFlow, Debate with AI and Healthy Convo) are <strong>100% free, private, and unlimited</strong>. They do NOT affect your official placement assessment scores, have zero time penalties, and are completely exempt from proctoring focus-loss rules.
                 </div>
               </div>
             </div>
@@ -1814,7 +1851,115 @@
                 </div>
               </div>
             </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingNine">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseNine" aria-expanded="false" aria-controls="faqCollapseNine" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-file-earmark-person me-2 text-primary"></i> Does the AI really read my resume?
+                </button>
+              </h2>
+              <div id="faqCollapseNine" class="accordion-collapse collapse" aria-labelledby="faqHeadingNine" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Yes. In a formal assessment your resume text is given to the AI on every turn, and about one question in three refers to something written in it, such as a project or skill, by name. The AI is told never to invent anything that is not in your resume. Upload or update it with <strong>Update Resume</strong>. Practice labs do not use your resume.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingTen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTen" aria-expanded="false" aria-controls="faqCollapseTen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-mortarboard me-2 text-primary"></i> What are the four Practice Labs?
+                </button>
+              </h2>
+              <div id="faqCollapseTen" class="accordion-collapse collapse" aria-labelledby="faqHeadingTen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  <strong>Academic Viva Voce</strong>: an oral exam on a subject you choose. <strong>FluentFlow</strong>: speaking practice in any language with gentle corrections and English translations. <strong>Debate with AI</strong>: you pick a topic and a side, and the AI argues the opposite in two short lines. <strong>Healthy Convo</strong>: a warm, friendly chat on anything you like. When you finish, you get an encouraging practice report.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingEleven">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseEleven" aria-expanded="false" aria-controls="faqCollapseEleven" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-envelope-check me-2 text-primary"></i> Which emails will I receive?
+                </button>
+              </h2>
+              <div id="faqCollapseEleven" class="accordion-collapse collapse" aria-labelledby="faqHeadingEleven" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  A welcome email when you register (once), a feedback email after each formal assessment with your score, session ID and three next steps, a notice if a session was ended by the proctoring system, a message when an administrator unlocks another assessment, and one-time login codes. If an email does not arrive, check your spam folder and mark it as not spam.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingTwelve">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseTwelve" aria-expanded="false" aria-controls="faqCollapseTwelve" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-chat-heart me-2 text-primary"></i> How do I send feedback or a review?
+                </button>
+              </h2>
+              <div id="faqCollapseTwelve" class="accordion-collapse collapse" aria-labelledby="faqHeadingTwelve" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Click <strong>Feedback</strong> in the sidebar, or <strong>Give Feedback</strong> on any report. Choose a rating, a topic, write your message (10 to 1000 characters) and press <strong>Send feedback</strong>. A confirmation appears when it has been delivered. You can choose whether we may email you back. You can send up to 5 messages per hour.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingThirteen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseThirteen" aria-expanded="false" aria-controls="faqCollapseThirteen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-shield-lock me-2 text-primary"></i> How is my account protected?
+                </button>
+              </h2>
+              <div id="faqCollapseThirteen" class="accordion-collapse collapse" aria-labelledby="faqHeadingThirteen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Login codes expire after 10 minutes, work once, and are cancelled after 5 wrong attempts. Five wrong passwords in a row lock sign-in for 15 minutes. Passwords are stored in encrypted form, Google sign-in always lets you choose which account to use, and an account created with an email code is only created after you prove the mailbox. Never share a code with anyone.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingFourteen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFourteen" aria-expanded="false" aria-controls="faqCollapseFourteen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-lightning-charge me-2 text-primary"></i> What if the AI is slow or something fails during my assessment?
+                </button>
+              </h2>
+              <div id="faqCollapseFourteen" class="accordion-collapse collapse" aria-labelledby="faqHeadingFourteen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  The platform retries automatically and can switch to backup AI services, so questions normally appear within a few seconds. If an error still happens, your attempt is never counted against you. If the final evaluation is unavailable, your answers are kept and a <strong>Retry now</strong> button appears on your dashboard.
+                </div>
+              </div>
+            </div>
 
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingFifteen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseFifteen" aria-expanded="false" aria-controls="faqCollapseFifteen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-exclamation-octagon me-2 text-primary"></i> What does the violation box mean?
+                </button>
+              </h2>
+              <div id="faqCollapseFifteen" class="accordion-collapse collapse" aria-labelledby="faqHeadingFifteen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  During a scored assessment, the platform shows a box whenever an integrity rule is broken. It names the <strong>exact mistake</strong> (for example <em>You tried to paste text</em>), shows your strike count and tells you how many more violations will end the session. Press <strong>I Understand &amp; Continue</strong> to carry on. Your answers so far are safe. The strike counter beside the timer shows <em>Strikes 1 / 2</em>, and strikes are kept on the server, so reloading or clearing your browser does not reset them.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingSixteen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSixteen" aria-expanded="false" aria-controls="faqCollapseSixteen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-tools me-2 text-primary"></i> I saw “We hit a problem”. Did I lose my interview?
+                </button>
+              </h2>
+              <div id="faqCollapseSixteen" class="accordion-collapse collapse" aria-labelledby="faqHeadingSixteen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  No. That page means something went wrong on our side. Your interview is saved on the server and <strong>no attempt was used</strong>. Press <strong>Back</strong> and you will continue from where you left off, at the next question. If it happens again, wait a minute and try once more. The short reference code on the page helps the administrator find the cause.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;">
+              <h2 class="accordion-header" id="faqHeadingSeventeen">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapseSeventeen" aria-expanded="false" aria-controls="faqCollapseSeventeen" style="background:var(--surface-alt);color:var(--text-main);font-family:'Outfit',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:none;">
+                  <i class="bi bi-collection me-2 text-primary"></i> How do I use the Preparation Library and study plans?
+                </button>
+              </h2>
+              <div id="faqCollapseSeventeen" class="accordion-collapse collapse" aria-labelledby="faqHeadingSeventeen" data-bs-parent="#faqAccordion">
+                <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
+                  Open <strong>Resources</strong> and press <strong>Search all resources</strong>. Pick a track, narrow by format (guide, practice, course, mock interview and more), search by topic, and press the bookmark to save a link for later. Below the list, three <strong>7-day study plans</strong> (Software developer, Data and analytics, Banking and business) give you one page to study each day; tick a day when it is done. Saved links and ticks stay available the next time you visit.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2185,5 +2330,6 @@ sessionStorage.removeItem('interview_proctor_strikes');
 })();
 </script>
 
+{% include "_feedback_modal.html" %}
 </body>
 </html>

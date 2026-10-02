@@ -698,7 +698,22 @@
             color: #00ff9d !important;
             border: 1px solid rgba(0, 255, 255, 0.15) !important;
         }
+
+        /* ── interview integrity ── */
+        .strike-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .8rem; color: #34d399; background: rgba(16,185,129,.12); border: 1.5px solid rgba(16,185,129,.4); white-space: nowrap; }
+        .strike-pill.hit { color: #f87171; background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.45); }
+        .vb-pips { display: inline-flex; gap: 6px; }
+        .vb-pips .pip { width: 14px; height: 14px; border-radius: 50%; background: #334155; }
+        .vb-pips .pip.on { background: #ef4444; box-shadow: 0 0 10px rgba(239,68,68,.6); }
+        #fsGate { position: fixed; inset: 0; z-index: 1040; display: none; align-items: center; justify-content: center; background: rgba(2,5,16,.97); padding: 20px; }
+        #fsGate.on { display: flex; }
+        .fs-card { max-width: 460px; text-align: center; background: #08122a; border: 1.5px solid #2b4a68; border-top: 3px solid #00ffff; border-radius: 22px; padding: 34px 28px; color: #e2e8f0; }
+        .fs-card h3 { font-family: 'Outfit', sans-serif; color: #fff; font-weight: 800; margin: 12px 0 8px; font-size: 1.4rem; }
+        .fs-card p { line-height: 1.6; margin: 0 0 20px; }
+        .fs-icon { width: 64px; height: 64px; border-radius: 18px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: #00ffff; background: rgba(0,255,255,.08); border: 1.5px solid rgba(0,255,255,.3); }
+        .fs-btn { padding: 12px 26px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 800; cursor: pointer; }
         </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 
 <body>
@@ -760,6 +775,9 @@
                                     <div class="timer-bar-fill" id="timerBarFill"></div>
                                 </div>
                             </div>
+                            {% if integrity and integrity.server_strikes %}
+                            <span class="strike-pill" id="strikePill" title="Every violation of the integrity rules is a strike">Strikes 0 / {{ integrity.max_strikes }}</span>
+                            {% endif %}
 
                             {% if is_practice %}
                             <button type="button" class="btn btn-finish" data-bs-toggle="modal" data-bs-target="#confirmFinishModal">
@@ -805,6 +823,11 @@
                     <div class="question-text-box">{{ question }}</div>
 
                     <form method="POST" id="answerForm" enctype="multipart/form-data">
+                        {% if integrity %}
+                        <input type="hidden" name="t_ms" id="tMs" value="">
+                        <input type="hidden" name="keys" id="keysCount" value="">
+                        <input type="hidden" name="voice" id="voiceUsed" value="0">
+                        {% endif %}
 
                         {% if q_num == 1 and not is_practice %}
                         <div class="upload-box mb-3">
@@ -913,9 +936,17 @@
           </div>
           <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
             <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
-            <a href="{% if is_practice %}/quit-interview{% else %}/dashboard{% endif %}" class="btn btn-danger rounded-pill px-4 fw-bold text-decoration-none">
+            {% if is_practice %}
+            <form method="post" action="/quit-interview" class="m-0">
+              <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                <i class="bi bi-box-arrow-right me-1"></i> Yes, Exit Now
+              </button>
+            </form>
+            {% else %}
+            <a href="/dashboard" class="btn btn-danger rounded-pill px-4 fw-bold text-decoration-none">
               <i class="bi bi-box-arrow-right me-1"></i> Yes, Exit Now
             </a>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -965,8 +996,9 @@
         const waveformWrap    = document.getElementById('waveformWrap');
 
         // ── DYNAMIC COUNTDOWN TIMER (Admin configurable: 20s to 180s) ──
-        const TOTAL_SECONDS = parseInt("{{ timer_seconds or 90 }}", 10) || 90;
-        let secondsLeft = TOTAL_SECONDS;
+        const TOTAL_SECONDS = parseInt("{{ timer_total or timer_seconds or 90 }}", 10) || 90;
+        let secondsLeft = parseInt("{{ timer_seconds if timer_seconds is not none else 90 }}", 10);
+        if (isNaN(secondsLeft)) secondsLeft = TOTAL_SECONDS;
         const timerText = document.getElementById('timerText');
         const timerBarFill = document.getElementById('timerBarFill');
         const timerContainer = document.getElementById('timerContainer');
@@ -1232,10 +1264,227 @@
     </div>
     {% endif %}
 
+    {% if integrity %}
+    <!-- Violation box: shown for every counted violation -->
+    <div class="modal fade" id="violationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="vbHeading" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:24px; border: 1.5px solid rgba(239, 68, 68, 0.55) !important; background: rgba(8, 14, 30, 0.97) !important; box-shadow: 0 0 50px rgba(239, 68, 68, 0.25) !important;">
+          <div class="modal-header border-0 p-4 pb-2">
+            <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="vbHeading" style="color: #f87171; font-family: 'Outfit', sans-serif; font-size: 1.2rem;">
+              <i class="bi bi-exclamation-octagon-fill fs-3"></i> VIOLATION DETECTED
+            </h5>
+          </div>
+          <div class="modal-body p-4 pt-2" style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.6;">
+            <div class="p-3 mb-3" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 14px;">
+              <div id="vbTitle" style="color: #fca5a5; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: 1.05rem;"></div>
+              <div id="vbMistake" style="color: #e2e8f0; margin-top: 4px;"></div>
+              <div id="vbDetail" style="color: #fca5a5; font-size: 0.85rem; margin-top: 6px;"></div>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <strong id="vbStrike" style="color: #fff; font-family: 'Outfit', sans-serif;"></strong>
+              <span id="vbPips" class="vb-pips" aria-hidden="true"></span>
+            </div>
+            <div class="p-3" style="background: rgba(251, 191, 36, 0.10); border: 1px dashed rgba(251, 191, 36, 0.5); border-radius: 12px; color: #fde68a; font-size: 0.9rem;">
+              <i class="bi bi-shield-lock-fill me-1" style="color: #fbbf24;"></i> <span id="vbWarning"></span>
+            </div>
+            <p class="mt-3 mb-0" style="font-size: 0.82rem; color: #94a3b8;">Every violation counts as a strike under the Candidate Integrity rules. Your answers so far are safe.</p>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0">
+            <button type="button" class="btn w-100 fw-bold py-2" id="vbOk" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #00ffff, #0088ff); color: #020510; border-radius: 12px; font-family: 'Outfit', sans-serif; border: none;">
+              <i class="bi bi-shield-check me-2"></i>I Understand &amp; Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if integrity.fullscreen %}
+    <!-- Fullscreen gate (only when the admin requires fullscreen) -->
+    <div id="fsGate" role="dialog" aria-modal="true" aria-labelledby="fsTitle">
+      <div class="fs-card">
+        <div class="fs-icon"><i class="bi bi-fullscreen"></i></div>
+        <h3 id="fsTitle">This assessment runs in fullscreen</h3>
+        <p>To keep every session fair, the assessment must stay in fullscreen. Leaving fullscreen counts as a violation.</p>
+        <button type="button" id="fsEnter" class="fs-btn"><i class="bi bi-arrows-fullscreen me-2"></i> Enter fullscreen</button>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/speech.js') }}"></script>
 
-    {% if not is_practice and (enable_warning_strikes is not defined or enable_warning_strikes) %}
+    {% if integrity %}
+    <!-- ── Interview integrity (admin-controlled): strikes, violation box, copy/paste block, fullscreen, one session ── -->
+    <script>
+    (function () {
+        var CFG = {{ integrity|tojson }};
+        var form = document.getElementById('answerForm');
+        var box = document.getElementById('answerBox');
+        var modalEl = document.getElementById('violationModal');
+        var pill = document.getElementById('strikePill');
+        var overlay = document.getElementById('loadingOverlay');
+        var submitting = false, terminating = false, lastSent = {};
+
+        // typing activity travels with the answer; it is only used for the admin's review flags
+        var t0 = Date.now(), keys = 0, voice = false;
+        var fT = document.getElementById('tMs'), fK = document.getElementById('keysCount'), fV = document.getElementById('voiceUsed');
+        function refreshFields() {
+            if (fT) fT.value = String(Date.now() - t0);
+            if (fK) fK.value = String(keys);
+            if (fV) fV.value = voice ? '1' : '0';
+        }
+        if (box) box.addEventListener('input', function (e) {
+            var t = e.inputType || '';
+            if (t !== 'insertFromPaste' && t !== 'insertFromDrop') keys++;
+        });
+        var tag = document.getElementById('listeningTag');
+        if (tag && window.MutationObserver) {
+            new MutationObserver(function () { if (tag.classList.contains('active')) voice = true; })
+                .observe(tag, { attributes: true, attributeFilter: ['class'] });
+        }
+        if (form) {
+            var nativeSubmit = form.submit.bind(form);
+            form.submit = function () { submitting = true; refreshFields(); nativeSubmit(); };
+        }
+
+        // the violation box: the exact mistake, the strike count and the warning
+        function setPill(n, max) {
+            if (!pill) return;
+            pill.textContent = 'Strikes ' + n + ' / ' + max;
+            pill.classList.toggle('hit', n > 0);
+        }
+        function showBox(b) {
+            document.getElementById('vbTitle').textContent = b.title;
+            document.getElementById('vbMistake').textContent = b.mistake;
+            var d = document.getElementById('vbDetail');
+            d.textContent = b.detail || '';
+            d.style.display = b.detail ? '' : 'none';
+            document.getElementById('vbStrike').textContent = 'Strike ' + b.strikes + ' of ' + b.max;
+            var pips = document.getElementById('vbPips');
+            pips.innerHTML = '';
+            for (var i = 0; i < b.max; i++) {
+                var s = document.createElement('span');
+                s.className = 'pip' + (i < b.strikes ? ' on' : '');
+                pips.appendChild(s);
+            }
+            document.getElementById('vbWarning').textContent = b.warning || '';
+            setPill(b.strikes, b.max);
+            if (window.bootstrap && modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+        setPill(CFG.strikes, CFG.max_strikes);
+        if (CFG.pending) showBox(CFG.pending);
+
+        function send(payload, tries) {
+            fetch('/interview/violation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.status === 'terminated') {
+                        terminating = true;
+                        if (overlay) {
+                            var l = overlay.querySelector('.cyber-loader-title');
+                            if (l) l.textContent = 'SESSION ENDED - INTEGRITY RULES BROKEN';
+                            overlay.classList.add('active');
+                        }
+                        window.location.href = d.redirect;
+                    } else if (d.status === 'counted' && d.box) {
+                        showBox(d.box);
+                    } else if (d.redirect) {
+                        window.location.href = d.redirect;
+                    }
+                })
+                .catch(function () { if (tries < 5) setTimeout(function () { send(payload, tries + 1); }, 4000); });
+        }
+        function report(kind, extra) {
+            if (terminating || submitting) return;
+            var now = Date.now();
+            if (lastSent[kind] && now - lastSent[kind] < 1500) return;
+            lastSent[kind] = now;
+            send(Object.assign({ kind: kind }, extra || {}), 0);
+        }
+        window.__integrityReport = report;           // used by the automated browser test
+
+        // leaving the exam window
+        var hiddenAt = null;
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) { hiddenAt = Date.now(); return; }
+            if (hiddenAt) {
+                var away = Math.round((Date.now() - hiddenAt) / 1000);
+                hiddenAt = null;
+                report('tab_switch', { away_s: away });
+            }
+        });
+
+        // copy and paste
+        if (CFG.block_copy_paste) {
+            document.addEventListener('paste', function (e) {
+                if (e.target && e.target.id === 'answerBox') { e.preventDefault(); report('paste'); }
+            }, true);
+            if (box) box.addEventListener('drop', function (e) {
+                if (e.dataTransfer && e.dataTransfer.getData('text')) { e.preventDefault(); report('paste'); }
+            });
+            var onCopy = function (e) {
+                var sel = window.getSelection();
+                var qb = document.querySelector('.question-text-box');
+                if (sel && sel.rangeCount && String(sel).length && qb && qb.contains(sel.anchorNode)) { e.preventDefault(); report('copy'); }
+            };
+            document.addEventListener('copy', onCopy, true);
+            document.addEventListener('cut', onCopy, true);
+        }
+        document.addEventListener('contextmenu', function (e) {
+            if (!e.target.closest('textarea') && !e.target.closest('input')) e.preventDefault();
+        });
+
+        // fullscreen (optional)
+        if (CFG.fullscreen && document.documentElement.requestFullscreen) {
+            var gate = document.getElementById('fsGate'), entered = false;
+            var showGate = function () { if (gate) gate.classList.add('on'); };
+            var hideGate = function () { if (gate) gate.classList.remove('on'); };
+            var enter = function () {
+                var p = document.documentElement.requestFullscreen();
+                if (p && p.then) {
+                    p.then(function () { entered = true; try { sessionStorage.setItem('fsOn', '1'); } catch (x) {} hideGate(); })
+                     .catch(function () { entered = false; hideGate(); });       // not allowed here: do not trap the candidate
+                } else { entered = true; hideGate(); }
+            };
+            document.addEventListener('fullscreenchange', function () {
+                if (document.fullscreenElement) { entered = true; return; }
+                if (entered && !submitting && !terminating) {
+                    entered = false;
+                    try { sessionStorage.removeItem('fsOn'); } catch (x) {}
+                    report('fullscreen_exit');
+                    showGate();
+                }
+            });
+            var had = false;
+            try { had = sessionStorage.getItem('fsOn') === '1'; } catch (x) {}
+            if (had) {
+                var once = function () { document.removeEventListener('click', once, true); document.removeEventListener('keydown', once, true); enter(); };
+                document.addEventListener('click', once, true);
+                document.addEventListener('keydown', once, true);
+            } else {
+                showGate();
+            }
+            var fsBtn = document.getElementById('fsEnter');
+            if (fsBtn) fsBtn.addEventListener('click', enter);
+        }
+
+        // one active session: keep this browser registered as the holder
+        if (CFG.single_session) {
+            var beat = function () {
+                fetch('/interview/heartbeat', { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) { if (d.status === 'displaced' || d.status === 'gone') window.location.href = d.redirect; })
+                    .catch(function () {});
+            };
+            setInterval(beat, 20000);
+            document.addEventListener('visibilitychange', function () { if (!document.hidden) beat(); });
+        }
+    })();
+    </script>
+    {% endif %}
+
+    {% if not is_practice and (enable_warning_strikes is not defined or enable_warning_strikes) and not (integrity and integrity.server_strikes) %}
     <!-- ── Automated Proctoring & Anti-Cheating Security System (Explicit Modal-Acknowledge Policy) ── -->
     <script>
     (function() {

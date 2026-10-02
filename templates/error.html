@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <title>{{ title }} — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; color: #fff; font-family: 'Inter', sans-serif;
+               background: radial-gradient(ellipse at 15% 0%, rgba(0,120,255,.20), transparent 55%), radial-gradient(ellipse at 90% 100%, rgba(0,255,220,.10), transparent 50%), #020510; }
+        .err-card { width: 100%; max-width: 560px; background: #08122a; border: 1.5px solid #2b4a68; border-top: 3px solid {{ '#fbbf24' if code == 404 else '#00ffff' }}; border-radius: 22px; padding: 38px 34px 30px; box-shadow: 0 24px 70px rgba(0,0,0,.6); text-align: center; }
+        .err-icon { width: 72px; height: 72px; border-radius: 20px; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: {{ '#fbbf24' if code == 404 else '#00ffff' }}; background: rgba(0,255,255,.08); border: 1.5px solid rgba(0,255,255,.3); }
+        .err-eyebrow { font-family: 'Outfit', sans-serif; font-size: .75rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #cbd5e1; }
+        h1 { font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 900; margin: 6px 0 10px; letter-spacing: -.01em; }
+        .err-msg { color: #e2e8f0; font-size: 1rem; line-height: 1.65; margin: 0 0 22px; }
+        .err-safe { display: flex; gap: 10px; align-items: flex-start; text-align: left; background: rgba(16,185,129,.10); border: 1.5px solid rgba(16,185,129,.4); border-radius: 14px; padding: 12px 14px; color: #a7f3d0; font-size: .92rem; line-height: 1.55; margin-bottom: 20px; }
+        .err-safe i { color: #34d399; font-size: 1.1rem; margin-top: 1px; }
+        .err-warn { display: flex; gap: 10px; align-items: flex-start; text-align: left; background: rgba(251,191,36,.10); border: 1.5px solid rgba(251,191,36,.45); border-radius: 14px; padding: 12px 14px; color: #fde68a; font-size: .92rem; line-height: 1.55; margin-bottom: 20px; }
+        .err-warn i { color: #fbbf24; font-size: 1.1rem; margin-top: 1px; }
+        .err-steps { list-style: none; counter-reset: s; margin: 0 0 24px; padding: 0; text-align: left; display: grid; gap: 10px; }
+        .err-steps li { counter-increment: s; display: flex; gap: 12px; align-items: flex-start; color: #e2e8f0; font-size: .95rem; line-height: 1.5; }
+        .err-steps li::before { content: counter(s); flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; background: rgba(0,255,255,.1); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: .8rem; display: flex; align-items: center; justify-content: center; }
+        .err-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 160px; padding: 13px 28px; border-radius: 13px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem; text-decoration: none; box-shadow: 0 6px 22px rgba(0,255,255,.3); }
+        .err-btn:hover { filter: brightness(1.08); color: #020510; }
+        .err-ref { margin-top: 20px; color: #a9b8cc; font-size: .8rem; }
+        .err-ref b { color: #cbd5e1; font-family: 'Outfit', sans-serif; letter-spacing: .04em; }
+        @media (max-width: 480px) { .err-card { padding: 30px 20px 24px; } h1 { font-size: 1.4rem; } .err-btn { width: 100%; } }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+</head>
+<body>
+    <main class="err-card" role="main">
+        <div class="err-icon"><i class="bi {{ icon }}"></i></div>
+        <div class="err-eyebrow">{{ eyebrow }}</div>
+        <h1>{{ title }}</h1>
+        <p class="err-msg">{{ message }}</p>
+
+        {% if notice %}
+        <div class="err-warn"><i class="bi bi-exclamation-triangle-fill"></i><div>{{ notice }}</div></div>
+        {% endif %}
+
+        {% if in_interview %}
+        <div class="err-safe">
+            <i class="bi bi-shield-check"></i>
+            <div><strong>Your interview is safe.</strong> Your progress has been saved and this error did not use any of your attempts.</div>
+        </div>
+        {% endif %}
+
+        <ol class="err-steps">
+            <li><span>Press <strong>Back</strong>{% if in_interview %} to return to your interview. You will continue from where you left off.{% else %}.{% endif %}</span></li>
+            <li><span>Try again. A second try usually works.</span></li>
+            <li><span>If it keeps happening, wait a minute and try once more{% if not in_interview %}, or contact your administrator{% endif %}.</span></li>
+        </ol>
+
+        <a href="{{ back_url }}" class="err-btn"><i class="bi bi-arrow-left"></i> Back</a>
+
+        {% if reference %}<div class="err-ref">Reference: <b>{{ reference }}</b></div>{% endif %}
+    </main>
+</body>
+</html>

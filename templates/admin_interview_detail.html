@@ -545,7 +545,95 @@
         ::-webkit-scrollbar-track{background:transparent;}
         ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
         ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
+
+        /* ── Report page structure ── */
+        .rp-top { align-items: center; }
+        .rp-crumbs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .9rem; font-weight: 600; color: #cbd5e1; }
+        .rp-crumbs a { color: #cbd5e1; text-decoration: none; }
+        .rp-crumbs a:hover { color: #00ffff; }
+        .rp-crumbs i { font-size: .7rem; color: #64748b; }
+        .rp-crumb-now { color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; }
+        .rp-hero { display: flex; justify-content: space-between; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 20px; }
+        .rp-hero-main { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+        .rp-hero-side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+        .rp-eyebrow { font-family: 'Outfit', sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #00ffff; }
+        .rp-title { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.7rem; margin: 2px 0 8px; color: #fff; text-transform: uppercase; letter-spacing: -.01em; }
+        .rp-meta { display: flex; gap: 14px; flex-wrap: wrap; color: #cbd5e1; font-size: .9rem; font-weight: 600; }
+        .rp-meta i { margin-right: 4px; color: #00ffff; }
+        .rp-id { cursor: pointer; padding: 3px 12px; border-radius: 8px; background: rgba(0,255,255,.12); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .85rem; }
+        .rp-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+        .rp-main, .rp-aside { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+        .rp-card { margin: 0 !important; padding: 22px !important; }
+        .rp-card-title { font-family: 'Outfit', sans-serif; font-size: .8rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #00ffff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .rp-alert { background: rgba(239,68,68,.12); border: 1.5px solid rgba(239,68,68,.4); border-radius: 16px; padding: 16px 18px; color: #cbd5e1; font-size: .92rem; line-height: 1.6; }
+        .rp-alert-title { color: #f87171; font-family: 'Outfit', sans-serif; font-weight: 800; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+        .rp-alert-reason { color: #fca5a5; font-weight: 700; }
+        .rp-bar { position: relative; height: 14px; border-radius: 14px; background: #1e293b; margin: 26px 0 6px; }
+        .rp-bar-fill { height: 100%; border-radius: 14px; }
+        .rp-bar-fill.ok { background: linear-gradient(90deg, #10b981, #00ffff); }
+        .rp-bar-fill.bad { background: linear-gradient(90deg, #ef4444, #f97316); }
+        .rp-bar-mark { position: absolute; top: -6px; bottom: -6px; width: 3px; background: #fbbf24; border-radius: 3px; }
+        .rp-bar-mark span { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .72rem; font-weight: 800; color: #fbbf24; font-family: 'Outfit', sans-serif; }
+        .rp-bar-scale { display: flex; justify-content: space-between; color: #a9b8cc; font-size: .75rem; font-weight: 700; }
+        .rp-note { color: #cbd5e1; font-size: .88rem; line-height: 1.6; margin: 10px 0 0; }
+        .rp-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+        .rp-notes li { display: flex; gap: 14px; background: #0b1329; border: 1px solid #334155; border-radius: 14px; padding: 14px 16px; }
+        .rp-notes p { margin: 0; color: #e2e8f0; font-size: .96rem; line-height: 1.75; }
+        .rp-note-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 9px; background: rgba(0,255,255,.12); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: .85rem; display: flex; align-items: center; justify-content: center; }
+        .rp-person { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .rp-avatar { width: 52px; height: 52px; border-radius: 15px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rp-person-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; color: #00ffff; text-decoration: none; text-transform: uppercase; }
+        .rp-person-name:hover { text-decoration: underline; }
+        .rp-badges { margin-top: 4px; }
+        .rp-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 7px; font-size: .72rem; font-weight: 800; border: 1.5px solid; }
+        .rp-badge.green { color: #34d399; background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.4); }
+        .rp-badge.red { color: #f87171; background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.4); }
+        .rp-badge.blue { color: #60a5fa; background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.4); }
+        .rp-facts { margin: 0; display: grid; gap: 0; }
+        .rp-facts > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #1e293b; font-size: .88rem; }
+        .rp-facts > div:last-child { border-bottom: 0; }
+        .rp-facts dt { color: #a9b8cc; font-weight: 700; flex-shrink: 0; }
+        .rp-facts dd { margin: 0; color: #fff; font-weight: 700; text-align: right; word-break: break-word; text-transform: capitalize; }
+        .rp-facts dd a { color: #00ffff; text-decoration: none; text-transform: none; }
+        .rp-skills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+        .rp-skills span { font-size: .72rem; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; color: #00ffff; border: 1px solid rgba(0,255,255,.3); background: rgba(0,255,255,.1); }
+        .rp-links { display: flex; gap: 12px; margin-top: 12px; }
+        .rp-links a { color: #cbd5e1; font-size: .85rem; font-weight: 700; text-decoration: none; }
+        .rp-links a:hover { color: #00ffff; }
+        .rp-actions { display: grid; gap: 10px; }
+        .rp-actions form { margin: 0; }
+        .rp-act { width: 100%; display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: 12px; background: #0b1329; border: 1.5px solid #475569; color: #e2e8f0; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .88rem; text-decoration: none; cursor: pointer; text-align: left; }
+        .rp-act:hover { border-color: #00ffff; color: #00ffff; }
+        .rp-act.cyan { border-color: #00ffff; color: #00ffff; background: rgba(0,255,255,.08); }
+        .rp-act.danger { border-color: rgba(239,68,68,.5); color: #f87171; background: rgba(239,68,68,.08); }
+        .rp-act.danger:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+        .rp-act.off { cursor: default; color: #a9b8cc; border-style: dashed; }
+        .rp-others { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+        .rp-others li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #0b1329; border: 1px solid #334155; border-radius: 12px; padding: 10px 12px; }
+        .rp-others a { text-decoration: none; min-width: 0; }
+        .rp-other-main { display: block; color: #fff; font-weight: 700; font-size: .9rem; }
+        .rp-other-sub { display: block; color: #a9b8cc; font-size: .75rem; font-weight: 600; }
+        @media (max-width: 960px) { .rp-grid { grid-template-columns: 1fr; } .rp-hero-side { align-items: flex-start; } }
+        @media print {
+            .rp-noprint, .rp-top { display: none !important; }
+            .rp-grid { display: block; }
+            .rp-card, .rp-hero { background: #fff !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; page-break-inside: avoid; margin-bottom: 14px !important; }
+            .rp-title, .rp-person-name, .rp-notes p, .rp-facts dd, .rp-facts dd a, .rp-note, .rp-meta, .rp-card-title { color: #1a2036 !important; }
+            .rp-notes li, .rp-facts > div { background: #fff !important; border-color: #e2e8f0 !important; }
+            .rp-bar, .rp-bar-fill, .rp-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+
+        .rp-only-you { margin-left: auto; text-transform: none; letter-spacing: 0; font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 700; color: #a9b8cc; }
+        .ig-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .ig-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+        .ig-log li { background: #0b1329; border: 1px solid #334155; border-left: 4px solid #ef4444; border-radius: 12px; padding: 12px 14px; }
+        .ig-log li.flag { border-left-color: #60a5fa; }
+        .ig-log-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; color: #fff; }
+        .ig-log-detail { color: #e2e8f0; font-size: .9rem; line-height: 1.55; margin-top: 4px; }
+        .ig-log-meta { color: #a9b8cc; font-size: .76rem; font-weight: 600; margin-top: 6px; }
+        @media print { #integrityLog { display: none !important; } }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -562,219 +650,199 @@
 <div class="page-shell">
 
     <!-- Top Bar -->
-    <div class="top-bar anim anim-1">
-        <button onclick="window.print()" class="btn-pdf-download">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
-                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 1 0-.708.708z"/>
-            </svg>
-            Download PDF Report
-        </button>
-
+    <div class="top-bar anim anim-1 rp-top">
+        <nav class="rp-crumbs" aria-label="Breadcrumb">
+            <a href="/admin">Dashboard</a>
+            <i class="bi bi-chevron-right"></i>
+            {% if candidate %}<a href="/admin/user/{{ candidate.id }}">{{ candidate.full_name }}</a>{% else %}<span>Candidate</span>{% endif %}
+            <i class="bi bi-chevron-right"></i>
+            <span class="rp-crumb-now">{{ result.session_code }}</span>
+        </nav>
         <div class="d-flex align-items-center gap-2">
             <button class="back-btn" id="themeToggle" title="Toggle Theme" style="padding: 9px 14px;">
                 <i class="bi bi-moon-fill" id="themeToggleIcon" style="transition: transform 0.2s ease;"></i>
             </button>
-            <a href="/admin" class="back-btn-global"><i class="bi bi-arrow-left"></i> BACK</a>
+            <a href="/admin" class="back-btn-global"><i class="bi bi-arrow-left"></i> Back</a>
         </div>
     </div>
 
-    <!-- Candidate Profile Section -->
-    <div class="profile-hero mb-4" style="background: #08122a !important; border: 1.5px solid #334155 !important; border-radius: 24px; padding: 36px 40px; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
-        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em;">
-                <i class="bi bi-person-badge-fill" style="color: #00ffff;"></i> Candidate Profile
+    <!-- Report hero -->
+    <section class="panel anim anim-2 rp-hero">
+        <div class="rp-hero-main">
+            <div class="score-ring-container">
+                <div class="score-ring" style="--ring-color: {{ '#10b981' if recommended else '#ef4444' }}; --ring-pct: {{ score_percent }}%;"></div>
+                <span class="score-ring-inner">{{ result.score }}</span>
             </div>
-            {% if candidate and (candidate.resume_filename or candidate.resume_text) %}
-            <button class="btn" data-bs-toggle="modal" data-bs-target="#userResumeModal" style="border: 1.5px solid rgba(0, 255, 255, 0.35); background: rgba(0, 255, 255, 0.08); color: #00ffff; font-weight: 700; font-size: 0.82rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="bi bi-file-earmark-text"></i> User Resume
-            </button>
+            <div>
+                <div class="rp-eyebrow">Placement evaluation report</div>
+                <h1 class="rp-title">{{ result.domain or 'General assessment' }}</h1>
+                <div class="rp-meta">
+                    <span><i class="bi bi-person-fill"></i> {{ candidate.full_name if candidate else 'Unknown candidate' }}</span>
+                    <span><i class="bi bi-clock"></i> {{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') if result.interview_datetime else '—' }}</span>
+                    <span class="copyable-id-badge rp-id" onclick="copySessionId('{{ result.session_code }}', this);" title="Click to copy Session ID: {{ result.session_code }}" role="button" tabindex="0">
+                        <i class="bi bi-fingerprint"></i> {{ result.session_code }} <i class="bi bi-copy"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="rp-hero-side">
+            {% if terminated %}
+            <div class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;"><i class="bi bi-shield-slash-fill"></i> Terminated</div>
+            {% elif recommended %}
+            <div class="verdict-pill selected"><i class="bi bi-check-circle-fill"></i> Recommended</div>
+            {% else %}
+            <div class="verdict-pill rejected"><i class="bi bi-x-circle-fill"></i> Not Recommended</div>
             {% endif %}
+            <button onclick="window.print()" class="btn-pdf-download rp-noprint">
+                <i class="bi bi-download"></i> Download PDF Report
+            </button>
         </div>
+    </section>
 
-        <div class="d-flex align-items-center gap-4 flex-wrap mb-4">
-            <div class="profile-avatar" style="width: 68px; height: 68px; border-radius: 18px; background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.6rem; box-shadow: 0 0 20px rgba(0, 255, 255, 0.35) !important; flex-shrink: 0;">{{ candidate.full_name[0]|upper if candidate and candidate.full_name else 'C' }}</div>
-            <div class="flex-grow-1">
-                <h1 class="profile-name d-flex align-items-center gap-2" style="color: #00ffff !important; font-weight: 800; text-transform: uppercase; margin: 0; font-size: 1.6rem; letter-spacing: -0.01em;">
-                    {% if candidate %}
-                    <a href="/admin/user/{{ candidate.id }}" style="color: #00ffff !important; text-decoration: none; border-bottom: 2px dashed rgba(0,255,255,0.35);">{{ candidate.full_name|upper }}</a>
-                    {% else %}
-                    <span>CANDIDATE (NOT FOUND)</span>
-                    {% endif %}
-                </h1>
-                <div class="d-flex align-items-center gap-3 flex-wrap mt-2">
-                    {% if candidate and candidate.email %}
-                    <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ candidate.email }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.9rem; color: #cbd5e1; font-weight: 500; text-decoration: none; transition: color 0.2s ease;" onmouseover="this.style.color='#00ffff';" onmouseout="this.style.color='#cbd5e1';" title="Compose email in Gmail for {{ candidate.email }}"><i class="bi bi-envelope-fill me-1"></i>{{ candidate.email }}</a>
-                    {% endif %}
-                    {% if candidate and candidate.auth_provider == "google" %}
-                        <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.75rem;letter-spacing:0.02em; border-color: rgba(66, 133, 244, 0.4) !important; color: #60a5fa !important; background: rgba(66, 133, 244, 0.15) !important; border: 1.5px solid rgba(66, 133, 244, 0.4); padding: 2px 8px; border-radius: 6px;">
-                            <svg class="google-g-icon" viewBox="0 0 48 48" style="width:16px;height:16px;margin-right:4px;flex-shrink:0;">
-                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
-                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
-                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
-                            </svg>
-                            GOOGLE
-                        </span>
-                    {% elif candidate and candidate.email_verified %}
-                        <span class="auth-badge d-inline-flex align-items-center" style="background: rgba(16, 185, 129, 0.12) !important; color: #34d399 !important; border: 1.5px solid rgba(16, 185, 129, 0.4) !important; font-weight: 900; font-size: 0.75rem; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 6px;">
-                            VERIFIED
-                        </span>
-                    {% endif %}
-                </div>
+    <div class="rp-grid">
+        <!-- ══ Main column ══ -->
+        <main class="rp-main">
+            {% if terminated %}
+            <div class="rp-alert">
+                <div class="rp-alert-title"><i class="bi bi-shield-slash-fill"></i> Proctoring breach: session terminated</div>
+                <div>This session was <strong>automatically ended after repeated warning strikes</strong> recorded by the proctoring system.
+                    <br><span class="rp-alert-reason"><i class="bi bi-info-circle"></i> Reason:</span> {{ result.termination_reason or "Repeated window focus loss / tab switching detected during the active assessment." }}</div>
             </div>
-        </div>
+            {% endif %}
 
-        <!-- 4 Attribute Blocks -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-gender-ambiguous"></i></div>
-                    <div>
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Gender</div>
-                        <div style="font-size: 0.95rem; font-weight: 800; color: #ffffff; text-transform: uppercase;">{{ candidate.gender or '—' if candidate else '—' }}</div>
-                    </div>
+            <section class="panel rp-card">
+                <div class="rp-card-title"><i class="bi bi-bullseye"></i> Score against the passing mark</div>
+                <div class="rp-bar" role="img" aria-label="Score {{ result.score }} out of 10, passing mark {{ settings.pass_score }}">
+                    <div class="rp-bar-fill {{ 'ok' if recommended else 'bad' }}" style="width: {{ score_percent }}%"></div>
+                    <div class="rp-bar-mark" style="left: {{ (settings.pass_score or 0) * 10 }}%"><span>Pass {{ settings.pass_score }}</span></div>
                 </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-mortarboard-fill"></i></div>
-                    <div>
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Education Level</div>
-                        <div style="font-size: 0.95rem; font-weight: 800; color: #ffffff; text-transform: uppercase;">{{ candidate.education or '—' if candidate else '—' }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(245, 158, 11, 0.15) !important; color: #f59e0b !important; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-book-half"></i></div>
-                    <div>
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Course</div>
-                        <div style="font-size: 0.95rem; font-weight: 800; color: #ffffff; text-transform: uppercase;">{{ candidate.course or '—' if candidate else '—' }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-calendar3-event"></i></div>
-                    <div>
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Semester</div>
-                        <div style="font-size: 0.95rem; font-weight: 800; color: #ffffff; text-transform: uppercase;">{{ candidate.semester or '—' if candidate else '—' }}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                <div class="rp-bar-scale"><span>0</span><span>5</span><span>10</span></div>
+                <p class="rp-note">
+                    {% if terminated %}This session ended early, so it is not scored against the passing mark.
+                    {% elif recommended %}Scored <strong>{{ result.score }}</strong> out of 10, at or above the current passing mark of <strong>{{ settings.pass_score }}</strong>.
+                    {% else %}Scored <strong>{{ result.score }}</strong> out of 10, below the current passing mark of <strong>{{ settings.pass_score }}</strong>.{% endif %}
+                    The mark can be changed in Settings and only applies to new results.
+                </p>
+            </section>
 
-        <!-- Github / Linkedin / Skills row -->
-        <div class="row g-3 mb-2">
-            <div class="col-md-4">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
-                    <div style="background: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-github"></i></div>
-                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Github</div>
-                        {% if candidate and candidate.github_url %}
-                        <a href="{{ candidate.github_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ candidate.github_url.replace('https://github.com/', '') }}</a>
-                        {% else %}
-                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                        {% endif %}
-                    </div>
+            {% if settings.proctor_integrity_log %}
+            <section class="panel rp-card" id="integrityLog">
+                <div class="rp-card-title"><i class="bi bi-shield-check"></i> Integrity log <span class="rp-only-you">only you can see this</span></div>
+                {% if violations %}
+                <div class="ig-summary">
+                    <span class="rp-badge {{ 'red' if strike_count else 'green' }}"><i class="bi bi-exclamation-triangle-fill"></i> {{ strike_count }} strike{{ '' if strike_count == 1 else 's' }}{% if strike_count >= settings.max_strikes %} · limit reached{% endif %}</span>
+                    {% if flag_count %}<span class="rp-badge blue"><i class="bi bi-flag-fill"></i> {{ flag_count }} review flag{{ '' if flag_count == 1 else 's' }}</span>{% endif %}
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
-                    <div style="background: rgba(10, 102, 194, 0.15) !important; color: #00a0dc !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-linkedin"></i></div>
-                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">LinkedIn</div>
-                        {% if candidate and candidate.linkedin_url %}
-                        <a href="{{ candidate.linkedin_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ candidate.linkedin_url.replace('https://www.linkedin.com/in/', '') }}</a>
-                        {% else %}
-                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div style="background: #0b1329; border: 1.5px solid #334155; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px; width: 100%;">
-                    <div style="background: rgba(6, 182, 212, 0.15) !important; color: #06b6d4 !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-cpu"></i></div>
+                <ol class="ig-log">
+                    {% for v in violations %}
+                    <li class="{{ 'strike' if v.strike_no else 'flag' }}">
+                        <div class="ig-log-top">
+                            <b>{{ v.title }}</b>
+                            {% if v.strike_no %}<span class="rp-badge red">Strike {{ v.strike_no }}</span>{% else %}<span class="rp-badge blue">Review flag</span>{% endif %}
+                        </div>
+                        {% if v.detail %}<div class="ig-log-detail">{{ v.detail }}</div>{% endif %}
+                        <div class="ig-log-meta"><i class="bi bi-clock"></i> {{ v.created_at.strftime('%d %b %Y, %I:%M:%S %p') }} UTC{% if v.q_num %} · Question {{ v.q_num }}{% endif %}</div>
+                    </li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <p class="rp-note" style="margin-top:0;"><i class="bi bi-patch-check-fill" style="color:#34d399;"></i> No violations or review flags were recorded for this session.</p>
+                {% endif %}
+            </section>
+            {% endif %}
+
+            <section class="panel rp-card">
+                <div class="rp-card-title"><i class="bi bi-journal-text"></i> Evaluation notes</div>
+                {% if paragraphs %}
+                <ol class="rp-notes">
+                    {% for para in paragraphs %}
+                    <li><span class="rp-note-num">{{ loop.index }}</span><p>{{ para }}</p></li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <p class="rp-note">No written evaluation was stored for this session.</p>
+                {% endif %}
+            </section>
+        </main>
+
+        <!-- ══ Side column ══ -->
+        <aside class="rp-aside">
+            <section class="panel rp-card">
+                <div class="rp-card-title"><i class="bi bi-person-badge-fill"></i> Candidate</div>
+                {% if candidate %}
+                <div class="rp-person">
+                    <div class="rp-avatar">{{ candidate.full_name[0]|upper if candidate.full_name else 'C' }}</div>
                     <div>
-                        <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Skills</div>
-                        <div class="d-flex flex-wrap gap-1 mt-1">
-                             {% if candidate and candidate.skills %}
-                                {% for skill in candidate.skills.split(',') %}
-                                <a href="https://www.google.com/search?q={{ skill.strip()|urlencode }}" target="_blank" style="background: rgba(0, 255, 255, 0.12); border: 1px solid rgba(0, 255, 255, 0.3); color: #00ffff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(0, 255, 255, 0.12)'">{{ skill.strip() }}</a>
-                                {% endfor %}
-                            {% else %}
-                                <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                            {% endif %}
+                        <a href="/admin/user/{{ candidate.id }}" class="rp-person-name">{{ candidate.full_name }}</a>
+                        <div class="rp-badges">
+                            {% if candidate.auth_provider == "google" %}<span class="rp-badge blue"><i class="bi bi-google"></i> Google</span>
+                            {% elif candidate.email_verified %}<span class="rp-badge green"><i class="bi bi-patch-check-fill"></i> Verified</span>{% endif %}
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Registration Timestamp details inside card bottom -->
-        <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-            <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: #00ffff;">{{ candidate.registered_at.strftime('%d %b %Y, %I:%M %p')|upper if candidate and candidate.registered_at else '—' }}</span>
-        </div>
-    </div>
-
-    <!-- Evaluation Report Panel -->
-    <div class="panel anim anim-3">
-        <div class="panel-title d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <span class="title-icon"><i class="bi bi-clipboard-data-fill"></i></span> Placement Evaluation Report
-            </div>
-            <span class="badge copyable-id-badge" onclick="copySessionId('{{ result.session_code }}', this);" style="cursor: pointer; background: rgba(0, 255, 255, 0.12); color: #00ffff; border: 1.5px solid rgba(0, 255, 255, 0.35); font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.85rem; padding: 6px 14px; border-radius: 8px; transition: all 0.2s ease;" title="Click to copy Session ID: {{ result.session_code }}">
-                <i class="bi bi-fingerprint me-1"></i>SESSION ID: {{ result.session_code }} <i class="bi bi-copy ms-1"></i>
-            </span>
-        </div>
-
-        {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
-        <div class="p-3 mb-4" style="background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.4); border-radius: 14px; color: #fca5a5;">
-            <div class="d-flex align-items-center gap-2 mb-1" style="color: #ef4444; font-weight: 800; font-family: 'Outfit', sans-serif;">
-                <i class="bi bi-shield-slash-fill fs-5" style="color: #f87171;"></i> PROCTORING CODE OF CONDUCT BREACH &mdash; SESSION TERMINATED
-            </div>
-            <div style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5;">
-                This assessment session was <strong>automatically terminated due to excessive warning strikes</strong> recorded by the platform anti-cheating proctoring system.
-                <br>
-                <span style="color: #fca5a5; font-weight: 600;"><i class="bi bi-info-circle me-1"></i> Strike Violation:</span> {{ result.termination_reason or "Repeated window focus loss / tab switching detected during active assessment." }}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="report-header">
-            <div class="score-ring-wrap">
-                <div class="score-ring-container">
-                    <div class="score-ring" style="--ring-color: {{ '#10b981' if (result.status == 'Selected' or 'PASS' in result.status) and not result.is_terminated else '#ef4444' }}; --ring-pct: {{ (result.score|float / 10 * 100)|round|int }}%;"></div>
-                    <span class="score-ring-inner">{{ result.score }}</span>
+                <dl class="rp-facts">
+                    <div><dt>Email</dt><dd>{% if candidate.email %}<a href="https://mail.google.com/mail/?view=cm&amp;fs=1&amp;to={{ candidate.email }}" target="_blank" rel="noopener noreferrer" title="Write to {{ candidate.email }}">{{ candidate.email }}</a>{% else %}—{% endif %}</dd></div>
+                    <div><dt>Education</dt><dd>{{ candidate.education or '—' }}</dd></div>
+                    <div><dt>Course</dt><dd>{{ candidate.course or '—' }}{% if candidate.semester %} · Sem {{ candidate.semester }}{% endif %}</dd></div>
+                    <div><dt>Gender</dt><dd>{{ candidate.gender or '—' }}</dd></div>
+                    <div><dt>Registered</dt><dd>{{ candidate.registered_at.strftime('%d %b %Y') if candidate.registered_at else '—' }}</dd></div>
+                </dl>
+                {% if candidate.skills %}
+                <div class="rp-skills">
+                    {% for skill in candidate.skills.split(',') if skill.strip() %}<span>{{ skill.strip() }}</span>{% endfor %}
                 </div>
-                <div>
-                    <div class="score-label">{{ result.score }} / 10</div>
-                    <div class="score-date"><i class="bi bi-clock me-1"></i>{{ result.interview_datetime.strftime('%d %b %Y, %I:%M %p') }}</div>
+                {% endif %}
+                <div class="rp-links rp-noprint">
+                    {% if candidate.github_url %}<a href="{{ candidate.github_url }}" target="_blank" rel="noopener"><i class="bi bi-github"></i> GitHub</a>{% endif %}
+                    {% if candidate.linkedin_url %}<a href="{{ candidate.linkedin_url }}" target="_blank" rel="noopener"><i class="bi bi-linkedin"></i> LinkedIn</a>{% endif %}
                 </div>
-            </div>
-            {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
-            <div class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;">
-                <i class="bi bi-shield-slash-fill"></i> Terminated
-            </div>
-            {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
-            <div class="verdict-pill selected">
-                <i class="bi bi-check-circle-fill"></i> Recommended
-            </div>
-            {% else %}
-            <div class="verdict-pill rejected">
-                <i class="bi bi-x-circle-fill"></i> Not Recommended
-            </div>
+                {% else %}
+                <p class="rp-note">This candidate account no longer exists.</p>
+                {% endif %}
+            </section>
+
+            {% if candidate %}
+            <section class="panel rp-card rp-noprint">
+                <div class="rp-card-title"><i class="bi bi-lightning-charge-fill"></i> Actions</div>
+                <div class="rp-actions">
+                    {% if candidate.resume_filename or candidate.resume_text %}
+                    <button class="rp-act" data-bs-toggle="modal" data-bs-target="#userResumeModal"><i class="bi bi-file-earmark-text"></i> User Resume</button>
+                    {% else %}
+                    <span class="rp-act off"><i class="bi bi-file-earmark-x"></i> No resume uploaded</span>
+                    {% endif %}
+                    <a class="rp-act" href="/admin/user/{{ candidate.id }}"><i class="bi bi-person-lines-fill"></i> Open full profile</a>
+                    {% if is_locked %}
+                    <button class="rp-act cyan" type="button" data-name="{{ candidate.full_name }}" onclick="adminUnlock({{ candidate.id }}, this.dataset.name)"><i class="bi bi-unlock-fill"></i> Unlock +1 attempt</button>
+                    {% endif %}
+                    <form method="post" action="/admin/delete/{{ result.id }}" onsubmit="return confirm('⚠️ WARNING: DELETION RISK!\n\nThis action cannot be undone.\n- This scorecard, score, and evaluation summary will be permanently erased.\n\nAre you sure you want to delete this interview record?');">
+                        <button class="rp-act danger" type="submit"><i class="bi bi-trash3-fill"></i> Delete this record</button>
+                    </form>
+                </div>
+                <div class="rp-note" style="margin-top:10px;">Attempts taken by this candidate: <strong>{{ attempts_used }}</strong>{% if is_locked %} <span class="rp-badge red"><i class="bi bi-lock-fill"></i> Locked</span>{% endif %}</div>
+            </section>
+
+            <section class="panel rp-card rp-noprint">
+                <div class="rp-card-title"><i class="bi bi-clock-history"></i> Other assessments</div>
+                {% if others %}
+                <ul class="rp-others">
+                    {% for o in others %}
+                    <li>
+                        <a href="/admin/interview/{{ o.id }}">
+                            <span class="rp-other-main"><b>{{ o.score }}</b>/10 · {{ o.domain or 'Assessment' }}</span>
+                            <span class="rp-other-sub">{{ o.interview_datetime.strftime('%d %b %Y') if o.interview_datetime else '—' }} · {{ o.session_code }}</span>
+                        </a>
+                        {% if o.is_terminated or 'Terminated' in (o.status or '') %}<span class="rp-badge red">Terminated</span>
+                        {% elif other_ok.get(o.id) %}<span class="rp-badge green">Recommended</span>
+                        {% else %}<span class="rp-badge red">Not recommended</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="rp-note">This is the candidate's only assessment so far.</p>
+                {% endif %}
+            </section>
             {% endif %}
-        </div>
-
-        <div class="summary-heading">Performance Summary</div>
-        <div class="summary-rule"></div>
-        <div class="summary-text">
-            {% for para in result.summary.split('\n') if para.strip() %}
-            <p>{{ para }}</p>
-            {% endfor %}
-        </div>
+        </aside>
     </div>
 
 </div>
@@ -903,6 +971,13 @@
 })();
 </script>
 <script>
+function adminUnlock(userId, name) {
+    if (!confirm('Grant 1 extra assessment attempt to ' + name + '?')) return;
+    fetch('/admin/user/' + userId + '/unlock-attempt', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { if (d.status === 'success') { window.location.reload(); } else { alert('Error: ' + (d.message || 'Could not unlock.')); } })
+        .catch(function (e) { alert('Connection error: ' + e); });
+}
 function copySessionId(text, triggerElem) {
     if (!text) return;
     function showFeedback() {

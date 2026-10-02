@@ -260,7 +260,22 @@
         @media (max-width: 600px) {
             .settings-card { padding: 24px 20px; }
         }
+
+        /* ── grouped interview settings ── */
+        .ig-group { background: #0b1329; border: 1.5px solid #334155; border-radius: 18px; padding: 22px 22px 8px; margin-bottom: 22px; }
+        .ig-group-head { font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #00ffff; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .ig-group-head span { font-family: 'Inter', sans-serif; font-size: .82rem; font-weight: 600; color: #a9b8cc; }
+        .ig-sub { font-family: 'Outfit', sans-serif; font-size: .8rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #38bdf8; border-top: 1px solid #1e293b; padding-top: 18px; margin: 22px 0 14px; }
+        .ig-sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+        .ig-sub-note { text-transform: none; letter-spacing: 0; font-weight: 600; color: #a9b8cc; font-family: 'Inter', sans-serif; margin-left: 8px; }
+        .ig-master { background: rgba(0,255,255,.07); border: 1.5px solid rgba(0,255,255,.35); border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; }
+        .ig-state { margin-left: 8px; font-size: .78rem; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: rgba(0,255,255,.12); color: #00ffff; border: 1px solid rgba(0,255,255,.35); }
+        .ig-row { padding: 12px 0; border-bottom: 1px solid #1e293b; }
+        .ig-children { margin-left: 18px; padding-left: 16px; border-left: 2px solid #1e3a52; transition: opacity .2s ease; }
+        .ig-children.ig-dim { opacity: .5; }
+        .ig-children .ig-row:last-child { border-bottom: 0; }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ ANIMATED BACKGROUND ══ -->
@@ -280,7 +295,7 @@
     <!-- Top Action buttons -->
     <div class="mb-4 d-flex align-items-center justify-content-between">
         <a href="/admin" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> BACK
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <a href="/admin/guide" class="back-btn-global" style="border-color: #38bdf8 !important; color: #38bdf8 !important; background: rgba(56, 189, 248, 0.08) !important; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2) !important;" title="Platform Information &amp; System Manual">
             <i class="bi bi-info-circle-fill me-1"></i> Info
@@ -295,8 +310,8 @@
                     <i class="bi bi-sliders"></i>
                 </div>
                 <div>
-                    <h3>Assessment Settings</h3>
-                    <p>Control recruitment assessment rules, question limits, timers, and scoring parameters.</p>
+                    <h3>Interview Settings</h3>
+                    <p>Everything that controls a scored interview: questions, scoring, attempts and integrity rules.</p>
                 </div>
             </div>
         </div>
@@ -308,92 +323,138 @@
         </div>
         {% endif %}
 
+        {% macro switch_row(id, name, icon, title, desc, checked, cls='', extra='') %}
+        <div class="ig-row">
+            <div class="form-check form-switch d-flex align-items-center gap-3 p-0">
+                <input class="form-check-input ms-0 me-2 {{ cls }}" type="checkbox" role="switch" id="{{ id }}" name="{{ name }}" style="width: 2.8em; height: 1.5em; cursor: pointer; flex-shrink: 0;" {% if checked %}checked{% endif %} {{ extra|safe }}>
+                <label class="form-label mb-0 cursor-pointer" for="{{ id }}" style="font-size: 1.02rem;"><i class="bi {{ icon }}"></i> {{ title }}</label>
+            </div>
+            <div class="form-text mt-1">{{ desc }}</div>
+        </div>
+        {% endmacro %}
+
         <form method="POST">
-            <div class="mb-4">
-                <label class="form-label"><i class="bi bi-dash-circle"></i> Minimum Questions</label>
-                <input type="number" name="min_questions" class="form-control" min="1" max="20" value="{{ settings.min_questions }}" required>
-                <div class="form-text">The minimum question threshold required before candidate assessment completion is evaluated.</div>
-            </div>
+            <input type="hidden" name="integrity_form" value="1">
 
-            <div class="mb-4">
-                <label class="form-label"><i class="bi bi-plus-circle"></i> Maximum Questions</label>
-                <input type="number" name="max_questions" class="form-control" min="1" max="20" value="{{ settings.max_questions }}" required>
-                <div class="form-text">The maximum question cap. The interview session automatically concludes when reached.</div>
-            </div>
+            <!-- ═════════ INTERVIEW SETTINGS (one group for everything about the interview) ═════════ -->
+            <div class="ig-group">
+                <div class="ig-group-head"><i class="bi bi-chat-square-text-fill"></i> Interview Settings <span>Everything that controls how a scored interview runs</span></div>
 
-            <div class="mb-4">
-                <label class="form-label"><i class="bi bi-award"></i> Passing Score Threshold (out of 10)</label>
-                <input type="number" name="pass_score" class="form-control" min="0" max="10" step="1" value="{{ settings.pass_score }}" required>
-                <div class="form-text">Candidates scoring at or above this whole-number threshold pass the assessment round. This mark also sets the tone of the feedback email each candidate receives after an assessment. It applies to assessments evaluated after you save; earlier results and emails are not changed.</div>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label"><i class="bi bi-clock-history"></i> Question Time Limit (Seconds)</label>
-                <input type="number" name="question_timer_seconds" class="form-control" min="20" max="300" step="5" value="{{ settings.question_timer_seconds or 90 }}" required>
-                <div class="form-text">Allocated seconds per question during live assessment sessions. Defaults to 90 seconds (Max: 300 seconds / 5 minutes).</div>
-            </div>
-
-            <hr style="border-color: #334155; margin: 28px 0; opacity: 1;">
-
-            <div class="mb-4">
-                <div class="form-check form-switch d-flex align-items-center gap-3 p-0">
-                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="enableAttemptLimits" name="enable_attempt_limits" style="width: 2.8em; height: 1.5em; cursor: pointer;" {% if settings.enable_attempt_limits %}checked{% endif %} onchange="toggleLimitFields(this.checked)">
-                    <label class="form-label mb-0 cursor-pointer" for="enableAttemptLimits" style="font-size: 1.05rem;">
-                        <i class="bi bi-lock-fill"></i> Enable Interview Attempt Restrictions
-                    </label>
+                <div class="ig-sub">1 · Questions &amp; scoring</div>
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-dash-circle"></i> Minimum Questions</label>
+                    <input type="number" name="min_questions" class="form-control" min="1" max="20" value="{{ settings.min_questions }}" required>
+                    <div class="form-text">The minimum question threshold required before candidate assessment completion is evaluated.</div>
                 </div>
-                <div class="form-text mt-2">When enabled, candidates are locked after completing their allowed interview sessions unless unlocked by Admin. If disabled, no attempt limit restrictions apply.</div>
-            </div>
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-plus-circle"></i> Maximum Questions</label>
+                    <input type="number" name="max_questions" class="form-control" min="1" max="20" value="{{ settings.max_questions }}" required>
+                    <div class="form-text">The maximum question cap. The interview session automatically concludes when reached.</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-award"></i> Passing Score Threshold (out of 10)</label>
+                    <input type="number" name="pass_score" class="form-control" min="0" max="10" step="1" value="{{ settings.pass_score }}" required>
+                    <div class="form-text">Candidates scoring at or above this whole-number threshold pass the assessment round. This mark also sets the tone of the feedback email each candidate receives after an assessment. It applies to assessments evaluated after you save; earlier results and emails are not changed.</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label"><i class="bi bi-clock-history"></i> Question Time Limit (Seconds)</label>
+                    <input type="number" name="question_timer_seconds" class="form-control" min="20" max="300" step="5" value="{{ settings.question_timer_seconds or 90 }}" required>
+                    <div class="form-text">Allocated seconds per question during live assessment sessions. Defaults to 90 seconds (Max: 300 seconds / 5 minutes).</div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label"><i class="bi bi-bar-chart-steps"></i> Default Assessment Target Level</label>
+                    <select name="default_difficulty" class="form-select">
+                        <option value="student" {% if settings.default_difficulty == 'student' or not settings.default_difficulty %}selected{% endif %}>Student / Entry-Level — Fundamental concept evaluation</option>
+                        <option value="mid" {% if settings.default_difficulty == 'mid' %}selected{% endif %}>Mid-Level — Professional placement scenarios</option>
+                        <option value="senior" {% if settings.default_difficulty == 'senior' %}selected{% endif %}>Senior / Professional — Architectural and deep technical drills</option>
+                    </select>
+                    <div class="form-text">Global default difficulty level applied to candidate interviews.</div>
+                </div>
 
-            <div class="mb-4 {% if not settings.enable_attempt_limits %}d-none{% endif %}" id="allowedInterviewsGroup">
-                <label class="form-label"><i class="bi bi-person-workspace"></i> Default Allowed Interviews Per Candidate</label>
-                <input type="number" name="default_allowed_interviews" class="form-control" min="1" max="10" value="{{ settings.default_allowed_interviews or 2 }}" required>
-                <div class="form-text">The number of standard interview attempts granted to candidates by default (Default: 2).</div>
-            </div>
-
-            <script>
-                function toggleLimitFields(enabled) {
-                    var group = document.getElementById('allowedInterviewsGroup');
-                    if (group) {
-                        if (enabled) {
-                            group.classList.remove('d-none');
-                        } else {
-                            group.classList.add('d-none');
-                        }
+                <div class="ig-sub">2 · Attempts</div>
+                <div class="mb-3">
+                    <div class="form-check form-switch d-flex align-items-center gap-3 p-0">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="enableAttemptLimits" name="enable_attempt_limits" style="width: 2.8em; height: 1.5em; cursor: pointer;" {% if settings.enable_attempt_limits %}checked{% endif %} onchange="toggleLimitFields(this.checked)">
+                        <label class="form-label mb-0 cursor-pointer" for="enableAttemptLimits" style="font-size: 1.02rem;"><i class="bi bi-lock-fill"></i> Enable Interview Attempt Restrictions</label>
+                    </div>
+                    <div class="form-text mt-2">When enabled, candidates are locked after completing their allowed interview sessions unless unlocked by Admin. If disabled, no attempt limit restrictions apply.</div>
+                </div>
+                <div class="mb-2 {% if not settings.enable_attempt_limits %}d-none{% endif %}" id="allowedInterviewsGroup">
+                    <label class="form-label"><i class="bi bi-person-workspace"></i> Default Allowed Interviews Per Candidate</label>
+                    <input type="number" name="default_allowed_interviews" class="form-control" min="1" max="10" value="{{ settings.default_allowed_interviews or 2 }}" required>
+                    <div class="form-text">The number of standard interview attempts granted to candidates by default (Default: 2).</div>
+                </div>
+                <script>
+                    function toggleLimitFields(enabled) {
+                        var group = document.getElementById('allowedInterviewsGroup');
+                        if (group) { group.classList.toggle('d-none', !enabled); }
                     }
-                }
-            </script>
+                </script>
 
-            <div class="mb-4">
-                <div class="form-check form-switch d-flex align-items-center gap-3 p-0">
-                    <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="enableWarningStrikes" name="enable_warning_strikes" style="width: 2.8em; height: 1.5em; cursor: pointer;" {% if settings.enable_warning_strikes %}checked{% endif %}>
-                    <label class="form-label mb-0 cursor-pointer" for="enableWarningStrikes" style="font-size: 1.05rem;">
-                        <i class="bi bi-shield-exclamation"></i> Enable AI Proctoring &amp; Warning Strikes
-                    </label>
+                <div class="ig-sub">3 · Integrity &amp; proctoring <span class="ig-sub-note">scored assessments only; practice labs are never proctored</span></div>
+                <div class="ig-master">
+                    <div class="form-check form-switch d-flex align-items-center gap-3 p-0">
+                        <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="igMaster" style="width: 3.2em; height: 1.7em; cursor: pointer; flex-shrink: 0;">
+                        <label class="form-label mb-0 cursor-pointer" for="igMaster" style="font-size: 1.1rem;"><i class="bi bi-toggles2"></i> All integrity features <span id="igMasterState" class="ig-state"></span></label>
+                    </div>
+                    <div class="form-text mt-1">One switch for every option below. Turn it on or off to change all of them at once, or leave it and set each option yourself.</div>
                 </div>
-                <div class="form-text mt-2">When enabled, proctoring violations (tab switching, no face detected, multiple people detected) issue strikes and terminate the interview if exceeded.</div>
+
+                {{ switch_row('enableWarningStrikes', 'enable_warning_strikes', 'bi-shield-exclamation', 'Proctoring & warning strikes',
+                              'The main switch. When off, no integrity rule below is applied to a scored interview.', settings.enable_warning_strikes, 'ig-switch') }}
+                <div class="ig-children">
+                    {{ switch_row('igServerStrikes', 'proctor_server_strikes', 'bi-hdd-network', 'Server-side strikes',
+                                  'Every violation is counted and stored on the server, so clearing browser data or editing the page cannot reset it. When off, only the older browser-side tab-switch rule applies.', settings.proctor_server_strikes, 'ig-switch') }}
+                    {{ switch_row('igSingleSession', 'proctor_single_session', 'bi-pc-display', 'One active session',
+                                  'An interview open in another browser or device is refused and counted as a violation while the first one is active.', settings.proctor_single_session, 'ig-switch') }}
+                    {{ switch_row('igServerTimer', 'proctor_server_timer', 'bi-stopwatch', 'Server-side timer',
+                                  'The server keeps the time left per question, so a reload cannot reset the clock. An answer that arrives well after the limit is a violation.', settings.proctor_server_timer, 'ig-switch') }}
+                    {{ switch_row('igCopyPaste', 'proctor_block_copy_paste', 'bi-clipboard-x', 'Block copy and paste',
+                                  'Pasting into the answer box or copying the question is blocked, and every attempt is a violation. Typing and voice input still work.', settings.proctor_block_copy_paste, 'ig-switch') }}
+                    {{ switch_row('igFullscreen', 'proctor_fullscreen', 'bi-fullscreen', 'Require fullscreen',
+                                  'Candidates start in fullscreen, and leaving it is a violation. Off by default because some phones and browsers do not support fullscreen.', settings.proctor_fullscreen, 'ig-switch') }}
+                    {{ switch_row('igTypingFlags', 'proctor_typing_flags', 'bi-keyboard', 'Typing-pattern flags',
+                                  'Answers that arrive instantly or look inserted rather than typed are flagged for you. Review only: it is not a strike and candidates are not told.', settings.proctor_typing_flags, 'ig-switch') }}
+                    {{ switch_row('igIntegrityLog', 'proctor_integrity_log', 'bi-journal-check', 'Integrity log on the report',
+                                  'The admin report lists every violation and flag with the time, question and exact details. Only you see it.', settings.proctor_integrity_log, 'ig-switch') }}
+                    <div class="ig-row">
+                        <label class="form-label"><i class="bi bi-1-circle"></i> Strike limit</label>
+                        <input type="number" name="max_strikes" class="form-control" min="1" max="5" value="{{ settings.max_strikes }}" style="max-width: 140px;" required>
+                        <div class="form-text">Every violation is one strike. The assessment ends when a candidate reaches this number (1 to 5, default 2). Candidates are warned at every strike.</div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-4">
-                <label class="form-label"><i class="bi bi-bar-chart-steps"></i> Default Assessment Target Level</label>
-                <select name="default_difficulty" class="form-select">
-                    <option value="student" {% if settings.default_difficulty == 'student' or not settings.default_difficulty %}selected{% endif %}>
-                        Student / Entry-Level — Fundamental concept evaluation
-                    </option>
-                    <option value="mid" {% if settings.default_difficulty == 'mid' %}selected{% endif %}>
-                        Mid-Level — Professional placement scenarios
-                    </option>
-                    <option value="senior" {% if settings.default_difficulty == 'senior' %}selected{% endif %}>
-                        Senior / Professional — Architectural and deep technical drills
-                    </option>
-                </select>
-                <div class="form-text">Global default difficulty level applied to candidate interviews.</div>
+            <!-- ═════════ EMAILS ═════════ -->
+            <div class="ig-group">
+                <div class="ig-group-head"><i class="bi bi-envelope-paper-fill"></i> Emails <span>Messages sent to candidates</span></div>
+                {{ switch_row('enableFeedbackEmails', 'enable_feedback_emails', 'bi-envelope-paper', 'Send Assessment Feedback Emails',
+                              'When enabled, each candidate receives a feedback email with their score and short next steps after completing an assessment. Turning this off stops only that email. Welcome emails, login codes, unlock notices and session notices are not affected.', settings.enable_feedback_emails) }}
             </div>
 
             <button type="submit" class="btn btn-save-settings mt-2">
                 <i class="bi bi-check2-square me-2"></i> Save Assessment Rules
             </button>
         </form>
+        <script>
+        (function () {
+            var boxes = Array.prototype.slice.call(document.querySelectorAll('.ig-switch'));
+            var master = document.getElementById('igMaster');
+            var state = document.getElementById('igMasterState');
+            var children = document.querySelector('.ig-children');
+            var main = document.getElementById('enableWarningStrikes');
+            function sync() {
+                var on = boxes.filter(function (b) { return b.checked; }).length;
+                master.checked = on === boxes.length;
+                master.indeterminate = on > 0 && on < boxes.length;
+                state.textContent = on === boxes.length ? 'All on' : (on === 0 ? 'All off' : on + ' of ' + boxes.length + ' on');
+                children.classList.toggle('ig-dim', !main.checked);
+            }
+            master.addEventListener('change', function () { boxes.forEach(function (b) { b.checked = master.checked; }); sync(); });
+            boxes.forEach(function (b) { b.addEventListener('change', sync); });
+            sync();
+        })();
+        </script>
 
     </div>
 </div>

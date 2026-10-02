@@ -751,6 +751,7 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
     </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 
@@ -784,6 +785,7 @@
             <a href="/admin/users" class="header-icon-btn btn-users-nav" title="Registered Candidates">
                 <i class="bi bi-people-fill"></i> Registered Users
             </a>
+            <a href="/admin/links" class="header-icon-btn" title="Check the preparation library links"><i class="bi bi-link-45deg"></i> Links</a>
             <a href="/admin/guide" class="header-icon-btn btn-info-nav" title="Platform Information &amp; System Manual">
                 <i class="bi bi-info-circle-fill"></i> Info
             </a>
@@ -932,9 +934,9 @@
                                     </button>
                                     {% endif %}
                                 {% endif %}
-                                <a href="/admin/delete/{{ result.id }}" class="btn-delete" title="Delete Record" onclick="return confirm('⚠️ WARNING: DELETION RISK!\n\nThis action cannot be undone.\n- The selected scorecard, score, and evaluation summary will be permanently erased.\n\nAre you sure you want to delete this interview record?');">
-                                    <i class="bi bi-trash-fill"></i>
-                                </a>
+                                <form method="post" action="/admin/delete/{{ result.id }}" style="display:inline;margin:0" onsubmit="return confirm('⚠️ WARNING: DELETION RISK!\n\nThis action cannot be undone.\n- The selected scorecard, score, and evaluation summary will be permanently erased.\n\nAre you sure you want to delete this interview record?');">
+                                    <button type="submit" class="btn-delete" title="Delete Record"><i class="bi bi-trash-fill"></i></button>
+                                </form>
                             </div>
                         </td>
                     </tr>

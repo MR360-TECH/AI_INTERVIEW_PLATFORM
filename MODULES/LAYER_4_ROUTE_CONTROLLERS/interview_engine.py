@@ -13,8 +13,10 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     get_settings,
     save_progress,
     clear_progress,
-    record_counted_attempt
+    record_counted_attempt,
+    attach_violations
 )
+from MODULES.LAYER_3_BUSINESS_SERVICES import integrity
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_assessment_feedback
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import (
     analyze_attachment,
@@ -43,6 +45,27 @@ def extract_domain_from_history(history, fallback="General"):
     return fallback
 
 
+def _guard_response(guard, as_json=False):
+    """Turns a refusal from integrity.guard_session() into a response."""
+    if guard.get("terminated"):
+        return jsonify({"done": True, "redirect": guard["redirect"]}) if as_json else redirect(guard["redirect"])
+    if as_json:
+        return jsonify({"error": "interview_open_elsewhere", "message": guard["notice"], "redirect": "/dashboard"}), 409
+    return render_template("error.html", code=409, title="Interview already open elsewhere", eyebrow="Integrity check", icon="bi-pc-display",
+                           message="This interview is currently open in another browser or device, so it cannot be opened here.",
+                           notice=guard["notice"], in_interview=False, back_url="/dashboard", reference=None), 409
+
+
+def _integrity_view(settings, user_id, is_practice, timer_total, new_question):
+    """Extra variables for interview.html: the server-side clock and the integrity features switched on by the admin."""
+    if not integrity.proctored(settings, is_practice):
+        return {"timer_seconds": timer_total, "timer_total": timer_total, "integrity": None}
+    integrity.touch(user_id, new_question=new_question)
+    left = integrity.seconds_left(integrity.get_progress(user_id), settings, timer_total)
+    return {"timer_seconds": timer_total if left is None else left, "timer_total": timer_total,
+            "integrity": integrity.template_context(user_id, settings)}
+
+
 @interview_bp.route("/interview", methods=["GET", "POST"])
 def interview():
     if session.get("is_admin"):
@@ -60,6 +83,12 @@ def interview():
     MAX_QUESTIONS = settings.max_questions
     timer_seconds = settings.question_timer_seconds or 90
 
+    # One session at a time (scored assessments only): another browser holding this interview is refused and counted
+    if integrity.proctored(settings, bool(session.get("interview_mode") or request.args.get("practice") == "1")):
+        guard = integrity.guard_session(user_id, settings)
+        if guard:
+            return _guard_response(guard)
+
     # Handle restart FIRST — so the lock check below sees the cleared state
     if request.args.get("restart") == "1":
         _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
@@ -75,6 +104,7 @@ def interview():
                 )
                 db.session.add(res_rec)
                 db.session.commit()
+                attach_violations(user_id, res_rec.id)
             except Exception as ex:
                 print(f"[RESTART LOG ERROR] {ex}")
                 db.session.rollback()
@@ -120,8 +150,12 @@ def interview():
     try:
         _db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
         chat_history = json.loads(_db_progress.chat_history or '[]') if _db_progress else []
-        if "q_count" not in session:
-            session["q_count"] = _db_progress.q_count if _db_progress else 0
+        # The saved interview is the source of truth. After an error or a browser Back, the cookie can be one step
+        # ahead of what was actually saved; trusting the database keeps question numbers and the resume point right.
+        if _db_progress:
+            session["q_count"] = _db_progress.q_count or 0
+        elif "q_count" not in session:
+            session["q_count"] = 0
     except Exception as db_err:
         print(f"[DB LOAD ERROR] {db_err}")
         db.session.rollback()
@@ -172,6 +206,13 @@ def interview():
             except Exception as e:
                 print(f"Error handling interview resume upload: {e}")
                 db.session.rollback()
+
+        if integrity.proctored(settings, bool(session.get("interview_mode"))):
+            checked = integrity.check_answer(user_id, settings, answer or code_answer, request.form, timer_seconds)
+            if checked["terminated"]:
+                return redirect(checked["redirect"])
+            if checked["timed_out"] and not (answer or code_answer):
+                answer = "[No answer was given before the time limit]"      # the clock ran out: move on, nothing is lost
 
         if answer or code_answer:
             if q_count == 0:
@@ -224,8 +265,8 @@ def interview():
             total=MAX_QUESTIONS,
             question_type=question_type,
             is_practice=is_practice,
-            timer_seconds=timer_seconds,
-            enable_warning_strikes=enable_warning_strikes
+            enable_warning_strikes=enable_warning_strikes,
+            **_integrity_view(settings, user_id, is_practice, timer_seconds, new_question=False)
         )
 
     conversation_text = ""
@@ -242,7 +283,7 @@ def interview():
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
 
-            if practice_mode in ["viva", "lang", "drill"]:
+            if practice_mode in ["viva", "lang", "drill", "debate", "convo"]:
                 prompt = build_initial_question_prompt(
                     practice_mode=practice_mode,
                     practice_topic=practice_topic,
@@ -269,11 +310,15 @@ def interview():
                 difficulty=difficulty,
                 q_count=q_count,
                 min_questions=MIN_QUESTIONS,
-                conversation_text=conversation_text
+                conversation_text=conversation_text,
+                resume_summary=session.get("resume_summary") or ""
             )
 
         if not question_text:
-            question_text = generate_text(prompt, max_output_tokens=80, temperature=0.2)
+            # conversational practice modes write a short reply plus a follow-up, so they get a little more room
+            chatty = session.get("interview_mode") in ("debate", "convo")
+            question_text = generate_text(prompt, max_output_tokens=110 if chatty else 80,
+                                          temperature={"debate": 0.5, "convo": 0.7}.get(session.get("interview_mode"), 0.2))
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         db.session.rollback()
@@ -302,8 +347,8 @@ def interview():
         total=MAX_QUESTIONS,
         question_type=question_type,
         is_practice=is_practice,
-        timer_seconds=timer_seconds,
-        enable_warning_strikes=enable_warning_strikes
+        enable_warning_strikes=enable_warning_strikes,
+        **_integrity_view(settings, user_id, is_practice, timer_seconds, new_question=True)
     )
 
 
@@ -325,6 +370,14 @@ def interview_submit():
     code_answer = (request.form.get("code_answer") or "").strip()
     is_practice = bool(session.get("interview_mode"))
 
+    if integrity.proctored(settings, is_practice):
+        guard = integrity.guard_session(user_id, settings)
+        if guard:
+            return _guard_response(guard, as_json=True)
+        checked = integrity.check_answer(user_id, settings, answer or code_answer, request.form, settings.question_timer_seconds or 90)
+        if checked["terminated"]:
+            return jsonify({"done": True, "redirect": checked["redirect"]})
+
     if not answer and not code_answer:
         return jsonify({"error": "empty_answer"})
 
@@ -337,7 +390,7 @@ def interview_submit():
 
     _submit_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
     submit_history = json.loads(_submit_progress.chat_history or '[]') if _submit_progress else []
-    submit_q_count = session.get("q_count", 0) + 1
+    submit_q_count = ((_submit_progress.q_count or 0) if _submit_progress else session.get("q_count", 0)) + 1
 
     submit_history.append({"role": "answer", "text": full_answer})
     session["q_count"] = submit_q_count
@@ -368,7 +421,8 @@ def interview_submit():
             is_practice=is_practice,
             submit_q_count=submit_q_count,
             min_questions=MIN_QUESTIONS,
-            max_questions=MAX_QUESTIONS
+            max_questions=MAX_QUESTIONS,
+            practice_mode=session.get("interview_mode")
         )
 
         chat_turns = []
@@ -396,6 +450,8 @@ def interview_submit():
 
     submit_history.append({"role": "question", "text": question_text, "type": question_type})
     save_progress(user_id, submit_history, submit_q_count)
+    if integrity.proctored(settings, is_practice):
+        integrity.touch(user_id, new_question=True)
 
     return jsonify({
         "question": question_text,
@@ -404,6 +460,73 @@ def interview_submit():
         "question_type": question_type,
         "done": False,
     })
+
+
+VIOLATION_KINDS = ("tab_switch", "fullscreen_exit", "paste", "copy")
+
+
+@interview_bp.route("/interview/violation", methods=["POST"])
+def interview_violation():
+    """The browser reports an integrity violation. The server counts it, stores it and answers with the exact box to show."""
+    if session.get("is_admin") or "user_id" not in session:
+        return jsonify({"status": "error", "message": "unauthorized"}), 401
+    user_id = session["user_id"]
+    settings = get_settings()
+    if not integrity.proctored(settings, bool(session.get("interview_mode"))):
+        return jsonify({"status": "disabled"})
+    data = request.get_json(silent=True) or {}
+    kind = data.get("kind")
+    if kind not in VIOLATION_KINDS:
+        return jsonify({"status": "error", "message": "unknown violation"}), 400
+    if not integrity.rule_enabled(settings, kind):
+        return jsonify({"status": "disabled"})
+    progress = integrity.get_progress(user_id)
+    try:
+        active = bool(progress and json.loads(progress.chat_history or "[]"))
+    except Exception:
+        active = bool(progress)
+    if not active:
+        return jsonify({"status": "ignored", "redirect": "/dashboard"})
+
+    detail = ""
+    if kind == "tab_switch":
+        try:
+            away = max(0, min(3600, int(float(data.get("away_s", 0)))))
+        except (TypeError, ValueError):
+            away = 0
+        detail = f"Away from the exam window for about {away} second{'' if away == 1 else 's'}." if away else "Switched away from the exam window."
+    elif kind == "paste":
+        detail = "Paste attempted in the answer box."
+    elif kind == "copy":
+        detail = "Copy or cut attempted on the question text."
+    elif kind == "fullscreen_exit":
+        detail = "Fullscreen was exited during the assessment."
+
+    outcome = integrity.record(user_id, progress, kind, detail, settings)
+    if outcome.get("ignored"):
+        return jsonify({"status": "ignored", "strikes": outcome["strikes"], "max": outcome["max"]})
+    if outcome.get("terminated"):
+        return jsonify({"status": "terminated", "redirect": outcome["redirect"]})
+    return jsonify({"status": "counted" if outcome["counted"] else "noted", "box": outcome["box"],
+                    "strikes": outcome["strikes"], "max": outcome["max"]})
+
+
+@interview_bp.route("/interview/heartbeat", methods=["POST"])
+def interview_heartbeat():
+    """Keeps this browser registered as the active holder of the interview (used by the one-session rule)."""
+    if session.get("is_admin") or "user_id" not in session:
+        return jsonify({"status": "error"}), 401
+    settings = get_settings()
+    if not integrity.proctored(settings, bool(session.get("interview_mode"))):
+        return jsonify({"status": "ok"})
+    progress = integrity.get_progress(session["user_id"])
+    if not progress:
+        return jsonify({"status": "gone", "redirect": "/dashboard"})
+    if settings.proctor_single_session and progress.sid and progress.sid != integrity.current_sid():
+        return jsonify({"status": "displaced", "redirect": "/interview"})
+    progress.last_seen_at = integrity._now()
+    db.session.commit()
+    return jsonify({"status": "ok", "strikes": progress.strikes or 0})
 
 
 @interview_bp.route("/finish-interview", methods=["GET", "POST"])
@@ -596,14 +719,17 @@ def interview_result():
         db.session.commit()
         session_code_val = result_record.session_code
         result_id_val = result_record.id
+        if not is_practice:
+            attach_violations(user_id, result_id_val)
 
     except Exception as e:
         print(f"[RESULT EVALUATION ERROR] {e}")
         db.session.rollback()
         return redirect("/dashboard?error=evaluation_failed")
 
-    # Feedback email for scored assessments only. It runs in the background and can never affect the result.
-    if not is_practice:
+    # Feedback email for scored assessments only (admin can switch it off). It runs in the background and
+    # can never affect the result.
+    if not is_practice and settings.enable_feedback_emails:
         try:
             candidate = db.session.get(User, user_id)
             if candidate and candidate.email:

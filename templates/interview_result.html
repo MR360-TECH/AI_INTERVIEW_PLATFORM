@@ -815,6 +815,7 @@
     }
 </style>
 {% endif %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -835,8 +836,11 @@
         <button onclick="window.print()" class="btn-action btn-primary-action" id="btn-print-top">
             <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
         </button>
+        <button type="button" class="btn-action" id="btn-feedback-top" data-feedback-open data-feedback-page="result" data-feedback-session="{{ session_code or '' }}">
+            <i class="bi bi-chat-heart-fill"></i> Give Feedback
+        </button>
         <a href="{{ back_url | default('/dashboard') }}" class="back-btn-global" id="btn-back-top">
-            <i class="bi bi-arrow-left"></i> BACK
+            <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>
 
@@ -1060,8 +1064,11 @@
         <button onclick="window.print()" class="btn-bottom btn-bottom-secondary" id="btn-print-bottom">
             <i class="bi bi-printer-fill"></i> Print Report
         </button>
+        <button type="button" class="btn-bottom btn-bottom-secondary" id="btn-feedback-bottom" data-feedback-open data-feedback-page="result" data-feedback-session="{{ session_code or '' }}">
+            <i class="bi bi-chat-heart-fill"></i> Give Feedback
+        </button>
         <a href="{{ back_url | default('/dashboard') }}" class="btn-bottom btn-bottom-primary" id="btn-back-bottom">
-            <i class="bi bi-arrow-left"></i> BACK
+            <i class="bi bi-arrow-left"></i> Back
         </a>
     </div>
 
@@ -1208,5 +1215,6 @@
 })();
 </script>
 
+{% include "_feedback_modal.html" %}
 </body>
 </html>

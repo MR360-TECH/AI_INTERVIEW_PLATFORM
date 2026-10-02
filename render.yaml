@@ -9,10 +9,14 @@ services:
         sync: false
       - key: APP_BASE_URL          # e.g. https://your-service.onrender.com (used for links inside emails)
         sync: false
+      - key: FEEDBACK_TO_EMAIL     # optional: mailbox that receives user feedback (default: MAIL_USERNAME)
+        sync: false
       - key: GEMINI_BACKUP_KEYS    # optional: comma-separated keys from other Google projects
         sync: false
       - key: SECRET_KEY
         generateValue: true
+      - key: ADMIN_2FA             # optional: true = admin also enters a code e-mailed to ADMIN_EMAIL
+        sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: GOOGLE_CLIENT_ID

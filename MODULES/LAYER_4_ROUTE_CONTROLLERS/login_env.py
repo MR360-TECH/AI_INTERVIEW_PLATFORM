@@ -1,14 +1,41 @@
 import os
-import random
+import hmac
 from flask import Blueprint, render_template, request, redirect, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth, ADMIN_EMAIL, ADMIN_PASSWORD, has_google_oauth
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_2FA, has_google_oauth
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, is_valid_email, profile_is_complete
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_otp_email
+from MODULES.LAYER_3_BUSINESS_SERVICES.auth_security import (
+    issue_otp, verify_otp as check_otp, throttle_seconds_left, throttle_fail, throttle_reset, minutes_text,
+    LOGIN_MAX_FAILURES, IP_MAX_FAILURES, OTP_SEND_MAX_PER_IP
+)
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_welcome_email
+from MODULES.LAYER_3_BUSINESS_SERVICES.web_security import password_problem
 
 login_bp = Blueprint('login_bp', __name__)
 register_bp = login_bp  # Alias for backward compatibility
+
+BAD_LOGIN_MESSAGE = "Incorrect email or password. If you signed up with Google, use 'Continue with Google' instead."
+_DUMMY_PASSWORD_HASH = generate_password_hash("not-a-real-password")
+
+OTP_MESSAGES = {
+    "invalid": "Invalid code. Please try again.",
+    "expired": "This code has expired or is no longer valid. Please request a new one.",
+    "locked": "Too many incorrect attempts. Please request a new code.",
+}
+
+
+def _client_ip():
+    return request.remote_addr or "unknown"
+
+
+def _otp_send_blocked():
+    """Limits how many verification emails one IP can trigger (stops the forms being used to spam inboxes)."""
+    key = f"otpsend:{_client_ip()}"
+    if throttle_seconds_left(key):
+        return True
+    throttle_fail(key, OTP_SEND_MAX_PER_IP)
+    return False
 
 
 def send_welcome_once(user, via_google=False):
@@ -59,26 +86,43 @@ def login():
         if not password:
             return render_template("login.html", error="Please enter your password.", prefill_email=email, has_google_oauth=has_google_oauth)
 
-        # Admin check
+        ip = _client_ip()
+        key = f"login:{email}|{ip}"
+        wait = max(throttle_seconds_left(key), throttle_seconds_left(f"ip:{ip}"))
+        if wait:
+            return render_template("login.html", error=f"Too many failed attempts. Please try again in {minutes_text(wait)}.",
+                                   prefill_email=email, has_google_oauth=has_google_oauth), 429
+
+        def failed(message=None, **extra):
+            throttle_fail(key, LOGIN_MAX_FAILURES)
+            throttle_fail(f"ip:{ip}", IP_MAX_FAILURES)
+            return render_template("login.html", error=message, prefill_email=email, has_google_oauth=has_google_oauth, **extra)
+
+        # One message for every failure (unknown email, wrong password, Google-only account, admin), so this form cannot
+        # be used to find out which emails are registered.
+        bad_login = BAD_LOGIN_MESSAGE
+
+        # Admin check (constant-time comparison)
         if ADMIN_EMAIL and email == ADMIN_EMAIL.strip().lower():
-            if ADMIN_PASSWORD and password == ADMIN_PASSWORD.strip():
+            if ADMIN_PASSWORD and hmac.compare_digest(password.encode(), ADMIN_PASSWORD.strip().encode()):
+                throttle_reset(key)
+                if ADMIN_2FA:
+                    return _start_admin_2fa(email)
                 session.clear()
                 session["is_admin"] = True
                 session["user_name"] = "Admin"
                 return redirect("/admin")
-            else:
-                return render_template("login.html", error="Wrong password. Please check your password and try again.", prefill_email=email, has_google_oauth=has_google_oauth)
+            return failed(bad_login)
 
         user = User.query.filter_by(email=email).first()
 
-        if not user:
-            return render_template("login.html", show_signup_prompt=True, prefill_email=email, has_google_oauth=has_google_oauth)
+        # Unknown emails and Google-only accounts still run one password hash check, so response time does not
+        # reveal whether the account exists.
+        stored_hash = user.password if user and user.password else _DUMMY_PASSWORD_HASH
+        password_ok = check_password_hash(stored_hash, password) and bool(user and user.password)
 
-        # Check if user registered via Google OAuth without a password
-        if user.auth_provider == "google" and not user.password:
-            return render_template("login.html", error="This account was registered with Google. Please click 'Continue with Google' above.", prefill_email=email, has_google_oauth=has_google_oauth)
-
-        if user.password and check_password_hash(user.password, password):
+        if user and password_ok:
+            throttle_reset(key)
             session.clear()
             session["user_id"] = user.id
             session["user_name"] = user.full_name
@@ -87,8 +131,7 @@ def login():
             if not profile_is_complete(user):
                 return redirect("/register")
             return redirect("/dashboard")
-        else:
-            return render_template("login.html", error="Wrong password. Please check your password and try again.", prefill_email=email, has_google_oauth=has_google_oauth)
+        return failed(bad_login)
 
     error_msg = None
     err_code = request.args.get("error")
@@ -96,7 +139,45 @@ def login():
         error_msg = "Uploaded file is too large. The maximum size limit is 10MB."
     elif err_code == "google_not_configured":
         error_msg = "Google Sign-in is not configured on this server."
+    elif err_code == "session_expired":
+        error_msg = "Your session expired for security. Please sign in again."
     return render_template("login.html", error=error_msg, has_google_oauth=has_google_oauth)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ADMIN SECOND STEP (only when ADMIN_2FA=true): a code e-mailed to the admin address
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _start_admin_2fa(email):
+    code, reason = issue_otp("admin", email)
+    if code and not send_otp_email(email, code):
+        return render_template("login.html", error="Could not send the admin verification code. Please try again.",
+                               prefill_email=email, has_google_oauth=has_google_oauth)
+    session.clear()
+    session["admin_2fa_email"] = email           # NOT yet an admin session: the code still has to be entered
+    return redirect("/admin/verify")
+
+
+@login_bp.route("/admin/verify", methods=["GET", "POST"])
+def admin_verify():
+    email = session.get("admin_2fa_email")
+    if not (ADMIN_2FA and email):
+        return redirect("/login")
+    if request.method == "GET":
+        return render_template("verify_otp.html", error=None, email=email, next_step="admin")
+
+    key = f"admin2fa:{_client_ip()}"
+    if throttle_seconds_left(key):
+        return render_template("verify_otp.html", error="Too many attempts. Please sign in again later.", email=email, next_step="admin"), 429
+    status = check_otp("admin", email, request.form.get("otp"))
+    if status != "ok":
+        throttle_fail(key, LOGIN_MAX_FAILURES)
+        return render_template("verify_otp.html", error=OTP_MESSAGES[status], email=email, next_step="admin")
+    throttle_reset(key)
+    session.clear()
+    session["is_admin"] = True
+    session["user_name"] = "Admin"
+    return redirect("/admin")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -109,7 +190,9 @@ def auth_google():
         return redirect("/login?error=google_not_configured")
     redirect_uri = url_for("login_bp.auth_google_callback", _external=True)
     google_client = getattr(oauth, 'google', None) or oauth.create_client('google')
-    return google_client.authorize_redirect(redirect_uri)
+    # prompt=select_account makes Google always show its account chooser (every Google account signed in on this
+    # device/browser, plus "Use another account") instead of silently reusing the last one.
+    return google_client.authorize_redirect(redirect_uri, prompt="select_account")
 
 
 @login_bp.route("/auth/google/callback")
@@ -162,42 +245,39 @@ def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
 
-        if not email or "@" not in email:
+        if not is_valid_email(email):
             return render_template("forgot_password.html", error="Please enter a valid email address.")
+        if _otp_send_blocked():
+            return render_template("forgot_password.html", error="Too many requests. Please try again in a few minutes.")
 
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return render_template("forgot_password.html", error="No account found with this email address.")
-
-        otp = str(random.randint(100000, 999999))
-        session["fp_otp"] = otp
+        # The answer is identical whether or not the account exists, so this form cannot be used to find out
+        # which emails are registered. A code is only generated and emailed for real accounts.
+        if User.query.filter_by(email=email).first():
+            code, _reason = issue_otp("reset", email)
+            if code and not send_otp_email(email, code):
+                return render_template("forgot_password.html", error="Failed to send the code. Please try again.")
         session["fp_email"] = email
-
-        if send_otp_email(email, otp):
-            return redirect("/forgot-password/verify")
-        else:
-            return render_template("forgot_password.html", error="Failed to send OTP. Please try again.")
+        return redirect("/forgot-password/verify")
 
     return render_template("forgot_password.html", error=None)
 
 
 @login_bp.route("/forgot-password/verify", methods=["GET", "POST"])
 def forgot_password_verify():
-    if "fp_otp" not in session or "fp_email" not in session:
+    email = session.get("fp_email")
+    if not email:
         return redirect("/forgot-password")
 
-    email = session["fp_email"]
     if request.method == "GET":
         return render_template("verify_otp.html", error=None, email=email, next_step="reset_password")
 
-    entered = (request.form.get("otp") or "").strip()
-    if entered == session.get("fp_otp"):
-        session.pop("fp_otp", None)
+    status = check_otp("reset", email, request.form.get("otp"))
+    if status == "ok":
         session["fp_verified_email"] = email
         session.pop("fp_email", None)
         return redirect("/forgot-password/reset")
 
-    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=email, next_step="reset_password")
+    return render_template("verify_otp.html", error=OTP_MESSAGES[status], email=email, next_step="reset_password")
 
 
 @login_bp.route("/forgot-password/reset", methods=["GET", "POST"])
@@ -210,8 +290,9 @@ def forgot_password_reset():
         password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm_password", "").strip()
 
-        if not password or len(password) < 6:
-            return render_template("set_password.html", error="Password must be at least 6 characters.", email=email, is_reset=True)
+        problem = password_problem(password, email)
+        if problem:
+            return render_template("set_password.html", error=problem, email=email, is_reset=True)
         if password != confirm:
             return render_template("set_password.html", error="Passwords do not match.", email=email, is_reset=True)
 
@@ -234,66 +315,56 @@ def send_otp():
     if request.method == "GET":
         return render_template("send_otp.html", error=None)
 
-    try:
-        email = (request.form.get("email") or "").strip().lower()
-        if not email or "@" not in email:
-            return render_template("send_otp.html", error="Please enter a valid email address.")
+    email = (request.form.get("email") or "").strip().lower()
+    if not is_valid_email(email):
+        return render_template("send_otp.html", error="Please enter a valid email address.")
+    if _otp_send_blocked():
+        return render_template("send_otp.html", error="Too many requests. Please try again in a few minutes.")
 
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user_name = email.split("@")[0].capitalize()
-            user = User(
-                full_name=user_name,
-                email=email,
-                password=generate_password_hash(os.urandom(24).hex()),
-                auth_provider="otp",
-                email_verified=True
-            )
-            db.session.add(user)
-            try:
-                db.session.commit()
-                print(f"[OTP] Auto-created user account for {email}")
-            except Exception as e:
-                db.session.rollback()
-                print(f"[OTP] Error auto-creating user account: {e}")
+    code, reason = issue_otp("login", email)
+    if reason == "limit":
+        return render_template("send_otp.html", error="Too many codes requested for this email. Please try again later.")
+    # reason == "cooldown": a code was sent moments ago and is still valid, so just continue to the verify page.
+    if code and not send_otp_email(email, code):
+        return render_template("send_otp.html", error="Failed to send the code. Please try again or use password login.")
 
-        otp = str(random.randint(100000, 999999))
-        session["otp_code"] = otp
-        session["otp_email"] = email
-
-        if send_otp_email(email, otp):
-            return redirect("/auth/otp/verify")
-        else:
-            return render_template("send_otp.html", error="Failed to send OTP email. Please try again or use password login.")
-
-    except Exception as e:
-        print(f"[send_otp] Unexpected error: {e}")
-        db.session.rollback()
-        return render_template("send_otp.html", error="Something went wrong. Please try again.")
+    session["otp_email"] = email
+    return redirect("/auth/otp/verify")
 
 
 @login_bp.route("/auth/otp/verify", methods=["GET", "POST"])
 def verify_otp():
-    if "otp_code" not in session:
+    email = session.get("otp_email")
+    if not email:
         return redirect("/auth/otp/send")
 
     if request.method == "GET":
-        return render_template("verify_otp.html", error=None, email=session.get("otp_email", ""))
+        return render_template("verify_otp.html", error=None, email=email)
 
-    entered = (request.form.get("otp") or "").strip()
-    if entered == session.get("otp_code"):
-        email = session.pop("otp_email", None)
-        session.pop("otp_code", None)
-        user = User.query.filter_by(email=email).first()
-        if user:
-            session.clear()
-            session["user_id"] = user.id
-            session["user_name"] = user.full_name
-            session["user_email"] = user.email
-            if not profile_is_complete(user):
-                return redirect("/register")
-            return redirect("/dashboard")
-    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=session.get("otp_email", ""))
+    status = check_otp("login", email, request.form.get("otp"))
+    if status != "ok":
+        return render_template("verify_otp.html", error=OTP_MESSAGES[status], email=email)
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        # Accounts created through an email code are only created once the mailbox has been proven.
+        user = User(full_name=email.split("@")[0].capitalize(), email=email,
+                    password=generate_password_hash(os.urandom(24).hex()), auth_provider="otp", email_verified=True)
+        db.session.add(user)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[OTP] Error creating account: {e}")
+            return render_template("verify_otp.html", error="Something went wrong. Please try again.", email=email)
+
+    session.clear()
+    session["user_id"] = user.id
+    session["user_name"] = user.full_name
+    session["user_email"] = user.email
+    if not profile_is_complete(user):
+        return redirect("/register")
+    return redirect("/dashboard")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -305,28 +376,31 @@ def signup():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
 
-        if not email or "@" not in email:
+        if not is_valid_email(email):
             return render_template("signup.html", error="Please enter a valid email address.", has_google_oauth=has_google_oauth)
 
         if User.query.filter_by(email=email).first():
             return render_template("signup.html", error="An account with this email already exists. Please login.", has_google_oauth=has_google_oauth)
 
-        otp = str(random.randint(100000, 999999))
-        session["reg_otp"] = otp
-        session["pending_signup_email"] = email
+        if _otp_send_blocked():
+            return render_template("signup.html", error="Too many requests. Please try again in a few minutes.", has_google_oauth=has_google_oauth)
 
-        if send_otp_email(email, otp):
-            return redirect("/auth/register/verify-otp")
-        else:
-            return render_template("signup.html", error="Failed to send OTP email. Please try again.", has_google_oauth=has_google_oauth)
+        code, reason = issue_otp("signup", email)
+        if reason == "limit":
+            return render_template("signup.html", error="Too many codes requested for this email. Please try again later.", has_google_oauth=has_google_oauth)
+        if code and not send_otp_email(email, code):
+            return render_template("signup.html", error="Failed to send the code. Please try again.", has_google_oauth=has_google_oauth)
+
+        session["pending_signup_email"] = email
+        return redirect("/auth/register/verify-otp")
 
     return render_template("signup.html", has_google_oauth=has_google_oauth, error=None)
 
 
 @login_bp.route("/auth/register/verify-otp", methods=["GET", "POST"])
 def verify_register_otp():
-    email = session.get("pending_signup_email") or session.get("email_otp_verified")
-    if not email or "reg_otp" not in session:
+    email = session.get("pending_signup_email")
+    if not email:
         if session.get("email_otp_verified"):
             return redirect("/signup/set-password")
         return redirect("/signup")
@@ -334,18 +408,17 @@ def verify_register_otp():
     if request.method == "GET":
         return render_template("verify_otp.html", error=None, email=email, next_step="set_password")
 
-    entered = (request.form.get("otp") or "").strip()
-    if entered == session.get("reg_otp"):
-        session.pop("reg_otp", None)
+    status = check_otp("signup", email, request.form.get("otp"))
+    if status == "ok":
         session["email_otp_verified"] = email
         return redirect("/signup/set-password")
 
-    return render_template("verify_otp.html", error="Invalid OTP. Please try again.", email=email, next_step="set_password")
+    return render_template("verify_otp.html", error=OTP_MESSAGES[status], email=email, next_step="set_password")
 
 
 @login_bp.route("/signup/set-password", methods=["GET", "POST"])
 def signup_set_password():
-    email = session.get("email_otp_verified") or session.get("pending_signup_email")
+    email = session.get("email_otp_verified")          # only an email whose code was entered correctly
     if not email:
         return redirect("/signup")
 
@@ -353,8 +426,9 @@ def signup_set_password():
         password = request.form.get("password", "").strip()
         confirm = request.form.get("confirm_password", "").strip()
 
-        if not password or len(password) < 6:
-            return render_template("set_password.html", error="Password must be at least 6 characters.", email=email)
+        problem = password_problem(password, email)
+        if problem:
+            return render_template("set_password.html", error=problem, email=email)
         if password != confirm:
             return render_template("set_password.html", error="Passwords do not match.", email=email)
 

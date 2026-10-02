@@ -97,6 +97,86 @@ class InterviewProgress(db.Model):
     chat_history = db.Column(db.Text, default='[]')
     q_count = db.Column(db.Integer, default=0)
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    # Interview integrity (all kept on the server, so clearing browser storage cannot reset them)
+    strikes = db.Column(db.Integer, default=0)
+    sid = db.Column(db.String(40))                        # which browser / device currently holds this interview
+    last_seen_at = db.Column(db.DateTime)                 # last page load or heartbeat from that browser
+    question_shown_at = db.Column(db.DateTime)            # when the current question was first shown
+
+
+class InterviewViolation(db.Model):
+    """One integrity event recorded during a scored assessment. `strike_no` is set when it counted as a strike;
+    review flags (strike_no NULL) are only ever shown to the admin. result_id is filled in when the assessment ends."""
+    __tablename__ = 'interview_violations'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    result_id = db.Column(db.Integer, db.ForeignKey('interview_results.id'), nullable=True, index=True)
+    kind = db.Column(db.String(30), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    detail = db.Column(db.String(300))
+    strike_no = db.Column(db.Integer)
+    q_num = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, nullable=False)
+
+
+class Feedback(db.Model):
+    """A review / feedback message sent from the feedback box. Kept in the database so nothing is lost if the e-mail fails."""
+    __tablename__ = 'feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    rating = db.Column(db.Integer)                       # 1-5, optional
+    category = db.Column(db.String(30), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    contact_ok = db.Column(db.Boolean, default=True)
+    page = db.Column(db.String(30))                      # dashboard | result
+    session_code = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, nullable=False)
+
+
+class ResourceBookmark(db.Model):
+    """A preparation-library link a candidate saved for later."""
+    __tablename__ = 'resource_bookmarks'
+    __table_args__ = (db.UniqueConstraint('user_id', 'url', name='uq_bookmark_user_url'),)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+
+
+class LinkCheck(db.Model):
+    """Result of the admin link checker for one library link. Only the admin ever sees this; `hidden` removes the link
+    from the candidate pages without editing code."""
+    __tablename__ = 'link_checks'
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(500), nullable=False, unique=True)
+    status_code = db.Column(db.Integer)
+    kind = db.Column(db.String(10))                      # ok | blocked | broken
+    note = db.Column(db.String(120))
+    checked_at = db.Column(db.DateTime)
+    hidden = db.Column(db.Boolean, default=False)
+
+
+class OtpChallenge(db.Model):
+    """One-time code issued by email. Only a keyed hash of the code is stored (never the code itself)."""
+    __tablename__ = 'otp_challenges'
+    id = db.Column(db.Integer, primary_key=True)
+    purpose = db.Column(db.String(20), nullable=False)          # login | signup | reset
+    email = db.Column(db.String(100), nullable=False, index=True)
+    code_hash = db.Column(db.String(64), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    attempts = db.Column(db.Integer, default=0)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, nullable=False)
+
+
+class AuthThrottle(db.Model):
+    """Failed-attempt counter used to lock brute-force attempts on login and code requests."""
+    __tablename__ = 'auth_throttle'
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(160), unique=True, nullable=False)
+    failures = db.Column(db.Integer, default=0)
+    window_start = db.Column(db.DateTime)
+    locked_until = db.Column(db.DateTime)
 
 
 class AdminSettings(db.Model):
@@ -110,6 +190,24 @@ class AdminSettings(db.Model):
     enable_attempt_limits = db.Column(db.Boolean, default=True)
     default_allowed_interviews = db.Column(db.Integer, default=2)
     enable_warning_strikes = db.Column(db.Boolean, default=True)
+    enable_feedback_emails = db.Column(db.Boolean, default=True)
+    # Interview integrity. `enable_warning_strikes` above is the master proctoring switch for scored assessments.
+    max_strikes = db.Column(db.Integer, default=2)
+    proctor_server_strikes = db.Column(db.Boolean, default=True)
+    proctor_single_session = db.Column(db.Boolean, default=True)
+    proctor_server_timer = db.Column(db.Boolean, default=True)
+    proctor_block_copy_paste = db.Column(db.Boolean, default=True)
+    proctor_fullscreen = db.Column(db.Boolean, default=False)
+    proctor_typing_flags = db.Column(db.Boolean, default=True)
+    proctor_integrity_log = db.Column(db.Boolean, default=True)
+
+
+# The integrity switches, with the value each one has when nothing was ever saved.
+INTEGRITY_SWITCHES = {
+    "proctor_server_strikes": True, "proctor_single_session": True, "proctor_server_timer": True,
+    "proctor_block_copy_paste": True, "proctor_fullscreen": False, "proctor_typing_flags": True,
+    "proctor_integrity_log": True,
+}
 
 
 class SettingsSnapshot:
@@ -126,6 +224,13 @@ class SettingsSnapshot:
         self.enable_warning_strikes = getattr(s, 'enable_warning_strikes', True)
         if self.enable_warning_strikes is None:
             self.enable_warning_strikes = True
+        self.enable_feedback_emails = getattr(s, 'enable_feedback_emails', True)
+        if self.enable_feedback_emails is None:
+            self.enable_feedback_emails = True
+        self.max_strikes = max(1, min(5, getattr(s, 'max_strikes', 2) or 2))
+        for name, default in INTEGRITY_SWITCHES.items():
+            value = getattr(s, name, default)
+            setattr(self, name, default if value is None else bool(value))
 
 
 def _clamp_strings(mapper, connection, target):
@@ -175,7 +280,8 @@ def get_settings():
                 question_timer_seconds=90,
                 enable_attempt_limits=True,
                 default_allowed_interviews=2,
-                enable_warning_strikes=True
+                enable_warning_strikes=True,
+                enable_feedback_emails=True
             )
             db.session.add(settings_row)
             db.session.commit()
@@ -216,6 +322,17 @@ def save_progress(user_id, chat_history, q_count):
 def clear_progress(user_id):
     try:
         InterviewProgress.query.filter_by(user_id=user_id).delete()
+        # integrity events that never became part of a stored result belong to the interview being discarded
+        InterviewViolation.query.filter_by(user_id=user_id, result_id=None).delete()
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
+def attach_violations(user_id, result_id):
+    """Links the integrity events of the interview that just ended to its stored result. Call BEFORE clear_progress."""
+    try:
+        InterviewViolation.query.filter_by(user_id=user_id, result_id=None).update({"result_id": result_id})
         db.session.commit()
     except Exception:
         db.session.rollback()
