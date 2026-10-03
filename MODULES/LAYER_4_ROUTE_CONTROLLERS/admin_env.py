@@ -154,10 +154,18 @@ def admin_settings():
             except (ValueError, TypeError):
                 pass
 
-        # Keep the interview bounds consistent: min >= 1 and max >= min
-        db_settings.min_questions = max(1, db_settings.min_questions or 1)
-        db_settings.max_questions = max(db_settings.min_questions, db_settings.max_questions or 1)
-        db_settings.pass_score = max(0, min(10, db_settings.pass_score or 0))
+        # The form limits the numbers, but the server enforces the same limits (a crafted request cannot save nonsense).
+        def clamp(value, low, high, default):
+            return default if value is None else max(low, min(high, value))
+
+        # Interview bounds stay consistent: 1 <= min <= max <= 20.
+        db_settings.min_questions = clamp(db_settings.min_questions, 1, 20, 3)
+        db_settings.max_questions = max(db_settings.min_questions, clamp(db_settings.max_questions, 1, 20, 8))
+        db_settings.pass_score = clamp(db_settings.pass_score, 0, 10, 3)
+        db_settings.question_timer_seconds = clamp(db_settings.question_timer_seconds, 20, 300, 90)
+        db_settings.default_allowed_interviews = clamp(db_settings.default_allowed_interviews, 1, 10, 2)
+        if db_settings.default_difficulty not in ("student", "mid", "senior"):
+            db_settings.default_difficulty = "student"
 
         db.session.commit()
 

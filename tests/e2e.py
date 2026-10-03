@@ -2702,11 +2702,222 @@ def t_organisation_wording():
     from MODULES.LAYER_4_ROUTE_CONTROLLERS import resources as R
     check("library: the peer-practice resource and format are renamed", "Peer practice" in {i["format"] for i in R.LIBRARY} and all("Mock" not in i["label"] and "mock" not in i["cta"].lower() for i in R.LIBRARY))
 
+def t_admin_settings_all():
+    section("Admin settings: every setting saves, shows again, is limited by the server, and changes real behaviour")
+    import re
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import get_settings as _get_settings
+
+    BASE = {"min_questions": "3", "max_questions": "8", "pass_score": "3", "question_timer_seconds": "90", "default_difficulty": "student",
+            "enable_attempt_limits": "on", "default_allowed_interviews": "2", "enable_warning_strikes": "on", "enable_feedback_emails": "on",
+            "integrity_form": "1", "proctor_server_strikes": "on", "proctor_single_session": "on", "proctor_server_timer": "on",
+            "proctor_block_copy_paste": "on", "proctor_typing_flags": "on", "proctor_integrity_log": "on", "max_strikes": "2"}
+    adm = client()
+    post(adm, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+
+    def save(**kw):
+        d = dict(BASE)
+        d.update(kw)
+        d = {k: v for k, v in d.items() if v is not None}          # None = leave the field out (an unticked switch)
+        r = post(adm, "/admin/settings", data=d)
+        invalidate_settings_cache()
+        return r
+
+    def cur():
+        invalidate_settings_cache()
+        with app.app_context():
+            return _get_settings()
+
+    def candidate(tag):
+        email = f"setall_{tag}@test.local"
+        make_user(email, f"Settings {tag}")
+        c, _ = login_user(email)
+        get(c, "/interview?restart=1")
+        return email, c
+
+    def answers_until_redirect(c, limit=12):
+        """Posts answers like the browser; returns how many were accepted before the interview ended."""
+        get(c, "/interview")
+        for n in range(1, limit + 1):
+            r = post(c, "/interview", data={"answer": "Python backend developer answer"})
+            if r.status_code == 302:
+                return n, r.headers["Location"]
+        return None, None
+
+    def finished_status(c, email):
+        finish(c)
+        with app.app_context():
+            u = User.query.filter_by(email=email).first()
+            r = InterviewResult.query.filter_by(user_id=u.id).order_by(InterviewResult.id.desc()).first()
+            return r.status if r else None
+
+    # ---------- access control
+    save()
+    before = cur().min_questions
+    for who, cl in (("anonymous visitor", client()), ("candidate", candidate("acc")[1])):
+        check(f"{who}: cannot open the settings page", get(cl, "/admin/settings").status_code == 302)
+        r = post(cl, "/admin/settings", data=dict(BASE, min_questions="19"))
+        check(f"{who}: cannot change settings", r.status_code == 302 and cur().min_questions == before)
+
+    # ---------- every field is saved and shown again
+    r = save(min_questions="4", max_questions="6", pass_score="5", question_timer_seconds="120", default_difficulty="senior", default_allowed_interviews="3", max_strikes="3")
+    check("saving redirects with the saved banner", r.status_code == 302 and r.headers["Location"].endswith("/admin/settings?saved=1"), r.headers.get("Location"))
+    s = cur()
+    check("all numeric settings were stored", (s.min_questions, s.max_questions, s.pass_score, s.question_timer_seconds, s.default_allowed_interviews, s.max_strikes) == (4, 6, 5, 120, 3, 3), vars(s))
+    check("the level was stored", s.default_difficulty == "senior")
+    h = get(adm, "/admin/settings?saved=1").data.decode()
+    check("the page shows the saved banner", "updated successfully" in h)
+    for name, val in (("min_questions", "4"), ("max_questions", "6"), ("pass_score", "5"), ("question_timer_seconds", "120"), ("default_allowed_interviews", "3"), ("max_strikes", "3")):
+        check(f"the page shows the saved value for {name}", re.search(rf'name="{name}"[^>]*value="{val}"', h) is not None)
+    check("the page shows the saved level as selected", re.search(r'<option value="senior"\s+selected', h) is not None)
+    for sw in ("enable_attempt_limits", "enable_warning_strikes", "enable_feedback_emails", "proctor_server_strikes", "proctor_single_session",
+               "proctor_server_timer", "proctor_block_copy_paste", "proctor_typing_flags", "proctor_integrity_log"):
+        check(f"the page shows the {sw} switch as ON", re.search(rf'name="{sw}"[^>]*checked', h) is not None or re.search(rf'checked[^>]*name="{sw}"', h) is not None)
+
+    # ---------- switches off and back on
+    save(enable_attempt_limits=None, enable_warning_strikes=None, enable_feedback_emails=None, proctor_typing_flags=None, proctor_integrity_log=None)
+    s = cur()
+    check("unticked switches are stored as OFF", not s.enable_attempt_limits and not s.enable_warning_strikes and not s.enable_feedback_emails and not s.proctor_typing_flags and not s.proctor_integrity_log)
+    check("switches that stayed ticked stay ON", s.proctor_server_strikes and s.proctor_single_session and s.proctor_server_timer and s.proctor_block_copy_paste)
+    h = get(adm, "/admin/settings").data.decode()
+    check("the page shows the OFF switches unchecked", re.search(r'name="enable_feedback_emails"[^>]*checked', h) is None and re.search(r'name="enable_warning_strikes"[^>]*checked', h) is None)
+    save()
+    check("ticking them again turns them back ON", cur().enable_feedback_emails and cur().enable_warning_strikes and cur().enable_attempt_limits)
+
+    # ---------- the server enforces limits and ignores nonsense
+    save(min_questions="0", max_questions="99", pass_score="15", question_timer_seconds="5", default_allowed_interviews="0", default_difficulty="hacker", max_strikes="9")
+    s = cur()
+    check("question range is limited to 1..20", s.min_questions == 1 and s.max_questions == 20, (s.min_questions, s.max_questions))
+    check("passing score is limited to 0..10", s.pass_score == 10)
+    check("timer is limited to 20..300 seconds", s.question_timer_seconds == 20)
+    check("default attempts are limited to 1..10", s.default_allowed_interviews == 1)
+    check("an unknown level falls back to student", s.default_difficulty == "student")
+    check("the strike limit is limited to 1..5", s.max_strikes == 5)
+    save(question_timer_seconds="9999", default_allowed_interviews="99", pass_score="-3")
+    s = cur()
+    check("too-large timer and attempts are capped, a negative score becomes 0", s.question_timer_seconds == 300 and s.default_allowed_interviews == 10 and s.pass_score == 0)
+    save(min_questions="3", max_questions="8", pass_score="4", question_timer_seconds="75")
+    save(min_questions="abc", max_questions="", pass_score="x", question_timer_seconds="y")
+    s = cur()
+    check("non-numeric input never crashes and keeps the previous values", (s.min_questions, s.max_questions, s.pass_score, s.question_timer_seconds) == (3, 8, 4, 75), vars(s))
+    save(min_questions="9", max_questions="2")
+    s = cur()
+    check("a minimum above the maximum is repaired (max follows min)", s.min_questions == 9 and s.max_questions == 9)
+
+    # ---------- maximum questions ends the interview
+    save(min_questions="1", max_questions="3")
+    e1, c1 = candidate("max3")
+    n, loc = answers_until_redirect(c1)
+    check("max 3: the interview ends after exactly 3 answers and goes to the result", n == 3 and loc.endswith("/interview-result"), (n, loc))
+    save(min_questions="1", max_questions="5")
+    e2, c2 = candidate("max5")
+    n, loc = answers_until_redirect(c2)
+    check("max 5: the new limit applies immediately (5 answers)", n == 5, n)
+
+    # ---------- minimum questions gates the 'you may finish' option in the AI prompt
+    save(min_questions="3", max_questions="8")
+    e3, c3 = candidate("min3")
+    get(c3, "/interview")
+    PROMPTS.clear()
+    post(c3, "/interview", data={"answer": "Python backend developer answer"})
+    post(c3, "/interview", data={"answer": "second answer"})
+    early = [p for p in PROMPTS if "CANDIDATE TARGET LEVEL" in p]
+    post(c3, "/interview", data={"answer": "third answer"})
+    later = [p for p in PROMPTS if "CANDIDATE TARGET LEVEL" in p]
+    check("min 3: before 3 answers the AI is not allowed to end the interview", early and all("you may conclude by outputting ONLY" not in p for p in early), len(early))
+    check("min 3: from the 3rd answer the AI may end the interview", later and "you may conclude by outputting ONLY: [END_INTERVIEW]" in later[-1])
+
+    # ---------- timer
+    save(question_timer_seconds="150")
+    e4, c4 = candidate("timer")
+    h = get(c4, "/interview").data.decode()
+    check("timer 150: the interview page counts from 150 seconds", 'TOTAL_SECONDS = parseInt("150"' in h)
+    save(question_timer_seconds="45")
+    h = get(candidate("timer2")[1], "/interview").data.decode()
+    check("timer 45: the next interview uses the new limit", 'TOTAL_SECONDS = parseInt("45"' in h)
+
+    # ---------- default level reaches the AI prompts
+    for level, label in (("senior", "Senior/Expert"), ("mid", "Mid-Level"), ("student", "Student/Beginner")):
+        save(default_difficulty=level, min_questions="3", max_questions="8", question_timer_seconds="90")
+        e, cl = candidate(f"lvl{level}")
+        get(cl, "/interview")
+        PROMPTS.clear()
+        post(cl, "/interview", data={"answer": "Python backend developer answer"})
+        used = [p for p in PROMPTS if "CANDIDATE TARGET LEVEL" in p]
+        check(f"level {level}: the questions are asked for a {label} candidate", used and label in used[-1], used[-1][:120] if used else "no prompt")
+
+    # ---------- passing score decides PASS / FAIL (the stub AI always scores 7.5)
+    save(min_questions="1", max_questions="2", pass_score="8")
+    e, cl = candidate("pass8")
+    answers_until_redirect(cl)
+    check("pass score 8: a 7.5 is a FAIL", finished_status(cl, e) == "FAIL")
+    save(min_questions="1", max_questions="2", pass_score="7")
+    e, cl = candidate("pass7")
+    answers_until_redirect(cl)
+    check("pass score 7: the same 7.5 is a PASS", finished_status(cl, e) == "PASS")
+
+    # ---------- attempt limits and the default number of attempts
+    save(min_questions="1", max_questions="2", pass_score="3", default_allowed_interviews="1")
+    e, cl = candidate("lim1")
+    answers_until_redirect(cl)
+    finish(cl)
+    r = get(cl, "/interview")
+    check("limits ON, 1 attempt: after one assessment the candidate is locked", r.status_code == 302 and "attempts_exceeded" in r.headers["Location"], r.headers.get("Location"))
+    with app.app_context():
+        uid = User.query.filter_by(email=e).first().id
+    r = adm.post(f"/admin/user/{uid}/unlock-attempt", base_url="https://localhost")
+    check("admin unlock gives +1 attempt", r.status_code == 200 and r.get_json()["status"] == "success")
+    check("after the unlock the candidate can start again", get(cl, "/interview").status_code == 200)
+    save(min_questions="1", max_questions="2", default_allowed_interviews="2")
+    e, cl = candidate("lim2")
+    answers_until_redirect(cl)
+    finish(cl)
+    check("1 of 2 attempts used: still allowed", get(cl, "/interview").status_code == 200)
+    answers_until_redirect(cl)
+    finish(cl)
+    check("2 of 2 attempts used: locked", get(cl, "/interview").status_code == 302)
+    save(min_questions="1", max_questions="2", default_allowed_interviews="1", enable_attempt_limits=None)
+    e, cl = candidate("limoff")
+    answers_until_redirect(cl)
+    finish(cl)
+    check("limits OFF: no lock even after the default number of attempts", get(cl, "/interview").status_code == 200)
+    r = get(adm, "/admin/settings").data.decode()
+    check("limits OFF: the page hides the 'default attempts' field", re.search(r'class="[^"]*d-none[^"]*"\s+id="allowedInterviewsGroup"', r) is not None)
+
+    # ---------- proctoring master switch reaches the interview page
+    save(enable_warning_strikes=None)
+    check("proctoring OFF: no integrity script on the interview page", "__integrityReport" not in get(candidate("pmoff")[1], "/interview").data.decode())
+    save()
+    check("proctoring ON: the integrity script is on the interview page", "__integrityReport" in get(candidate("pmon")[1], "/interview").data.decode())
+    save(max_strikes="4")
+    check("strike limit 4: the interview page shows 'Strikes 0 / 4'", "Strikes 0 / 4" in get(candidate("sl4")[1], "/interview").data.decode())
+
+    # ---------- feedback e-mail switch
+    save(min_questions="1", max_questions="2", enable_feedback_emails="on")
+    e_on, c_on = candidate("mailon")
+    answers_until_redirect(c_on)
+    SENT.clear()
+    finish(c_on)
+    check("feedback e-mail ON: the candidate gets the assessment e-mail", len(sent_to(e_on)) >= 1)
+    save(min_questions="1", max_questions="2", enable_feedback_emails=None)
+    e_off, c_off = candidate("mailoff")
+    answers_until_redirect(c_off)
+    SENT.clear()
+    finish(c_off)
+    check("feedback e-mail OFF: no assessment e-mail is sent", len(sent_to(e_off)) == 0)
+
+    # ---------- settings survive the 5-second cache and a restart of the in-memory cache
+    save(pass_score="6")
+    invalidate_settings_cache()
+    check("a saved value is read back from the database after the cache is cleared", cur().pass_score == 6)
+
+    save()                                                           # restore the defaults for the tests that follow
+    save(min_questions="3", max_questions="8", pass_score="3", default_allowed_interviews="2", question_timer_seconds="90", default_difficulty="student", max_strikes="2")
+
 
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

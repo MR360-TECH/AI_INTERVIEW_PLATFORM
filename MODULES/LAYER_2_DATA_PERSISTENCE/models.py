@@ -214,7 +214,8 @@ class SettingsSnapshot:
     def __init__(self, s=None):
         self.min_questions = getattr(s, 'min_questions', 3) or 3
         self.max_questions = getattr(s, 'max_questions', 8) or 8
-        self.pass_score = getattr(s, 'pass_score', 3) or 3
+        pass_score = getattr(s, 'pass_score', 3)
+        self.pass_score = 3 if pass_score is None else pass_score        # 0 is a valid passing score
         self.default_difficulty = getattr(s, 'default_difficulty', 'student') or 'student'
         self.question_timer_seconds = getattr(s, 'question_timer_seconds', 90) or 90
         self.enable_attempt_limits = getattr(s, 'enable_attempt_limits', True)
