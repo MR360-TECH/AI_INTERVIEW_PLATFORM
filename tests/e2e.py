@@ -39,6 +39,7 @@ from MODULES.LAYER_3_BUSINESS_SERVICES import feedback_email, mailer, email_temp
 app = create_app()
 app.config["TESTING"] = False        # keep real error handlers (500 -> handler) active
 app.config["CSRF_ENABLED"] = False    # the dedicated security test switches it on
+app.config["RATE_LIMIT_ENABLED"] = bool(os.environ.get("E2E_RATE_LIMITS"))    # off for the tests; the dedicated test and E2E_RATE_LIMITS=1 turn it on
 app.config["PROPAGATE_EXCEPTIONS"] = False
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 print("UPLOAD_FOLDER used by app:", app.config["UPLOAD_FOLDER"])
@@ -2710,7 +2711,7 @@ def t_admin_settings_all():
     BASE = {"min_questions": "3", "max_questions": "8", "pass_score": "3", "question_timer_seconds": "90", "default_difficulty": "student",
             "enable_attempt_limits": "on", "default_allowed_interviews": "2", "enable_warning_strikes": "on", "enable_feedback_emails": "on",
             "integrity_form": "1", "proctor_server_strikes": "on", "proctor_single_session": "on", "proctor_server_timer": "on",
-            "proctor_block_copy_paste": "on", "proctor_typing_flags": "on", "proctor_integrity_log": "on", "max_strikes": "2"}
+            "proctor_block_copy_paste": "on", "proctor_typing_flags": "on", "proctor_integrity_log": "on", "enable_rate_limits": "on", "max_strikes": "2"}
     adm = client()
     post(adm, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
 
@@ -2914,10 +2915,183 @@ def t_admin_settings_all():
     save(min_questions="3", max_questions="8", pass_score="3", default_allowed_interviews="2", question_timer_seconds="90", default_difficulty="student", max_strikes="2")
 
 
+def t_rate_limiter():
+    section("Rate limiter: loose, friendly, never uses an attempt, can be switched off, never breaks the app")
+    import re
+    import io
+    from MODULES.LAYER_3_BUSINESS_SERVICES import rate_limit as rl
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import get_settings as _gs, AdminSettings
+    rl.reset()
+    old_limits = dict(rl.LIMITS)
+
+    # --- the sliding window itself
+    check("window: allows up to the limit", [rl.allow("t1", 3, 60, now=100.0)[0] for _ in range(3)] == [True, True, True])
+    ok, wait = rl.allow("t1", 3, 60, now=110.0)
+    check("window: the next request is refused with a wait time", ok is False and 49 <= wait <= 50, wait)
+    check("window: after the time has passed it works again, with no penalty", rl.allow("t1", 3, 60, now=161.0)[0] is True)
+    check("window: keys are independent", rl.allow("t2", 1, 60, now=100.0)[0] and rl.allow("t3", 1, 60, now=100.0)[0])
+    rl.reset()
+
+    app.config["RATE_LIMIT_ENABLED"] = True
+    try:
+        # --- visitors: per IP, friendly page
+        rl.LIMITS["anon"] = (5, 60)
+        v = client()
+        codes = [get(v, "/login").status_code for _ in range(7)]
+        check("visitor: the first 5 requests are served, then 429", codes[:5] == [200] * 5 and codes[5:] == [429, 429], codes)
+        r = get(v, "/login")
+        h = r.data.decode()
+        check("visitor: a calm explanation, the wait time and a Back button", "going a little fast" in h and "Please wait" in h and "Back" in h)
+        check("visitor: Retry-After header is a number of seconds", r.headers.get("Retry-After", "").isdigit() and 1 <= int(r.headers["Retry-After"]) <= 60)
+        check("static files are never counted", all(get(v, "/static/css/visibility.css").status_code == 200 for _ in range(10)))
+        rl.reset()
+        check("after the window the visitor is served again (nothing is banned)", get(client(), "/login").status_code == 200)
+
+        # --- signed-in people: per account, AI answers have their own limit
+        rl.LIMITS["anon"] = (400, 60)
+        rl.LIMITS["ai"] = (3, 60)
+        email = "rl_user@test.local"
+        uid = make_user(email, "Rate User")
+        c, _ = login_user(email)
+        get(c, "/interview")
+        before = used(email)
+        codes = [post(c, "/interview", data={"answer": f"answer number {i} with some words"}).status_code for i in range(5)]
+        check("answers: the first 3 are accepted, the next ones are limited (429)", codes[:3] == [200, 200, 200] and codes[3:] == [429, 429], codes)
+        h = post(c, "/interview", data={"answer": "one more"}).data.decode()
+        check("answers: the page says the interview is safe and no attempt was used", "Your interview is safe" in h and "did not use any of your attempts" in h)
+        j = post(c, "/interview/submit", data={"answer": "ajax answer"}).get_json()
+        check("answers via AJAX get JSON with retry_after and progress_saved", j and j.get("error") == "rate_limited" and j["retry_after"] >= 1 and j["progress_saved"] is True, j)
+        check("the saved interview is untouched by the limit", progress_exists(email))
+        check("no attempt was used by a limited request", used(email) == before, (used(email), before))
+        check("other pages still work for that user while the answer limit is active", get(c, "/dashboard").status_code == 200)
+        email2 = "rl_user2@test.local"
+        make_user(email2, "Rate User Two")
+        c2, _ = login_user(email2)
+        get(c2, "/interview")
+        check("another account is not affected (limits are per account)", post(c2, "/interview", data={"answer": "hello there"}).status_code == 200)
+        rl.reset()
+        check("after the window the first account can answer again", post(c, "/interview", data={"answer": "answer after waiting"}).status_code == 200)
+
+        # --- heartbeat and logout are never limited
+        rl.LIMITS["user"] = (4, 60)
+        rl.reset()
+        hb = [post(c, "/interview/heartbeat").status_code for _ in range(10)]
+        check("the interview heartbeat is never limited", all(x != 429 for x in hb), hb)
+        check("sign-out is never limited", get(c, "/logout").status_code != 429)
+        rl.LIMITS["user"] = old_limits["user"]
+        rl.reset()
+
+        # --- hourly caps (database)
+        rl.LIMITS["practice"] = (2, 3600)
+        email3 = "rl_user3@test.local"
+        make_user(email3, "Rate User Three")
+        c3, _ = login_user(email3)
+        codes = [post(c3, "/practice-start", data={"mode": "drill", "drill_subject": "Graphs"}).status_code for _ in range(4)]
+        check("practice sessions: the first 2 per hour are allowed, then 429", 429 not in codes[:2] and codes[2:] == [429, 429], codes)
+        c2b, _ = login_user(email2)
+        check("the hourly cap is per account", post(c2b, "/practice-start", data={"mode": "drill", "drill_subject": "Graphs"}).status_code != 429)
+        rl.LIMITS["practice"] = old_limits["practice"]
+        rl.LIMITS["resume"] = (1, 3600)
+        email4 = "rl_user4@test.local"
+        make_user(email4, "Rate User Four")
+        c4, _ = login_user(email4)
+        up = lambda: post(c4, "/dashboard/update-resume", data={"resume": (io.BytesIO(b"%PDF-1.4 test"), "cv.pdf")}, content_type="multipart/form-data")
+        s1, s2 = up().status_code, up().status_code
+        check("resume uploads: the second one in the same hour is limited", s1 != 429 and s2 == 429, (s1, s2))
+        rl.LIMITS["resume"] = old_limits["resume"]
+
+        # --- the administrator is never limited
+        rl.LIMITS["anon"] = (2, 60)
+        rl.LIMITS["user"] = (2, 60)
+        rl.reset()
+        a = client()
+        post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+        rl.reset()
+        codes = [get(a, "/admin").status_code for _ in range(8)]
+        check("the administrator can open pages as fast as needed", 429 not in codes, codes)
+        rl.LIMITS.update(old_limits)
+        rl.reset()
+
+        # --- the admin switch (Settings -> Protection)
+        app.config["RATE_LIMIT_ENABLED"] = None                     # now the Settings switch decides
+        rl.LIMITS["anon"] = (3, 60)
+        rl.reset()
+        v2 = client()
+        codes = [get(v2, "/login").status_code for _ in range(5)]
+        check("switch ON (default): the limit applies", codes[3:] == [429, 429], codes)
+        base = {"min_questions": "3", "max_questions": "8", "pass_score": "3", "question_timer_seconds": "90", "default_difficulty": "student",
+                "enable_attempt_limits": "on", "default_allowed_interviews": "2", "enable_warning_strikes": "on", "enable_feedback_emails": "on",
+                "integrity_form": "1", "proctor_server_strikes": "on", "proctor_single_session": "on", "proctor_server_timer": "on",
+                "proctor_block_copy_paste": "on", "proctor_typing_flags": "on", "proctor_integrity_log": "on", "max_strikes": "2"}
+        rl.LIMITS["anon"] = (400, 60)
+        adm = client()
+        post(adm, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+        rl.LIMITS["anon"] = (3, 60)
+        rl.reset()
+        sp = get(adm, "/admin/settings").data.decode()
+        check("settings page: a Protection group with the rate-limiter switch", 'name="enable_rate_limits"' in sp and "Protection" in sp)
+        check("settings page: the explanation is shown under the switch", all(t in sp for t in ("What it does and how it works", "sliding window", "When to turn it off")))
+        post(adm, "/admin/settings", data=base)                      # the switch is left out = OFF
+        invalidate_settings_cache()
+        rl.reset()
+        codes = [get(v2, "/login").status_code for _ in range(8)]
+        check("switch OFF: nothing is limited any more", 429 not in codes, codes)
+        with app.app_context():
+            check("switch OFF is stored", _gs().enable_rate_limits is False)
+        post(adm, "/admin/settings", data=dict(base, enable_rate_limits="on"))
+        invalidate_settings_cache()
+        rl.reset()
+        codes = [get(v2, "/login").status_code for _ in range(5)]
+        check("switch back ON: the limit applies again", codes[3:] == [429, 429], codes)
+        post(adm, "/admin/settings", data={k: v for k, v in base.items() if k != "integrity_form"})
+        invalidate_settings_cache()
+        with app.app_context():
+            check("an older settings post (without the grouped form) never switches it off by accident", _gs().enable_rate_limits is True)
+
+        # --- environment controls and fail-safety
+        import os as _os
+        _os.environ["RATE_LIMITS_ENABLED"] = "false"
+        try:
+            rl.reset()
+            check("RATE_LIMITS_ENABLED=false forces the limiter off", 429 not in [get(v2, "/login").status_code for _ in range(8)])
+        finally:
+            _os.environ.pop("RATE_LIMITS_ENABLED", None)
+        _os.environ["RATE_LIMIT_SCALE"] = "10"
+        try:
+            rl.reset()
+            check("RATE_LIMIT_SCALE=10 makes every limit 10 times looser", 429 not in [get(v2, "/login").status_code for _ in range(20)])
+        finally:
+            _os.environ.pop("RATE_LIMIT_SCALE", None)
+        real_allow = rl.allow
+
+        def _broken(*a, **k):
+            raise RuntimeError("limiter bug")
+        rl.allow = _broken
+        try:
+            check("fail-safe: if the limiter itself breaks, requests simply go through", get(client(), "/login").status_code == 200)
+        finally:
+            rl.allow = real_allow
+    finally:
+        app.config["RATE_LIMIT_ENABLED"] = False
+        rl.LIMITS.update(old_limits)
+        rl.reset()
+        with app.app_context():
+            row = AdminSettings.query.first()
+            row.enable_rate_limits = True
+            db.session.commit()
+        invalidate_settings_cache()
+
+    # --- the guide explains it
+    ga = client()
+    post(ga, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    g = get(ga, "/admin/guide").data.decode()
+    check("admin guide: the rate limiter is explained and its setting is listed", "Friendly rate limiter" in g and "enable_rate_limits" in g and "RATE_LIMIT_SCALE" in g)
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

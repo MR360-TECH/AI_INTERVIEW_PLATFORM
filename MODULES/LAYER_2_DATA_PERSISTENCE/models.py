@@ -200,6 +200,7 @@ class AdminSettings(db.Model):
     proctor_fullscreen = db.Column(db.Boolean, default=False)
     proctor_typing_flags = db.Column(db.Boolean, default=True)
     proctor_integrity_log = db.Column(db.Boolean, default=True)
+    enable_rate_limits = db.Column(db.Boolean, default=True)      # friendly request limits (see rate_limit.py)
 
 
 # The integrity switches, with the value each one has when nothing was ever saved.
@@ -229,6 +230,8 @@ class SettingsSnapshot:
         if self.enable_feedback_emails is None:
             self.enable_feedback_emails = True
         self.max_strikes = max(1, min(5, getattr(s, 'max_strikes', 2) or 2))
+        rate = getattr(s, 'enable_rate_limits', True)
+        self.enable_rate_limits = True if rate is None else bool(rate)
         for name, default in INTEGRITY_SWITCHES.items():
             value = getattr(s, name, default)
             setattr(self, name, default if value is None else bool(value))

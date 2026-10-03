@@ -274,6 +274,12 @@
         .ig-children { margin-left: 18px; padding-left: 16px; border-left: 2px solid #1e3a52; transition: opacity .2s ease; }
         .ig-children.ig-dim { opacity: .5; }
         .ig-children .ig-row:last-child { border-bottom: 0; }
+
+        .rl-explain { margin: 4px 0 18px; background: #08122a; border: 1px solid #1e3a52; border-radius: 12px; padding: 12px 16px; }
+        .rl-explain summary { cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 800; color: #38bdf8; }
+        .rl-explain ul { margin: 10px 0 2px; padding-left: 20px; color: #cbd5e1; font-size: .9rem; line-height: 1.65; }
+        .rl-explain li { margin-bottom: 6px; }
+        .rl-explain strong { color: #ffffff; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
@@ -423,6 +429,27 @@
                         <div class="form-text">Every violation is one strike. The assessment ends when a candidate reaches this number (1 to 5, default 2). Candidates are warned at every strike.</div>
                     </div>
                 </div>
+            </div>
+
+
+            <!-- ═════════ PROTECTION ═════════ -->
+            <div class="ig-group">
+                <div class="ig-group-head"><i class="bi bi-speedometer2"></i> Protection <span>Keeps the platform fast and the AI quota safe</span></div>
+                {{ switch_row('enableRateLimits', 'enable_rate_limits', 'bi-speedometer2', 'Rate limiter (friendly request limits)',
+                              'Slows down only scripts and runaway loops. Normal use is never affected. Turn it off for load tests or if a very large group on one network ever sees a "please slow down" message.', settings.enable_rate_limits) }}
+                <details class="rl-explain" open>
+                    <summary><i class="bi bi-info-circle-fill"></i> What it does and how it works</summary>
+                    <ul>
+                        <li><strong>Why it exists.</strong> Every interview answer calls the Gemini AI, which has a limited free quota. Without a limit, one script or a stuck page could use it all, or slow the site for everyone.</li>
+                        <li><strong>How it works.</strong> The platform counts requests in a short sliding window. If a person or script goes far above normal use, the next request shows a calm "You're going a little fast" page that says how many seconds to wait. After that, everything works again. There are no bans and no penalties.</li>
+                        <li><strong>The limits are very generous.</strong> About 30 interview answers a minute, 600 requests a minute per signed-in candidate, 400 a minute per visitor who is not signed in, 30 resume uploads an hour and 120 practice sessions an hour. A person cannot reach these numbers.</li>
+                        <li><strong>Candidates stay safe.</strong> A limited request never uses an interview attempt, never loses saved progress, and the interview resumes from the Back button.</li>
+                        <li><strong>Fair on shared networks.</strong> Signed-in candidates are counted per account, so a whole classroom on one college network does not block each other.</li>
+                        <li><strong>Administrators</strong> are never limited, and the page itself, images and the interview heartbeat are never counted.</li>
+                        <li><strong>When to turn it off.</strong> During a load test, when many people sign in at the same moment from one address, or while you are debugging. It is safe to leave on for normal use.</li>
+                        <li><strong>If the limiter itself ever has a problem,</strong> requests simply go through. It can never take the site down. The server owner can also loosen every limit with the <code>RATE_LIMIT_SCALE</code> environment variable (for example 2 doubles all limits).</li>
+                    </ul>
+                </details>
             </div>
 
             <!-- ═════════ EMAILS ═════════ -->

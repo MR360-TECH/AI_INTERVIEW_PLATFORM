@@ -595,6 +595,7 @@ Scored assessments are protected by rules that are **counted and stored on the s
 | Sign-in | Keyed-hash one-time codes with expiry and attempt limits, brute-force lockouts, password strength rules, one generic login error, optional admin two-step sign-in |
 | Secrets | No key in the source code; `SECRET_KEY` or a private key derived from `DATABASE_URL`; admin credentials only from environment variables |
 | Data | Upload type and size checks; deleting a user also deletes files, events and bookmarks |
+| Rate limits | Friendly, very generous request limits protect the AI quota from scripts and runaway loops; per account for signed-in users, never for administrators, never an attempt used; one admin switch (**Settings → Protection**) and `RATE_LIMIT_SCALE` / `RATE_LIMITS_ENABLED` |
 
 ---
 

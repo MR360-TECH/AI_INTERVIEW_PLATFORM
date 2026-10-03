@@ -144,6 +144,7 @@ def admin_settings():
         if request.form.get("integrity_form"):
             for switch in INTEGRITY_SWITCHES:
                 setattr(db_settings, switch, bool(request.form.get(switch)))
+            db_settings.enable_rate_limits = bool(request.form.get("enable_rate_limits"))
             try:
                 db_settings.max_strikes = max(1, min(5, int(float(request.form.get("max_strikes", 2)))))
             except (ValueError, TypeError):

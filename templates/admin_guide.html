@@ -673,6 +673,11 @@
                     <td>The main proctoring switch for formal assessments. When off, none of the integrity rules in Module 03 apply.</td>
                 </tr>
                 <tr>
+                    <td class="setting-name">enable_rate_limits</td>
+                    <td><span class="badge bg-warning text-dark">Enabled</span></td>
+                    <td>The friendly rate limiter (Module 09). Turn it off for load tests or if a very large group on one network sees a "please slow down" page.</td>
+                </tr>
+                <tr>
                     <td class="setting-name">max_strikes</td>
                     <td><span class="badge bg-secondary">2</span></td>
                     <td>How many strikes end an assessment (1 to 5). Every violation is one strike.</td>
@@ -891,6 +896,10 @@
                 <p>New passwords need 8+ characters with a letter and a number, and common or email-based passwords are refused. Wrong sign-ins always show one identical message, so nobody can discover which emails are registered.</p>
             </div>
             <div class="feature-card">
+                <h4><i class="bi bi-speedometer2 text-info"></i> Friendly rate limiter</h4>
+                <p>Counts requests in a short sliding window and slows down only scripts and runaway loops, so the AI quota is protected. Limits are very generous (for example about 30 interview answers a minute), signed-in candidates are counted per account, administrators are never limited, and a limited request never uses an attempt. Switch it on or off in <strong>Settings &rarr; Protection</strong>, where the same explanation is shown.</p>
+            </div>
+            <div class="feature-card">
                 <h4><i class="bi bi-phone-fill text-success"></i> Optional admin two-step sign-in</h4>
                 <p>Set <code style="color:#00ffff;">ADMIN_2FA=true</code> and the admin password is followed by a six-digit code emailed to the admin address. Leave it off if your email delivery is not reliable yet.</p>
             </div>
@@ -928,6 +937,7 @@
             <tbody>
                 <tr><td class="setting-name">DATABASE_URL</td><td><span class="badge bg-danger">Required</span></td><td>Neon PostgreSQL connection string (use the pooled one).</td></tr>
                 <tr><td class="setting-name">SECRET_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Signs sessions and keys the one-time-code hashes. Use a long random value. The server refuses to start on Render without it.</td></tr>
+                <tr><td class="setting-name">RATE_LIMIT_SCALE / RATE_LIMITS_ENABLED</td><td><span class="badge bg-secondary">Optional</span></td><td>Scale every rate limit (2 doubles them) or force the limiter off. The Settings switch is the normal way to turn it on or off.</td></tr>
                 <tr><td class="setting-name">ADMIN_2FA</td><td><span class="badge bg-secondary">Optional</span></td><td>Set to <code>true</code> to require an emailed code after the admin password.</td></tr>
                 <tr><td class="setting-name">GEMINI_API_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Main Gemini key for questions, evaluation and feedback notes.</td></tr>
                 <tr><td class="setting-name">ADMIN_EMAIL / ADMIN_PASSWORD</td><td><span class="badge bg-danger">Required</span></td><td>The administrator login for this console.</td></tr>

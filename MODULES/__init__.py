@@ -30,6 +30,7 @@ _REQUIRED_COLUMNS = {
         ('proctor_fullscreen', 'BOOLEAN DEFAULT FALSE'),
         ('proctor_typing_flags', 'BOOLEAN DEFAULT TRUE'),
         ('proctor_integrity_log', 'BOOLEAN DEFAULT TRUE'),
+        ('enable_rate_limits', 'BOOLEAN DEFAULT TRUE'),
     ],
     'interview_progress': [
         ('strikes', 'INTEGER DEFAULT 0'),
@@ -181,6 +182,8 @@ def create_app():
         return response
 
     # CSRF tokens, idle/absolute session timeout, Content-Security-Policy, no caching of signed-in pages
+    from MODULES.LAYER_3_BUSINESS_SERVICES.rate_limit import init_rate_limits
+    init_rate_limits(app)                      # friendly, very loose limits (registered first so floods are stopped cheaply)
     from MODULES.LAYER_3_BUSINESS_SERVICES.web_security import init_web_security
     init_web_security(app)
 
