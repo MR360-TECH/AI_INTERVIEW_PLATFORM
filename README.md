@@ -818,7 +818,7 @@ The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in
 
 For permission to use the software, licensing or partnership enquiries, feedback, or bug reports:
 
-**Email: [mrgowtham36000@gmail.com](mailto:mrgowtham36000@gmail.com)**
+**Email: [aiinterviewplatform26@gmail.com](mailto:aiinterviewplatform26@gmail.com)**
 
 Please include the subject line **"AI Interview Platform"** and a short description of what you need.
 
