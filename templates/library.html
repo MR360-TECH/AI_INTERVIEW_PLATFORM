@@ -38,6 +38,8 @@
         .res-top { display: flex; align-items: center; gap: 12px; }
         .res-avatar { width: 44px; height: 44px; border-radius: 13px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.15rem;
                       background: hsl(var(--h) 60% 20%); color: hsl(var(--h) 95% 78%); border: 1.5px solid hsl(var(--h) 60% 38%); }
+        .res-avatar.has-logo { background: #ffffff; border-color: #ffffff; padding: 5px; }
+        .res-avatar.has-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
         .res-site { min-width: 0; flex: 1; }
         .res-site b { display: block; font-family: 'Outfit', sans-serif; font-size: .95rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .res-site span { display: inline-flex; align-items: center; gap: 5px; font-size: .76rem; font-weight: 700; color: #7dd3fc; margin-top: 1px; }
@@ -103,7 +105,7 @@
         <article class="res" data-track="{{ it.tracks|join('|') }}" data-format="{{ it.format }}" data-url="{{ it.url }}" style="--h: {{ it.hue }}"
                  data-text="{{ (it.label ~ ' ' ~ it.site ~ ' ' ~ it.desc ~ ' ' ~ (it.hubs|map(attribute='name')|join(' ')))|lower }}">
             <div class="res-top">
-                <span class="res-avatar" aria-hidden="true">{{ it.site[0]|upper }}</span>
+                {% if it.logo %}<span class="res-avatar has-logo"><img src="{{ url_for('static', filename='images/sites/' ~ it.logo) }}" alt="{{ it.site }} logo" width="34" height="34" loading="lazy"></span>{% else %}<span class="res-avatar" aria-hidden="true">{{ it.site[0]|upper }}</span>{% endif %}
                 <div class="res-site"><b>{{ it.site }}</b><span><i class="bi {{ it.format_icon }}"></i> {{ it.format }}</span></div>
                 <button type="button" class="bm {{ 'on' if it.url in saved }}" title="Save for later" aria-label="Save for later" aria-pressed="{{ 'true' if it.url in saved else 'false' }}"><i class="bi bi-bookmark-star-fill"></i></button>
             </div>

@@ -1700,9 +1700,8 @@ def tech_questions_detail(company_key):
 
     # links the admin hid (for example a broken one) never reach the candidate
     hidden = hidden_urls()
-    if hidden:
-        item = dict(item, resources=[r for r in item["resources"] if r["url"] not in hidden])
-        item["total_questions"] = len(item["resources"])
+    visible = [r for r in item["resources"] if r["url"] not in hidden]
+    item = dict(item, resources=with_logos(visible), total_questions=len(visible))
 
     return render_template("company_questions.html", company=item, company_key=company_key.lower())
 
@@ -1731,6 +1730,21 @@ FORMAT_BY_SITE = {
 }
 
 
+# The icon of the site each link opens (saved in static/images/sites/), so every link box shows where it leads.
+SITE_LOGOS = {
+    "IndiaBix": "indiabix.png", "GeeksForGeeks": "geeksforgeeks.png", "HackerRank": "hackerrank.png", "GitHub": "github.png",
+    "W3Schools": "w3schools.png", "Kaggle": "kaggle.png", "Aced Practice": "aced.png", "PrepInsta": "prepinsta.png",
+    "javascript.info": "javascriptinfo.png", "roadmap.sh": "roadmapsh.png", "Amazon Jobs": "amazonjobs.png",
+    "Netflix Jobs": "netflixjobs.png", "NeetCode": "neetcode.png", "takeUforward": "takeuforward.png", "CS50": "cs50.png",
+    "Tech Interview Handbook": "techinterviewhandbook.png", "freeCodeCamp": "freecodecamp.png", "SQLBolt": "sqlbolt.png",
+}
+
+
+def with_logos(resources):
+    """Copies of the resource dicts that also carry the site logo file name (or None)."""
+    return [dict(r, logo=SITE_LOGOS.get(r["site"])) for r in resources]
+
+
 FORMAT_ICONS = {
     "Question bank": "bi-patch-question-fill", "Guide": "bi-journal-text", "Practice": "bi-lightning-charge-fill",
     "Tutorial": "bi-mortarboard-fill", "Course": "bi-play-btn-fill", "Roadmap": "bi-signpost-split-fill",
@@ -1747,7 +1761,7 @@ def _build_library():
                 item = items.setdefault(r["url"], {
                     "url": r["url"], "label": r["label"], "site": r["site"], "desc": r["desc"], "icon": r.get("icon", "bi-link-45deg"),
                     "format": FORMAT_BY_SITE.get(r["site"], "Guide"), "cta": r.get("cta") or "Open resource",
-                    "hue": sum(ord(ch) for ch in r["site"]) * 7 % 360,
+                    "hue": sum(ord(ch) for ch in r["site"]) * 7 % 360, "logo": SITE_LOGOS.get(r["site"]),
                     "tracks": [], "hubs": [],
                 })
                 if track_name not in item["tracks"]:
