@@ -24,14 +24,21 @@ IS_PRODUCTION = bool(
 )
 
 # Sessions and one-time codes are signed with this key, so it must be secret. A key written in the source code would be
-# public, so there is no built-in fallback: production refuses to start without one, local runs get a random key.
+# public, so there is no built-in fallback. Order of preference:
+#   1. the SECRET_KEY environment variable (recommended: set a long random value in the hosting dashboard)
+#   2. a key derived from the private DATABASE_URL (stable across restarts and workers, never in the source code), so a
+#      hosted service that has no SECRET_KEY yet still starts safely
+#   3. local development only: a random temporary key
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    # Only a real hosting environment must refuse: a local run that merely uses the Neon DATABASE_URL still starts.
-    if os.environ.get("RENDER") or os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("FLASK_ENV") == "production":
-        raise RuntimeError("SECRET_KEY is not set. Add a long random SECRET_KEY in the hosting dashboard.")
-    SECRET_KEY = secrets.token_hex(32)
-    print(" * NOTE: SECRET_KEY is not set, using a temporary random key (sessions reset when the server restarts).")
+    _private = os.environ.get("DATABASE_URL")
+    if _private:
+        import hashlib
+        SECRET_KEY = hashlib.sha256(("session-signing-key|" + _private).encode()).hexdigest()
+        print(" * NOTE: SECRET_KEY is not set, so a private key derived from DATABASE_URL is used. Set SECRET_KEY for best practice.")
+    else:
+        SECRET_KEY = secrets.token_hex(32)
+        print(" * NOTE: SECRET_KEY is not set, using a temporary random key (sessions reset when the server restarts).")
 
 # Optional: require an e-mailed code for the admin sign-in as well (set ADMIN_2FA=true)
 ADMIN_2FA = (os.environ.get("ADMIN_2FA") or "").strip().lower() in ("1", "true", "yes", "on")
