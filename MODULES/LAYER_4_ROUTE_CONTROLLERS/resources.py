@@ -1685,7 +1685,9 @@ def tech_questions():
         tech_domains=tech_domains,
         business_companies=business_companies,
         business_domains=business_domains,
-        scripts=scripts
+        scripts=scripts,
+        library_count=len([i for i in LIBRARY if i["url"] not in hidden_urls()]),
+        library_sites=[{"name": n, "logo": SITE_LOGOS[n]} for n in ("GeeksForGeeks", "GitHub", "IndiaBix", "HackerRank", "W3Schools", "Kaggle", "freeCodeCamp", "NeetCode")]
     )
 
 

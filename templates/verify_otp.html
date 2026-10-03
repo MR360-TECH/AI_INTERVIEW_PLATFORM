@@ -228,6 +228,11 @@
         }
         .btn-primary-auth:active { transform: translateY(0); }
 
+        .spam-hint { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0 0; padding: 11px 14px; border-radius: 12px; text-align: left;
+            background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.35); color: #fde68a; font-size: .84rem; line-height: 1.5; }
+        .spam-hint i { color: #fbbf24; font-size: 1.05rem; margin-top: 1px; flex-shrink: 0; }
+        .spam-hint strong { color: #fff; }
+
         .auth-footer-note {
             text-align: center; margin-top: 24px;
             font-size: 0.84rem; color: #475569;
@@ -351,6 +356,14 @@
                 </button>
 
             </form>
+
+            {# SPAM-HINT (temporary): remove this block, or set SHOW_SPAM_HINT=false, once a verified sending domain is in place #}
+            {% if show_spam_hint %}
+            <div class="spam-hint" role="note" id="spamHint">
+                <i class="bi bi-envelope-exclamation"></i>
+                <div><strong>No email yet?</strong> Check your <strong>Spam</strong> or <strong>Promotions</strong> folder and mark it <em>Not spam</em>. It can take up to a minute.</div>
+            </div>
+            {% endif %}
 
             <p class="auth-footer-note">
                 Didn't receive code? <a href="{% if next_step == 'reset_password' %}/forgot-password{% elif next_step == 'admin' %}/login{% elif next_step == 'set_password' %}/signup{% else %}/auth/otp/send{% endif %}">Resend Code</a>

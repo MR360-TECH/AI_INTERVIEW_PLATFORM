@@ -116,6 +116,12 @@ def create_app():
     app.jinja_env.filters["readable"] = readable_color
     app.jinja_env.filters["ink_on"] = ink_on
 
+    # Temporary helper text on the verification-code page while e-mails may land in spam (no verified domain yet).
+    # Remove it later by setting SHOW_SPAM_HINT=false (or by deleting the marked block in verify_otp.html).
+    @app.context_processor
+    def inject_mail_hint():
+        return {"show_spam_hint": (os.environ.get("SHOW_SPAM_HINT", "true").strip().lower() not in ("0", "false", "no", "off"))}
+
     # Session cookie security
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"

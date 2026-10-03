@@ -378,6 +378,21 @@
         ::-webkit-scrollbar-track{background:transparent;}
         ::-webkit-scrollbar-thumb{background:rgba(0,220,255,0.25);border-radius:99px;}
         ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
+
+        /* ── extended library banner ── */
+        .library-banner { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin: 0 0 26px; padding: 20px 24px; border-radius: 20px; text-decoration: none;
+            background: linear-gradient(135deg, rgba(0,255,255,0.10), rgba(2,132,199,0.16)); border: 1.5px solid #0e7490; transition: all .25s ease; }
+        .library-banner:hover { border-color: #00ffff; box-shadow: 0 12px 34px rgba(0,255,255,.18); transform: translateY(-2px); }
+        .lb-logos { display: flex; }
+        .lb-logo { width: 46px; height: 46px; border-radius: 13px; background: #fff; display: flex; align-items: center; justify-content: center; padding: 7px; margin-left: -10px; border: 2px solid #08122a; box-shadow: 0 4px 12px rgba(0,0,0,.4); }
+        .lb-logo:first-child { margin-left: 0; }
+        .lb-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .lb-text { flex: 1; min-width: 240px; }
+        .lb-eyebrow { color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; }
+        .lb-title { color: #fff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.3rem; margin: 2px 0 4px; }
+        .lb-sub { color: #cbd5e1; font-size: .9rem; }
+        .lb-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 800; white-space: nowrap; }
+        @media (max-width: 700px) { .lb-cta { width: 100%; justify-content: center; } }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
@@ -412,15 +427,25 @@
                 <p class="catalog-subtitle mb-0">Explore 105+ verified question banks, recruitment test papers, Indian banking assessments, management case studies, and hands-on scripting challenges.</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="/library" class="btn btn-back-hub rounded-pill px-4 py-2 border shadow-sm" style="border-color:#00ffff !important;color:#00ffff !important;">
-                    <i class="bi bi-search me-1"></i> Search all resources
-                </a>
                 <a href="/dashboard" class="btn btn-back-hub rounded-pill px-4 py-2 border shadow-sm">
                     <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
             </div>
         </div>
     </div>
+
+    <!-- ══ EXTENDED LIBRARY BANNER ══ -->
+    <a href="/library" class="library-banner" id="libraryBanner" aria-label="Open the extended preparation library">
+        <div class="lb-logos" aria-hidden="true">
+            {% for s in library_sites %}<span class="lb-logo"><img src="{{ url_for('static', filename='images/sites/' ~ s.logo) }}" alt="" width="30" height="30" loading="lazy"></span>{% endfor %}
+        </div>
+        <div class="lb-text">
+            <div class="lb-eyebrow"><i class="bi bi-collection-fill"></i> Extended Library</div>
+            <div class="lb-title">Need more? Every preparation link in one searchable page</div>
+            <div class="lb-sub">{{ library_count }} curated links &middot; filter by track and format &middot; search by topic &middot; bookmarks &middot; 7-day study plans</div>
+        </div>
+        <span class="lb-cta">Click here for more resources <i class="bi bi-arrow-right"></i></span>
+    </a>
 
     <!-- ══ QUICK JUMP & LIVE FILTER CONTROLS ══ -->
     <div class="controls-wrapper">
