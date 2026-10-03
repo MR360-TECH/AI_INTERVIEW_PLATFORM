@@ -126,3 +126,24 @@ html body .badge.text-warning { color: #fbbf24 !important; }
 
 /* delete actions are POST forms now: make the buttons look like the links they replaced */
 button.btn-delete, button.btn-del-user { font-family: inherit; cursor: pointer; line-height: inherit; }
+
+/* ───── smoothness: cheaper effects everywhere (smoother scrolling and transitions) ───── */
+/* the animated background lives on its own layer and is not repainted while scrolling */
+.db-bg { transform: translateZ(0); contain: layout paint; }
+.db-orb { animation: none !important; filter: none !important; opacity: .55 !important; }       /* blurred + animated = very costly */
+.db-star { animation: none !important; opacity: .35; }
+/* blur-behind on every card is the biggest scroll cost; the cards already have dark translucent backgrounds */
+body :not(.modal-content):not(.modal-backdrop) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* long lists: the browser skips drawing cards that are far off-screen */
+.hub-card-item, .animate-item, .res, .resource-vault-card { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+.animate-card, .animate-item { animation-duration: .35s !important; }
+/* a soft fade when a page opens, and a themed progress bar while the next page loads */
+@keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+body { animation: pageIn .28s ease-out; }
+#navBar { position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 10000; opacity: 0; pointer-events: none;
+          background: linear-gradient(90deg, #00ffff, #0284c7); box-shadow: 0 0 12px rgba(0,255,255,.8); }
+#navBar.on { opacity: 1; width: 85%; transition: width 6s cubic-bezier(.1,.7,.2,1); }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    .loader-spinner { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; }   /* a loading spinner must keep turning */
+}

@@ -50,6 +50,20 @@ _CLIENT_SCRIPT = (
     "var i=document.createElement('input');i.type='hidden';i.name='csrf_token';i.value=t;fm.appendChild(i);}}}},true);"
     "}})();</script>"
 )
+# Themed progress bar while another page loads; also clears any "loading" overlay when the browser restores a page from its
+# back/forward cache, so a spinner can never be left stuck on screen.
+_MOTION_SCRIPT = (
+    "<script>(function(){var bar;function B(){if(!bar){bar=document.createElement('div');bar.id='navBar';"
+    "(document.body||document.documentElement).appendChild(bar);}return bar;}"
+    "function go(){var b=B();b.className='';void b.offsetWidth;b.className='on';}"
+    "document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;"
+    "if(!a||e.defaultPrevented||e.button||e.ctrlKey||e.metaKey||e.shiftKey||a.target==='_blank'||a.hasAttribute('download'))return;"
+    "var u;try{u=new URL(a.href,location.href);}catch(x){return;}"
+    "if(u.origin!==location.origin||(u.pathname===location.pathname&&u.search===location.search))return;go();},true);"
+    "document.addEventListener('submit',function(e){if(!e.defaultPrevented)go();},false);"
+    "window.addEventListener('pageshow',function(){if(bar)bar.className='';var o=document.getElementById('loadingOverlay');"
+    "if(o)o.classList.remove('active');});})();</script>"
+)
 _POST_FORM = re.compile(r"(<form\b[^>]*\bmethod\s*=\s*[\"']?post[\"']?[^>]*>)", re.IGNORECASE)
 
 
@@ -111,7 +125,7 @@ def init_web_security(app):
                 token = csrf_token()
                 html = response.get_data(as_text=True)
                 html = _POST_FORM.sub(lambda m: m.group(1) + f'<input type="hidden" name="csrf_token" value="{token}">', html)
-                snippet = _CLIENT_SCRIPT.format(token=token)
+                snippet = _CLIENT_SCRIPT.format(token=token) + _MOTION_SCRIPT
                 html = html.replace("</head>", snippet + "</head>", 1) if "</head>" in html else snippet + html
                 response.set_data(html)
         return response

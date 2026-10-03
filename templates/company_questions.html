@@ -471,7 +471,7 @@
 
     <div class="row g-4">
         {% for r in company.resources %}
-        <div class="col-md-6 animate-item" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+        <div class="col-md-6 animate-item" style="animation-delay: {{ [loop.index0, 8]|min * 0.05 }}s;">
             <div class="resource-vault-card" style="--card-accent: {{ company.color }}; --card-glow: {{ company.color }}25;">
                 <div>
                     <div class="d-flex justify-content-between align-items-start mb-2">

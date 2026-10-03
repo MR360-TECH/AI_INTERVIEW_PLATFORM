@@ -532,7 +532,7 @@
             'swiggy-zomato': 'https://www.google.com/s2/favicons?sz=128&domain=swiggy.com'
         } %}
         {% for c in companies %}
-        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ c.name | lower }} {{ c.description | lower }}" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
+        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ c.name | lower }} {{ c.description | lower }}" style="animation-delay: {{ [loop.index0, 8]|min * 0.04 }}s;">
             <a href="/tech-questions/{{ c.key }}" class="item-card" style="--brand-color: {{ c.color }}; --brand-text: {{ c.color|readable }}; --brand-ink: {{ c.color|ink_on }}; --brand-glow: {{ c.color }}25;">
                 <div class="card-aura"></div>
                 <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between" style="position: relative; z-index: 10;">
@@ -602,7 +602,7 @@
             'compilers-lowlevel': 'bi-cpu-fill'
         } %}
         {% for td in tech_domains %}
-        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ td.name | lower }} {{ td.category | lower }} {{ td.description | lower }}" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
+        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ td.name | lower }} {{ td.category | lower }} {{ td.description | lower }}" style="animation-delay: {{ [loop.index0, 8]|min * 0.04 }}s;">
             <a href="/tech-questions/{{ td.key }}" class="item-card" style="--brand-color: {{ td.color }}; --brand-text: {{ td.color|readable }}; --brand-ink: {{ td.color|ink_on }}; --brand-glow: {{ td.color }}25;">
                 <div class="card-aura"></div>
                 <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between" style="position: relative; z-index: 10;">
@@ -679,7 +679,7 @@
             'indigo-airindia': 'https://www.google.com/s2/favicons?sz=128&domain=goindigo.in'
         } %}
         {% for bc in business_companies %}
-        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ bc.name | lower }} {{ bc.category | lower }} {{ bc.description | lower }}" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
+        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ bc.name | lower }} {{ bc.category | lower }} {{ bc.description | lower }}" style="animation-delay: {{ [loop.index0, 8]|min * 0.04 }}s;">
             <a href="/tech-questions/{{ bc.key }}" class="item-card" style="--brand-color: {{ bc.color }}; --brand-text: {{ bc.color|readable }}; --brand-ink: {{ bc.color|ink_on }}; --brand-glow: {{ bc.color }}25;">
                 <div class="card-aura"></div>
                 <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between" style="position: relative; z-index: 10;">
@@ -761,7 +761,7 @@
             'media-pr-comms': 'bi-broadcast-pin'
         } %}
         {% for b in business_domains %}
-        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ b.name | lower }} {{ b.category | lower }} {{ b.description | lower }}" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
+        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ b.name | lower }} {{ b.category | lower }} {{ b.description | lower }}" style="animation-delay: {{ [loop.index0, 8]|min * 0.04 }}s;">
             <a href="/tech-questions/{{ b.key }}" class="item-card" style="--brand-color: {{ b.color }}; --brand-text: {{ b.color|readable }}; --brand-ink: {{ b.color|ink_on }}; --brand-glow: {{ b.color }}25;">
                 <div class="card-aura"></div>
                 <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between" style="position: relative; z-index: 10;">
@@ -836,7 +836,7 @@
             'matlab-octave': 'bi-calculator-fill'
         } %}
         {% for s in scripts %}
-        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ s.name | lower }} {{ s.category | lower }} {{ s.description | lower }}" style="animation-delay: {{ loop.index0 * 0.02 }}s;">
+        <div class="col-lg-4 col-md-6 animate-card hub-card-item" data-search="{{ s.name | lower }} {{ s.category | lower }} {{ s.description | lower }}" style="animation-delay: {{ [loop.index0, 8]|min * 0.04 }}s;">
             <a href="/tech-questions/{{ s.key }}" class="item-card" style="--brand-color: {{ s.color }}; --brand-text: {{ s.color|readable }}; --brand-ink: {{ s.color|ink_on }}; --brand-glow: {{ s.color }}25;">
                 <div class="card-aura"></div>
                 <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between" style="position: relative; z-index: 10;">

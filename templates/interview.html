@@ -250,9 +250,7 @@
             position: fixed;
             inset: 0;
             z-index: 9999;
-            background: rgba(4, 9, 20, 0.88);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(4, 9, 20, 0.94);
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -286,7 +284,7 @@
             border-top-color: #00ffff;
             border-right-color: #0284c7;
             border-radius: 50%;
-            animation: spin 0.75s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            animation: spin 0.9s linear infinite;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.4);
         }
         .loader-core-icon {
@@ -300,6 +298,10 @@
             100% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 10px #00ffff); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-dots i { font-style: normal; animation: dotBlink 1.2s infinite both; }
+        .loader-dots i:nth-child(2) { animation-delay: .2s; }
+        .loader-dots i:nth-child(3) { animation-delay: .4s; }
+        @keyframes dotBlink { 0%, 80%, 100% { opacity: .2; } 40% { opacity: 1; } }
 
         .loader-title {
             font-family: 'Outfit', sans-serif;
@@ -736,8 +738,8 @@
             <div class="loader-spinner"></div>
             <i class="bi bi-cpu-fill loader-core-icon"></i>
         </div>
-        <div class="loader-title cyber-loader-title">AI Examiner is evaluating...</div>
-        <div class="loader-sub">Analyzing technical depth &amp; structuring the next question</div>
+        <div class="loader-title cyber-loader-title">Preparing your next question<span class="loader-dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></div>
+        <div class="loader-sub">The AI examiner is reading your answer. This usually takes a few seconds.</div>
     </div>
 
     {% include 'navbar.html' %}
