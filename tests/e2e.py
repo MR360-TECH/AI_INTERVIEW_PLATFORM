@@ -2686,11 +2686,27 @@ def t_legal_and_brand():
     check("result page: the app logo and name replace the plain badge", 'class="lh-brand"' in rh and "logo-icon.png" in rh and "AI Interview Platform" in rh and "AI Evaluation System" in rh)
     check("result page: the logo is dark-text safe when printed", ".lh-brand strong { color: #0b1329" not in rh or True)
 
+def t_organisation_wording():
+    section("Positioning: the app speaks to organisations; no 'mock interview' wording inside the project")
+    import glob, re
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__import__("MODULES").__file__)))
+    hits = []
+    for pat in ("templates/*.html", "MODULES/**/*.py", "static/js/*.js"):
+        for f in glob.glob(os.path.join(root, pat), recursive=True):
+            if re.search(r"mock", open(f, encoding="utf-8", errors="ignore").read(), re.I):
+                hits.append(os.path.relpath(f, root))
+    check("no file in templates, modules or scripts uses the words 'mock interview'", not hits, hits)
+    h = get(client(), "/").data.decode()
+    check("home page speaks to organisations", "Enterprise AI Interviews" in h and "Assess Talent with Confidence" in h and "for organisations" in h.lower())
+    check("sign-in pages show the neutral system name", "Interview &amp; Assessment System" in get(client(), "/login").data.decode())
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS import resources as R
+    check("library: the peer-practice resource and format are renamed", "Peer practice" in {i["format"] for i in R.LIBRARY} and all("Mock" not in i["label"] and "mock" not in i["cta"].lower() for i in R.LIBRARY))
+
 
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

@@ -18,7 +18,7 @@ COMPANY_HUB = [
             {"site": "GitHub",        "label": "Tech Interview Handbook",         "desc": "Free open-source handbook covering algorithms, system design, and behavioral questions for FAANG companies.",          "url": "https://github.com/yangshun/tech-interview-handbook",                              "icon": "bi-github"},
             {"site": "GeeksForGeeks", "label": "Top 100 DSA Problems",            "desc": "Curated collection of the most commonly asked algorithmic and data structure problems with complete solutions.",   "url": "https://www.geeksforgeeks.org/dsa/top-100-data-structure-and-algorithms-dsa-interview-questions-topic-wise/", "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Placement Papers & Aptitude",     "desc": "Company placement papers, aptitude, verbal, and logical reasoning practice — all free, no login required.",           "url": "https://www.indiabix.com/placement-papers/companies/",                              "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -32,7 +32,7 @@ COMPANY_HUB = [
             {"site": "GitHub",        "label": "Coding Interview University",     "desc": "A complete CS study plan with topics covering everything Microsoft interviewers ask — 100% free.",                   "url": "https://github.com/jwasham/coding-interview-university",                            "icon": "bi-github"},
             {"site": "GeeksForGeeks", "label": "Must-Do Coding Questions",        "desc": "Curated list of must-solve algorithmic and coding problems for companies like Microsoft and Adobe.",               "url": "https://www.geeksforgeeks.org/dsa/must-do-coding-questions-for-companies-like-amazon-microsoft-adobe/", "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Aptitude & Logical Reasoning",    "desc": "Sharpen aptitude and reasoning skills with thousands of free practice questions.",                                    "url": "https://www.indiabix.com/aptitude/questions-and-answers/",                         "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -47,7 +47,7 @@ COMPANY_HUB = [
             {"site": "GeeksForGeeks", "label": "Must-Do Coding Questions",        "desc": "Must-solve coding interview questions frequently asked in Amazon online assessments and onsite loops.",             "url": "https://www.geeksforgeeks.org/dsa/must-do-coding-questions-for-companies-like-amazon-microsoft-adobe/", "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Placement Papers & Aptitude",     "desc": "Aptitude, reasoning, and placement paper archives — free to browse without login.",                                  "url": "https://www.indiabix.com/placement-papers/companies/",                              "icon": "bi-file-earmark-text-fill"},
             {"site": "Amazon Jobs", "label": "Leadership Principles (Official)", "desc": "The principles Amazon interviews are built around - read the official page and prepare a story for each", "url": "https://www.amazon.jobs/content/en/our-workplace/leadership-principles", "icon": "bi-file-earmark-text-fill", "cta": "Read the official principles"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -61,7 +61,7 @@ COMPANY_HUB = [
             {"site": "GitHub",        "label": "System Design Primer",            "desc": "Learn system design at scale — exactly what Meta tests in design rounds. Open-source and completely free.",          "url": "https://github.com/donnemartin/system-design-primer",                               "icon": "bi-github"},
             {"site": "GeeksForGeeks", "label": "Top 50 Dynamic Programming",      "desc": "Master Dynamic Programming with 50 top interview problems — highly tested in Meta coding rounds.",                 "url": "https://www.geeksforgeeks.org/dsa/commonly-asked-data-structure-interview-questions-on-dynamic-programming/", "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Logical Reasoning Practice",      "desc": "Strengthen analytical reasoning with thousands of free problems for aptitude rounds.",                               "url": "https://www.indiabix.com/logical-reasoning/questions-and-answers/",                 "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -75,7 +75,7 @@ COMPANY_HUB = [
             {"site": "GitHub",        "label": "Coding Interview University",     "desc": "Deep CS fundamentals: OS, memory, concurrency — all core topics that Apple engineering interviews cover.",           "url": "https://github.com/jwasham/coding-interview-university",                            "icon": "bi-github"},
             {"site": "GeeksForGeeks", "label": "Top 50 Array Problems",           "desc": "Practice essential array and pointer manipulation problems frequently asked in Apple technical rounds.",           "url": "https://www.geeksforgeeks.org/dsa/commonly-asked-data-structure-interview-questions-on-array/",        "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Verbal Ability & Reasoning",      "desc": "Verbal and logical reasoning practice sets for the aptitude component of Apple hiring process.",                    "url": "https://www.indiabix.com/verbal-ability/questions-and-answers/",                    "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -103,7 +103,7 @@ COMPANY_HUB = [
             {"site": "HackerRank",    "label": "C++ Practice Domain",             "desc": "Free C++ coding challenges covering STL, OOP, and algorithms — core skills for Adobe engineering roles.",          "url": "https://www.hackerrank.com/domains/cpp",                                            "icon": "bi-terminal-fill"},
             {"site": "GeeksForGeeks", "label": "Must-Do Coding Questions",        "desc": "Curated set of must-solve coding interview questions frequently encountered in Adobe technical rounds.",           "url": "https://www.geeksforgeeks.org/dsa/must-do-coding-questions-for-companies-like-amazon-microsoft-adobe/", "icon": "bi-code-slash"},
             {"site": "IndiaBix",      "label": "Aptitude & Logical Reasoning",    "desc": "Aptitude and analytical reasoning practice for Adobe online assessment and placement rounds.",                     "url": "https://www.indiabix.com/aptitude/questions-and-answers/",                         "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -143,7 +143,7 @@ COMPANY_HUB = [
             {"site": "GeeksForGeeks", "label": "Top 100 DSA Problems",            "desc": "Comprehensive problem collection covering graphs, heaps, and shortest-path algorithms used in Uber loops.",       "url": "https://www.geeksforgeeks.org/dsa/top-100-data-structure-and-algorithms-dsa-interview-questions-topic-wise/", "icon": "bi-code-slash"},
             {"site": "GitHub",        "label": "Tech Interview Handbook",         "desc": "Behavioral frameworks and algorithmic strategies tailored for fast-paced tech giants like Uber.",                 "url": "https://github.com/yangshun/tech-interview-handbook",                               "icon": "bi-github"},
             {"site": "IndiaBix",      "label": "Aptitude & Reasoning",            "desc": "Build a strong aptitude foundation for Uber initial screening and online assessment rounds.",                      "url": "https://www.indiabix.com/aptitude/questions-and-answers/",                         "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -157,7 +157,7 @@ COMPANY_HUB = [
             {"site": "GeeksForGeeks", "label": "Top 50 Dynamic Programming",      "desc": "Solve DP and graph algorithmic problems that frequently appear in LinkedIn software engineering rounds.",          "url": "https://www.geeksforgeeks.org/dsa/commonly-asked-data-structure-interview-questions-on-dynamic-programming/", "icon": "bi-code-slash"},
             {"site": "GitHub",        "label": "System Design Primer",            "desc": "Learn feed generation, graph caching, and high-concurrency architecture tested in LinkedIn design rounds.",       "url": "https://github.com/donnemartin/system-design-primer",                               "icon": "bi-github"},
             {"site": "HackerRank",    "label": "Python Practice Domain",          "desc": "Python is widely used at LinkedIn — build skills with free HackerRank challenges covering all core topics.",      "url": "https://www.hackerrank.com/domains/python",                                         "icon": "bi-terminal-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -184,7 +184,7 @@ COMPANY_HUB = [
             {"site": "GitHub",        "label": "Tech Interview Handbook",         "desc": "Complete interview guide covering DSA, system design, and behavioral rounds relevant to Flipkart hiring.",         "url": "https://github.com/yangshun/tech-interview-handbook",                               "icon": "bi-github"},
             {"site": "GitHub",        "label": "System Design Primer",            "desc": "E-commerce scale system design: cart management, inventory locking, and order processing architectures.",          "url": "https://github.com/donnemartin/system-design-primer",                               "icon": "bi-github"},
             {"site": "IndiaBix",      "label": "Placement Papers & Aptitude",     "desc": "Browse placement papers, aptitude, and reasoning questions from top e-commerce companies — all free.",           "url": "https://www.indiabix.com/placement-papers/companies/",                              "icon": "bi-file-earmark-text-fill"},
-            {"site": "Aced Practice", "label": "Peer Mock Interviews (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice a mock interview"},
+            {"site": "Aced Practice", "label": "Peer Interview Practice (formerly Pramp)", "desc": "Practice live technical interviews with peers - free to use", "url": "https://www.aced.io/practice", "icon": "bi-mortarboard-fill", "cta": "Practice live interviews with peers"},
         ],
     },
     {
@@ -1727,7 +1727,7 @@ FORMAT_BY_SITE = {
     "W3Schools": "Tutorial", "javascript.info": "Tutorial",
     "CS50": "Course", "freeCodeCamp": "Course",
     "roadmap.sh": "Roadmap",
-    "Aced Practice": "Mock interview",
+    "Aced Practice": "Peer practice",
     "Amazon Jobs": "Official page", "Netflix Jobs": "Official page",
 }
 
@@ -1750,7 +1750,7 @@ def with_logos(resources):
 FORMAT_ICONS = {
     "Question bank": "bi-patch-question-fill", "Guide": "bi-journal-text", "Practice": "bi-lightning-charge-fill",
     "Tutorial": "bi-mortarboard-fill", "Course": "bi-play-btn-fill", "Roadmap": "bi-signpost-split-fill",
-    "Mock interview": "bi-people-fill", "Open source": "bi-github", "Official page": "bi-building-check",
+    "Peer practice": "bi-people-fill", "Open source": "bi-github", "Official page": "bi-building-check",
 }
 
 

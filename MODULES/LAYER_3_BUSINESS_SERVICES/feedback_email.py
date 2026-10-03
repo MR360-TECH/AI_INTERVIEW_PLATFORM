@@ -124,7 +124,7 @@ def is_safe_note(text, min_words=6, max_words=40):
 
 def _lines_prompt(band, domain, report_text):
     return (
-        "You write three short coaching lines for a candidate after a mock assessment in the domain: "
+        "You write three short coaching lines for a candidate after an assessment in the domain: "
         f"{domain}.\n"
         "Return ONLY a JSON object with exactly these keys: stood_out, focus, try_next. "
         "Each value is ONE plain sentence of at most 25 words.\n"
