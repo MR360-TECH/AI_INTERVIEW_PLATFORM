@@ -7,7 +7,7 @@
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
 [![Deployment](https://img.shields.io/badge/Deployment-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 
-> **An adaptive, AI-driven interview and assessment platform.** Students get realistic, unscripted interview practice. Institutions and recruiters get a fair, secure and auditable way to evaluate candidates, with the administrator in full control of every rule. Built with **Flask, SQLAlchemy and Google Gemini** on a clean 4-layer architecture.
+> **An adaptive, AI-driven interview and assessment platform for organisations.** Companies, colleges and training providers get a fair, secure and auditable way to interview and evaluate candidates, with the administrator in full control of every rule. The same platform also works well for **mock interviews and practice**. Built with **Flask, SQLAlchemy and Google Gemini** on a clean 4-layer architecture.
 
 ---
 
@@ -98,6 +98,9 @@ Interview preparation and assessment have five long-standing gaps:
 ---
 
 ## 🌟 Key capabilities
+
+> [!TIP]
+> **Who uses it:** organisations that screen or assess candidates (hiring drives, campus placements, training programmes, certification rounds), and candidates or institutions that want realistic **mock interviews** and practice.
 
 **For candidates**
 - 🧠 **Adaptive AI examiner** at three levels; about one question in three refers to something real in the resume.
