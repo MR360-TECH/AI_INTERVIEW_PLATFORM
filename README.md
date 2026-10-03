@@ -1,261 +1,200 @@
 # 🤖 AI Interview Studio & Assessment Platform
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Flask](https://img.shields.io/badge/Flask-3.0+-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-Flash%20Lite%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Database](https://img.shields.io/badge/Database-Neon%20PostgreSQL-00E599?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5.3-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
-[![Deployment](https://img.shields.io/badge/Deployment-Render%20Cloud-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
+[![Deployment](https://img.shields.io/badge/Deployment-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 
-> **An enterprise-grade, full-stack AI-powered mock interview platform** that simulates realistic, unscripted hiring evaluations — powered by **Google Gemini AI**, built on **Flask & SQLAlchemy**, with a clean 4-layer modular architecture, adaptive assessments, voice dictation, Monaco code sandbox, automated anti-cheat proctoring, and printable PDF scorecards.
-
-> **Designed for:** University students, aspiring engineers, and job seekers who want to master technical, behavioral, and domain-specific interviews through intelligent, real-time AI simulations — completely free.
+> **An adaptive, AI-driven interview and assessment platform.** Students get realistic, unscripted interview practice. Institutions and recruiters get a fair, secure and auditable way to evaluate candidates, with the administrator in full control of every rule. Built with **Flask, SQLAlchemy and Google Gemini** on a clean 4-layer architecture.
 
 ---
 
-## 💡 Why This Platform Was Built
+## 📑 Table of Contents
 
-The technical interview process is one of the most anxiety-inducing and poorly-prepared-for stages in a student's academic and professional journey. Most students realize too late that:
-
-- **Mock interviews are expensive** — professional platforms charge monthly subscriptions, and human mentors are hard to access.
-- **Generic question banks go stale** — static PDFs and YouTube videos don't simulate the real pressure of live questioning.
-- **There is no personalization** — every student gets the same questions regardless of their resume, domain, or semester level.
-- **Language barriers exist** — many students struggle to articulate technically correct ideas in English under time pressure.
-- **Practice environments are disconnected** — code editors, voice practice, and company-specific prep live in different tools.
-
-**This platform was built to solve all of that in one place** — a single, free, open-source solution where a student can upload their resume, select a domain, and get interrogated by an AI examiner that adapts dynamically to their answers, flags behavioral violations, and delivers an honest, structured performance report — just like a real recruiter would.
-
-The platform was designed with the needs of **tier-2 and tier-3 engineering college students in India** specifically in mind, where access to quality placement training infrastructure is limited but the aspirations are not.
-
----
-
-## 🎯 Key Capabilities & Highlights
-
-* 🧠 **Adaptive AI Examiner**: Evaluates technical depth, analytical reasoning, and communication clarity in real-time, dynamically adjusting questions based on candidate performance.
-* 🛡️ **Interview Integrity & Strikes**: Server-side strikes for every violation (tab switch, paste/copy, second session, late answer, optional fullscreen), a clear violation box showing the exact mistake, an admin-set strike limit, an admin-only integrity log, and an individual on/off switch for every rule plus a master switch.
-* 🎓 **Multi-Track Practice Hub**:
-  * **Academic Viva Voce**: Oral university exam simulations testing definitions, theoretical rigor, and algorithms.
-  * **FluentFlow Language Practice**: Conversational multilingual practice with instant grammatical corrections and translations.
-  * **Concept Drills**: Rapid-fire architectural and scenario reasoning challenges.
-* 🏢 **Company-Specific Prep Hub**: Curated, categorized resource links for 11 top companies — Google, Microsoft, Amazon, Meta, Netflix, TCS, Infosys, Wipro, Accenture, Cognizant, and Capgemini — covering LeetCode, GeeksForGeeks, PrepInsta, and InterviewBit.
-* 🎙️ **Hands-Free Voice Dictation**: Integrated client-side Web Speech API (`webkitSpeechRecognition`) with animated neural waveform visualizers.
-* 💻 **Monaco Code Editor**: Built-in VS Code-style Python 3 programming sandbox for coding challenges.
-* 📄 **Resume-Driven Questioning**: Automatic PDF/DOCX resume text extraction embedded into the candidate's interview context for hyper-personalized questioning.
-* 📊 **Instant Competency Scorecards**: High-contrast score gauge rings, competency matrix breakdowns, qualitative executive summaries, and single-click printable PDF report generation.
-* 🔐 **Triple-Redundant OTP Delivery**: Resend HTTP API, SendGrid HTTP API, and SMTP failover routing for ultra-reliable email authentication.
-* ⚙️ **Executive Operations Dashboard**: Administrative candidate management, live assessment monitoring, candidate resume viewers, per-user attempt unlock, and real-time pass-score threshold configuration.
-* 🔑 **Three Authentication Pathways**: Classic password login, Google OAuth 2.0 Single Sign-On, and passwordless OTP login — all under one unified session layer.
-* 📚 **Preparation Library**: 92 curated links in one searchable page with track and format filters, bookmarks and three 7-day study plans. An admin-only Link Health checker finds broken links and can hide them.
-* 🧭 **Interactive Admin Guide**: A 38-step guided tour with spotlight and pointer over illustrated admin screens, plus an 11-module manual.
-* 🔁 **Error Recovery**: A server error never uses an attempt; the interview is saved on the server, and a professional error page with one Back button resumes it at the next question.
-* 🏗️ **Clean 4-Layer Modular Architecture**: Codebase fully refactored into `MODULES/` with clear separation of Config, Models, Services, and Controllers for maintainability at scale.
+1. [Abstract](#-abstract)
+2. [Problem statement](#-problem-statement)
+3. [Objectives and scope](#-objectives-and-scope)
+4. [Existing vs proposed system](#-existing-vs-proposed-system)
+5. [Key capabilities](#-key-capabilities)
+6. [User journey](#-user-journey)
+7. [System architecture](#-system-architecture)
+8. [Modular 4-layer architecture](#-modular-4-layer-architecture)
+9. [Class diagram](#-class-diagram)
+10. [Entity-relationship (ER) diagram](#-entity-relationship-er-diagram)
+11. [Data flow diagrams (DFD)](#-data-flow-diagrams-dfd)
+12. [Sequence diagrams](#-sequence-diagrams)
+13. [Interview integrity and anti-cheat](#-interview-integrity-and-anti-cheat)
+14. [Security](#-security)
+15. [AI engine and reliability](#-ai-engine-and-reliability)
+16. [Preparation hub, library and practice labs](#-preparation-hub-library-and-practice-labs)
+17. [Admin console](#-admin-console)
+18. [E-mail system](#-e-mail-system)
+19. [Requirement analysis](#-requirement-analysis)
+20. [System stack](#-system-stack)
+21. [Project structure](#-project-structure)
+22. [Environment variables](#-environment-variables)
+23. [Local setup](#-local-setup)
+24. [Deployment](#-deployment-render-and-neon)
+25. [Testing](#-testing)
+26. [Roadmap](#-roadmap)
+27. [FAQ](#-faq)
+28. [License](#-license)
 
 ---
 
-## 🗺️ App Flow — Step-by-Step User Journey
+## 📝 Abstract
 
-This section walks through the **complete experience** of a candidate from first visit to final scorecard.
+The **AI Interview Studio & Assessment Platform** is a full-stack web application that simulates realistic hiring interviews and runs secure, scored assessments. A candidate signs in, optionally uploads a resume, chooses a domain, and is interviewed by an AI examiner built on **Google Gemini**. The examiner asks one question at a time, adapts to each answer and to the chosen difficulty level (Student, Mid-level or Senior), can refer to real items from the candidate's resume, and accepts typed answers, spoken answers (voice dictation) and code (an in-browser Monaco editor).
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        COMPLETE CANDIDATE JOURNEY                           │
-└─────────────────────────────────────────────────────────────────────────────┘
+When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-STEP 1 ─ LANDING & DISCOVERY
-  └─► Candidate visits the platform landing page (/)
-      ├── Reviews platform capabilities, features, and testimonials
-      └── Clicks "Get Started" → routed to registration / login
-
-STEP 2 ─ ACCOUNT CREATION & IDENTITY VERIFICATION
-  └─► Three pathways available:
-      ├── [A] Classic Registration (/register)
-      │     ├── Fills in full name, email, password, education, course, semester
-      │     └── PBKDF2-SHA256 hashed password stored securely
-      ├── [B] Google OAuth (/auth/google)
-      │     └── One-click sign-in via Google OpenID Connect, auto-profile sync
-      └── [C] OTP Passwordless (/auth/otp/send → /auth/otp/verify)
-            ├── Email entered → OTP dispatched via Resend → SendGrid → SMTP
-            └── 6-digit code verified, session initialized
-
-STEP 3 ─ CANDIDATE WORKSPACE DASHBOARD (/dashboard)
-  └─► Personalized workspace loads:
-      ├── Profile card: name, education, course, semester
-      ├── Resume upload zone (PDF/DOCX, max 10 MB) → auto text extraction
-      ├── Latest interview result summary with score gauge ring
-      ├── Interview history progress chart (Chart.js trend line)
-      ├── Quick-launch cards: Assessment, Practice, Tech Prep, History
-      └── Edit profile (/edit-profile): update name, education, course, semester
-
-STEP 4A ─ LIVE ASSESSMENT INTERVIEW (/interview)
-  └─► Domain selection screen → Pick from:
-      │   Web Dev, Python, Java, DSA, DBMS, OS, CN, AI/ML,
-      │   System Design, Cybersecurity, Cloud, DevOps, and more
-      ├── Resume context auto-injected into Gemini's system prompt
-      ├── Anti-cheat proctoring activates immediately on page load
-      │
-      ├── QUESTION LOOP:
-      │     ├── Gemini streams the first question (domain + resume aware)
-      │     ├── Candidate types OR uses voice dictation (waveform animates)
-      │     ├── Code questions → Monaco Editor sandbox appears
-      │     ├── File questions → image/diagram upload enabled
-      │     ├── Answer submitted → Gemini evaluates and generates next question
-      │     └── Adaptive depth: deeper follow-ups if answers are strong
-      │
-      ├── PROCTORING LAYER (parallel):
-      │     ├── Page visibility & window focus monitored via JS events
-      │     ├── Strike 1: Tab switched → Full-screen red warning modal fires
-      │     └── Strike 2: Another violation → Session auto-terminated & flagged
-      │
-      └── COMPLETION (after min. questions reached):
-            └── Candidate clicks "Finish" → /finish-interview
-
-STEP 4B ─ PRACTICE HUB (/practice-setup)
-  └─► Select one of three modes:
-      ├── 🎓 Viva Voce: Enter any academic subject → AI conducts oral Q&A
-      ├── 💬 FluentFlow Language Practice:
-      │     ├── Choose target language (English, Hindi, French, etc.)
-      │     ├── Set focus: conversation / grammar / vocabulary / pronunciation
-      │     └── Set level: beginner / intermediate / advanced
-      └── ⚡ Concept Drills: Enter a topic → rapid-fire scenario challenges
-      (Practice sessions are NOT scored or saved to history)
-
-STEP 4C ─ COMPANY PREP HUB (/tech-questions)
-  └─► Browse 11 companies (Google, Microsoft, Amazon, Meta, Netflix,
-      TCS, Infosys, Wipro, Accenture, Cognizant, Capgemini)
-      └── Each company card → curated resource links:
-            LeetCode tagged problems, GeeksForGeeks guides,
-            PrepInsta placement papers, InterviewBit mock Q&A
-
-STEP 5 ─ AI EVALUATION PIPELINE (/finish-interview)
-  └─► Full chat transcript submitted to Gemini evaluation prompt
-      ├── Scores 10-point scale: overall 1.0–10.0 competency rating
-      ├── Generates qualitative executive summary (3 professional paragraphs)
-      ├── Determines PASS / FAIL against admin-configured cutoff
-      └── Result stored in DB → redirects to scorecard
-
-STEP 6 ─ SCORECARD & REPORT (/interview-result)
-  └─► High-contrast result card renders:
-      ├── Score gauge ring with PASS / FAIL / TERMINATED badge
-      ├── Unique Assessment Session Code (e.g. AIS-000042)
-      ├── AI-written qualitative executive summary
-      ├── "Print / Save PDF" button → browser print-to-PDF
-      └── Navigation back to Dashboard or History
-
-STEP 7 ─ HISTORY & PROGRESSION (/my-history)
-  └─► Full attempt log table: date, domain, score, status
-      ├── Click any row → detailed scorecard for that attempt
-      └── Trend analysis via Chart.js score progression graph
-```
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **747 automated checks** plus real-browser tests.
 
 ---
 
-## 🔄 End-to-End Platform Architecture
+## ❗ Problem statement
 
-```mermaid
-flowchart TD
-    User([Candidate / Job Seeker]) --> AuthLayer{Authentication Gateway}
-    
-    AuthLayer -->|Local Account| LocalLogin[PBKDF2 Password Auth]
-    AuthLayer -->|Social Login| GoogleOAuth[Google OAuth 2.0]
-    AuthLayer -->|Passwordless| OTPAuth[Multi-Provider OTP Dispatcher]
-    
-    LocalLogin --> Dashboard[Candidate Workspace Dashboard]
-    GoogleOAuth --> Dashboard
-    OTPAuth --> Dashboard
-    
-    Dashboard --> ResumeUpload[Resume Indexing & Text Extraction]
-    Dashboard --> TrackSelection[Mode Selection: Assessment vs Practice vs Prep Hub]
-    
-    TrackSelection --> InterviewEngine[Live Assessment Studio Engine]
-    TrackSelection --> PracticeHub[Practice Hub: Viva / Language / Drills]
-    TrackSelection --> CompanyPrep[Company Prep Hub: 11 Companies]
-    ResumeUpload -.->|Embedded Context| InterviewEngine
-    
-    InterviewEngine --> Proctor[Active Anti-Cheat Proctoring Monitor]
-    InterviewEngine --> VoiceInput[Web Speech Voice Transcription]
-    InterviewEngine --> Monaco[Monaco Code Editor Sandbox]
-    InterviewEngine --> GeminiEngine[Google Gemini Flash Lite AI Engine]
-    
-    GeminiEngine -->|Streaming Q&A| InterviewEngine
-    Proctor -->|2nd Strike Breach| Terminate[Disqualification & Termination]
-    
-    InterviewEngine -->|Completion| ResultGen[Rapid AI Evaluation Pipeline]
-    ResultGen --> Scorecard[Performance Evaluation Report & PDF]
-    Scorecard --> History[Candidate Attempt Progression & History]
-    
-    Scorecard -.-> DB[(Neon PostgreSQL)]
-    History -.-> DB
-    
-    AdminUser([Recruiter / Administrator]) --> AdminPanel[Admin Operations Control Center]
-    AdminPanel --> DB
-    AdminPanel --> ConfigMgmt[Global Settings & Cutoff Configuration]
-    AdminPanel --> UserMgmt[User Management & Attempt Unlock]
-```
+Interview preparation and assessment have five long-standing gaps:
+
+1. **No realistic practice.** Professional mock interviews are expensive, mentors are scarce, and static question lists never reproduce the pressure of live questioning.
+2. **No personalisation.** Every student receives the same questions regardless of resume, domain, semester or experience level.
+3. **Slow and inconsistent feedback.** Feedback arrives late, differs from mentor to mentor and is rarely specific enough to act on.
+4. **Online assessments are easy to cheat in.** Tab switching, pasting answers, second devices and reloading to reset a timer are common, and institutions have little proof of what happened.
+5. **Little visibility and control.** Administrators cannot easily see, audit or configure what a candidate experienced, and a failure of an external AI service can ruin a session.
 
 ---
 
-## 🏗️ Modular 4-Layer Architecture
+## 🎯 Objectives and scope
 
-The codebase is fully organized under a `MODULES/` package with clean separation of concerns across four well-defined layers:
-
-```mermaid
-flowchart TD
-    subgraph L1["LAYER 1 — Core Infrastructure"]
-        Config["config.py\n─────────────────\n• Flask app factory settings\n• SQLAlchemy & OAuth init\n• DB URL resolution (MySQL→SQLite fallback)\n• Gemini model name & API key\n• Upload folder & file limits\n• Admin credential bootstrap"]
-    end
-
-    subgraph L2["LAYER 2 — Data Persistence"]
-        Models["models.py\n─────────────────\n• User ORM model\n• InterviewResult ORM model\n• InterviewProgress ORM model\n• AdminSettings ORM model\n• SettingsSnapshot (cache DTO)\n• get_settings() with 5s TTL cache\n• save_progress() / clear_progress()\n• profile_is_complete() validator\n• allowed_file() / allowed_resume_file()"]
-    end
-
-    subgraph L3["LAYER 3 — Business Services"]
-        AI["ai_client.py\n─────────────────\n• get_ai_client() (singleton)\n• analyze_attachment()\n• build_initial_question_prompt()\n• build_subsequent_question_prompt()\n• build_ajax_system_prompt()\n• build_evaluation_prompt()"]
-        Mailer["mailer.py\n─────────────────\n• send_otp_email()\n• send_slot_unlocked_email()\n• Resend API → SendGrid → SMTP\n• Async threaded dispatch\n• HTML OTP email templates"]
-    end
-
-    subgraph L4["LAYER 4 — Route Controllers"]
-        Login["login_env.py\n(login_bp)\n• / home\n• /login  /logout\n• /register  /signup\n• /auth/google  /auth/google/callback\n• /auth/otp/send  /auth/otp/verify\n• /forgot-password  /reset-password"]
-        Dashboard["dashboard.py\n(dashboard_bp)\n• /dashboard\n• /upload-resume\n• /edit-profile\n• /my-history\n• /interview-result/<id>\n• /uploads/<filename>"]
-        Interview["interview_engine.py\n(interview_bp)\n• /interview  GET/POST\n• /interview/submit  POST (AJAX)\n• /finish-interview  POST\n• /practice  GET/POST\n• /practice/submit  POST (AJAX)"]
-        Admin["admin_env.py\n(admin_bp)\n• /admin\n• /admin/users\n• /admin/users/<id>\n• /admin/interview/<id>\n• /admin/unlock/<user_id>\n• /admin/settings\n• /admin/db-check"]
-        Practice["practicemode.py\n(practice_bp)\n• /practice-setup\n• /practice\n• /practice/submit"]
-        Resources["resources.py\n(resources_bp)\n• /tech-questions\n• /tech-questions/<company>"]
-    end
-
-    AppFactory["MODULES/__init__.py\ncreate_app() Factory\n─────────────────────\n• Instantiate Flask app\n• Security & performance headers\n• Error handlers (413, 500)\n• register_blueprints()"]
-
-    L1 --> L2
-    L2 --> L3
-    L3 --> L4
-    L4 --> AppFactory
-    L1 --> AppFactory
-```
-
----
-
-## 🏢 Company Prep Hub — Supported Companies
-
-The platform includes a curated preparation hub for **11 major tech companies**, each with 4 structured resource links:
-
-| # | Company | Focus Areas |
+| # | Objective | How it is met |
 |---|---|---|
-| 1 | **Google** | DSA, Algorithms, System Design, Behavioral |
-| 2 | **Microsoft** | OOP, OS, Networking, SDE/SDET roles |
-| 3 | **Amazon** | Leadership Principles, System Design, SDE |
-| 4 | **Meta (Facebook)** | Graphs, DP, System Design at Scale |
-| 5 | **Netflix** | Distributed Systems, Microservices, Culture Fit |
-| 6 | **TCS** | NQT Aptitude, Verbal, Logical, Coding |
-| 7 | **Infosys** | InfyTQ, Aptitude, Verbal, Technical Rounds |
-| 8 | **Wipro** | NLTH Aptitude, Written Communication, Coding |
-| 9 | **Accenture** | Cognitive Ability, Verbal, Communication |
-| 10 | **Cognizant** | GenC/GenC Next, Aptitude, Coding |
-| 11 | **Capgemini** | Pseudocode, Essay Writing, Behavioral |
+| 1 | Provide **adaptive, realistic** interviews | Gemini-based examiner with three difficulty levels, resume-aware questions, voice and code input |
+| 2 | Deliver **fast, structured feedback** | Score out of 10, four-paragraph report, PDF scorecard, feedback e-mail |
+| 3 | Keep assessments **fair and auditable** | Server-side strikes, one active session, server timer, copy/paste block, admin-only integrity log |
+| 4 | Give administrators **full control** | Interview Settings with a switch per rule, strike limit, attempts, unlocks, link health, guided tour |
+| 5 | Stay **reliable and secure** | Retries and fallbacks for the AI, saved interview state, CSRF, CSP, session timeouts, hashed codes |
 
-Each company page aggregates resources from **LeetCode**, **GeeksForGeeks**, **PrepInsta**, and **InterviewBit**.
+**In scope:** a web application for candidates and an administrator; AI interviews, practice labs, a preparation library, e-mail notifications, reports and an admin console.
+**Out of scope (see the roadmap):** webcam proctoring, multiple administrator roles, LMS/ATS integration, native mobile apps.
 
 ---
 
-## 📐 Class Diagram
+## ⚖️ Existing vs proposed system
+
+| Aspect | Existing approach | This platform |
+|---|---|---|
+| Practice realism | Static question lists, paid mentors | Live, unscripted AI interview that follows each answer |
+| Personalisation | None | Level-based prompts and questions drawn from the candidate's resume |
+| Feedback | Late, informal, inconsistent | Instant score, four-paragraph report, PDF and e-mail |
+| Cheating control | Browser-side, easy to bypass | Server-side strikes, one session, server clock, copy/paste block |
+| Administrator control | Fixed rules | A switch for every rule, strike limit, attempts and unlocks |
+| Failure handling | Session lost on error | State saved on the server; Back resumes; no attempt used |
+| Visibility | Little or none | Admin dashboard, reports and an integrity log |
+| Cost | Subscriptions | Runs on the free tiers of Render, Neon and Gemini |
+
+---
+
+## 🌟 Key capabilities
+
+**For candidates**
+- 🧠 **Adaptive AI examiner** at three levels; about one question in three refers to something real in the resume.
+- 🎙️ **Voice dictation** (Web Speech API), a **Monaco code editor**, file attachments, and a per-question timer kept on the server.
+- 📊 **AI evaluation:** score out of 10, four-paragraph report, printable PDF, unique session code such as `AIS-000042`.
+- ✉️ **Feedback e-mail** after every assessment, and a welcome e-mail once.
+- 🎓 **Five practice labs** that never use an attempt: Academic Viva, Language practice, Concept Drill, Debate, Healthy Conversation.
+- 📚 **Preparation hub** (113 pages) and **library** (92 links) with site logos, filters, bookmarks and three 7-day study plans.
+- 🔑 **Three sign-in methods:** password, one-time e-mail code, and Google (with the account chooser).
+- 💬 A **feedback box** with an animated confirmation.
+
+**For administrators**
+- 📈 **Live dashboard** with counters, filters, instant search and Recommended / Not recommended / Terminated results.
+- 👥 **Candidate management:** summary cards, sorting, paging, attempts taken, one-click unlock, profile with resume viewer.
+- 📋 **Report page:** score against the passing mark, evaluation notes, candidate sidebar and an **admin-only integrity log**.
+- ⚙️ **Interview Settings:** question range, passing score, timer, level, attempts, a master switch with seven integrity switches, a strike limit, and the feedback-e-mail switch.
+- 🔗 **Link Health** checker for the library, and an interactive **guided tour** (38 steps) with an 11-module manual.
+
+**Platform qualities**
+- 📱 Responsive on phones, with a dark cyan theme audited for contrast and smooth scrolling and page transitions.
+- 🔁 A server error never uses an attempt: the interview is saved on the server and resumes at the next question.
+
+---
+
+## 🗺️ User journey
+
+```mermaid
+flowchart LR
+    A([Visit site]) --> B{Sign in}
+    B -->|Password| D[Dashboard]
+    B -->|E-mail code| D
+    B -->|Google| D
+    D --> P[Practice labs<br/>unscored, unlimited]
+    D --> R[Resources and Library]
+    D --> S[Scored assessment]
+    S --> Q[AI questions<br/>typed, spoken or code]
+    Q --> I{Integrity rules}
+    I -->|violation| W[Violation box<br/>strike counted]
+    W --> Q
+    I -->|limit reached| T[Session terminated]
+    Q --> E[AI evaluation]
+    E --> F[Report + PDF + feedback e-mail]
+    F --> R
+```
+
+---
+
+## 🔄 System architecture
+
+```mermaid
+flowchart TD
+    Browser([Browser: candidate or admin]) --> Sec["Security layer<br/>CSRF · session timeout · CSP · headers"]
+    Sec --> Flask["Flask application<br/>6 blueprints · 4 layers"]
+    Flask --> Svc["Business services<br/>AI client · integrity · e-mail · auth security · link checker"]
+    Svc --> Gemini[(Google Gemini API<br/>retries · backup keys and models)]
+    Svc --> Mail[(Mail providers<br/>SMTP · Resend · SendGrid)]
+    Flask --> ORM["SQLAlchemy ORM"]
+    ORM --> DB[(Neon PostgreSQL)]
+    Flask --> OAuth[(Google OAuth 2.0)]
+    Render["Render (gunicorn)"] -.hosts.-> Flask
+```
+
+---
+
+## 🏗️ Modular 4-layer architecture
+
+All backend code lives in the `MODULES/` package. Each layer only depends on the layers below it.
+
+```mermaid
+flowchart TD
+    subgraph L1["LAYER 1 · Core Infrastructure"]
+        Config["config.py<br/>environment variables · database URL · Google OAuth<br/>secret key rules · upload limits · admin bootstrap"]
+    end
+    subgraph L2["LAYER 2 · Data Persistence"]
+        Models["models.py<br/>User · InterviewResult · InterviewProgress · InterviewViolation<br/>AdminSettings · Feedback · OtpChallenge · AuthThrottle<br/>ResourceBookmark · LinkCheck · settings cache · attempt accounting"]
+    end
+    subgraph L3["LAYER 3 · Business Services"]
+        AI["ai_client.py<br/>Gemini calls · retries · prompts per level"]
+        INT["integrity.py<br/>strikes · one session · server timer · flags"]
+        MAIL["mailer.py · email_templates.py · feedback_email.py"]
+        SEC["auth_security.py · web_security.py"]
+        LINK["link_checker.py"]
+    end
+    subgraph L4["LAYER 4 · Route Controllers (6 blueprints)"]
+        LOGIN["login_env.py<br/>sign-up · login · OTP · Google · reset · profile"]
+        DASH["dashboard.py<br/>dashboard · resume · history · feedback"]
+        INTV["interview_engine.py<br/>interview · violation · heartbeat · result"]
+        PRAC["practicemode.py<br/>practice labs · quit · reset"]
+        ADM["admin_env.py<br/>dashboard · users · report · settings · guide · links"]
+        RES["resources.py<br/>prep hub · library · bookmarks"]
+    end
+    App["MODULES/__init__.py · create_app()<br/>blueprints · security init · error pages · schema migration"]
+    L1 --> L2 --> L3 --> L4 --> App
+```
+
+---
+
+## 📐 Class diagram
 
 ```mermaid
 classDiagram
@@ -264,516 +203,616 @@ classDiagram
         +String full_name
         +String email UK
         +String password
-        +String gender
-        +String education
-        +String course
-        +String semester
         +String auth_provider
         +Boolean email_verified
-        +String google_id UK
-        +DateTime registered_at
-        +String user_type
-        +String github_url
-        +String linkedin_url
-        +Text skills
-        +String years_of_experience
-        +String current_designation
+        +String course
+        +String skills
         +Text resume_text
         +String resume_filename
         +int extra_allowed_interviews
         +int attempts_count
+        +Boolean welcome_sent
         +get_attempts_used() int
     }
-
     class InterviewResult {
         +int id PK
         +int user_id FK
-        +Decimal score
+        +Numeric score
         +String status
-        +Text strengths
-        +Text improvements
         +Text summary
         +String domain
         +Boolean is_terminated
         +Text termination_reason
         +DateTime interview_datetime
         +session_code() String
-        +real_attempt_filter()$ BooleanClause
     }
-
     class InterviewProgress {
         +int id PK
         +int user_id FK UK
         +Text chat_history
         +int q_count
-        +DateTime updated_at
+        +int strikes
+        +String sid
+        +DateTime last_seen_at
+        +DateTime question_shown_at
     }
-
-    class AdminSettings {
+    class InterviewViolation {
         +int id PK
+        +int user_id FK
+        +int result_id FK
+        +String kind
+        +String title
+        +String detail
+        +int strike_no
+        +int q_num
+        +DateTime created_at
+    }
+    class AdminSettings {
         +int min_questions
         +int max_questions
         +int pass_score
-        +String default_difficulty
         +int question_timer_seconds
-        +Boolean enable_attempt_limits
         +int default_allowed_interviews
         +Boolean enable_warning_strikes
+        +int max_strikes
+        +Boolean proctor_server_strikes
+        +Boolean proctor_single_session
+        +Boolean proctor_server_timer
+        +Boolean proctor_block_copy_paste
+        +Boolean proctor_fullscreen
+        +Boolean proctor_typing_flags
+        +Boolean proctor_integrity_log
     }
-
-    class SettingsSnapshot {
-        +int min_questions
-        +int max_questions
-        +int pass_score
-        +String default_difficulty
-        +int question_timer_seconds
-        +Boolean enable_attempt_limits
-        +int default_allowed_interviews
-        +Boolean enable_warning_strikes
-        +__init__(s)
+    class Feedback {
+        +int id PK
+        +int user_id FK
+        +int rating
+        +String category
+        +Text message
+        +DateTime created_at
     }
-
+    class OtpChallenge {
+        +int id PK
+        +String purpose
+        +String email
+        +String code_hash
+        +DateTime expires_at
+        +int attempts
+        +Boolean used
+    }
+    class AuthThrottle {
+        +int id PK
+        +String key UK
+        +int failures
+        +DateTime locked_until
+    }
+    class ResourceBookmark {
+        +int id PK
+        +int user_id FK
+        +String url
+    }
+    class LinkCheck {
+        +int id PK
+        +String url UK
+        +int status_code
+        +String kind
+        +Boolean hidden
+        +DateTime checked_at
+    }
+    class IntegrityService {
+        <<service>>
+        +record(user_id, kind, detail) dict
+        +guard_session(user_id) dict
+        +check_answer(user_id, answer) dict
+        +seconds_left(progress) int
+        +terminate(user_id, reason) int
+    }
     class AIClient {
         <<service>>
-        +get_ai_client() Client
-        +analyze_attachment(bytes, mime, hint) String
-        +build_initial_question_prompt(mode, topic, lang, focus, level) String
-        +build_subsequent_question_prompt(mode, topic, lang, focus, level, difficulty, q_count, min_q, convo) String
-        +build_ajax_system_prompt(domain, difficulty, resume, is_practice, q_count, min_q, max_q) String
-        +build_evaluation_prompt(mode, topic, lang, difficulty, domain, convo) String
+        +generate_text(prompt) str
+        +build_subsequent_question_prompt() str
+        +build_evaluation_prompt() str
+        +get_level(difficulty) dict
     }
-
     class Mailer {
         <<service>>
-        +send_otp_email(to_email, otp) void
-        +send_slot_unlocked_email(to_email, name) void
-        -_send_via_resend(to, subject, html) bool
-        -_send_via_sendgrid(to, subject, html) bool
-        -_send_via_smtp(to, subject, text, html, user, pass) bool
-        -_otp_html_body(otp) String
+        +send_email_notification() bool
+        +send_otp_email() bool
     }
-
-    class FlaskApp {
-        <<factory>>
-        +create_app() Flask
-        +add_performance_headers(response)
-        +apply_security_headers(response)
-        +register_blueprints(app)
+    class WebSecurity {
+        <<service>>
+        +csrf_token() str
+        +password_problem(pw) str
     }
-
-    User "1" --> "0..*" InterviewResult : completes
-    User "1" --> "0..1" InterviewProgress : tracks
-    AdminSettings --> SettingsSnapshot : snapshot of
-    FlaskApp ..> AIClient : uses
-    FlaskApp ..> Mailer : uses
-    FlaskApp ..> User : manages
-    FlaskApp ..> InterviewResult : persists
-    FlaskApp ..> AdminSettings : configures
+    User "1" --> "*" InterviewResult : takes
+    User "1" --> "0..1" InterviewProgress : has active
+    User "1" --> "*" InterviewViolation : causes
+    InterviewResult "1" --> "*" InterviewViolation : records
+    User "1" --> "*" Feedback : sends
+    User "1" --> "*" ResourceBookmark : saves
+    IntegrityService ..> InterviewProgress : updates strikes
+    IntegrityService ..> InterviewViolation : stores events
+    IntegrityService ..> AdminSettings : reads switches
+    AIClient ..> AdminSettings : reads level
 ```
 
 ---
 
-## 📊 Database Entity-Relationship Diagram
+## 📊 Entity-relationship (ER) diagram
 
 ```mermaid
 erDiagram
-    users ||--o{ interview_results : "completes"
-    users ||--o| interview_progress : "tracks active session"
+    users ||--o{ interview_results : takes
+    users ||--o| interview_progress : "has active"
+    users ||--o{ interview_violations : causes
+    interview_results ||--o{ interview_violations : records
+    users ||--o{ feedback : sends
+    users ||--o{ resource_bookmarks : saves
 
     users {
         int id PK
-        varchar full_name
-        varchar email UK
-        varchar password "Hashed PBKDF2"
-        varchar gender
-        varchar auth_provider "local | google | otp"
-        boolean email_verified
-        varchar google_id UK
+        string full_name
+        string email UK
+        string password
+        string auth_provider
+        bool email_verified
+        string google_id UK
         datetime registered_at
-        varchar user_type "student | professional"
-        varchar github_url
-        varchar linkedin_url
-        text skills
-        varchar years_of_experience
-        varchar current_designation
+        string user_type
+        string course
+        string skills
         text resume_text
-        varchar resume_filename
-        int extra_allowed_interviews "Admin-granted extra attempts"
-        int attempts_count "Cached attempt counter"
+        string resume_filename
+        int extra_allowed_interviews
+        int attempts_count
+        bool welcome_sent
     }
-
     interview_results {
         int id PK
         int user_id FK
-        decimal score "Score 1.0–10.0"
-        varchar status "PASS | FAIL | Terminated | Selected"
-        text strengths "AI-identified strengths"
-        text improvements "AI-suggested improvements"
-        text summary "3-paragraph AI Assessment Summary"
-        varchar domain "Interview Domain"
-        boolean is_terminated "Anti-cheat flag"
+        numeric score
+        string status
+        text summary
+        string domain
+        bool is_terminated
         text termination_reason
         datetime interview_datetime
     }
-
     interview_progress {
         int id PK
-        int user_id FK UK
-        text chat_history "JSON serialized conversation"
-        int q_count "Question progress index"
-        datetime updated_at
+        int user_id FK, UK
+        text chat_history
+        int q_count
+        int strikes
+        string sid
+        datetime last_seen_at
+        datetime question_shown_at
     }
-
+    interview_violations {
+        int id PK
+        int user_id FK
+        int result_id FK
+        string kind
+        string title
+        string detail
+        int strike_no
+        int q_num
+        datetime created_at
+    }
     admin_settings {
         int id PK
-        int min_questions "Default: 3"
-        int max_questions "Default: 8"
-        int pass_score "Cutoff score threshold"
-        varchar default_difficulty "student | mid | senior"
-        int question_timer_seconds "Default: 90"
-        boolean enable_attempt_limits
-        int default_allowed_interviews "Default: 2"
-        boolean enable_warning_strikes
+        int min_questions
+        int max_questions
+        int pass_score
+        string default_difficulty
+        int question_timer_seconds
+        bool enable_attempt_limits
+        int default_allowed_interviews
+        bool enable_warning_strikes
+        bool enable_feedback_emails
+        int max_strikes
+        bool proctor_server_strikes
+        bool proctor_single_session
+        bool proctor_server_timer
+        bool proctor_block_copy_paste
+        bool proctor_fullscreen
+        bool proctor_typing_flags
+        bool proctor_integrity_log
     }
+    feedback {
+        int id PK
+        int user_id FK
+        int rating
+        string category
+        text message
+        bool contact_ok
+        string page
+        string session_code
+        datetime created_at
+    }
+    otp_challenges {
+        int id PK
+        string purpose
+        string email
+        string code_hash
+        datetime expires_at
+        int attempts
+        bool used
+        datetime created_at
+    }
+    auth_throttle {
+        int id PK
+        string key UK
+        int failures
+        datetime window_start
+        datetime locked_until
+    }
+    resource_bookmarks {
+        int id PK
+        int user_id FK
+        string url
+        datetime created_at
+    }
+    link_checks {
+        int id PK
+        string url UK
+        int status_code
+        string kind
+        string note
+        datetime checked_at
+        bool hidden
+    }
+```
+
+> [!TIP]
+> The session code `AIS-000042` is derived from `interview_results.id`. `interview_violations.strike_no` is empty for review-only flags. Older databases are upgraded automatically at start-up: `ensure_columns()` adds new columns and `create_all()` adds new tables.
+
+---
+
+## 🔀 Data flow diagrams (DFD)
+
+**Level 0: context diagram**
+
+```mermaid
+flowchart LR
+    C([Candidate]) -- "credentials, answers, resume, feedback" --> P((AI Interview<br/>Platform))
+    P -- "questions, reports, violation boxes" --> C
+    A([Administrator]) -- "settings, unlocks, link actions" --> P
+    P -- "dashboards, reports, integrity log" --> A
+    P -- "prompts" --> G([Gemini AI service])
+    G -- "questions, evaluations" --> P
+    P -- "codes and notices" --> M([E-mail service])
+    P <--> DB[(Database)]
+```
+
+**Level 1**
+
+```mermaid
+flowchart TD
+    C([Candidate]) --> P1[1 Authentication]
+    C --> P2[2 Interview and practice]
+    C --> P6[6 Resource library]
+    A([Administrator]) --> P5[5 Administration]
+    P1 <--> D1[(D1 Users and codes)]
+    P2 <--> D2[(D2 Results and progress)]
+    P2 --> P4[4 Integrity monitoring]
+    P4 <--> D3[(D3 Violations)]
+    P4 --> P2
+    P2 --> P3[3 AI evaluation and reports]
+    P3 <--> G([Gemini])
+    P3 --> D2
+    P3 --> M([E-mail service])
+    P5 <--> D4[(D4 Settings)]
+    P5 --> D2
+    P5 --> D3
+    P5 --> D1
+    P4 --> D4
+    P6 <--> D5[(D5 Bookmarks and link checks)]
 ```
 
 ---
 
-## 🔄 Request-Response Sequence Diagram
+## ⏱️ Sequence diagrams
+
+**One interview step (with integrity checks)**
 
 ```mermaid
 sequenceDiagram
-    participant C as Candidate Browser
-    participant F as Flask App
-    participant DB as Database
-    participant G as Gemini AI
-
-    C->>F: GET /interview (domain selected)
-    F->>DB: Query InterviewProgress, User resume_text
-    F->>G: build_initial_question_prompt()
-    G-->>F: First question text + [TYPE: TEXT/CODE]
-    F-->>C: Render interview.html + first question
-
-    loop Question-Answer Loop
-        C->>F: POST /interview/submit (answer + q_count)
-        F->>DB: save_progress(chat_history, q_count)
-        F->>G: build_ajax_system_prompt() + chat history
-        G-->>F: Next question OR [END_INTERVIEW]
-        F-->>C: JSON { question, q_num, done }
+    participant U as Candidate browser
+    participant S as Flask (interview_engine)
+    participant I as IntegrityService
+    participant D as Database
+    participant G as Gemini
+    U->>S: POST /interview (answer, typing metrics)
+    S->>I: guard_session / check_answer
+    I->>D: read progress and settings
+    alt answer after the time limit
+        I->>D: store violation, add strike
     end
+    S->>D: save answer in interview_progress
+    S->>G: next question (level + resume + history)
+    alt Gemini slow or down
+        S->>S: fallback question (no attempt used)
+    end
+    S->>D: save question, restart server clock
+    S-->>U: next question page
+```
 
-    C->>F: POST /finish-interview
-    F->>DB: clear_progress(user_id)
-    F->>G: build_evaluation_prompt(transcript)
-    G-->>F: SCORE + SUMMARY paragraphs
-    F->>DB: INSERT InterviewResult (score, status, summary)
-    F-->>C: Redirect → /interview-result/<id>
+**A violation (for example a paste attempt)**
+
+```mermaid
+sequenceDiagram
+    participant U as Candidate browser
+    participant S as Flask
+    participant I as IntegrityService
+    participant D as Database
+    U->>U: paste blocked in the browser
+    U->>S: POST /interview/violation {kind: paste}
+    S->>I: record(user, paste)
+    I->>D: insert event, strikes + 1
+    alt strikes reached the limit
+        I->>D: store terminated result and attach events
+        S-->>U: redirect to terminated page
+    else
+        S-->>U: box with the exact mistake, strike x of y, warning
+    end
 ```
 
 ---
 
-## 🗂️ Project Structure
+## 🛡️ Interview integrity and anti-cheat
+
+Scored assessments are protected by rules that are **counted and stored on the server**, so clearing browser data or editing the page cannot reset them. Practice labs are never proctored. Every rule has an admin switch under **Admin → Settings → Interview Settings**, there is a master "All integrity features" switch, and the **strike limit** is 1 to 5 (default 2).
+
+| Rule | What it does | Strike |
+|---|---|---|
+| Proctoring and warning strikes (main switch) | Turns every rule on or off | - |
+| Server-side strikes | Counts and stores every violation on the server | Yes |
+| Leaving the exam window | Tab, window or app switch, with the time away | Yes |
+| One active session | Another browser or device is refused and counted | Yes |
+| Server-side timer | The clock lives on the server; late answers are counted | Late answers |
+| Block copy and paste | Pasting into the answer box and copying the question are blocked | Yes |
+| Require fullscreen (off by default) | Leaving fullscreen is a violation | Yes |
+| Typing-pattern flags | Instant or inserted long answers are flagged for the admin | Review only |
+| Integrity log | The admin sees every event with time, question and details | Display |
+
+> [!IMPORTANT]
+> Every violation shows the candidate a box that names the **exact mistake**, the strike count (for example *Strike 1 of 2*) and a warning. Reaching the limit ends the session; it is recorded as terminated and counts as one attempt.
+
+---
+
+## 🔐 Security
+
+| Area | Protection |
+|---|---|
+| Forms and requests | CSRF token on every form and same-site request; destructive actions are POST-only |
+| Sessions | Idle timeout (admin 30 min, candidate 2 h), 12-hour maximum, `HttpOnly` / `SameSite=Lax` / `Secure` cookies, no caching of signed-in pages |
+| Headers | Content-Security-Policy, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, HSTS in production |
+| Sign-in | Keyed-hash one-time codes with expiry and attempt limits, brute-force lockouts, password strength rules, one generic login error, optional admin two-step sign-in |
+| Secrets | No key in the source code; `SECRET_KEY` or a private key derived from `DATABASE_URL`; admin credentials only from environment variables |
+| Data | Upload type and size checks; deleting a user also deletes files, events and bookmarks |
+
+---
+
+## 🧠 AI engine and reliability
+
+- **Models:** Google Gemini through `google-genai`, with retries, optional **backup API keys** (`GEMINI_BACKUP_KEYS`) and **backup models** (`GEMINI_FALLBACK_MODELS`).
+- **Levels:** one definition per level (Student, Mid-level, Senior) feeds the question prompt, the system prompt and the evaluation prompt, so the way questions are asked and the way answers are scored always agree. Each level has its own scoring guide.
+- **Evaluation:** a score out of 10 plus four professional paragraphs (overall, strengths, gaps, guidance) in a calm third-person tone, with rules against inventing answers and against instructions hidden inside answers.
+- **Resilience:** if the AI is slow or down, a non-repeating fallback question keeps the interview going. A failed evaluation stores nothing and uses no attempt. The interview is saved on the server after every step.
+- **Error page:** a server error shows "We hit a problem" with *Your interview is safe*, one **Back** button that resumes at the next question, and a reference code that also appears in the server log.
+
+---
+
+## 📚 Preparation hub, library and practice labs
+
+- **Resources and Prep Hub:** 113 pages (25 tech companies, 19 tech domains, 23 business companies, 25 business domains, 21 programming languages). Every link box shows the **logo of the site it opens**, and a floating **Back** button follows the reader down the page.
+- **Extended Library:** all **92 unique curated links** (482 placements) in one searchable page, with track and format filters, bookmarks, "saved only", and three **7-day study plans** (Software developer, Data and analytics, Banking and business).
+- **Link Health (admin only):** checks every library link in the background, separates *Working*, *Refused* (the site blocks bots) and *Broken*, and lets the admin hide a link without changing code. Candidates never see check dates.
+- **Practice labs:** Academic Viva, Language practice (with corrections and translations), Concept Drill, Debate (the AI argues the opposite side) and Healthy Conversation. They never use an attempt.
+
+---
+
+## ⚙️ Admin console
+
+| Page | Purpose |
+|---|---|
+| `/admin` | Counters, filters, instant search, the results table |
+| `/admin/users` | Summary cards, filters, sorting, paging, attempts taken, unlock |
+| `/admin/user/<id>` | Profile, resume viewer, attempts, history |
+| `/admin/interview/<id>` | Report: score against the passing mark, evaluation notes, candidate sidebar, **integrity log** |
+| `/admin/settings` | **Interview Settings** (questions, scoring, attempts, integrity switches) and Emails |
+| `/admin/links` | Link Health |
+| `/admin/guide` | The interactive 38-step guided tour and the 11-module manual |
+
+---
+
+## ✉️ E-mail system
+
+Dark-theme, mobile-responsive HTML e-mails with a plain-text part: welcome (sent once), assessment feedback, session-ended notice, slot unlocked, one-time code, and feedback received (to the owner, with sender details). Delivery tries **Gmail SMTP, then Resend, then SendGrid**, runs in the background, and never breaks the request. The admin can switch the assessment-feedback e-mail on or off without affecting any other e-mail.
+
+> [!WARNING]
+> **Deliverability.** Render's free plan blocks SMTP ports, so e-mails may be sent through an HTTP provider and land in spam until a verified sending domain (SPF, DKIM, DMARC) is configured. A temporary hint on the code page tells users to check Spam or Promotions. Set `SHOW_SPAM_HINT=false` once a domain is in place.
+
+---
+
+## 💻 Requirement analysis
+
+| | Hardware | Software |
+|---|---|---|
+| **Client (candidate / admin)** | PC, laptop or phone with 2 GB RAM or more, stable internet, microphone optional (voice dictation) | Modern browser (Chrome, Edge, Firefox or Safari) |
+| **Server** | A small cloud instance (Render free or paid plan) | Python 3.11+, Flask 3, gunicorn, PostgreSQL (Neon) or SQLite for local use |
+| **External accounts** | - | Gemini API key; optional Google OAuth client; a mail account (Gmail app password, Resend or SendGrid) |
+
+---
+
+## 🧱 System stack
+
+| Layer | Technologies in this project |
+|---|---|
+| **Frontend** | HTML5, CSS3, JavaScript (vanilla), Jinja2 templates, Bootstrap 5.3, Bootstrap Icons, Google Fonts (Inter, Outfit), Monaco Editor, Web Speech API, browser Visibility, Fullscreen and Clipboard APIs |
+| **Backend** | Python 3.11+, Flask 3 (application factory, 6 blueprints), Werkzeug, Authlib (Google OAuth 2.0), python-dotenv, cryptography, gunicorn |
+| **Data** | Neon serverless PostgreSQL, SQLAlchemy 2 with Flask-SQLAlchemy, PostgreSQL drivers (`psycopg`, `psycopg2`, `pg8000`), SQLite for local use, automatic schema migration, 10 tables |
+| **AI** | Google Gemini via `google-genai`, retries with backup API keys and models, a difficulty-level prompt library, evaluation and feedback prompts |
+| **E-mail and sign-in services** | Gmail SMTP, Resend and SendGrid HTTP APIs, Google OAuth, dark-theme responsive e-mail templates |
+| **Security** | CSRF tokens, session timeouts, Content-Security-Policy, keyed-hash one-time codes, brute-force lockouts, optional admin 2FA |
+| **Hosting and tooling** | Render (web service), Neon (database), Git and GitHub, an automated test suite, Chrome DevTools Protocol browser checks, Mermaid diagrams |
+
+<details>
+<summary><b>Python dependencies (requirements.txt)</b></summary>
+
+| Package | Used for |
+|---|---|
+| `Flask` | Web framework (app factory, blueprints, Jinja2 templates) |
+| `Flask-SQLAlchemy` / SQLAlchemy | ORM and database access |
+| `psycopg[binary]`, `psycopg2-binary`, `pg8000` | PostgreSQL drivers |
+| `google-genai` | Google Gemini API |
+| `authlib` | Google OAuth 2.0 |
+| `cryptography` | Cryptographic primitives used by OAuth and TLS |
+| `python-dotenv` | Loading the `.env` file locally |
+| `gunicorn` | Production WSGI server |
+| `Werkzeug` | Password hashing and WSGI utilities |
+
+</details>
+
+---
+
+## 🗂️ Project structure
 
 ```
 ai_interview_platform/
-│
-├── app.py                              # Entry point: calls create_app() from MODULES
-├── requirements.txt                    # Python package dependencies
-├── Procfile                            # Gunicorn start command for Render/Heroku
-├── render.yaml                         # Render cloud service configuration
-├── runtime.txt                         # Python runtime version pin
-├── .env                                # Local environment variables (never commit this)
-├── .gitignore                          # Git ignore rules
-│
-├── MODULES/                            # 🏗️ Core application package (4-layer architecture)
-│   ├── __init__.py                     # create_app() Flask factory function
-│   │
-│   ├── LAYER_1_CORE_INFRASTRUCTURE/
-│   │   └── config.py                   # App config, DB URL resolution, OAuth, Gemini, uploads
-│   │
-│   ├── LAYER_2_DATA_PERSISTENCE/
-│   │   └── models.py                   # SQLAlchemy ORM models, validators, settings cache
-│   │
+├── app.py                         # entry point (gunicorn app:app)
+├── Procfile · render.yaml · runtime.txt · requirements.txt
+├── MODULES/
+│   ├── __init__.py                # create_app(): blueprints, security, errors, schema migration
+│   ├── LAYER_1_CORE_INFRASTRUCTURE/config.py
+│   ├── LAYER_2_DATA_PERSISTENCE/models.py
 │   ├── LAYER_3_BUSINESS_SERVICES/
-│   │   ├── ai_client.py                # Gemini AI prompt builders & client singleton
-│   │   └── mailer.py                   # Multi-provider OTP email dispatcher
-│   │
+│   │   ├── ai_client.py           # Gemini access, prompts, difficulty levels
+│   │   ├── integrity.py           # strikes, one session, server timer, flags
+│   │   ├── mailer.py · email_templates.py · feedback_email.py
+│   │   ├── auth_security.py       # hashed OTP, lockouts
+│   │   ├── web_security.py        # CSRF, timeouts, CSP, password rules
+│   │   └── link_checker.py
 │   └── LAYER_4_ROUTE_CONTROLLERS/
-│       ├── __init__.py                 # register_blueprints() aggregator
-│       ├── login_env.py                # Auth routes: login, register, Google OAuth, OTP
-│       ├── dashboard.py                # Dashboard, resume upload, history, results
-│       ├── interview_engine.py         # Live interview, AJAX submit, evaluation pipeline
-│       ├── admin_env.py                # Admin panel, user management, settings
-│       ├── practicemode.py             # Viva, FluentFlow, Concept Drills practice routes
-│       └── resources.py                # Company prep hub resource pages
-│
-├── templates/                          # Jinja2 HTML templates
-│   ├── index.html                      # Landing page
-│   ├── login.html                      # Login page (password + Google + OTP)
-│   ├── signup.html                     # OTP-based signup entry
-│   ├── register.html                   # Full registration form
-│   ├── dashboard.html                  # Candidate workspace dashboard
-│   ├── interview.html                  # Live interview studio
-│   ├── interview_result.html           # Score report & competency card
-│   ├── practice_setup.html             # Practice mode selector
-│   ├── my_history.html                 # Attempt history log
-│   ├── tech_questions.html             # Company prep hub index
-│   ├── company_questions.html          # Per-company resource page
-│   ├── admin.html                      # Admin operations dashboard
-│   ├── admin_users.html                # User management table
-│   ├── admin_user_detail.html          # Individual user profile view
-│   ├── admin_interview_detail.html     # Individual result deep-dive
-│   ├── admin_settings.html             # Platform settings configuration
-│   ├── edit_profile.html               # Profile editor
-│   ├── forgot_password.html            # Password reset request
-│   ├── send_otp.html                   # OTP login entry
-│   ├── verify_otp.html                 # OTP verification
-│   └── privacy.html                    # Privacy policy
-│
-├── static/                             # CSS, JS, images, fonts
-└── uploads/                            # Candidate resume file storage
+│       ├── login_env.py · dashboard.py · interview_engine.py
+│       └── practicemode.py · admin_env.py · resources.py
+├── templates/                     # Jinja pages (candidate, admin, error)
+├── static/
+│   ├── css/ (style.css, visibility.css)   # theme, contrast, smoothness, floating Back
+│   ├── js/ (speech.js)
+│   └── images/ (backgrounds, sites/ = logos of linked sites)
+└── tests/e2e.py                   # automated end-to-end checks
 ```
 
 ---
 
-## 🛠️ Technical Stack
+## 🔧 Environment variables
 
-| Component | Technology | Description |
+| Variable | Needed | Purpose |
 |---|---|---|
-| **Backend Framework** | Python 3.11+ / Flask 3.0+ | Core application server, routing, and session management |
-| **Application Architecture** | 4-Layer MODULES package | Config → Models → Services → Controllers with Blueprint registration |
-| **Database ORM** | Flask-SQLAlchemy 3.1+ | Relational ORM on Neon PostgreSQL (SQLite only as a local fallback) |
-| **AI Assessment Engine** | Google Gemini (`gemini-flash-lite-latest`) | High-speed, context-aware conversational questioning & grading |
-| **Authentication & Security** | Werkzeug / Authlib / PyCryptodome | PBKDF2-SHA256 password hashing, Google OAuth 2.0 OpenID Connect |
-| **Email Delivery Engine** | Resend API / SendGrid API / SMTP | Multi-provider fallback delivery system for verification codes |
-| **Speech Processing** | Web Speech API | Client-side browser-native speech-to-text recognition |
-| **Code Editor** | Monaco Editor CDN | Embedded VS Code syntax highlighter and code input |
-| **Data Visualization** | Chart.js 4.4+ | Interactive score progression and trend lines |
-| **Styling & Theme** | Bootstrap 5.3 + Custom CSS3 | Elite Cyber-Blue high-contrast dark theme with neural aurora backdrop |
-| **Production WSGI** | Gunicorn | High-concurrency production HTTP application server |
+| `DATABASE_URL` | **Yes** (hosted) | Neon PostgreSQL connection string (use the pooled address) |
+| `GEMINI_API_KEY` | **Yes** | Google Gemini key |
+| `SECRET_KEY` | Recommended | Signs sessions and one-time code hashes. If missing, a private key is derived from `DATABASE_URL` |
+| `RENDER` | Hosted | Marks a hosted environment (secure cookies, HTTPS rules) |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | **Yes** | Administrator sign-in. If the password is missing, a random one is printed once at start-up |
+| `APP_BASE_URL` | Recommended | Public address, used for links inside e-mails |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional | Google sign-in |
+| `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | Optional | Gmail SMTP (app password) |
+| `RESEND_API_KEY`, `RESEND_DOMAIN`, `SENDGRID_API_KEY` | Optional | HTTP mail providers |
+| `FEEDBACK_TO_EMAIL` | Optional | Mailbox that receives user feedback (default: `MAIL_USERNAME`) |
+| `GEMINI_BACKUP_KEYS`, `GEMINI_FALLBACK_MODELS` | Optional | Comma-separated backup keys and models |
+| `ADMIN_2FA` | Optional | `true` adds an e-mailed code after the admin password |
+| `ADMIN_IDLE_MINUTES`, `USER_IDLE_MINUTES`, `SESSION_MAX_HOURS` | Optional | Session timeouts (30, 120, 12) |
+| `SHOW_SPAM_HINT` | Optional | `false` hides the spam-folder hint on the code page |
+| `UPLOAD_FOLDER` | Optional | Where resumes are stored |
+
+> [!CAUTION]
+> Never commit secrets. `.env` is git-ignored. Rotate any key that has been shared publicly.
 
 ---
 
-## 🔐 Security & Anti-Cheat System
-
-Scored assessments are protected by integrity rules that are **counted and stored on the server**, so clearing browser data or editing the page cannot reset them. Practice labs are never proctored. Every rule has its own switch under **Admin → Settings → Interview Settings → Integrity & proctoring**, with a master "All integrity features" switch and a strike limit (1 to 5, default 2).
-
-```
-   Violation (browser or server)  ──►  Strike counted on the server  ──►  Box shown to the candidate
-                                                │                         (exact mistake, Strike x of y, warning)
-                                                ▼
-                                   Limit reached?  ── yes ──►  Session ended (Terminated), counts as an attempt,
-                                                │                events attached to the stored result
-                                                no
-                                                ▼
-                                   Interview continues  ·  every event is listed in the admin-only integrity log
-```
-
-| Rule (admin switch) | What it does | Strike |
-|---|---|---|
-| Proctoring & warning strikes (main switch) | Turns all integrity rules on or off | - |
-| Server-side strikes | Counts every violation on the server | Yes |
-| Leaving the exam window | Tab, window or app switch (with time away) | Yes |
-| One active session | Another browser or device is refused and counted | Yes |
-| Server-side timer | The clock lives on the server; a reload cannot reset it; late answers counted | Late answers |
-| Block copy and paste | Paste into the answer box and copying the question are blocked | Yes |
-| Require fullscreen (off by default) | Leaving fullscreen is a violation | Yes |
-| Typing-pattern flags | Instant or inserted long answers are flagged for the admin | Review only |
-| Integrity log on the report | Admin sees every event with time, question and details | Display |
-
-* **Web protection**: CSRF token on every form and request, session idle timeout (admin 30 min, candidate 2 h, 12 h maximum), Content-Security-Policy, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` and HSTS in production, `HttpOnly` / `SameSite=Lax` / `Secure` cookies, no signed-in page caching.
-* **Sign-in protection**: one-time codes stored only as keyed hashes with expiry and attempt limits, brute-force lockouts, password strength rules, one generic login error (no account enumeration), POST-only destructive actions, no hard-coded secret key (the server refuses to start on Render without `SECRET_KEY`), optional admin two-step sign-in with `ADMIN_2FA=true`.
-* **Admin Credential Hardening**: If `ADMIN_PASSWORD` is not set, a random token is generated and printed once to the startup log; no predictable default is ever used.
-* **Role-Based Access Control**: administrative pages and tools are separated from candidate pages by session checks.
-
----
-
-## ⚙️ Environment Configuration
-
-Create a `.env` file in the root directory and configure the required environment variables:
+## 💻 Local setup
 
 ```bash
-# -------------------------------------------------------------
-# CORE APPLICATION SETTINGS
-# -------------------------------------------------------------
-SECRET_KEY=your_secure_random_flask_secret_key_here
-FLASK_ENV=production
-
-# -------------------------------------------------------------
-# DATABASE CONFIGURATION - Neon PostgreSQL (use the SAME value locally and on Render)
-# Copy the *pooled* connection string from the Neon dashboard.
-# On Render the app refuses to start without it; locally, a missing value falls back
-# to a throw-away SQLite file with a warning.
-# -------------------------------------------------------------
-DATABASE_URL=postgresql://user:password@ep-xxxx-pooler.region.aws.neon.tech/neondb?sslmode=require
-
-# -------------------------------------------------------------
-# GOOGLE GEMINI AI ENGINE
-# -------------------------------------------------------------
-GEMINI_API_KEY=your_gemini_api_key_here
-# Optional reliability helpers (all safe to leave unset):
-#   GEMINI_BACKUP_KEYS     comma-separated keys from OTHER Google projects; used when the main key is rate-limited
-#   GEMINI_FALLBACK_MODELS comma-separated backup models (default: gemini-3.5-flash-lite,gemini-3.1-flash-lite);
-#                          set it to an empty value to disable. The main model is always tried first.
-#   APP_BASE_URL           public site URL used for links inside emails, e.g. https://your-app.onrender.com
-#   FEEDBACK_TO_EMAIL      where feedback from the in-app feedback box is e-mailed (default: MAIL_USERNAME)
-#   UPLOAD_FOLDER          override the folder where resumes are stored
-
-# -------------------------------------------------------------
-# GOOGLE OAUTH 2.0 (Optional - for Google Single Sign-On)
-# -------------------------------------------------------------
-GOOGLE_CLIENT_ID=your_google_oauth_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_google_oauth_client_secret
-
-# -------------------------------------------------------------
-# EMAIL DELIVERY & OTP SERVICES (Optional - with SMTP fallback)
-# Priority: Resend → SendGrid → SMTP
-# -------------------------------------------------------------
-RESEND_API_KEY=your_resend_api_key_here
-SENDGRID_API_KEY=your_sendgrid_api_key_here
-MAIL_SERVER=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USE_TLS=True
-MAIL_USERNAME=your_sender_email@gmail.com
-MAIL_PASSWORD=your_email_app_password
-MAIL_DEFAULT_SENDER=your_sender_email@gmail.com
-
-# -------------------------------------------------------------
-# ADMINISTRATOR CREDENTIALS (Auto-initialized on first launch)
-# -------------------------------------------------------------
-ADMIN_EMAIL=admin@platform.local
-ADMIN_PASSWORD=your_custom_admin_password
-```
-
-> **Security Note:** Never commit your `.env` file to version control. The `.gitignore` already excludes it. For cloud deployments, set all variables directly in your hosting provider's environment dashboard.
-
----
-
-## 🚀 Installation & Local Setup
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/MR360-TECH/AI_INTERVIEW_PLATFORM_3.git
-cd AI_INTERVIEW_PLATFORM_3
-```
-
-### 2. Create and Activate Virtual Environment
-```bash
-# Windows
+git clone https://github.com/MR360-TECH/AI_INTERVIEW_PLATFORM.git
+cd AI_INTERVIEW_PLATFORM
 python -m venv venv
-venv\Scripts\activate
-
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install Dependencies
-```bash
+venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Configure Environment Variables
+Create a `.env` file. The minimum for a local run:
 
-Copy the environment template and fill in your credentials before running the app.
-
-### 5. Run the Application
-```bash
-python app.py
 ```
-Open your browser and navigate to `http://127.0.0.1:5000`.
+DATABASE_URL=sqlite:///ai_interview_platform.db
+GEMINI_API_KEY=your-key
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=choose-a-strong-password
+```
 
-> **First Launch:** The application automatically creates all required database tables (with live schema migration for missing columns) and initializes the admin account on startup. No manual migration commands are needed.
+Start the app with `python app.py` and open http://localhost:5000. Tables and new columns are created automatically.
 
 ---
 
-## 🌐 Production Cloud Deployment (Render)
+## ☁️ Deployment (Render and Neon)
 
-This repository includes native deployment support for **Render**:
+1. Create a **Neon** project and copy the **pooled** connection string into `DATABASE_URL`.
+2. Create a **Render** web service from this repository. Use the start command `gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 4` (a ready-made blueprint is in `render.yaml`).
+3. Add the environment variables (at least `DATABASE_URL`, `GEMINI_API_KEY`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `RENDER=true`, `APP_BASE_URL`, and a long random `SECRET_KEY`).
+4. Deploy. The first start creates the tables and upgrades older databases automatically.
+5. If you change the Neon password, update `DATABASE_URL` in Render and redeploy; everyone is signed out once.
 
-1. Fork or push this repository to your GitHub account.
-2. Log in to [Render Dashboard](https://dashboard.render.com/) and click **New + Web Service**.
-3. Connect your repository and configure:
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
-4. Under **Environment Variables**, add `SECRET_KEY`, `GEMINI_API_KEY`, `DATABASE_URL`, and other optional credentials.
-5. Deploy the service. The SQL engine will auto-verify database schemas and apply migrations automatically on startup.
+---
 
-> **Persistent Storage on Render:** SQLite data is written to `/var/data/` on Render's persistent disk when available, preventing data loss across deploys. Resume uploads are also stored in `/var/data/uploads/`.
+## ✅ Testing
+
+```bash
+python tests/e2e.py                          # all groups (747 checks, about one minute)
+python tests/e2e.py t_interview_integrity    # one group
+```
+
+The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in for e-mail, so it never touches real data. It covers sign-up and login, attempts, the interview flow, the integrity rules and strikes, error recovery, security (CSRF, timeouts, headers), the admin pages, the library and link health, e-mails, prompts, and a syntax check of every inline script. Real-browser (Chrome) checks of the integrity features and a PostgreSQL migration check were also run during development.
+
+**Sample test cases**
+
+| # | Test case | Expected result | Status |
+|---|---|---|---|
+| 1 | Valid login | Dashboard opens | Pass |
+| 2 | Wrong password | One generic error; no hint whether the e-mail exists | Pass |
+| 3 | Request without a CSRF token | Rejected (HTTP 400) | Pass |
+| 4 | Paste into the answer box | Blocked; violation box; Strike 1 | Pass |
+| 5 | Strike limit reached | Session ended and recorded as terminated | Pass |
+| 6 | Server error during an interview | "We hit a problem" page; progress saved; no attempt used | Pass |
+| 7 | Same interview in a second browser | Refused and counted | Pass |
+| 8 | AI service down | Fallback question; interview continues; no attempt used | Pass |
 
 ---
 
 ## 🗺️ Roadmap
 
-The platform is under active development. Planned improvements include:
-
-| Status | Feature |
-|---|---|
-| ✅ Done | Live AI interview with adaptive questioning |
-| ✅ Done | Anti-cheat proctoring (2-strike system, admin toggle) |
-| ✅ Done | Voice dictation with waveform visualizer |
-| ✅ Done | Resume-driven personalized questions |
-| ✅ Done | Monaco code editor sandbox |
-| ✅ Done | File/image upload for diagram questions |
-| ✅ Done | Google OAuth + OTP + Password authentication |
-| ✅ Done | Company-specific prep hub (11 companies) |
-| ✅ Done | Admin control panel with attempt unlock |
-| ✅ Done | Clean 4-layer modular MODULES architecture |
-| ✅ Done | Professional + Student user type profiles |
-| ✅ Done | Settings cache with TTL invalidation |
-| 🔄 Planned | Webcam-based facial proctoring (optional) |
-| 🔄 Planned | Multi-language UI localization |
-| 🔄 Planned | Recruiter portal for candidate shortlisting |
-| 🔄 Planned | Scheduled interview slots with email reminders |
-| 🔄 Planned | Leaderboard and peer performance benchmarking |
-| 🔄 Planned | Mobile PWA wrapper |
+- Webcam proctoring with explicit consent.
+- More practice labs (HR/STAR, group discussion, salary negotiation).
+- Analytics dashboards for institutions and exportable reports.
+- Multi-admin roles, LMS/ATS integration and multi-language screens.
+- A second AI provider with automatic failover, and a verified e-mail sending domain.
 
 ---
 
-## ❓ Frequently Asked Questions
+## ❓ FAQ
 
-**Q: Does the platform save my interview chat transcript?**  
-A: Only the active in-progress chat history is stored temporarily in the database (`interview_progress`) to support resume/refresh. After the interview is evaluated, only the final score, summary, and metadata are retained — not the raw question-answer chat log.
+**Does practice use my attempts?** No. Practice labs are unscored, unlimited and never proctored.
 
-**Q: Can I retake the interview if I fail?**  
-A: By default, 2 attempts are permitted per user to maintain assessment integrity. Admins can grant additional attempts individually from the admin panel using the "Unlock Attempt" feature, or configure the global default from Admin Settings.
+**What counts as an attempt?** A completed or terminated scored assessment. Exiting, restarting, an AI problem or a server error never counts.
 
-**Q: What happens if I switch tabs during an interview?**  
-A: The proctoring system detects it immediately. The first violation shows a warning modal. The second violation auto-terminates and flags your session as "Terminated" in the database. The admin can disable this behavior via `enable_warning_strikes` in settings.
+**What if the AI is slow?** The platform retries, switches to backup keys and models, and finally uses a fallback question. The interview continues.
 
-**Q: Is an internet connection required for the code editor?**  
-A: Yes — the Monaco Editor is loaded from CDN. However, the code editor is purely for input; Python code is not executed on the server — it is submitted as text and evaluated by the AI.
+**Can the admin turn the anti-cheat rules off?** Yes. Each rule has its own switch, plus a master switch, in Interview Settings.
 
-**Q: What database does the platform use?**
-A: **Neon PostgreSQL**, configured with the `DATABASE_URL` environment variable (the same value for local development and production). Tables and missing columns are created automatically at startup. If `DATABASE_URL` is not set, local runs fall back to a temporary SQLite file with a warning, and a Render deployment refuses to start so data is never lost silently.
-
-**Q: Is a paid API key required to run the platform?**  
-A: The Google Gemini API has a generous free tier that covers typical usage. Email delivery via Resend and SendGrid also offer free tiers. The platform is designed to be **fully operational at zero cost** for personal and small-scale use.
-
-**Q: What is the difference between Student and Professional user types?**  
-A: Student profiles require Education, Course, and Semester fields. Professional profiles require Current Designation and Years of Experience instead. The AI difficulty level adapts accordingly.
+**I did not receive the code e-mail.** Check Spam or Promotions, then use Resend Code, or sign in with Google or your password.
 
 ---
 
-## 🤝 Contributing
+## 📄 License
 
-Contributions, bug reports, and feature suggestions are welcome!
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature-name`
-3. Commit your changes: `git commit -m "feat: add your feature description"`
-4. Push to your branch: `git push origin feature/your-feature-name`
-5. Open a Pull Request against the `main` branch
-
-Please make sure your code follows PEP 8 style guidelines and that all new routes are properly secured with session checks. New controllers should be added as Blueprints under `MODULES/LAYER_4_ROUTE_CONTROLLERS/` and registered in `register_blueprints()`.
-
----
-
-## 📄 License & Attribution
-
-Distributed under the **MIT License**. Developed and maintained by **MR360-TECH**.
-
----
-
-**Developed by Gowtham V, Akash S and Charitha M** · [MR360-TECH](https://github.com/MR360-TECH)
+Distributed under the **MIT License**.

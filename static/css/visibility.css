@@ -147,3 +147,12 @@ body { animation: pageIn .28s ease-out; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
     .loader-spinner { animation-duration: 1.2s !important; animation-iteration-count: infinite !important; }   /* a loading spinner must keep turning */
 }
+
+/* ───── floating Back button: follows the reader down long pages so they never have to scroll back up ───── */
+.float-back { position: fixed; left: 20px; bottom: 24px; z-index: 900; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px;
+              border-radius: 999px; background: #08122a; border: 1.5px solid #00ffff; color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800;
+              font-size: .95rem; text-decoration: none; box-shadow: 0 8px 26px rgba(0,0,0,.55), 0 0 18px rgba(0,255,255,.25);
+              opacity: 0; transform: translateY(14px); pointer-events: none; transition: opacity .25s ease, transform .25s ease, background .2s ease, color .2s ease; }
+.float-back.show { opacity: 1; transform: none; pointer-events: auto; }
+.float-back:hover { background: #00ffff; color: #020510; }
+@media (max-width: 600px) { .float-back { left: 14px; bottom: 16px; padding: 11px 18px; } }

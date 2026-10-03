@@ -204,5 +204,17 @@
     render();
 })();
 </script>
+
+<a href="/tech-questions" class="float-back" id="floatBack" aria-label="Back"><i class="bi bi-arrow-left"></i> Back</a>
+<script>
+(function () {
+    var b = document.getElementById('floatBack');
+    if (!b) return;
+    var ticking = false;
+    function update() { b.classList.toggle('show', window.scrollY > 260); ticking = false; }
+    window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
+})();
+</script>
 </body>
 </html>
