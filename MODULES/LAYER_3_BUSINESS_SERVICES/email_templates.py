@@ -7,10 +7,17 @@ Layout rules (so the emails read well on phones as well as desktops):
   * one fluid 600px column, table based, inline CSS (the fixed width only applies to Outlook)
   * body text 16px, buttons become full width on narrow screens, the score card stacks on narrow screens
 """
+import os
 import re
 from html import escape
 
-APP_NAME = "AI Assessment Studio"
+APP_NAME = "AI Interview Platform"
+
+
+def _logo_url():
+    """The app logo (same icon as the top-left of the website). Mail clients can only load it from a public https address."""
+    base = (os.environ.get("APP_BASE_URL") or "https://ai-interview-platform-r8u8.onrender.com").strip().rstrip("/")
+    return f"{base}/static/images/logo-icon.png" if base.startswith("https://") else ""
 
 _FONT = "'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 
@@ -205,6 +212,10 @@ body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
 
 
 def _layout(title, preheader, body_html, footer_reason):
+    logo = _logo_url()
+    logo_cell = (f'<td width="40" style="width:40px;"><img src="{logo}" width="40" height="40" alt="" '
+                 'style="display:block;border:0;outline:none;width:40px;height:40px;border-radius:11px;"></td>') if logo else (
+                 f'<td style="width:12px;height:12px;background:{_CYAN};border-radius:3px;font-size:0;line-height:0;">&nbsp;</td>')
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -223,8 +234,8 @@ def _layout(title, preheader, body_html, footer_reason):
   <table role="presentation" cellpadding="0" cellspacing="0" bgcolor="{_SURFACE}" style="width:100%;max-width:600px;background:{_SURFACE};border:1px solid {_BORDER};border-radius:16px;overflow:hidden;">
     <tr><td class="px" bgcolor="#0a1a35" style="background:#0a1a35;background-image:linear-gradient(135deg,#0a2540,#0c3a63);padding:20px 32px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td style="width:12px;height:12px;background:{_CYAN};border-radius:3px;font-size:0;line-height:0;">&nbsp;</td>
-        <td style="padding-left:10px;font-family:{_FONT};font-size:17px;font-weight:700;letter-spacing:0.01em;color:#ffffff;">{APP_NAME}</td>
+        {logo_cell}
+        <td style="padding-left:12px;font-family:{_FONT};font-size:19px;font-weight:800;letter-spacing:-0.01em;color:#ffffff;">{APP_NAME}</td>
       </tr></table>
     </td></tr>
     <tr><td style="height:3px;background:{_CYAN};background-image:linear-gradient(90deg,#00ffff,#0284c7);font-size:0;line-height:0;">&nbsp;</td></tr>
@@ -298,10 +309,10 @@ def _build(subject, preheader, title, greeting, paragraphs, footer_reason, rows=
 
 def welcome_email(full_name, base_url, via_google=False):
     if via_google:
-        opening = ("Welcome to AI Assessment Studio. Your Google account is now linked and your workspace is ready. "
+        opening = ("Welcome to AI Interview Platform. Your Google account is now linked and your workspace is ready. "
                    "Upload your resume to get interview questions that fit your experience.")
     else:
-        opening = ("Welcome to AI Assessment Studio, and thank you for registering. Your workspace is ready, and the best "
+        opening = ("Welcome to AI Interview Platform, and thank you for registering. Your workspace is ready, and the best "
                    "way to start is by uploading your resume so your interviews match your experience.")
     return _build(
         subject=f"Welcome to {APP_NAME}",
@@ -358,7 +369,7 @@ def otp_email(otp, base_url):
         badge="Platform Access Code",
         title="Your Temporary Login Code",
         greeting="Hello,",
-        paragraphs=["You recently requested to access the AI Assessment Studio. Please use the secure code below to "
+        paragraphs=["You recently requested to access the AI Interview Platform. Please use the secure code below to "
                     "complete your login securely."],
         code=otp,
         callout=("Important Security Note", "This code will expire in 10 minutes. If you did not request this code, "
@@ -374,7 +385,7 @@ def slot_unlocked_email(full_name, base_url):
         title="New Interview Slot Authorized!",
         greeting=greeting_for(full_name),
         paragraphs=["Great news! An additional standard evaluation slot has been unlocked for your account on "
-                    "AI Assessment Studio."],
+                    "AI Interview Platform."],
         callout=("What is Next?", "Log in to your workspace dashboard to launch your new assessment session. Make sure "
                                   "you have a quiet environment and uninterrupted time."),
         button=(f"Open {APP_NAME}", f"{base_url}/dashboard"),

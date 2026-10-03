@@ -14,7 +14,7 @@ def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mai
     """Sends email via Gmail SMTP (port 587 TLS or port 465 SSL)."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"AI Assessment Studio <{mail_user}>"
+    msg["From"] = f"AI Interview Platform <{mail_user}>"
     msg["To"] = to_email
     msg["Auto-Submitted"] = "auto-generated"
     if reply_to:
@@ -53,9 +53,9 @@ def _send_via_resend(to_email, subject, text_content, html_content, api_key, rep
     """Send via Resend HTTP API (port 443 HTTPS)."""
     resend_domain = (os.environ.get("RESEND_DOMAIN") or "").strip()
     if resend_domain and resend_domain != "resend.dev":
-        from_addr = f"AI Assessment Studio <notifications@{resend_domain}>"
+        from_addr = f"AI Interview Platform <notifications@{resend_domain}>"
     else:
-        from_addr = "AI Assessment Studio <onboarding@resend.dev>"
+        from_addr = "AI Interview Platform <onboarding@resend.dev>"
 
     body = {
         "from": from_addr,
@@ -96,7 +96,7 @@ def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key, r
     from_addr = (os.environ.get("MAIL_USERNAME") or "aiinterviewplatform26@gmail.com").strip()
     body = {
         "personalizations": [{"to": [{"email": to_email}]}],
-        "from": {"email": from_addr, "name": "AI Assessment Studio"},
+        "from": {"email": from_addr, "name": "AI Interview Platform"},
         "subject": subject,
         "content": [
             {"type": "text/plain", "value": text_content},

@@ -156,3 +156,8 @@ body { animation: pageIn .28s ease-out; }
 .float-back.show { opacity: 1; transform: none; pointer-events: auto; }
 .float-back:hover { background: #00ffff; color: #020510; }
 @media (max-width: 600px) { .float-back { left: 14px; bottom: 16px; padding: 11px 18px; } }
+
+/* ───── legal consent line under sign-in / sign-up forms ───── */
+.legal-note { margin: 16px 0 0; text-align: center; font-size: .8rem; line-height: 1.5; color: #a9b8cc; }
+.legal-note a { color: #00ffff; font-weight: 700; text-decoration: none; }
+.legal-note a:hover { text-decoration: underline; }

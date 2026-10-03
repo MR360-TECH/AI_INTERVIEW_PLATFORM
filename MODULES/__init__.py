@@ -119,6 +119,11 @@ def create_app():
     # Temporary helper text on the verification-code page while e-mails may land in spam (no verified domain yet).
     # Remove it later by setting SHOW_SPAM_HINT=false (or by deleting the marked block in verify_otp.html).
     @app.context_processor
+    def inject_legal_contact():
+        """The public contact address shown on the legal pages comes from configuration (FEEDBACK_TO_EMAIL / MAIL_USERNAME)."""
+        return {"contact_email": getattr(config, "FEEDBACK_TO_EMAIL", "") or ""}
+
+    @app.context_processor
     def inject_mail_hint():
         return {"show_spam_hint": (os.environ.get("SHOW_SPAM_HINT", "true").strip().lower() not in ("0", "false", "no", "off"))}
 

@@ -430,7 +430,7 @@ html.dark-theme .db-bg { display: block; }
         <h1 class="doc-title">Privacy Policy &amp; Terms of Use</h1>
         <div class="doc-meta">
             <span class="doc-meta-item"><i class="bi bi-calendar3"></i> Effective: January 1, 2026</span>
-            <span class="doc-meta-item"><i class="bi bi-arrow-repeat"></i> Last updated: August 2026</span>
+            <span class="doc-meta-item"><i class="bi bi-arrow-repeat"></i> Last updated: October 2026</span>
             <span class="doc-meta-item"><i class="bi bi-geo-alt"></i> Governing jurisdiction: India</span>
         </div>
     </div>
@@ -441,236 +441,262 @@ html.dark-theme .db-bg { display: block; }
         <ul class="toc-list">
             <li><a href="#overview"><i class="bi bi-dot"></i>Overview</a></li>
             <li><a href="#data-collected"><i class="bi bi-dot"></i>Data We Collect</a></li>
-            <li><a href="#ai-processing"><i class="bi bi-dot"></i>AI &amp; Data Processing</a></li>
+            <li><a href="#ai-processing"><i class="bi bi-dot"></i>AI & Data Processing</a></li>
             <li><a href="#data-usage"><i class="bi bi-dot"></i>How We Use Your Data</a></li>
-            <li><a href="#data-storage"><i class="bi bi-dot"></i>Storage &amp; Security</a></li>
-            <li><a href="#cookies"><i class="bi bi-dot"></i>Cookies &amp; Sessions</a></li>
-            <li><a href="#user-rights"><i class="bi bi-dot"></i>Your Rights</a></li>
+            <li><a href="#data-storage"><i class="bi bi-dot"></i>Storage, Security & Retention</a></li>
+            <li><a href="#cookies"><i class="bi bi-dot"></i>Cookies, Sessions & Browser Storage</a></li>
+            <li><a href="#integrity"><i class="bi bi-dot"></i>Examination Integrity & Automated Proctoring</a></li>
+            <li><a href="#user-rights"><i class="bi bi-dot"></i>Your Rights & Choices</a></li>
             <li><a href="#third-party"><i class="bi bi-dot"></i>Third-Party Services</a></li>
+            <li><a href="#children"><i class="bi bi-dot"></i>Age Limit</a></li>
             <li><a href="#terms"><i class="bi bi-dot"></i>Terms of Use</a></li>
             <li><a href="#contact"><i class="bi bi-dot"></i>Contact</a></li>
         </ul>
     </div>
 
-    <!-- Section 1 -->
+    <!-- Section 01 -->
     <div class="doc-section" id="overview">
         <div class="section-label"><i class="bi bi-info-circle-fill"></i> Section 01</div>
         <div class="section-title">Overview</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>This Privacy Policy describes how AI Interview Platform ("we", "us", or "our") collects, uses, and safeguards information provided by users ("you") while using our AI-powered mock interview and candidate assessment service.</p>
-            <p>By creating an account or using any feature of this platform, you acknowledge that you have read and understood this policy and agree to its terms. If you do not agree, you should discontinue use of the platform immediately.</p>
+            <p>This document contains the <strong>Privacy Policy</strong> and the <strong>Terms of Use</strong> of AI Interview Studio ("the platform", "we", "us"). The platform is owned and operated by an independent developer ("the owner"). It provides AI-powered mock interviews, scored assessments, practice labs and a preparation library.</p>
+            <p>By creating an account or using any feature of the platform, you confirm that you have read and understood this document and agree to it. If you do not agree, please do not use the platform.</p>
             <div class="info-box">
                 <i class="bi bi-shield-check-fill"></i>
-                <div class="info-box-text">We do not sell, rent, or trade your personal information to any third party under any circumstances. Your data is used solely to operate and improve this platform.</div>
+                <div class="info-box-text">We do not sell, rent or trade your personal information, and we do not use it for advertising. Your data is used only to operate, secure and improve the platform.</div>
             </div>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 2 -->
+    <!-- Section 02 -->
     <div class="doc-section" id="data-collected">
         <div class="section-label"><i class="bi bi-database-fill"></i> Section 02</div>
         <div class="section-title">Data We Collect</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>We collect the minimum data necessary to operate the platform. This includes:</p>
+            <p>We collect only the data needed to run the platform:</p>
             <ul>
-                <li><strong>Account information:</strong> Your name, email address, and hashed password at registration. If you sign in via Google OAuth, your Google name, email, and profile picture are received from Google.</li>
-                <li><strong>Resume uploads:</strong> PDF or document files you optionally upload for AI-based resume analysis. Files are stored securely and used only for analysis during your session.</li>
-                <li><strong>Interview responses:</strong> Text answers you provide during interview sessions. These are sent to the Gemini AI API for evaluation and stored as part of your assessment record.</li>
-                <li><strong>Assessment results:</strong> Your score, performance tier, domain, evaluation summary, and timestamp are stored in our database and linked to your account.</li>
-                <li><strong>Session data:</strong> Temporary session identifiers, interview progress, and preferences stored server-side during your session.</li>
+                <li><strong>Account and profile:</strong> your name, e-mail address, sign-in method, a salted hash of your password (never the password itself), and the profile details you enter: gender, education, course, semester, skills, GitHub and LinkedIn links, and (for professionals) years of experience and designation. If you sign in with Google, we receive your Google name and e-mail address.</li>
+                <li><strong>Resume:</strong> the file you optionally upload (PDF or Word, up to 10 MB), and the text and short summary the AI extracts from it.</li>
+                <li><strong>Interview content:</strong> the questions asked, your answers (typed, dictated or code), the saved progress of an unfinished interview, and, for scored assessments, your score, evaluation, domain, session code and time. Files you attach to an answer are analysed by the AI; the file itself is not kept, only a short text analysis in the answer record.</li>
+                <li><strong>Integrity data (scored assessments only):</strong> a record of each rule violation (type, time, question number, strike number, and details such as how many seconds you were away), your strike count, a random identifier that tells browsers apart, when each question was shown and answered, and typing-activity counts (how many key presses, how long an answer took, whether voice was used). We do <strong>not</strong> record what you type key by key, and the platform does not use your camera or record your screen or audio.</li>
+                <li><strong>Security data:</strong> your IP address and failed sign-in counters (to limit guessing attacks), and one-time codes, which are stored only as short-lived hashes.</li>
+                <li><strong>Communications:</strong> e-mails we send you, and any feedback you submit (rating, topic, message and whether you allow a reply).</li>
+                <li><strong>Library activity:</strong> links you bookmark. Study-plan ticks stay in your own browser.</li>
             </ul>
-            <p>We do not collect payment information, government identifiers, or sensitive personal data beyond what is listed above.</p>
+            <p>We do not collect payment information, government identifiers or other sensitive personal data. Please do not put highly sensitive information in your answers or resume.</p>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 3 -->
+    <!-- Section 03 -->
     <div class="doc-section" id="ai-processing">
         <div class="section-label"><i class="bi bi-cpu-fill"></i> Section 03</div>
-        <div class="section-title">AI &amp; Data Processing</div>
+        <div class="section-title">AI & Data Processing</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>This platform uses <strong>Google Gemini AI</strong> to generate interview questions, evaluate your responses, and produce assessment summaries. Your interview conversation and resume content are transmitted to Google's servers for this purpose.</p>
+            <p>The platform uses <strong>Google Gemini</strong> to generate interview questions, read resumes and attachments, and write evaluations. Your interview conversation, resume text and attached files are sent to Google's servers for this purpose.</p>
             <div class="info-box">
                 <i class="bi bi-exclamation-triangle-fill"></i>
-                <div class="info-box-text">By using this platform, you consent to your interview responses and resume being processed by Google Gemini AI. Please refer to <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: #00ffff;">Google's Privacy Policy</a> for details on how Google handles API data.</div>
+                <div class="info-box-text">By using the platform you consent to this processing. Google's handling of API data is described in <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" style="color: #00ffff;">Google's Privacy Policy</a> and its Gemini API terms.</div>
             </div>
-            <p>AI-generated evaluations are automated. They are not reviewed by human assessors and are intended for practice and self-improvement purposes only. Scores and feedback are not official placement decisions.</p>
+            <p>Evaluations are generated automatically, can contain mistakes, and are not reviewed by human assessors unless the administrator chooses to. They are intended for practice, learning and screening support, and are not official placement or hiring decisions.</p>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 4 -->
+    <!-- Section 04 -->
     <div class="doc-section" id="data-usage">
         <div class="section-label"><i class="bi bi-bar-chart-fill"></i> Section 04</div>
         <div class="section-title">How We Use Your Data</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>We use the data we collect for the following purposes only:</p>
+            <p>We use your data only for these purposes:</p>
             <ul>
-                <li>To authenticate your identity and manage your account securely.</li>
-                <li>To conduct AI-powered mock interview sessions and generate personalised evaluation reports.</li>
-                <li>To display your assessment history, score trends, and performance metrics on your dashboard.</li>
-                <li>To generate downloadable or printable PDF assessment reports.</li>
-                <li>To improve platform reliability, fix errors, and enhance features.</li>
-                <li>To send account-related communications such as password reset OTPs (if applicable).</li>
+                <li>To authenticate you, keep your account secure and prevent abuse (lockouts, rate limits, session timeouts).</li>
+                <li>To conduct interviews and practice sessions and to produce evaluations, scores and printable reports.</li>
+                <li>To keep scored assessments fair by applying and recording the integrity rules in the Integrity section below.</li>
+                <li>To show your history and progress, and to let administrators review results and manage attempts.</li>
+                <li>To send service e-mails: welcome message, one-time codes, assessment feedback, session notices and unlock notices.</li>
+                <li>To respond to feedback, diagnose errors and improve the platform.</li>
             </ul>
-            <p>We do not use your data for advertising, profiling, or any purpose outside the direct operation of this platform.</p>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 5 -->
+    <!-- Section 05 -->
     <div class="doc-section" id="data-storage">
         <div class="section-label"><i class="bi bi-lock-fill"></i> Section 05</div>
-        <div class="section-title">Storage &amp; Security</div>
+        <div class="section-title">Storage, Security & Retention</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>Your data is stored in a secured relational database. Passwords are <strong>never stored in plain text</strong> — they are hashed using industry-standard Werkzeug hashing (PBKDF2/SHA256) before storage.</p>
-            <p>We implement the following security controls:</p>
+            <p>Data is stored in a managed PostgreSQL database (Neon) and the application runs on Render. Passwords are salted and hashed with Werkzeug and are never stored in plain text. One-time codes are stored only as keyed hashes and expire after 10 minutes.</p>
+            <p>Security measures include:</p>
             <ul>
-                <li>HTTPS-only transmission in production environments (HSTS enforced).</li>
-                <li>HTTP security headers on all responses.</li>
-                <li>Session cookies are <code>HttpOnly</code> and <code>SameSite=Lax</code> to mitigate XSS and CSRF risks.</li>
-                <li>File uploads are validated by type and size (10MB maximum). Only permitted extensions are accepted.</li>
-                <li>Access to all authenticated routes requires a valid server-side session.</li>
+                <li>HTTPS in production with HSTS, a Content-Security-Policy and other security headers.</li>
+                <li>Session cookies that are <code>HttpOnly</code>, <code>SameSite=Lax</code> and <code>Secure</code>; an idle timeout (administrators 30 minutes, candidates 2 hours) and a 12-hour maximum.</li>
+                <li>A secret token on every form and request (CSRF protection), limits on repeated sign-in and code attempts, and password strength rules.</li>
+                <li>Upload checks for type and size; access to signed-in pages requires a valid server-side session.</li>
             </ul>
-            <p>Despite these measures, no internet-based system is completely immune to security risks. You are advised not to include highly sensitive personal information in your interview responses.</p>
+            <p><strong>Retention:</strong> account data, results and integrity records are kept for as long as your account exists. An unfinished interview is deleted when it ends or is restarted. Resume files are kept until you remove them or your account is deleted. Security counters and codes expire automatically.</p>
+            <p>No internet system is completely free of risk. If we become aware of a breach that affects your data, we will take reasonable steps to limit harm and to inform affected users as required by law.</p>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 6 -->
+    <!-- Section 06 -->
     <div class="doc-section" id="cookies">
         <div class="section-label"><i class="bi bi-cookie"></i> Section 06</div>
-        <div class="section-title">Cookies &amp; Sessions</div>
+        <div class="section-title">Cookies, Sessions & Browser Storage</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>We use a minimal set of cookies essential for the operation of the platform:</p>
+            <p>We use only what the platform needs to work:</p>
             <ul>
-                <li><strong>Session cookie:</strong> A server-managed cookie that maintains your login state.</li>
-                <li><strong>Theme preference:</strong> A local preference key stored in your browser.</li>
+                <li><strong>Session cookie</strong> (essential): keeps you signed in and holds a security token. It is removed when you sign out or the session expires.</li>
+                <li><strong>Browser storage</strong>: your theme preference and study-plan ticks (local storage), and small helper flags used during a scored assessment (session storage, cleared when you close the tab).</li>
             </ul>
-            <p>We do not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
+            <p>We do not use advertising cookies, tracking cookies or third-party analytics. Fonts, icon libraries and the code editor are loaded from content delivery networks, which may receive your IP address when they serve those files.</p>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 7 -->
-    <div class="doc-section" id="user-rights">
-        <div class="section-label"><i class="bi bi-person-check-fill"></i> Section 07</div>
-        <div class="section-title">Your Rights</div>
+    <!-- Section 07 -->
+    <div class="doc-section" id="integrity">
+        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> Section 07</div>
+        <div class="section-title">Examination Integrity & Automated Proctoring</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>You have the following rights with respect to your personal data held on this platform:</p>
+            <p>To keep scored assessments fair, the platform applies integrity rules during a live scored assessment. <strong>Practice labs are never proctored.</strong> The administrator can switch each rule on or off and sets the strike limit (1 to 5, default 2). The rules are:</p>
             <ul>
-                <li><strong>Access:</strong> You may request a summary of the personal data we hold about you.</li>
-                <li><strong>Correction:</strong> You may update your profile information via the Edit Profile page.</li>
-                <li><strong>Deletion:</strong> You may request deletion of your account and all associated data.</li>
-                <li><strong>Portability:</strong> You may request an export of your assessment history.</li>
+                <li><strong>Stay in the exam window:</strong> switching to another tab, window or app is a violation.</li>
+                <li><strong>No pasting or copying:</strong> pasting into the answer box or copying the question text is blocked and is a violation.</li>
+                <li><strong>One session:</strong> opening the same interview in another browser or device while it is active is refused and is a violation.</li>
+                <li><strong>Time limit:</strong> the clock is kept by the server, and answers that arrive well after the limit are a violation.</li>
+                <li><strong>Fullscreen</strong> (only when the administrator requires it): leaving fullscreen is a violation.</li>
+                <li><strong>Typing-pattern review:</strong> long answers that arrive instantly or appear to be inserted rather than typed may be flagged for the administrator. A flag is not a strike and nothing happens automatically.</li>
             </ul>
-            <p>To exercise any of these rights, contact the administrator.</p>
-        </div>
-    </div>
-
-    <hr class="section-divider">
-
-    <!-- Section 8 — Examination Integrity & Automated Proctoring -->
-    <div class="doc-section" id="proctoring">
-        <div class="section-label"><i class="bi bi-shield-lock-fill"></i> Section 08</div>
-        <div class="section-title">Examination Integrity &amp; Automated Proctoring Policy</div>
-        <div class="section-rule"></div>
-        <div class="section-body">
-            <p>To ensure fairness, authenticity, and strict adherence to placement evaluation standards, the platform employs an <strong>Automated Proctoring Security Layer</strong> during active examination sessions.</p>
-            <p><strong>Window Focus &amp; Tab-Switch Restrictions (2-Strike Policy):</strong></p>
-            <ul>
-                <li><strong>Continuous Session Focus:</strong> Candidates are required to maintain active window focus on the examination studio throughout the duration of the interview.</li>
-                <li><strong>Strike 1 (Warning):</strong> The first instance of tab switching, window minimization, or application focus loss triggers an immediate warning dialog reminding the candidate of anti-cheating regulations.</li>
-                <li><strong>Strike 2 (Immediate Termination):</strong> A second focus loss violation results in <strong>automatic session termination</strong>. The attempt is immediately recorded as <code>Terminated (Code of Conduct Breach)</code> with a score of 0/10.</li>
-            </ul>
+            <p><strong>Every violation is one strike.</strong> You always see a box that names the exact mistake, your strike count and a warning. When you reach the strike limit, the session ends automatically and is recorded as <code>Terminated</code> with a score of 0/10; a terminated session counts as one attempt.</p>
             <div class="info-box" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1);">
                 <i class="bi bi-shield-exclamation" style="color: #f87171;"></i>
-                <div class="info-box-text" style="color: #fca5a5;">
-                    <strong>Audit Logging:</strong> All security violations and premature session terminations are permanently logged in administrative audit records and displayed on candidate performance reports.
-                </div>
+                <div class="info-box-text" style="color: #fca5a5;"><strong>Audit log:</strong> violations and review flags are stored with the assessment record and are visible to the administrator only. They are not shown on the candidate's own report. If you believe a violation was recorded in error, contact us (see Contact) and quote your session code.</div>
             </div>
         </div>
     </div>
 
     <hr class="section-divider">
 
-    <!-- Section 9 -->
+    <!-- Section 08 -->
+    <div class="doc-section" id="user-rights">
+        <div class="section-label"><i class="bi bi-person-check-fill"></i> Section 08</div>
+        <div class="section-title">Your Rights & Choices</div>
+        <div class="section-rule"></div>
+        <div class="section-body">
+            <p>Subject to applicable law, you may:</p>
+            <ul>
+                <li><strong>Access</strong> a summary of the personal data we hold about you.</li>
+                <li><strong>Correct</strong> your profile at any time on the Edit Profile page.</li>
+                <li><strong>Delete</strong> your account. This removes your profile, results, integrity records, bookmarks and uploaded resume. Feedback messages you sent are kept but are no longer linked to your account.</li>
+                <li><strong>Export</strong> a copy of your assessment history.</li>
+                <li><strong>Withdraw consent</strong> or object to processing by contacting us. Withdrawing consent may mean you can no longer use features that depend on it, such as AI interviews.</li>
+            </ul>
+            <p>To exercise any of these rights, contact us using the details below. We will respond within 15 business days.</p>
+        </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Section 09 -->
     <div class="doc-section" id="third-party">
         <div class="section-label"><i class="bi bi-link-45deg"></i> Section 09</div>
         <div class="section-title">Third-Party Services</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>This platform integrates with the following third-party services. Each governs its own data practices:</p>
+            <p>The platform relies on the following services. Each has its own privacy practices:</p>
             <ul>
-                <li><strong>Google Gemini AI API:</strong> Used for question generation and response evaluation.</li>
-                <li><strong>Google OAuth 2.0:</strong> Optional sign-in method.</li>
-                <li><strong>Google Fonts:</strong> Typography assets.</li>
-                <li><strong>Bootstrap CDN:</strong> CSS and icon libraries.</li>
+                <li><strong>Google Gemini API:</strong> question generation, resume and attachment analysis, evaluation.</li>
+                <li><strong>Google OAuth 2.0:</strong> optional sign-in.</li>
+                <li><strong>Neon and Render:</strong> database and application hosting.</li>
+                <li><strong>E-mail delivery:</strong> Gmail SMTP, Resend and SendGrid receive the recipient address and the content of the e-mails we send.</li>
+                <li><strong>Voice dictation:</strong> uses your browser's speech-recognition service. Depending on your browser, audio may be processed by the browser vendor; the platform itself receives only the resulting text.</li>
+                <li><strong>Content delivery networks:</strong> jsDelivr, cdnjs and Google Fonts serve fonts, icons, Bootstrap and the code editor.</li>
+                <li><strong>Preparation links:</strong> links in the Resources and Library pages open websites owned by other parties. We do not control and are not responsible for their content or privacy practices.</li>
             </ul>
-        </div>
-    </div>
-
-    <hr class="section-divider">
-
-    <!-- Section 9 — Terms -->
-    <div class="doc-section" id="terms">
-        <div class="section-label"><i class="bi bi-file-text-fill"></i> Section 09</div>
-        <div class="section-title">Terms of Use</div>
-        <div class="section-rule"></div>
-        <div class="section-body">
-            <p>By accessing and using AI Interview Platform, you agree to the following terms:</p>
-            <ul>
-                <li>You must be at least 16 years of age to create an account and use this platform.</li>
-                <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
-                <li>You agree not to attempt to reverse-engineer or disrupt the platform or its AI systems.</li>
-                <li>Assessment results are generated by an automated AI system and carry no guarantee of employment outcomes.</li>
-            </ul>
-            <div class="info-box">
-                <i class="bi bi-info-circle-fill"></i>
-                <div class="info-box-text">These terms are governed by the laws of India. Any disputes arising from use of this platform shall be subject to the jurisdiction of competent courts in India.</div>
-            </div>
         </div>
     </div>
 
     <hr class="section-divider">
 
     <!-- Section 10 -->
-    <div class="doc-section" id="contact">
-        <div class="section-label"><i class="bi bi-envelope-fill"></i> Section 10</div>
-        <div class="section-title">Contact</div>
+    <div class="doc-section" id="children">
+        <div class="section-label"><i class="bi bi-person-hearts"></i> Section 10</div>
+        <div class="section-title">Age Limit</div>
         <div class="section-rule"></div>
         <div class="section-body">
-            <p>For any questions, data requests, or concerns regarding this Privacy Policy or Terms of Use, contact the platform administrator:</p>
+            <p>The platform is intended for people aged <strong>16 and over</strong>. We do not knowingly collect data from younger children. If you believe a child has created an account, contact us and we will delete it.</p>
+        </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Section 11 -->
+    <div class="doc-section" id="terms">
+        <div class="section-label"><i class="bi bi-file-text-fill"></i> Section 11</div>
+        <div class="section-title">Terms of Use</div>
+        <div class="section-rule"></div>
+        <div class="section-body">
+            <p>By using the platform you agree to the following terms.</p>
+            <ul>
+                <li><strong>Eligibility and account:</strong> you must be at least 16. Provide accurate information, keep your sign-in details confidential, and tell us if you suspect unauthorised use. You are responsible for activity under your account.</li>
+                <li><strong>Acceptable use:</strong> do not cheat or help others cheat, do not share or resell access, do not attempt to bypass the integrity rules or limits, do not reverse-engineer, scrape, overload or disrupt the platform or its AI systems, and do not upload content that is unlawful or that you have no right to use (for example someone else's resume).</li>
+                <li><strong>Assessments:</strong> you agree to the integrity rules and monitoring described above. Strikes, terminations and attempt limits are applied as configured by the administrator, who may review and adjust results.</li>
+                <li><strong>AI output:</strong> questions and evaluations are generated automatically and may be inaccurate or incomplete. Results carry no guarantee of any employment, admission or placement outcome and are not professional advice.</li>
+                <li><strong>Your content:</strong> you keep ownership of what you submit. You give us a limited licence to store and process it, and to send it to the AI and e-mail services described above, solely to provide the platform to you.</li>
+                <li><strong>Ownership:</strong> the platform, including its source code, design, prompts, text, graphics and evaluation methods, is owned by the owner. <strong>All rights reserved.</strong> No licence is granted except the right to use the platform as intended while your account is active.</li>
+                <li><strong>Availability:</strong> the platform is provided free of charge and may be unavailable, slow or limited, for example when an external AI service reaches its limits. Features may change or be withdrawn.</li>
+                <li><strong>Suspension and termination:</strong> we may suspend or close an account that breaks these terms or puts the platform or other users at risk. You may stop using the platform and request deletion of your account at any time.</li>
+                <li><strong>Disclaimer and liability:</strong> the platform is provided "as is", without warranties of any kind. To the fullest extent permitted by law, the owner is not liable for indirect or consequential losses or for any decision made on the basis of an AI-generated result.</li>
+                <li><strong>Changes:</strong> we may update this document. The date at the top shows the latest version. Continued use after a change means you accept it.</li>
+            </ul>
             <div class="info-box">
-                <i class="bi bi-envelope-at-fill"></i>
-                <div class="info-box-text">
-                    <strong>AI Interview Platform — Data Queries</strong><br>
-                    Email: <a href="aiinterviewplatform26@gmail.com" style="color: #00ffff;">admin@gmail.com</a><br>
-                    Response time: within 15 business days
-                </div>
+                <i class="bi bi-info-circle-fill"></i>
+                <div class="info-box-text">These terms are governed by the laws of India. Any dispute arising from the use of this platform is subject to the jurisdiction of the competent courts in India.</div>
             </div>
         </div>
     </div>
 
+    <hr class="section-divider">
+
+    <!-- Section 12 -->
+    <div class="doc-section" id="contact">
+        <div class="section-label"><i class="bi bi-envelope-fill"></i> Section 12</div>
+        <div class="section-title">Contact</div>
+        <div class="section-rule"></div>
+        <div class="section-body">
+            <p>For questions, data requests, corrections or integrity disputes, contact the platform owner:</p>
+            <div class="info-box">
+                <i class="bi bi-envelope-at-fill"></i>
+                <div class="info-box-text">
+                    <strong>AI Interview Studio: Privacy and Support</strong><br>
+                    {% if contact_email %}Email: <a href="mailto:{{ contact_email }}" style="color: #00ffff;">{{ contact_email }}</a><br>{% endif %}
+                    Response time: within 15 business days
+                </div>
+            </div>
+            <p>&copy; 2026 AI Interview Studio. All rights reserved.</p>
+        </div>
+    </div>
 </div>
 
 <footer>
     <div class="footer-inner">
-        <span class="footer-copy">&copy; 2026 AI Assessment Lab &middot; All rights reserved.</span>
+        <span class="footer-copy">&copy; 2026 AI Interview Studio &middot; All rights reserved.</span>
         <div class="footer-links">
             <a href="/" class="footer-link">Home</a>
             <a href="/login" class="footer-link">Sign In</a>

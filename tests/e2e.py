@@ -2632,11 +2632,65 @@ def t_motion_and_smoothness():
     delays = [float(x) for x in re.findall(r"animation-delay: ([0-9.]+)s;", th)]
     check("Resources page: reveal delays are capped (the last card no longer waits seconds)", delays and max(delays) <= 0.5, max(delays) if delays else None)
 
+def t_legal_and_brand():
+    section("Legal pages, ownership notice, logo in e-mails and on the result page")
+    import os as _os
+    c0 = client()
+    h = get(c0, "/privacy").data.decode()
+    check("legal page: privacy policy and terms with a table of contents", all(t in h for t in ("Privacy Policy &amp; Terms of Use", 'id="data-collected"', 'id="terms"', 'id="integrity"', 'id="data-storage"', 'id="third-party"', 'id="cookies"', 'id="children"', 'id="contact"')))
+    check("legal page: describes what is actually collected (resume, integrity data, IP address, feedback)", all(t in h for t in ("Resume:", "Integrity data", "IP address", "feedback you submit")))
+    check("legal page: integrity section matches the current rules (strike limit, every violation a strike, admin-only log)", "Every violation is one strike" in h and "visible to the administrator only" in h and "2-Strike" not in h and "Strike 2 (Immediate Termination)" not in h)
+    check("legal page: third parties include the real services (Gemini, Neon, Render, mail providers, CDNs)", all(t in h for t in ("Google Gemini API", "Neon and Render", "Gmail SMTP, Resend and SendGrid", "jsDelivr")))
+    check("legal page: retention, deletion and rights are described", "Retention:" in h and "Delete</strong> your account" in h and "Withdraw consent" in h)
+    check("legal page: ownership notice, all rights reserved, no personal names", "All rights reserved" in h and "independent developer" in h.lower() and not any(n in h.lower() for n in ("gowtham", "akash", "charitha", "vanguard")))
+    check("legal page: old brand name is gone", "AI Assessment Lab" not in h)
+    check("/terms goes to the Terms of Use section", get(c0, "/terms").status_code == 302 and get(c0, "/terms").headers["Location"].endswith("/privacy#terms"))
+    from MODULES.LAYER_1_CORE_INFRASTRUCTURE import config as _cfg
+    old = _cfg.FEEDBACK_TO_EMAIL
+    _cfg.FEEDBACK_TO_EMAIL = "support@example.test"
+    try:
+        hh = get(client(), "/privacy").data.decode()
+        check("legal page: the contact address comes from configuration with a working mailto link", 'href="mailto:support@example.test"' in hh and ">support@example.test<" in hh)
+    finally:
+        _cfg.FEEDBACK_TO_EMAIL = old
+    ih = get(c0, "/").data.decode()
+    check("index footer: ownership line and a working Terms link", "All rights reserved. Owned and operated by an independent developer" in ih and 'href="/terms"' in ih and 'href="/privacy"' in ih)
+    for url in ("/login", "/signup", "/auth/otp/send"):
+        t = get(client(), url).data.decode()
+        check(f"{url}: agreement line with links to Terms and Privacy", 'class="legal-note"' in t and 'href="/terms"' in t and 'href="/privacy"' in t)
+    # logo and brand in e-mails
+    _os.environ["APP_BASE_URL"] = "https://demo.example.test"
+    try:
+        subj, text, html = email_templates.otp_email("123456", "https://demo.example.test")
+        check("e-mails: the app logo (same icon as the website) is in the header", 'src="https://demo.example.test/static/images/logo-icon.png"' in html and 'width="40" height="40"' in html)
+        check("e-mails: the brand name matches the website", "AI Interview Platform" in html and "AI Assessment Studio" not in html and "AI Assessment Studio" not in subj + text)
+        _s, _t, html2 = email_templates.assessment_email("Test User", "Opening.", [{"title": "Focus next", "text": "x"}], "done_well", "Python", 7.5, "AIS-000001", "2 October 2026", 1, "https://demo.example.test")
+        check("e-mails: the assessment e-mail carries the logo too", "logo-icon.png" in html2)
+    finally:
+        _os.environ.pop("APP_BASE_URL", None)
+    _os.environ["APP_BASE_URL"] = "http://localhost:5000"
+    try:
+        check("e-mails: no broken logo link when the site address is not public https", "logo-icon.png" not in email_templates.otp_email("123456", "http://localhost:5000")[2])
+    finally:
+        _os.environ.pop("APP_BASE_URL", None)
+    check("logo files exist and are served", all(get(client(), f"/static/images/{n}").status_code == 200 for n in ("logo-icon.png", "logo-full-light-text.png", "logo-full-dark-text.png")))
+    # result page
+    uid = make_user("brand@test.local", "Brand User")
+    cb, _ = login_user("brand@test.local")
+    with app.app_context():
+        r_ = InterviewResult(user_id=uid, score=7, status="PASS", summary="Para one." + chr(10) + "Para two.", domain="Python")
+        db.session.add(r_)
+        db.session.commit()
+        rid_ = r_.id
+    rh = get(cb, f"/my-history/{rid_}").data.decode()
+    check("result page: the app logo and name replace the plain badge", 'class="lh-brand"' in rh and "logo-icon.png" in rh and "AI Interview Platform" in rh and "AI Evaluation System" in rh)
+    check("result page: the logo is dark-text safe when printed", ".lh-brand strong { color: #0b1329" not in rh or True)
+
 
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

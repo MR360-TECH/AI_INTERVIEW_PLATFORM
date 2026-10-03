@@ -70,6 +70,12 @@ def privacy():
     return render_template("privacy.html")
 
 
+@login_bp.route("/terms")
+def terms():
+    """The Terms of Use are Section 'Terms of Use' of the combined legal page."""
+    return redirect("/privacy#terms")
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PASSWORD & CREDENTIALS LOGIN
 # ══════════════════════════════════════════════════════════════════════════════

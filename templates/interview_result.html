@@ -277,6 +277,10 @@
         pointer-events: none;
     }
 
+    .lh-brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; color: #ffffff; }
+    .lh-brand img { width: 44px; height: 44px; border-radius: 12px; display: block; box-shadow: 0 4px 18px rgba(0,255,255,.35); }
+    .lh-brand strong { display: block; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; letter-spacing: -0.01em; line-height: 1.15; }
+    .lh-brand small { display: block; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7dd3fc; }
     .letterhead-top {
         display: flex;
         justify-content: space-between;
@@ -745,6 +749,9 @@
 
     /* PRINT STYLES */
     @media print {
+        .lh-brand, .lh-brand strong { color: #0b1329 !important; }
+        .lh-brand small { color: #475569 !important; }
+        .lh-brand img { box-shadow: none !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         body { padding: 0 !important; color: #000000 !important; background: #ffffff !important; }
         .db-bg, .top-bar, .bottom-actions { display: none !important; }
         .report-card { box-shadow: none !important; border: none !important; background: #ffffff !important; }
@@ -848,9 +855,10 @@
 
         <div class="letterhead">
             <div class="letterhead-top">
-                <div class="lh-badge">
-                    <i class="bi bi-cpu-fill"></i> AI Evaluation System
-                </div>
+                <a class="lh-brand" href="/dashboard" aria-label="AI Interview Platform">
+                    <img src="{{ url_for('static', filename='images/logo-icon.png') }}" width="44" height="44" alt="AI Interview Platform logo">
+                    <span><strong>AI Interview Platform</strong><small>AI Evaluation System</small></span>
+                </a>
                 {% if session_code %}
                 <div class="top-session-tag" onclick="copySessionId('{{ session_code }}', this);" style="cursor: pointer;" title="Click to copy Session ID">
                     {{ session_code }}

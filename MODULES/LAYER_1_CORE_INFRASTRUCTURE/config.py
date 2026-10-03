@@ -109,7 +109,7 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 has_google_oauth = bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
 
 # Public base URL used for links inside emails (set APP_BASE_URL in production)
-APP_BASE_URL = (os.environ.get("APP_BASE_URL") or "https://ai-interview-platform-3-vdic.onrender.com").strip().rstrip("/")
+APP_BASE_URL = (os.environ.get("APP_BASE_URL") or "https://ai-interview-platform-r8u8.onrender.com").strip().rstrip("/")
 
 # Where user feedback is e-mailed: FEEDBACK_TO_EMAIL if set, otherwise the mailbox the app already sends from.
 FEEDBACK_TO_EMAIL = (os.environ.get("FEEDBACK_TO_EMAIL") or os.environ.get("MAIL_USERNAME") or os.environ.get("ADMIN_EMAIL") or "").strip()

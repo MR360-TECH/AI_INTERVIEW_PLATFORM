@@ -521,6 +521,8 @@
     </div><!-- /form-card -->
 
     {% if not is_google and not is_guest and not prefill_email %}
+    <p class="legal-note">By creating an account you agree to our <a href="/terms">Terms of Use</a> and <a href="/privacy">Privacy Policy</a>.</p>
+
     <p class="auth-footer-note">Already have an account? <a href="/login">Sign in</a></p>
     {% else %}
     <p class="auth-footer-note">Want to use a different account? <a href="/login">Go to Login</a></p>

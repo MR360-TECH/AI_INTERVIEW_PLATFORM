@@ -40,7 +40,8 @@
 25. [Testing](#-testing)
 26. [Roadmap](#-roadmap)
 27. [FAQ](#-faq)
-28. [License](#-license)
+28. [Contact](#-contact)
+29. [License](#-license)
 
 ---
 
@@ -810,6 +811,16 @@ The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in
 **Can the admin turn the anti-cheat rules off?** Yes. Each rule has its own switch, plus a master switch, in Interview Settings.
 
 **I did not receive the code e-mail.** Check Spam or Promotions, then use Resend Code, or sign in with Google or your password.
+
+---
+
+## 📬 Contact
+
+For permission to use the software, licensing or partnership enquiries, feedback, or bug reports:
+
+**Email: [mrgowtham36000@gmail.com](mailto:mrgowtham36000@gmail.com)**
+
+Please include the subject line **"AI Interview Platform"** and a short description of what you need.
 
 ---
 
