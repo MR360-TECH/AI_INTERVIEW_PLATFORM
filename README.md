@@ -815,4 +815,6 @@ The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in
 
 ## 📄 License
 
-Distributed under the **MIT License**.
+**Copyright (c) 2026. All rights reserved.**
+
+This software and its source code are proprietary. No permission is granted to use, copy, modify, merge, publish, distribute, sublicense or sell any part of it without the prior written permission of the owner. Viewing the repository does not grant any license. For permission or enquiries, contact the repository owner.
