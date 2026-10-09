@@ -18,7 +18,6 @@
     })();
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg: #020510;
@@ -177,11 +176,30 @@
             margin: 0 0 24px;
         }
 
-        /* ── Chart canvas wrapper ── */
-        .chart-wrap {
+        /* the content sits above the fixed animated background */
+        .page-wrap {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 16px 48px;
             position: relative;
-            height: 170px;
+            z-index: 1;
         }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .page-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900;
+            font-size: 2rem;
+            color: #ffffff;
+            margin: 0 0 4px;
+        }
+        .page-subtitle { color: #94a3b8; font-size: 0.95rem; margin: 0; }
 
         /* ── Attempt list ── */
         .attempts-section-label {
@@ -413,7 +431,7 @@
     <div class="page-header">
         <div>
             <h1 class="page-title">Assessment History</h1>
-            <p class="page-subtitle">Your placement evaluation records and score progression</p>
+            <p class="page-subtitle">Your assessment records and reports</p>
         </div>
         <a href="/dashboard" class="back-btn-global">
             <i class="bi bi-arrow-left"></i> Back
@@ -421,15 +439,6 @@
     </div>
 
     {% if attempts %}
-
-    <!-- Score Trend Chart -->
-    <div class="glass-card">
-        <div class="card-title">Score Trend</div>
-        <p class="card-sub">Overall score across all assessment sessions</p>
-        <div class="chart-wrap">
-            <canvas id="scoreChart"></canvas>
-        </div>
-    </div>
 
     <!-- Attempt Cards -->
     <div class="attempts-section-label">Assessment Records - {{ attempts | length }} total</div>
@@ -469,6 +478,10 @@
             <span class="verdict-badge fail" style="background: rgba(239, 68, 68, 0.18) !important; color: #f87171 !important; border-color: rgba(239, 68, 68, 0.4) !important;">
                 <i class="bi bi-shield-slash-fill"></i> Terminated (Code of Conduct)
             </span>
+            {% elif a.is_exited %}
+            <span class="verdict-badge fail" style="background: rgba(245, 158, 11, 0.16) !important; color: #fbbf24 !important; border-color: rgba(245, 158, 11, 0.4) !important;">
+                <i class="bi bi-box-arrow-right"></i> Exited early
+            </span>
             {% elif session.get('is_admin') %}
                 {% if a.status in ["Selected", "PASS"] or (a.status and "WELL DONE" in a.status) %}
                 <span class="verdict-badge pass">
@@ -488,60 +501,6 @@
     </div>
     {% endfor %}
 
-    <script>
-        const ctx = document.getElementById('scoreChart').getContext('2d');
-        const isDark = document.documentElement.classList.contains('dark-theme');
-        const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
-        const tickColor = isDark ? '#cbd5e1' : '#475569';
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ chart_labels | tojson }},
-                datasets: [{
-                    label: 'Score out of 10',
-                    data: {{ chart_scores | tojson }},
-                    borderColor: isDark ? '#00ffff' : '#2563eb',
-                    backgroundColor: isDark ? 'rgba(0, 255, 255, 0.08)' : 'rgba(37,99,235,0.08)',
-                    fill: true,
-                    tension: 0.45,
-                    pointRadius: 5,
-                    pointBackgroundColor: isDark ? '#00ffff' : '#2563eb',
-                    pointBorderColor: isDark ? '#040914' : '#ffffff',
-                    pointBorderWidth: 2,
-                    borderWidth: 2.5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        min: 0,
-                        max: 10,
-                        ticks: { stepSize: 2, color: tickColor, font: { family: 'Inter', size: 11 } },
-                        grid: { color: gridColor }
-                    },
-                    x: {
-                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } },
-                        grid: { color: gridColor }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: isDark ? '#1e293b' : '#0f172a',
-                        titleColor: '#f1f5f9',
-                        bodyColor: '#94a3b8',
-                        borderColor: isDark ? '#334155' : '#1e293b',
-                        borderWidth: 1,
-                        padding: 10,
-                        cornerRadius: 10
-                    }
-                }
-            }
-        });
-    </script>
 
     {% else %}
 

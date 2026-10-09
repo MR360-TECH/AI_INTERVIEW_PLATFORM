@@ -64,6 +64,8 @@ def dashboard():
         error_msg = "Your resume could not be saved on the server. Please try again."
     elif err_code == "resume_text_failed":
         error_msg = "Your resume was uploaded, but the AI could not read its text. Recruiters can still open the file; try a clearer PDF if you want the AI interviewer to use it."
+    elif err_code == "assessment_in_progress":
+        error_msg = "Your assessment was interrupted and is still saved. Continue it (or exit it from the interview screen) before starting a practice session."
     elif err_code == "evaluation_failed":
         error_msg = "The AI evaluation is temporarily unavailable. Your answers are saved and no attempt has been used. Please retry in a moment to get your result."
 
@@ -189,6 +191,8 @@ def latest_result():
 
     if not result:
         return redirect("/dashboard")
+    if result.is_exited:
+        return redirect(f"/my-history/{result.id}")
 
     is_term = bool(result.is_terminated or (result.status and "Terminated" in result.status))
     if is_term:
@@ -229,10 +233,7 @@ def my_history():
 
     attempts = InterviewResult.query.filter_by(user_id=session["user_id"]).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all()
 
-    chart_labels = [a.interview_datetime.strftime('%d %b') if a.interview_datetime else '' for a in reversed(attempts)]
-    chart_scores = [float(a.score) if a.score is not None else 0 for a in reversed(attempts)]
-
-    return render_template("my_history.html", attempts=attempts, chart_labels=chart_labels, chart_scores=chart_scores)
+    return render_template("my_history.html", attempts=attempts)
 
 
 @dashboard_bp.route("/my-history/<int:result_id>")
@@ -267,8 +268,12 @@ def view_past_result(result_id):
     score_percent = min(int((score_num / 10) * 100), 100)
     verdict = result.status or "FAIL"
     is_terminated = bool(result.is_terminated or (result.status and "Terminated" in result.status))
-    
-    if is_terminated or "Terminated" in str(verdict):
+
+    if result.is_exited:
+        label = "Incomplete"
+        label_color = "#f59e0b"
+        verdict_message = "You exited this assessment before it was complete. This report covers only the questions you answered."
+    elif is_terminated or "Terminated" in str(verdict):
         verdict = "Terminated (Breach)"
         label = "Disqualified"
         label_color = "#e74a3b"
@@ -295,7 +300,8 @@ def view_past_result(result_id):
         is_terminated=is_terminated,
         termination_reason=result.termination_reason or "Repeated window focus loss / tab switching detected during active assessment",
         session_code=result.session_code,
-        back_url="/my-history"
+        back_url="/my-history",
+        is_exited=result.is_exited
     )
 
 

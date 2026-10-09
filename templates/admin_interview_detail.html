@@ -553,41 +553,83 @@
         .rp-crumbs a:hover { color: #00ffff; }
         .rp-crumbs i { font-size: .7rem; color: #64748b; }
         .rp-crumb-now { color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; }
-        .rp-hero { display: flex; justify-content: space-between; align-items: center; gap: 22px; flex-wrap: wrap; margin-bottom: 20px; }
-        .rp-hero-main { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
-        .rp-hero-side { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
-        .rp-eyebrow { font-family: 'Outfit', sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #00ffff; }
-        .rp-title { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.7rem; margin: 2px 0 8px; color: #fff; text-transform: uppercase; letter-spacing: -.01em; }
-        .rp-meta { display: flex; gap: 14px; flex-wrap: wrap; color: #cbd5e1; font-size: .9rem; font-weight: 600; }
-        .rp-meta i { margin-right: 4px; color: #00ffff; }
-        .rp-id { cursor: pointer; padding: 3px 12px; border-radius: 8px; background: rgba(0,255,255,.12); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .85rem; }
+
+        /* hero: a tinted band that matches the verdict */
+        .rp-hero { --tone: #00ffff; position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; margin-bottom: 18px; padding: 26px 28px !important; border-radius: 22px !important;
+                   background: linear-gradient(135deg, color-mix(in srgb, var(--tone) 14%, #08122a) 0%, #08122a 55%) !important; border: 1.5px solid color-mix(in srgb, var(--tone) 45%, #1e3a52) !important; }
+        .rp-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--tone); }
+        .rp-hero.tone-green { --tone: #34d399; } .rp-hero.tone-rose { --tone: #fb7185; } .rp-hero.tone-red { --tone: #f87171; } .rp-hero.tone-amber { --tone: #fbbf24; }
+        .rp-hero-main { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; min-width: 0; }
+        .rp-hero-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .rp-verdict-note { max-width: 260px; text-align: right; color: #cbd5e1; font-size: .82rem; line-height: 1.5; }
+        .rp-ring { position: relative; width: 116px; height: 116px; flex-shrink: 0; }
+        .rp-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .rp-ring-track { fill: none; stroke: #1e293b; stroke-width: 10; }
+        .rp-ring-fill { fill: none; stroke: var(--tone); stroke-width: 10; stroke-linecap: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--tone) 60%, transparent)); }
+        .rp-ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .rp-ring-label b { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; color: #fff; line-height: 1; }
+        .rp-ring-label span { font-size: .66rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #a9b8cc; margin-top: 4px; }
+        .rp-eyebrow { font-family: 'Outfit', sans-serif; font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--tone); }
+        .rp-title { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.75rem; margin: 4px 0 10px; color: #fff; text-transform: uppercase; letter-spacing: -.01em; word-break: break-word; }
+        .rp-meta { display: flex; gap: 10px; flex-wrap: wrap; color: #cbd5e1; font-size: .86rem; font-weight: 600; }
+        .rp-meta > span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid #1e3a52; }
+        .rp-meta i { color: #00ffff; }
+        .rp-id { cursor: pointer; background: rgba(0,255,255,.12) !important; border: 1.5px solid rgba(0,255,255,.35) !important; color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 800; }
+
+        /* summary tiles */
+        .rp-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+        .rp-kpi { background: #08122a; border: 1.5px solid #1e3a52; border-radius: 16px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; }
+        .rp-kpi-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; background: rgba(0,255,255,.1); color: #00ffff; }
+        .rp-kpi-icon.amber { background: rgba(251,191,36,.12); color: #fbbf24; } .rp-kpi-icon.red { background: rgba(248,113,113,.12); color: #f87171; } .rp-kpi-icon.green { background: rgba(52,211,153,.12); color: #34d399; }
+        .rp-kpi-val { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.25rem; color: #fff; line-height: 1.1; }
+        .rp-kpi-val small { font-size: .78rem; color: #a9b8cc; font-weight: 700; }
+        .rp-kpi-label { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #a9b8cc; margin-top: 3px; }
+
         .rp-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
         .rp-main, .rp-aside { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-        .rp-card { margin: 0 !important; padding: 22px !important; }
-        .rp-card-title { font-family: 'Outfit', sans-serif; font-size: .8rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #00ffff; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-        .rp-alert { background: rgba(239,68,68,.12); border: 1.5px solid rgba(239,68,68,.4); border-radius: 16px; padding: 16px 18px; color: #cbd5e1; font-size: .92rem; line-height: 1.6; }
-        .rp-alert-title { color: #f87171; font-family: 'Outfit', sans-serif; font-weight: 800; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+        .rp-aside { position: sticky; top: 18px; }
+        .rp-card { margin: 0 !important; padding: 22px 24px !important; border-radius: 18px !important; }
+        .rp-card-title { font-family: 'Outfit', sans-serif; font-size: .8rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #00ffff; margin-bottom: 16px; display: flex; align-items: center; gap: 9px; padding-bottom: 12px; border-bottom: 1px solid #1e293b; }
+        .rp-card-title i { width: 28px; height: 28px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: rgba(0,255,255,.1); }
+        .rp-alert { display: flex; gap: 14px; background: rgba(239,68,68,.1); border: 1.5px solid rgba(239,68,68,.4); border-radius: 16px; padding: 16px 18px; color: #cbd5e1; font-size: .92rem; line-height: 1.6; }
+        .rp-alert-icon { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; background: rgba(239,68,68,.16); color: #f87171; }
+        .rp-alert.amber { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.45); }
+        .rp-alert.amber .rp-alert-icon { background: rgba(245,158,11,.16); color: #fbbf24; }
+        .rp-alert-title { color: #f87171; font-family: 'Outfit', sans-serif; font-weight: 800; margin-bottom: 4px; }
+        .rp-alert.amber .rp-alert-title { color: #fbbf24; }
         .rp-alert-reason { color: #fca5a5; font-weight: 700; }
-        .rp-bar { position: relative; height: 14px; border-radius: 14px; background: #1e293b; margin: 26px 0 6px; }
-        .rp-bar-fill { height: 100%; border-radius: 14px; }
-        .rp-bar-fill.ok { background: linear-gradient(90deg, #10b981, #00ffff); }
-        .rp-bar-fill.bad { background: linear-gradient(90deg, #ef4444, #f97316); }
-        .rp-bar-mark { position: absolute; top: -6px; bottom: -6px; width: 3px; background: #fbbf24; border-radius: 3px; }
-        .rp-bar-mark span { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .72rem; font-weight: 800; color: #fbbf24; font-family: 'Outfit', sans-serif; }
-        .rp-bar-scale { display: flex; justify-content: space-between; color: #a9b8cc; font-size: .75rem; font-weight: 700; }
-        .rp-note { color: #cbd5e1; font-size: .88rem; line-height: 1.6; margin: 10px 0 0; }
+
+        /* score against the passing mark */
+        .rp-bar { position: relative; height: 16px; border-radius: 16px; background: repeating-linear-gradient(90deg, #1e293b 0, #1e293b calc(10% - 2px), #0b1329 calc(10% - 2px), #0b1329 10%); margin: 30px 0 8px; }
+        .rp-bar-fill { height: 100%; border-radius: 16px; }
+        .rp-bar-fill.ok { background: linear-gradient(90deg, #10b981, #00ffff); box-shadow: 0 0 14px rgba(0,255,255,.35); }
+        .rp-bar-fill.bad { background: linear-gradient(90deg, #ef4444, #f97316); box-shadow: 0 0 14px rgba(249,115,22,.3); }
+        .rp-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); box-shadow: 0 0 14px rgba(251,191,36,.3); }
+        .rp-bar-mark { position: absolute; top: -7px; bottom: -7px; width: 3px; background: #fbbf24; border-radius: 3px; }
+        .rp-bar-mark span { position: absolute; top: -24px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .72rem; font-weight: 800; color: #020510; background: #fbbf24; padding: 1px 7px; border-radius: 6px; font-family: 'Outfit', sans-serif; }
+        .rp-bar-scale { display: flex; justify-content: space-between; color: #a9b8cc; font-size: .72rem; font-weight: 700; }
+        .rp-note { color: #cbd5e1; font-size: .88rem; line-height: 1.6; margin: 12px 0 0; }
+
+        /* evaluation notes */
         .rp-notes { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-        .rp-notes li { display: flex; gap: 14px; background: #0b1329; border: 1px solid #334155; border-radius: 14px; padding: 14px 16px; }
+        .rp-notes li { display: flex; gap: 14px; background: #0b1329; border: 1px solid #334155; border-radius: 14px; padding: 16px 18px; }
+        .rp-notes li:hover { border-color: rgba(0,255,255,.35); }
         .rp-notes p { margin: 0; color: #e2e8f0; font-size: .96rem; line-height: 1.75; }
-        .rp-note-num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 9px; background: rgba(0,255,255,.12); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: .85rem; display: flex; align-items: center; justify-content: center; }
+        .rp-note-head { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #7dd3fc; margin-bottom: 4px; }
+        .rp-note-num, .rp-qa-num { flex-shrink: 0; width: 30px; height: 30px; border-radius: 10px; background: rgba(0,255,255,.12); border: 1.5px solid rgba(0,255,255,.35); color: #00ffff; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: .85rem; display: flex; align-items: center; justify-content: center; }
+        .rp-qa-q { color: #fff; font-weight: 700; margin-bottom: 4px; }
+        .rp-qa-a { color: #cbd5e1; white-space: pre-wrap; word-break: break-word; }
+
+        /* candidate card */
         .rp-person { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-        .rp-avatar { width: 52px; height: 52px; border-radius: 15px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rp-avatar { width: 54px; height: 54px; border-radius: 16px; background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 1.35rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 18px rgba(0,255,255,.25); }
         .rp-person-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; color: #00ffff; text-decoration: none; text-transform: uppercase; }
         .rp-person-name:hover { text-decoration: underline; }
         .rp-badges { margin-top: 4px; }
         .rp-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 7px; font-size: .72rem; font-weight: 800; border: 1.5px solid; }
         .rp-badge.green { color: #34d399; background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.4); }
         .rp-badge.red { color: #f87171; background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.4); }
+        .rp-badge.amber { color: #fbbf24; background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.4); }
         .rp-badge.blue { color: #60a5fa; background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.4); }
         .rp-facts { margin: 0; display: grid; gap: 0; }
         .rp-facts > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #1e293b; font-size: .88rem; }
@@ -602,7 +644,7 @@
         .rp-links a:hover { color: #00ffff; }
         .rp-actions { display: grid; gap: 10px; }
         .rp-actions form { margin: 0; }
-        .rp-act { width: 100%; display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: 12px; background: #0b1329; border: 1.5px solid #475569; color: #e2e8f0; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .88rem; text-decoration: none; cursor: pointer; text-align: left; }
+        .rp-act { width: 100%; display: flex; align-items: center; gap: 9px; padding: 11px 14px; border-radius: 12px; background: #0b1329; border: 1.5px solid #475569; color: #e2e8f0; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .88rem; text-decoration: none; cursor: pointer; text-align: left; transition: border-color .15s, color .15s, background .15s; }
         .rp-act:hover { border-color: #00ffff; color: #00ffff; }
         .rp-act.cyan { border-color: #00ffff; color: #00ffff; background: rgba(0,255,255,.08); }
         .rp-act.danger { border-color: rgba(239,68,68,.5); color: #f87171; background: rgba(239,68,68,.08); }
@@ -610,24 +652,30 @@
         .rp-act.off { cursor: default; color: #a9b8cc; border-style: dashed; }
         .rp-others { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
         .rp-others li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #0b1329; border: 1px solid #334155; border-radius: 12px; padding: 10px 12px; }
+        .rp-others li:hover { border-color: rgba(0,255,255,.35); }
         .rp-others a { text-decoration: none; min-width: 0; }
         .rp-other-main { display: block; color: #fff; font-weight: 700; font-size: .9rem; }
         .rp-other-sub { display: block; color: #a9b8cc; font-size: .75rem; font-weight: 600; }
-        @media (max-width: 960px) { .rp-grid { grid-template-columns: 1fr; } .rp-hero-side { align-items: flex-start; } }
+        @media (max-width: 1100px) { .rp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 960px) { .rp-grid { grid-template-columns: 1fr; } .rp-aside { position: static; } .rp-hero-side { align-items: flex-start; } .rp-verdict-note { text-align: left; } }
+        @media (max-width: 520px) { .rp-kpis { grid-template-columns: 1fr; } .rp-hero { padding: 20px !important; } .rp-title { font-size: 1.35rem; } }
         @media print {
             .rp-noprint, .rp-top { display: none !important; }
-            .rp-grid { display: block; }
-            .rp-card, .rp-hero { background: #fff !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; page-break-inside: avoid; margin-bottom: 14px !important; }
-            .rp-title, .rp-person-name, .rp-notes p, .rp-facts dd, .rp-facts dd a, .rp-note, .rp-meta, .rp-card-title { color: #1a2036 !important; }
+            .rp-grid { display: block; } .rp-aside { position: static; }
+            .rp-card, .rp-hero, .rp-kpi { background: #fff !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; page-break-inside: avoid; margin-bottom: 14px !important; }
+            .rp-title, .rp-person-name, .rp-notes p, .rp-facts dd, .rp-facts dd a, .rp-note, .rp-meta, .rp-card-title, .rp-kpi-val, .rp-ring-label b { color: #1a2036 !important; }
             .rp-notes li, .rp-facts > div { background: #fff !important; border-color: #e2e8f0 !important; }
-            .rp-bar, .rp-bar-fill, .rp-badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .rp-bar, .rp-bar-fill, .rp-badge, .rp-ring { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
+        /* integrity log as a timeline */
         .rp-only-you { margin-left: auto; text-transform: none; letter-spacing: 0; font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 700; color: #a9b8cc; }
         .ig-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-        .ig-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-        .ig-log li { background: #0b1329; border: 1px solid #334155; border-left: 4px solid #ef4444; border-radius: 12px; padding: 12px 14px; }
-        .ig-log li.flag { border-left-color: #60a5fa; }
+        .ig-log { list-style: none; margin: 0; padding: 0 0 0 18px; display: grid; gap: 12px; position: relative; }
+        .ig-log::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: #1e293b; }
+        .ig-log li { position: relative; background: #0b1329; border: 1px solid #334155; border-radius: 12px; padding: 12px 14px; }
+        .ig-log li::before { content: ''; position: absolute; left: -19px; top: 16px; width: 12px; height: 12px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 3px #08122a; }
+        .ig-log li.flag::before { background: #60a5fa; }
         .ig-log-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; color: #fff; }
         .ig-log-detail { color: #e2e8f0; font-size: .9rem; line-height: 1.55; margin-top: 4px; }
         .ig-log-meta { color: #a9b8cc; font-size: .76rem; font-weight: 600; margin-top: 6px; }
@@ -667,13 +715,15 @@
     </div>
 
     <!-- Report hero -->
-    <section class="panel anim anim-2 rp-hero">
+    {% set score_val = (result.score or 0) | float %}
+    {% set tone = 'red' if terminated else ('amber' if result.is_exited else ('green' if recommended else 'rose')) %}
+    <section class="panel anim anim-2 rp-hero tone-{{ tone }}">
         <div class="rp-hero-main">
-            <div class="score-ring-container">
-                <div class="score-ring" style="--ring-color: {{ '#10b981' if recommended else '#ef4444' }}; --ring-pct: {{ score_percent }}%;"></div>
-                <span class="score-ring-inner">{{ result.score }}</span>
+            <div class="rp-ring" role="img" aria-label="Score {{ '%.1f' | format(score_val) }} out of 10">
+                <svg viewBox="0 0 120 120"><circle class="rp-ring-track" cx="60" cy="60" r="52"/><circle class="rp-ring-fill" cx="60" cy="60" r="52" style="stroke-dasharray: {{ (326.73 * score_percent / 100) | round(2) }} 326.73;"/></svg>
+                <div class="rp-ring-label"><b>{{ '%.1f' | format(score_val) }}</b><span>out of 10</span></div>
             </div>
-            <div>
+            <div style="min-width:0;">
                 <div class="rp-eyebrow">Placement evaluation report</div>
                 <h1 class="rp-title">{{ result.domain or 'General assessment' }}</h1>
                 <div class="rp-meta">
@@ -688,10 +738,16 @@
         <div class="rp-hero-side">
             {% if terminated %}
             <div class="verdict-pill rejected" style="background: rgba(239, 68, 68, 0.2) !important; color: #f87171 !important; border: 1px solid rgba(239, 68, 68, 0.4) !important;"><i class="bi bi-shield-slash-fill"></i> Terminated</div>
+            <div class="rp-verdict-note">Ended by the proctoring system after repeated strikes.</div>
+            {% elif result.is_exited %}
+            <div class="verdict-pill rejected" style="background: rgba(245, 158, 11, 0.16) !important; color: #fbbf24 !important; border: 1px solid rgba(245, 158, 11, 0.4) !important;"><i class="bi bi-box-arrow-right"></i> Exited early</div>
+            <div class="rp-verdict-note">The candidate left before the end; only the answers given were evaluated.</div>
             {% elif recommended %}
             <div class="verdict-pill selected"><i class="bi bi-check-circle-fill"></i> Recommended</div>
+            <div class="rp-verdict-note">At or above the passing mark of {{ settings.pass_score }}.</div>
             {% else %}
             <div class="verdict-pill rejected"><i class="bi bi-x-circle-fill"></i> Not Recommended</div>
+            <div class="rp-verdict-note">Below the passing mark of {{ settings.pass_score }}.</div>
             {% endif %}
             <button onclick="window.print()" class="btn-pdf-download rp-noprint">
                 <i class="bi bi-download"></i> Download PDF Report
@@ -699,31 +755,103 @@
         </div>
     </section>
 
+    <!-- Summary tiles -->
+    <div class="rp-kpis anim anim-3">
+        <div class="rp-kpi">
+            <div class="rp-kpi-icon {{ 'green' if recommended else ('amber' if result.is_exited else 'red') }}"><i class="bi bi-speedometer2"></i></div>
+            <div><div class="rp-kpi-val">{{ '%.1f' | format(score_val) }} <small>/ 10</small></div><div class="rp-kpi-label">Score</div></div>
+        </div>
+        <div class="rp-kpi">
+            <div class="rp-kpi-icon amber"><i class="bi bi-flag-fill"></i></div>
+            <div><div class="rp-kpi-val">{{ settings.pass_score }} <small>/ 10</small></div><div class="rp-kpi-label">Passing mark</div></div>
+        </div>
+        <div class="rp-kpi">
+            <div class="rp-kpi-icon {{ 'red' if strike_count else 'green' }}"><i class="bi bi-shield-check"></i></div>
+            <div>
+                {% if settings.proctor_integrity_log %}
+                <div class="rp-kpi-val">{{ strike_count }} <small>strike{{ '' if strike_count == 1 else 's' }}{% if flag_count %} · {{ flag_count }} flag{{ '' if flag_count == 1 else 's' }}{% endif %}</small></div>
+                {% else %}
+                <div class="rp-kpi-val"><small>Log switched off</small></div>
+                {% endif %}
+                <div class="rp-kpi-label">Integrity</div>
+            </div>
+        </div>
+        <div class="rp-kpi">
+            <div class="rp-kpi-icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div><div class="rp-kpi-val">{{ attempts_used }}{% if is_locked %} <small>· locked</small>{% endif %}</div><div class="rp-kpi-label">Attempts taken</div></div>
+        </div>
+    </div>
+
     <div class="rp-grid">
         <!-- ══ Main column ══ -->
         <main class="rp-main">
             {% if terminated %}
             <div class="rp-alert">
-                <div class="rp-alert-title"><i class="bi bi-shield-slash-fill"></i> Proctoring breach: session terminated</div>
-                <div>This session was <strong>automatically ended after repeated warning strikes</strong> recorded by the proctoring system.
-                    <br><span class="rp-alert-reason"><i class="bi bi-info-circle"></i> Reason:</span> {{ result.termination_reason or "Repeated window focus loss / tab switching detected during the active assessment." }}</div>
+                <div class="rp-alert-icon"><i class="bi bi-shield-slash-fill"></i></div>
+                <div>
+                    <div class="rp-alert-title">Proctoring breach: session terminated</div>
+                    <div>This session was <strong>automatically ended after repeated warning strikes</strong> recorded by the proctoring system.
+                        <br><span class="rp-alert-reason"><i class="bi bi-info-circle"></i> Reason:</span> {{ result.termination_reason or "Repeated window focus loss / tab switching detected during the active assessment." }}</div>
+                </div>
+            </div>
+            {% elif result.is_exited %}
+            <div class="rp-alert amber">
+                <div class="rp-alert-icon"><i class="bi bi-box-arrow-right"></i></div>
+                <div>
+                    <div class="rp-alert-title">Candidate exited before completion</div>
+                    <div>The candidate pressed <strong>Exit</strong> during the assessment. Only the questions they answered were evaluated, and the session counts as one attempt. Their questions and answers are listed below.</div>
+                </div>
             </div>
             {% endif %}
 
             <section class="panel rp-card">
                 <div class="rp-card-title"><i class="bi bi-bullseye"></i> Score against the passing mark</div>
                 <div class="rp-bar" role="img" aria-label="Score {{ result.score }} out of 10, passing mark {{ settings.pass_score }}">
-                    <div class="rp-bar-fill {{ 'ok' if recommended else 'bad' }}" style="width: {{ score_percent }}%"></div>
+                    <div class="rp-bar-fill {{ 'ok' if recommended else ('warn' if result.is_exited else 'bad') }}" style="width: {{ score_percent }}%"></div>
                     <div class="rp-bar-mark" style="left: {{ (settings.pass_score or 0) * 10 }}%"><span>Pass {{ settings.pass_score }}</span></div>
                 </div>
-                <div class="rp-bar-scale"><span>0</span><span>5</span><span>10</span></div>
+                <div class="rp-bar-scale">{% for n in range(0, 11) %}<span>{{ n }}</span>{% endfor %}</div>
                 <p class="rp-note">
                     {% if terminated %}This session ended early, so it is not scored against the passing mark.
+                    {% elif result.is_exited %}Scored <strong>{{ result.score }}</strong> out of 10 on the questions answered before the candidate exited. An exited session is never marked as recommended.
                     {% elif recommended %}Scored <strong>{{ result.score }}</strong> out of 10, at or above the current passing mark of <strong>{{ settings.pass_score }}</strong>.
                     {% else %}Scored <strong>{{ result.score }}</strong> out of 10, below the current passing mark of <strong>{{ settings.pass_score }}</strong>.{% endif %}
                     The mark can be changed in Settings and only applies to new results.
                 </p>
             </section>
+
+            <section class="panel rp-card">
+                <div class="rp-card-title"><i class="bi bi-journal-text"></i> Evaluation notes</div>
+                {% if paragraphs %}
+                {% set note_titles = ['Overall assessment', 'What went well', 'Gaps to address', 'Guidance and readiness'] if paragraphs | length == 4 else [] %}
+                <ol class="rp-notes">
+                    {% for para in paragraphs %}
+                    <li><span class="rp-note-num">{{ loop.index }}</span><div>{% if note_titles %}<div class="rp-note-head">{{ note_titles[loop.index0] }}</div>{% endif %}<p>{{ para }}</p></div></li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <p class="rp-note">No written evaluation was stored for this session.</p>
+                {% endif %}
+            </section>
+
+            {% if result.is_exited %}
+            <section class="panel rp-card" id="exitTranscript">
+                <div class="rp-card-title"><i class="bi bi-chat-square-text-fill"></i> Questions and answers before exiting</div>
+                {% set qa = result.transcript_items() %}
+                {% if qa %}
+                <ol class="rp-notes">
+                    {% for item in qa %}
+                    <li><span class="rp-qa-num">{{ loop.index }}</span>
+                        <div><div class="rp-qa-q">{{ item.q }}</div>
+                        <div class="rp-qa-a">{% if item.a %}{{ item.a }}{% else %}<em>Not answered: the candidate exited at this question.</em>{% endif %}</div></div>
+                    </li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <p class="rp-note">The candidate exited before answering any interview question.</p>
+                {% endif %}
+            </section>
+            {% endif %}
 
             {% if settings.proctor_integrity_log %}
             <section class="panel rp-card" id="integrityLog">
@@ -750,19 +878,6 @@
                 {% endif %}
             </section>
             {% endif %}
-
-            <section class="panel rp-card">
-                <div class="rp-card-title"><i class="bi bi-journal-text"></i> Evaluation notes</div>
-                {% if paragraphs %}
-                <ol class="rp-notes">
-                    {% for para in paragraphs %}
-                    <li><span class="rp-note-num">{{ loop.index }}</span><p>{{ para }}</p></li>
-                    {% endfor %}
-                </ol>
-                {% else %}
-                <p class="rp-note">No written evaluation was stored for this session.</p>
-                {% endif %}
-            </section>
         </main>
 
         <!-- ══ Side column ══ -->
@@ -832,6 +947,7 @@
                             <span class="rp-other-sub">{{ o.interview_datetime.strftime('%d %b %Y') if o.interview_datetime else '—' }} · {{ o.session_code }}</span>
                         </a>
                         {% if o.is_terminated or 'Terminated' in (o.status or '') %}<span class="rp-badge red">Terminated</span>
+                        {% elif o.is_exited %}<span class="rp-badge amber">Exited early</span>
                         {% elif other_ok.get(o.id) %}<span class="rp-badge green">Recommended</span>
                         {% else %}<span class="rp-badge red">Not recommended</span>{% endif %}
                     </li>

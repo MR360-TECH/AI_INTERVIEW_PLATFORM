@@ -17,6 +17,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     attach_violations
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES import integrity
+from MODULES.LAYER_3_BUSINESS_SERVICES.exit_report import has_unfinished_assessment
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_assessment_feedback
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import (
     analyze_attachment,
@@ -27,7 +28,8 @@ from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import (
     build_initial_question_prompt,
     build_subsequent_question_prompt,
     build_ajax_system_prompt,
-    build_evaluation_prompt
+    build_evaluation_prompt,
+    evaluate_interview
 )
 
 interview_bp = Blueprint('interview_bp', __name__)
@@ -91,23 +93,11 @@ def interview():
 
     # Handle restart FIRST — so the lock check below sees the cleared state
     if request.args.get("restart") == "1":
-        _existing_prog = InterviewProgress.query.filter_by(user_id=user_id).first()
-        is_practice_restart = bool(session.get("interview_mode") or request.args.get("practice") == "1")
-        if not is_practice_restart and _existing_prog and _existing_prog.q_count > 0:
-            try:
-                res_rec = InterviewResult(
-                    user_id=user_id,
-                    score=0.0,
-                    status="Abandoned (Reset)",
-                    summary="Candidate started a fresh interview session.",
-                    domain=session.get("interview_domain", "General")
-                )
-                db.session.add(res_rec)
-                db.session.commit()
-                attach_violations(user_id, res_rec.id)
-            except Exception as ex:
-                print(f"[RESTART LOG ERROR] {ex}")
-                db.session.rollback()
+        # (practice-start always sets interview_mode first, so only a scored save can reach this without it)
+        if not session.get("interview_mode") and has_unfinished_assessment(user_id):
+            # A saved scored assessment only exists after a server or network problem: it is continued, never
+            # discarded for a free fresh start (leaving on purpose is done with Exit, which is evaluated and counted).
+            return redirect(url_for("interview_bp.interview"))
 
         clear_progress(user_id)
         session.pop("chat_history", None)
@@ -587,7 +577,7 @@ def interview_result():
         completed_res = InterviewResult.query.filter(
             InterviewResult.user_id == user_id,
             InterviewResult.is_terminated == False,
-            ~InterviewResult.status.in_(["Abandoned (Reset)", "Terminated (Breach)"])
+            ~InterviewResult.status.in_(["Abandoned (Reset)", "Terminated (Breach)", InterviewResult.EXITED_STATUS])
         ).order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).first()
 
         latest_res = completed_res or InterviewResult.query.filter_by(
@@ -596,6 +586,8 @@ def interview_result():
 
         if not latest_res:
             return redirect("/dashboard")
+        if latest_res.is_exited:
+            return redirect(f"/my-history/{latest_res.id}")      # the exited-session report (with its answers)
 
         latest_score = float(latest_res.score or 0)
         is_term = bool(latest_res.is_terminated or (latest_res.status and "Terminated" in latest_res.status))
@@ -636,43 +628,7 @@ def interview_result():
             domain_val=domain_val,
             conversation_text=conversation_text
         )
-
-        score_num = None
-        evaluation = ""
-        for _attempt in range(2):
-            evaluation = generate_text(prompt, max_output_tokens=1200, temperature=0.1,
-                                       deadline_s=45.0, per_call_timeout_s=25.0, trim_truncated=False)
-            plain_eval = re.sub(r'[\*\#\_]', '', evaluation)
-            score_match = re.search(r'SCORE\s*:\s*([0-9]+(?:\.[0-9]+)?)', plain_eval, re.IGNORECASE) \
-                or re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', plain_eval)
-            if score_match:
-                score_num = max(0.0, min(10.0, float(score_match.group(1))))
-                break
-        if score_num is None:
-            raise ValueError("AI evaluation did not contain a score")
-
-        summary_lines = []
-        in_summary = False
-        for raw_line in evaluation.split("\n"):
-            line = raw_line.strip()
-            if not line:
-                if in_summary:
-                    summary_lines.append("")
-                continue
-
-            upper_line = re.sub(r'[\*\#\_]', '', line).strip().upper()
-            if upper_line.startswith("SCORE"):
-                in_summary = False
-            elif upper_line.startswith("SUMMARY"):
-                in_summary = True
-            elif in_summary:
-                summary_lines.append(line)
-
-        summary_text = "\n".join(summary_lines).strip()
-        if not summary_text:
-            summary_text = re.sub(r'SCORE\s*:\s*[^\n]+', '', evaluation, flags=re.IGNORECASE).strip()
-            if not summary_text:
-                summary_text = "Not enough data to generate a report."
+        score_num, summary_text = evaluate_interview(prompt)
 
         if score_num >= 8:
             label = "Excellent"
@@ -738,7 +694,8 @@ def interview_result():
                     full_name=candidate.full_name, domain=domain_val, score=score_num, pass_score=PASS_SCORE,
                     answer_count=sum(1 for entry in _result_history if entry.get("role") == "answer"),
                     report_text=summary_text, session_code=session_code_val, result_id=result_id_val,
-                    when=datetime.now())
+                    when=datetime.now(),
+                    difficulty=session.get("interview_difficulty") or settings.default_difficulty)
         except Exception as mail_err:
             print(f"[MAIL] feedback email not queued: {mail_err}")
 

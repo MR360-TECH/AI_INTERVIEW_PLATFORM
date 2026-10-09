@@ -396,6 +396,7 @@
                                 <div class="um-main">{{ r.last.score }} <span class="um-dim">/ 10</span>
                                     {% if r.last.is_terminated or 'Terminated' in (r.last.status or '') %}
                                     <span class="um-tag bad">Terminated</span>
+                                    {% elif r.last.is_exited %}<span class="um-tag bad">Exited early</span>
                                     {% elif r.last_ok %}<span class="um-tag ok">Recommended</span>
                                     {% else %}<span class="um-tag bad">Not recommended</span>{% endif %}
                                 </div>

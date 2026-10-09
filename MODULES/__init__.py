@@ -18,6 +18,7 @@ _REQUIRED_COLUMNS = {
     'interview_results': [
         ('is_terminated', 'BOOLEAN DEFAULT FALSE'),
         ('termination_reason', 'TEXT'),
+        ('transcript', 'TEXT'),
     ],
     'admin_settings': [
         ('enable_warning_strikes', 'BOOLEAN DEFAULT TRUE'),

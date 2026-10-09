@@ -62,7 +62,7 @@ def admin():
     month_count = sum(1 for r, u in all_results if r.interview_datetime and r.interview_datetime.year == current_year and r.interview_datetime.month == current_month)
     total_count = len(all_results)
     selected_count = sum(1 for r, u in all_results if (r.status in ["Selected", "PASS"] or (r.status and "WELL DONE" in r.status)) and not r.is_terminated)
-    rejected_count = sum(1 for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "")))
+    rejected_count = sum(1 for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "") or r.is_exited))
 
     if filter_type == "today":
         results = [(r, u) for r, u in all_results if r.interview_datetime and r.interview_datetime.date() == today]
@@ -71,7 +71,7 @@ def admin():
     elif filter_type == "selected":
         results = [(r, u) for r, u in all_results if (r.status in ["Selected", "PASS"] or (r.status and "WELL DONE" in r.status)) and not r.is_terminated]
     elif filter_type == "rejected":
-        results = [(r, u) for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or ""))]
+        results = [(r, u) for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "") or r.is_exited)]
     else:
         results = all_results
 
@@ -280,9 +280,9 @@ USER_SORTS = ("newest", "oldest", "name", "attempts")
 
 
 def _is_recommended(result, settings):
-    """Same rule the dashboard uses: at or above the passing score and not ended by proctoring."""
+    """Same rule the dashboard uses: at or above the passing score, not ended by proctoring and not exited early."""
     try:
-        return (not result.is_terminated and "Terminated" not in (result.status or "")
+        return (not result.is_terminated and "Terminated" not in (result.status or "") and not result.is_exited
                 and float(result.score) >= float(settings.pass_score or 0))
     except (TypeError, ValueError):
         return False

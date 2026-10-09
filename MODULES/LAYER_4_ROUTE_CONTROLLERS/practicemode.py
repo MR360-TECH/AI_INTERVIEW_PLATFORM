@@ -3,7 +3,8 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_terminated_notice
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress, record_counted_attempt, attach_violations
+from MODULES.LAYER_3_BUSINESS_SERVICES.exit_report import record_exit, has_unfinished_assessment
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, InterviewResult, InterviewProgress, clear_progress, record_counted_attempt, attach_violations, get_settings
 
 practice_bp = Blueprint('practice_bp', __name__)
 
@@ -27,6 +28,11 @@ def practice_start():
     mode = request.form.get("mode")
     if mode not in ("viva", "lang", "drill", "debate", "convo"):
         return redirect("/practice-setup")
+
+    # A scored assessment interrupted by a server or network problem is still saved. Starting practice would throw it
+    # away for free, so the candidate must continue it (or exit it) first.
+    if not session.get("interview_mode") and has_unfinished_assessment(session["user_id"]):
+        return redirect("/dashboard?error=assessment_in_progress")
 
     viva_subject = request.form.get("viva_subject", "").strip()
     drill_subject = request.form.get("drill_subject", "").strip()
@@ -57,6 +63,11 @@ def practice_start():
 def quit_interview():
     if "user_id" not in session:
         return redirect("/login")
+    if not session.get("interview_mode"):
+        # Exit from a scored assessment: the answers so far are evaluated, it counts as an attempt and the interview
+        # is erased (it can never be resumed). The candidate lands on the report.
+        result_id = record_exit(session["user_id"], get_settings())
+        return redirect(f"/my-history/{result_id}" if result_id else "/dashboard")
     session.pop("chat_history", None)
     session.pop("q_count", None)
     session.pop("interview_mode", None)
@@ -76,28 +87,10 @@ def reset_assessment():
     if "user_id" not in session:
         return jsonify({"status": "error", "reason": "not_logged_in"}), 401
     user_id = session["user_id"]
-    is_practice = bool(session.get("interview_mode"))
-    domain_val = session.get("interview_domain", "General")
-
-    # Check DB for actual progress (more reliable than session q_count)
-    db_progress = InterviewProgress.query.filter_by(user_id=user_id).first()
-    has_real_progress = bool(db_progress and db_progress.q_count and db_progress.q_count > 0)
-
-    if not is_practice and has_real_progress:
-        try:
-            res_rec = InterviewResult(
-                user_id=user_id,
-                score=0.0,
-                status="Abandoned (Reset)",
-                summary="Candidate initiated a fresh session reset mid-assessment.",
-                domain=domain_val
-            )
-            db.session.add(res_rec)
-            db.session.commit()
-            attach_violations(user_id, res_rec.id)
-        except Exception as e:
-            print(f"[RESET ASSESSMENT LOG ERROR] {e}")
-            db.session.rollback()
+    if not session.get("interview_mode"):
+        # Resetting a scored assessment is the same as exiting it: never a free restart.
+        result_id = record_exit(user_id, get_settings())
+        return jsonify({"status": "ok", "redirect": f"/my-history/{result_id}" if result_id else "/dashboard"})
 
     session.pop("chat_history", None)
     session.pop("q_count", None)

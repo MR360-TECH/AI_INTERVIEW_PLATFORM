@@ -503,17 +503,17 @@ def t_proctoring_and_reset():
     r = post(c, "/terminate-proctoring")
     check("terminate-proctoring with NO active interview does not consume an attempt", used(email)[0] == 1, used(email))
 
-    # reset mid-assessment is free
+    # resetting a scored assessment mid-way is the same as exiting it: evaluated and counted, never a free restart
     get(c, "/interview")
     post(c, "/interview", data={"answer": "Java"})
     r = post(c, "/reset-assessment")
-    check("reset-assessment ok", r.status_code == 200)
-    check("reset does not consume an attempt", used(email)[0] == 1, used(email))
+    check("reset-assessment ok and points to the report", r.status_code == 200 and r.get_json()["redirect"].startswith("/my-history/"), r.get_json())
+    check("reset of a scored assessment counts as one attempt", used(email)[0] == 2, used(email))
     r = get(c, "/interview?restart=1", follow_redirects=True)
     check("restart works", r.status_code == 200)
     r = post(c, "/quit-interview")
-    check("quit-interview -> dashboard", r.status_code == 302)
-    check("quit does not consume an attempt", used(email)[0] == 1, used(email))
+    check("quit before answering the role question -> dashboard", r.status_code == 302 and r.headers["Location"].endswith("/dashboard"), r.headers.get("Location"))
+    check("quit before the interview really started does not consume an attempt", used(email)[0] == 2, used(email))
 
 
 def t_practice():
@@ -668,17 +668,20 @@ def t_schema_migration():
 def t_bands_and_filter():
     section("Email bands, safety filter, greeting (unit)")
     sb = feedback_email.score_band
-    check("band: pass mark 3, score 9 -> excellent", sb(9, 3, 8) == "excellent")
+    check("band: pass mark 3, score 9 -> outstanding", sb(9, 3, 8) == "outstanding")
+    check("band: pass mark 3, score 8.5 -> excellent", sb(8.5, 3, 8) == "excellent")
     check("band: pass mark 3, score 5 -> done_well", sb(5, 3, 8) == "done_well")
     check("band: pass mark 3, score 3 -> done_well (at the mark)", sb(3, 3, 8) == "done_well")
     check("band: pass mark 5, score 4 -> close", sb(4, 5, 8) == "close")
     check("band: pass mark 5, score 3.5 -> close (exactly 1.5 below)", sb(3.5, 5, 8) == "close")
-    check("band: pass mark 5, score 3 -> clear", sb(3, 5, 8) == "clear")
+    check("band: pass mark 5, score 3 -> developing (room to grow)", sb(3, 5, 8) == "developing")
+    check("band: pass mark 5, score 2 -> developing (exactly 3 below)", sb(2, 5, 8) == "developing")
+    check("band: pass mark 5, score 1.5 -> foundation", sb(1.5, 5, 8) == "foundation")
     check("band: high pass mark 9, score 8 -> close, never excellent", sb(8, 9, 8) == "close")
-    check("band: high pass mark 9, score 9.5 -> excellent", sb(9.5, 9, 8) == "excellent")
+    check("band: high pass mark 9, score 9.5 -> outstanding", sb(9.5, 9, 8) == "outstanding")
     check("band: pass mark 10, score 9.5 -> close", sb(9.5, 10, 8) == "close")
     check("band: 2 answers -> brief regardless of score", sb(9, 3, 2) == "brief" and sb(1, 3, 1) == "brief")
-    check("band: 3 answers is NOT brief", sb(9, 3, 3) == "excellent")
+    check("band: 3 answers is NOT brief", sb(9, 3, 3) == "outstanding")
 
     ok_note = "Your fundamentals are solid and clearly explained. Spending a little time on error handling will make the next session even stronger."
     check("safe note accepted", feedback_email.is_safe_note(ok_note))
@@ -784,22 +787,29 @@ def t_assessment_email():
             rid = InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email).first().id).first()
             code = rid.session_code
         check("subject carries the session code", code in subject, subject)
-        check("email shows the score", "Score: 7.5 / 10" in text and ">7.5<" in html and "/ 10" in html)
+        check("email shows the score", "Score: 7.5 / 10" in text and ">7.5<" in html and "out of 10" in html)
         check("email shows the session code", code in text and code in html)
         check("email greets with 'Dear' + the full name", "Dear Feedback Person," in text, text[:120])
         check("the domain is NOT in the subject or the title", "Python" not in subject and "Python backend" not in text.split("\n")[0], subject)
         check("the domain appears further down, in the details", "Domain: Python backend" in text, text)
-        check("done-well opening is used (score 7.5, pass mark 3 -> excellent or done well)",
-              "excellent performance" in text or "You have done well" in text, text[:400])
-        check("email has the three structured sections with their headings",
-              all(h in text for h in ("WHAT IS NEXT?", "What stood out", "Focus next", "Try this next")), text)
+        check("done-well opening is used (score 7.5, pass mark 3) with the domain filled in",
+              "You have done well." in text and "fundamentals of Python backend" in text, text[:400])
+        check("email has the three takeaway cards with their headings",
+              all(h in text for h in ("YOUR THREE TAKEAWAYS", "What stood out", "Focus next", "Try this next")), text)
+        check("key phrases are bold in the html, plain in the text, and never underlined",
+              '<strong style="color:#ffffff;font-weight:700;">done well</strong>' in html and "**" not in text
+              and "border-bottom:2px" not in html)
+        check("the headline and closing match the band, signed by the team",
+              text.split("\n")[0] == "You have done well" and "A little more depth will take you even further." in text
+              and "The AI Interview Platform team" in text)
+        check("the hero shows the level from the interview difficulty", "Student level" in html and "Level: Student level" in text)
         check("each AI line appears under its own heading", all(v in text for v in GOOD_LINES.values()))
-        check("email shows the tone chip and the score card", "Strong performance" in html and "YOUR RESULT" in text)
+        check("email shows the tone chip and the score ring", "Strong performance" in html and "YOUR RESULT" in text and "out of 10" in html)
         check("html is responsive (viewport + mobile rules)", 'name="viewport"' in html and "max-width:520px" in html)
         check("email follows the app theme (navy surface + cyan accents)", "#08122a" in html and "#00ffff" in html)
         check("no 'Start a practice session' link in the feedback email", "Start a practice session" not in html and "/practice-setup" not in html)
-        check("first paragraph is short and to the point (2 to 3 sentences, under 50 words)", 25 < len(feedback_email.OPENINGS["done_well"].split()) < 50 and all(len(o.split()) < 60 for o in feedback_email.OPENINGS.values()))
-        check("the elaborated opening is in the email", feedback_email.OPENINGS["excellent"] in text or feedback_email.OPENINGS["done_well"] in text)
+        check("first paragraph is short and to the point (2 sentences, under 45 words)", 20 < len(feedback_email.OPENINGS["done_well"].split()) < 45 and all(len(o.split()) < 45 for o in feedback_email.OPENINGS.values()))
+        check("the opening is in the email", email_templates.plain_text(feedback_email.opening_for("done_well", "Python backend")) in text)
         check("email contains no verdict or put-down words",
               not feedback_email._BANNED.search(text), feedback_email._BANNED.search(text))
         check("email does not repeat the report paragraphs", "Technical critique" not in text and "Good overall" not in text)
@@ -967,40 +977,39 @@ def t_terminated_email_and_page():
 
 
 def t_no_continue_and_restart():
-    section("Standard mode has no 'Continue Assessment'; restart redirect")
+    section("An interrupted assessment is continued, never restarted for free; restart redirect")
     email = "cont@test.local"
     make_user(email, "Continue Person")
     c, _ = login_user(email)
     r = get(c, "/dashboard")
     h = r.data.decode()
     check("fresh dashboard offers to start the assessment", "Start Assessment" in h or "Launch Assessment Studio" in h)
+    check("fresh dashboard has no 'Continue Assessment'", "Continue Assessment" not in h)
     get(c, "/interview")
     post(c, "/interview", data={"answer": "Python"})
+    # the browser is closed / the connection drops here: the interview stays saved
     r = get(c, "/dashboard")
     h = r.data.decode()
-    check("dashboard with an unfinished session has NO 'Continue Assessment'", "Continue Assessment" not in h, "found")
-    check("dashboard has NO 'Resume Assessment'", "Resume Assessment" not in h and "Resume Recruitment Assessment" not in h)
+    check("dashboard with an interrupted session offers 'Continue Assessment'", "Continue Assessment" in h)
     check("dashboard has NO 'Restart Assessment' button", "Restart Assessment" not in h and "resetAssessmentBtn" not in h)
-    check("dashboard start link discards the old session via ?restart=1", "/interview?restart=1" in h)
-    check("dashboard warns the unfinished session will be discarded", "previous unfinished session will be discarded" in h)
+    check("dashboard explains the interrupted session is saved", "interrupted by a connection or server problem and is saved" in h)
+    check("the continue buttons resume /interview (no ?restart=1 while a session is saved)", 'href="/interview"' in h and "/interview?restart=1" not in h)
 
     r = get(c, "/interview?restart=1")
     check("GET /interview?restart=1 redirects to the clean URL", r.status_code == 302 and r.headers["Location"].rstrip("?").endswith("/interview"), r.headers.get("Location"))
-    check("abandoned session did not consume an attempt", used(email)[0] == 0, used(email))
-    with app.app_context():
-        st = [x.status for x in InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email).first().id).all()]
-    check("abandoned session was logged as non-counting", st == ["Abandoned (Reset)"], st)
+    check("restart cannot discard an interrupted assessment: nothing recorded, no attempt used", used(email)[0] == 0 and results_for(email) == [], (used(email), results_for(email)))
+    check("restart kept the saved interview", progress_exists(email))
 
-    # the full real-browser flow after a restart: progress must accumulate and complete
+    # the full real-browser flow continues the saved interview: progress must accumulate and complete
     FAKE["mode"] = "ok"
     r = get(c, "/interview?restart=1", follow_redirects=True)
-    check("restart then follow redirect renders the first question", r.status_code == 200, r.status_code)
+    check("restart then follow redirect renders the saved question", r.status_code == 200, r.status_code)
     for turn in range(1, 4):
         post(c, "/interview", data={"answer": f"answer {turn}"})
         with app.app_context():
             u = User.query.filter_by(email=email).first()
             pr = InterviewProgress.query.filter_by(user_id=u.id).first()
-        check(f"after answer {turn} the saved progress counts {turn} (no wipe)", pr and pr.q_count == turn, pr and pr.q_count)
+        check(f"after answer {turn} the saved progress counts {turn + 1} (continued, no wipe)", pr and pr.q_count == turn + 1, pr and pr.q_count)
     loc = None
     for _ in range(12):
         r = post(c, "/interview", data={"answer": "another answer"})
@@ -2500,14 +2509,14 @@ def t_interview_integrity():
     r = get(cb7, "/interview")
     check("a refusal that reaches the strike limit ends the interview", r.status_code == 302 and "terminated=1" in r.headers["Location"] and prog(uid7) is None, r.status_code)
 
-    # ---------- restart keeps the events with the abandoned record
+    # ---------- exiting keeps the events with the exited record
     uid8, c8 = start("integ8@test.local", "Integ Eight")
     vio(c8, "tab_switch", away_s=5)
-    get(c8, "/interview?restart=1")
+    post(c8, "/quit-interview")
     with app.app_context():
         ev = InterviewViolation.query.filter_by(user_id=uid8).all()
-        ab = InterviewResult.query.filter_by(user_id=uid8, status="Abandoned (Reset)").first()
-    check("restarting attaches the events to the abandoned record and resets strikes", len(ev) == 1 and ab is not None and ev[0].result_id == ab.id and prog(uid8) is None)
+        ab = InterviewResult.query.filter_by(user_id=uid8, status=InterviewResult.EXITED_STATUS).first()
+    check("exiting attaches the events to the exited record and resets strikes", len(ev) == 1 and ab is not None and ev[0].result_id == ab.id and prog(uid8) is None)
 
     # ---------- finishing normally attaches events to the real result
     uid9, c9 = start("integ9@test.local", "Integ Nine")
@@ -3088,10 +3097,177 @@ def t_rate_limiter():
     check("admin guide: the rate limiter is explained and its setting is listed", "Friendly rate limiter" in g and "enable_rate_limits" in g and "RATE_LIMIT_SCALE" in g)
 
 
+def t_exit_report():
+    section("Exit mid-assessment: erased, answers evaluated, report with Q&A, counts as an attempt, exit e-mail")
+    import re as _re
+    from MODULES.LAYER_3_BUSINESS_SERVICES import exit_report
+    FAKE["mode"] = "ok"
+    email = "exiter@test.local"
+    uid = make_user(email, "Exit Person")
+    c, _ = login_user(email)
+    get(c, "/interview")
+    post(c, "/interview", data={"answer": "Python backend"})              # the role question
+    post(c, "/interview", data={"answer": "Polymorphism lets one interface have many forms."})
+    post(c, "/interview", data={"answer": "A decorator wraps a function to extend it."})
+    h = get(c, "/interview").data.decode()
+    check("interview page: Exit is a POST form to /quit-interview with the honest warning",
+          'action="/quit-interview"' in h and 'id="exitAssessmentForm"' in h and "cannot be resumed" in h and "counts as one attempt" in h
+          and "will not be counted as an attempt" not in h)
+
+    SENT.clear()
+    PROMPTS.clear()
+    r = post(c, "/quit-interview")
+    check("exit redirects to the report of this session", r.status_code == 302 and "/my-history/" in r.headers["Location"], r.headers.get("Location"))
+    rid = int(r.headers["Location"].rsplit("/", 1)[1])
+    with app.app_context():
+        rec = db.session.get(InterviewResult, rid)
+        items = rec.transcript_items()
+        status, score, summary = rec.status, float(rec.score), rec.summary
+    check("the exited session is stored as 'Exited (Incomplete)' with the AI score", status == "Exited (Incomplete)" and score == 7.5, (status, score))
+    check("exit counts as exactly one attempt", used(email)[0] == 1, used(email))
+    check("the interview is erased: no saved progress remains", not progress_exists(email))
+    check("transcript: the two answered questions plus the question left open, role question left out",
+          len(items) == 3 and items[0]["a"].startswith("Polymorphism") and items[1]["a"].startswith("A decorator") and items[2]["a"] is None
+          and all("role or domain" not in i["q"] for i in items), items)
+    ev_prompts = [p for p in PROMPTS if "Evaluate this" in p]
+    check("the evaluation prompt tells the AI the session ended early and to judge only the answers given",
+          len(ev_prompts) == 1 and "SESSION ENDED EARLY" in ev_prompts[0] and "Never mention how many questions" in ev_prompts[0])
+
+    rep = get(c, r.headers["Location"]).data.decode()
+    check("report: incomplete banner and the AI analysis", "You exited before the assessment was complete" in rep
+          and "Assessment Report (Incomplete Session)" in rep and "Good overall." in rep
+          and "based only on the questions you answered" in rep)
+    check("report shows only the analysis: no questions and no answers",
+          "Questions you answered" not in rep and "What is polymorphism?" not in rep
+          and "Polymorphism lets one interface have many forms." not in rep and "Not answered" not in rep)
+    check("report never shows the admin's question settings", _re.search(r"\b\d+\s+(?:of|/)\s+8\b", rep) is None and "max_questions" not in rep)
+
+    mails = sent_to(email)
+    check("exactly one e-mail: the exit feedback e-mail", len(mails) == 1 and "Your assessment report" in mails[0][1], [m[1] for m in mails])
+    subject, text, html = mails[0][1], mails[0][2], mails[0][3]
+    check("exit e-mail: ended-early title, reviewed opening, score card chip and a link to the report",
+          "Your assessment ended early" in text and "chose to exit before the interview was complete" in text
+          and "Incomplete session" in text and f"/my-history/{rid}" in html)
+    check("exit e-mail shows only the analysis, never the questions or answers",
+          "What is polymorphism?" not in text and "Polymorphism lets one interface" not in text and "covers only the answers you gave" in text)
+    check("exit e-mail never mentions question counts or attempts",
+          _re.search(r"\b\d+\s+(?:of\s+\d+|questions?)\b", text) is None and "attempt" not in text.lower(), text)
+    check("exit e-mail coaching lines come from the AI", GOOD_LINES["focus"] in text)
+
+    # after exiting: a fresh start, nothing to continue
+    h = get(c, "/dashboard").data.decode()
+    check("dashboard after exit offers a fresh start, not 'Continue Assessment'", "Continue Assessment" not in h)
+    r = get(c, "/interview?restart=1", follow_redirects=True)
+    check("next start begins fresh with the role question", r.status_code == 200 and b"role or domain" in r.data)
+    check("/latest-result opens the exited report", get(c, "/latest-result").headers.get("Location", "").endswith(f"/my-history/{rid}"))
+    hist = get(c, "/my-history").data.decode()
+    check("history list shows the session as 'Exited early'", "Exited early" in hist)
+
+    # admin views
+    a = client()
+    post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    ad = get(a, f"/admin/interview/{rid}").data.decode()
+    check("admin report: 'Exited early' badge, explanation and the questions with answers",
+          "Exited early" in ad and "Candidate exited before completion" in ad and "Questions and answers before exiting" in ad
+          and "Polymorphism lets one interface have many forms." in ad)
+    check("admin dashboard lists the exit as 'Exited early' and it is never recommended",
+          "Exited early" in get(a, "/admin").data.decode() and "Recommended</div>" not in ad.split("rp-hero-side")[1][:600])
+    check("admin 'Not recommended' filter includes exited sessions", "Exited early" in get(a, "/admin?filter=rejected").data.decode())
+
+    # AI review fails: the exit still ends the interview, stores a fixed note with the answers, counts, and e-mails
+    email2 = "exiter2@test.local"
+    make_user(email2, "Exit Two")
+    c2, _ = login_user(email2)
+    get(c2, "/interview")
+    post(c2, "/interview", data={"answer": "Java"})
+    post(c2, "/interview", data={"answer": "JVM runs bytecode."})
+    SENT.clear()
+    FAKE["mode"] = "raise"
+    r = post(c2, "/quit-interview")
+    FAKE["mode"] = "ok"
+    with app.app_context():
+        rec2 = InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email2).first().id).first()
+        s2 = (rec2.status, rec2.summary, len(rec2.transcript_items())) if rec2 else None
+    check("AI down: exit still recorded with the fixed note (answers kept for the admin)", s2 is not None and s2[0] == "Exited (Incomplete)"
+          and s2[1] == exit_report.REVIEW_FAILED_SUMMARY and s2[2] == 2, s2)
+    check("AI down: still exactly one attempt and no saved progress", used(email2)[0] == 1 and not progress_exists(email2))
+    m2 = sent_to(email2)
+    check("AI down: e-mail without a score card, saying the analysis could not be prepared",
+          len(m2) == 1 and "Exited before completion" in m2[0][2] and "could not be prepared this time" in m2[0][2]
+          and "/ 10" not in m2[0][2] and "JVM runs bytecode" not in m2[0][2], [m[2] for m in m2])
+
+    # exit right after the role question: nothing answered, still counts (a question was shown)
+    email3 = "exiter3@test.local"
+    make_user(email3, "Exit Three")
+    c3, _ = login_user(email3)
+    get(c3, "/interview")
+    post(c3, "/interview", data={"answer": "Data science"})
+    SENT.clear()
+    post(c3, "/quit-interview")
+    with app.app_context():
+        rec3 = InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email3).first().id).first()
+    check("exit before answering any interview question: recorded with the no-answers note, one attempt",
+          rec3 is not None and rec3.summary == exit_report.NO_ANSWER_SUMMARY and used(email3)[0] == 1)
+    check("…and its e-mail says there were no answers to review", sent_to(email3) and "before answering any interview question" in sent_to(email3)[0][2])
+    rep3 = get(c3, f"/my-history/{rec3.id}").data.decode()
+    check("…and its report shows the no-answers note, not the question", exit_report.NO_ANSWER_SUMMARY in rep3 and "What is polymorphism?" not in rep3)
+
+    # exit before even answering the role question: nothing recorded, nothing used, no e-mail
+    email4 = "exiter4@test.local"
+    make_user(email4, "Exit Four")
+    c4, _ = login_user(email4)
+    get(c4, "/interview")
+    SENT.clear()
+    r = post(c4, "/quit-interview")
+    check("exit at the role question: back to the dashboard, nothing recorded, no attempt, no e-mail",
+          r.headers["Location"].endswith("/dashboard") and results_for(email4) == [] and used(email4)[0] == 0 and not sent_to(email4)
+          and not progress_exists(email4))
+
+    # the feedback-email switch also controls the exit e-mail
+    with app.app_context():
+        row = AdminSettings.query.first()
+        row.enable_feedback_emails = False
+        db.session.commit()
+    invalidate_settings_cache()
+    try:
+        email5 = "exiter5@test.local"
+        make_user(email5, "Exit Five")
+        c5, _ = login_user(email5)
+        get(c5, "/interview")
+        post(c5, "/interview", data={"answer": "Go"})
+        post(c5, "/interview", data={"answer": "Goroutines are lightweight threads."})
+        SENT.clear()
+        post(c5, "/quit-interview")
+        check("feedback e-mails switched off: exit is still recorded but no e-mail is sent", results_for(email5) and not sent_to(email5))
+    finally:
+        with app.app_context():
+            row = AdminSettings.query.first()
+            row.enable_feedback_emails = True
+            db.session.commit()
+        invalidate_settings_cache()
+
+    # an interrupted assessment cannot be thrown away by starting practice
+    email6 = "exiter6@test.local"
+    make_user(email6, "Exit Six")
+    c6, _ = login_user(email6)
+    get(c6, "/interview")
+    post(c6, "/interview", data={"answer": "Rust"})
+    r = post(c6, "/practice-start", data={"mode": "drill", "drill_subject": "Graphs"})
+    check("practice-start with an interrupted assessment goes back to the dashboard", r.status_code == 302 and "assessment_in_progress" in r.headers["Location"], r.headers.get("Location"))
+    check("…which explains it, and the assessment is still saved",
+          "Your assessment was interrupted and is still saved" in get(c6, r.headers["Location"]).data.decode() and progress_exists(email6))
+
+    # the e-mail builder never reveals how many questions there were
+    for answered, reviewed in ((3, True), (2, False), (0, False)):
+        _s, t, _h = feedback_email.build_exit_message("Asha Kumar", "Python", 6.5 if reviewed else 0.0, answered, reviewed, "",
+                                                       "AIS-000099", 99, sections=[{"title": "What stood out", "text": "x"}] if reviewed else None)
+        check(f"exit e-mail ({answered} answered, reviewed={reviewed}) has no question count", _re.search(r"\b\d+\s+questions?\b", t) is None, t)
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

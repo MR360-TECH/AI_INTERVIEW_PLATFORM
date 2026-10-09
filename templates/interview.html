@@ -928,10 +928,10 @@
               </div>
               <div>
                 <p class="fw-semibold mb-1" style="color:var(--text-main);font-family:'Outfit',sans-serif;">
-                  {% if is_practice %}Discard current practice session?{% else %}Return to dashboard?{% endif %}
+                  {% if is_practice %}Discard current practice session?{% else %}End this assessment now?{% endif %}
                 </p>
                 <p style="color:var(--text-desc);font-size:0.88rem;margin:0;">
-                  {% if is_practice %}Your practice conversation will be reset and you will return to the practice setup.{% else %}A formal assessment cannot be resumed once you leave. Exiting now ends this session without a result, and it will not be counted as an attempt.{% endif %}
+                  {% if is_practice %}Your practice conversation will be reset and you will return to the practice setup.{% else %}Exiting ends this assessment for good: it cannot be resumed. The questions you have answered so far will be evaluated, you will receive a report and a feedback e-mail, and this session counts as one attempt.{% endif %}
                 </p>
               </div>
             </div>
@@ -945,9 +945,11 @@
               </button>
             </form>
             {% else %}
-            <a href="/dashboard" class="btn btn-danger rounded-pill px-4 fw-bold text-decoration-none">
-              <i class="bi bi-box-arrow-right me-1"></i> Yes, Exit Now
-            </a>
+            <form method="post" action="/quit-interview" class="m-0" id="exitAssessmentForm" onsubmit="if (loadingOverlay) { const t = document.querySelector('.loader-title'); const s = document.querySelector('.loader-sub'); if (t) t.textContent='Preparing your report'; if (s) s.textContent='The AI examiner is reviewing the questions you answered. This can take a few seconds.'; loadingOverlay.classList.add('active'); } var b = this.querySelector('button'); if (b) b.disabled = true;">
+              <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                <i class="bi bi-box-arrow-right me-1"></i> Yes, Exit Now
+              </button>
+            </form>
             {% endif %}
           </div>
         </div>

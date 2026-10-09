@@ -1056,10 +1056,17 @@
                 Assessment Locked
             </a>
             {% else %}
+            {% if has_progress %}
+            <a href="/interview" class="nav-item">
+                <span class="nav-icon"><i class="bi bi-play-circle-fill"></i></span>
+                Continue Assessment
+            </a>
+            {% else %}
             <a href="/interview?restart=1" class="nav-item">
                 <span class="nav-icon"><i class="bi bi-rocket-takeoff-fill"></i></span>
                 Start Assessment
             </a>
+            {% endif %}
             {% endif %}
             <a href="/practice-setup" class="nav-item">
                 <span class="nav-icon"><i class="bi bi-mortarboard-fill"></i></span>
@@ -1199,7 +1206,7 @@
                         </button>
                         {% else %}
                         <button type="button" class="btn-primary-grad w-100" data-bs-toggle="modal" data-bs-target="#confirmStartAssessmentModal" id="assessmentMainBtn">
-                            <i class="bi bi-rocket-takeoff-fill"></i> Launch Assessment Studio &rarr;
+                            {% if has_progress %}<i class="bi bi-play-circle-fill"></i> Continue Assessment &rarr;{% else %}<i class="bi bi-rocket-takeoff-fill"></i> Launch Assessment Studio &rarr;{% endif %}
                         </button>
                         {% endif %}
                     </div>
@@ -1479,8 +1486,8 @@
             </p>
             <p style="color:var(--text-desc);font-size:0.88rem;margin:0;line-height:1.6;">
               You are about to start a formal, adaptive AI-driven technical assessment. Ensure you are in a quiet environment and your microphone is ready.
-              Once started, the assessment must be completed in one sitting and cannot be resumed if you leave.
-              {% if has_progress %}<strong style="color:#f59e0b;">Your previous unfinished session will be discarded.</strong>{% endif %}
+              Once started, the assessment must be completed in one sitting. Exiting ends it for good: the questions you answered are evaluated and it counts as one attempt.
+              {% if has_progress %}<strong style="color:#f59e0b;">Your last assessment was interrupted by a connection or server problem and is saved. You will continue where you left off.</strong>{% endif %}
             </p>
           </div>
         </div>
@@ -1500,9 +1507,15 @@
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
         <button type="button" class="btn btn-secondary rounded-pill px-4 fw-semibold" data-bs-dismiss="modal">Cancel</button>
+        {% if has_progress %}
+        <a href="/interview" class="btn btn-primary-grad rounded-pill px-4 fw-bold text-white text-decoration-none">
+          <i class="bi bi-play-circle-fill me-1"></i> Continue Assessment
+        </a>
+        {% else %}
         <a href="/interview?restart=1" class="btn btn-primary-grad rounded-pill px-4 fw-bold text-white text-decoration-none">
           <i class="bi bi-rocket-takeoff-fill me-1"></i> Begin Assessment Now
         </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -1651,7 +1664,7 @@
               </div>
               <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:6px;">Single Session</div>
               <p style="font-size:0.83rem;color:var(--text-desc);line-height:1.55;margin:0;">
-                Complete the assessment in one sitting. A formal session cannot be resumed once you leave it, and an unfinished session is never counted as a completed attempt.
+                Complete the assessment in one sitting. If you exit, it ends for good: the questions you answered are evaluated and it counts as one attempt. Only a connection or server problem lets you continue later.
               </p>
             </div>
 
@@ -1749,7 +1762,7 @@
               </h2>
               <div id="faqCollapseOne" class="accordion-collapse collapse" aria-labelledby="faqHeadingOne" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
-                  Formal assessments must be completed in a single sitting and cannot be resumed once you leave, so please start only when you have uninterrupted time. If the platform itself hits an error, your attempt is never counted against you.
+                  Formal assessments must be completed in a single sitting, so please start only when you have uninterrupted time. If the platform hits an error or your connection drops, your answers are saved and you can continue where you left off.
                 </div>
               </div>
             </div>
@@ -1791,7 +1804,7 @@
               </h2>
               <div id="faqCollapseFour" class="accordion-collapse collapse" aria-labelledby="faqHeadingFour" data-bs-parent="#faqAccordion">
                 <div class="accordion-body" style="font-size:0.85rem;color:var(--text-desc);line-height:1.6;">
-                  A formal assessment cannot be resumed. If you leave, the unfinished session is discarded and the next start begins fresh from Question 1. An unfinished session does not consume one of your completed evaluation attempts.
+                  If you press Exit, the assessment ends for good and cannot be resumed. The questions you answered are evaluated, you receive a report and a feedback e-mail, and the session counts as one attempt. If a connection or server problem interrupts you instead, your answers are saved and you can continue from the dashboard.
                 </div>
               </div>
             </div>

@@ -465,7 +465,8 @@ def build_ajax_system_prompt(domain, difficulty, resume_summary, is_practice, su
     return " ".join(p for p in prompt_parts if p)
 
 
-def build_evaluation_prompt(practice_mode, practice_topic, lang_target, difficulty, domain_val, conversation_text):
+def build_evaluation_prompt(practice_mode, practice_topic, lang_target, difficulty, domain_val, conversation_text,
+                            ended_early=False):
     if practice_mode == "viva":
         grading_instruction = f"Academic Viva Voce exam on {practice_topic}. Grade strictly on theoretical accuracy, equation mastery, and academic definitions."
     elif practice_mode == "lang":
@@ -490,10 +491,20 @@ def build_evaluation_prompt(practice_mode, practice_topic, lang_target, difficul
             "concrete next steps, and never use dramatic or harsh words (for example catastrophic, hopeless, terrible).\n"
         )
 
+    early_note = ""
+    if ended_early:
+        early_note = (
+            "SESSION ENDED EARLY: the candidate chose to exit before the interview was complete. Evaluate ONLY the questions "
+            "that were actually answered and judge those answers on their own merit; do not count unasked questions against "
+            "the candidate. A final question left unanswered when the candidate exited is not an answer: ignore it. In "
+            "paragraph 1, say once, neutrally, that this review covers only the questions answered before the candidate "
+            "exited. Never mention how many questions the interview was meant to have.\n"
+        )
+
     prompt = (
         f"Evaluate this {domain_val} interview assessment thoroughly based on the candidate's transcript.\n"
         f"{grading_instruction}\n"
-        f"{practice_tone}\n"
+        f"{practice_tone}{early_note}\n"
         "EVIDENCE RULES: Base every statement on what the candidate actually said in the transcript. Never invent answers, projects "
         "or skills. Refer to specific answers or topics, briefly and in your own words. A line such as "
         "'[No answer was given before the time limit]' means that question was left unanswered; mention it neutrally only if it matters. "
@@ -519,3 +530,45 @@ def build_evaluation_prompt(practice_mode, practice_topic, lang_target, difficul
         f"Transcript:\n{conversation_text}"
     )
     return prompt
+
+
+def evaluate_interview(prompt):
+    """Runs the evaluation prompt and returns (score 0-10, summary paragraphs). Raises ValueError when the AI gives
+    no usable score, so the caller can decide what to keep."""
+    score_num = None
+    evaluation = ""
+    for _attempt in range(2):
+        evaluation = generate_text(prompt, max_output_tokens=1200, temperature=0.1,
+                                   deadline_s=45.0, per_call_timeout_s=25.0, trim_truncated=False)
+        plain_eval = re.sub(r'[\*\#\_]', '', evaluation)
+        score_match = re.search(r'SCORE\s*:\s*([0-9]+(?:\.[0-9]+)?)', plain_eval, re.IGNORECASE) \
+            or re.search(r'([0-9]+(?:\.[0-9]+)?)\s*/\s*10', plain_eval)
+        if score_match:
+            score_num = max(0.0, min(10.0, float(score_match.group(1))))
+            break
+    if score_num is None:
+        raise ValueError("AI evaluation did not contain a score")
+
+    summary_lines = []
+    in_summary = False
+    for raw_line in evaluation.split("\n"):
+        line = raw_line.strip()
+        if not line:
+            if in_summary:
+                summary_lines.append("")
+            continue
+
+        upper_line = re.sub(r'[\*\#\_]', '', line).strip().upper()
+        if upper_line.startswith("SCORE"):
+            in_summary = False
+        elif upper_line.startswith("SUMMARY"):
+            in_summary = True
+        elif in_summary:
+            summary_lines.append(line)
+
+    summary_text = "\n".join(summary_lines).strip()
+    if not summary_text:
+        summary_text = re.sub(r'SCORE\s*:\s*[^\n]+', '', evaluation, flags=re.IGNORECASE).strip()
+        if not summary_text:
+            summary_text = "Not enough data to generate a report."
+    return score_num, summary_text

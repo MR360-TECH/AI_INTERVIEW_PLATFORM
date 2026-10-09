@@ -65,12 +65,28 @@ class InterviewResult(db.Model):
     domain = db.Column(db.String(150))
     is_terminated = db.Column(db.Boolean, default=False)
     termination_reason = db.Column(db.Text)
+    transcript = db.Column(db.Text)          # JSON [{"q", "a"}] of the questions answered (kept for exited sessions)
     interview_datetime = db.Column(db.DateTime, server_default=db.func.now())
+
+    # The candidate pressed Exit during a scored assessment: the answers given so far are evaluated and it counts
+    # as one attempt.
+    EXITED_STATUS = "Exited (Incomplete)"
 
     # Statuses that should NOT consume a token slot:
     #   - anything with 'Practice' in name
-    #   - 'Abandoned (Reset)' — user reset before finishing
+    #   - 'Abandoned (Reset)' — older records from before exiting counted as an attempt
     NON_COUNTING_STATUSES = ['Abandoned (Reset)']
+
+    @property
+    def is_exited(self):
+        return self.status == self.EXITED_STATUS
+
+    def transcript_items(self):
+        try:
+            items = json.loads(self.transcript or "[]")
+            return [i for i in items if isinstance(i, dict) and i.get("q")]
+        except (TypeError, ValueError):
+            return []
 
     @property
     def session_code(self):

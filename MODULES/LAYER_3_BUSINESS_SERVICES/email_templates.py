@@ -35,12 +35,39 @@ _ON_CYAN = "#020510"
 
 # Result chip per tone band: (label, background, text colour, border). Deliberately no red / no verdict words.
 BAND_STYLE = {
+    "outstanding": ("Outstanding performance", "#3b2f06", "#fcd34d", "#a16207"),
     "excellent": ("Excellent performance", "#052e2b", "#34d399", "#065f46"),
     "done_well": ("Strong performance", "#052e2b", "#34d399", "#065f46"),
     "close": ("Almost there", "#0c2a4d", "#7dd3fc", "#075985"),
-    "clear": ("Room to grow", "#1e1b4b", "#a5b4fc", "#3730a3"),
+    "developing": ("Room to grow", "#1e1b4b", "#a5b4fc", "#3730a3"),
+    "foundation": ("Building foundations", "#1e1b4b", "#a5b4fc", "#3730a3"),
     "brief": ("Short session", "#1e293b", "#cbd5e1", "#475569"),
+    "exited": ("Incomplete session", "#3b2a06", "#fbbf24", "#92400e"),
 }
+
+# The feedback e-mail per band: (accent colour, hero tint, headline, closing line). The subject is chosen in
+# FEEDBACK_SUBJECTS: an upbeat subject for the top results, a neutral one otherwise (a low score is never announced in
+# the inbox).
+FEEDBACK_LOOK = {
+    "outstanding": ("#fcd34d", "#2a2208", "An outstanding performance", "Congratulations on a truly outstanding result."),
+    "excellent": ("#34d399", "#062a22", "An excellent performance", "Well done, and thank you for the effort you put in."),
+    "done_well": ("#34d399", "#062a22", "You have done well", "Good work. A little more depth will take you even further."),
+    "close": ("#7dd3fc", "#0a2238", "You were very close", "You are nearly there. Keep going."),
+    "developing": ("#a5b4fc", "#17153d", "Your assessment is complete", "Every improvement starts with a first step, and you have taken it."),
+    "foundation": ("#a5b4fc", "#17153d", "Your learning plan starts here", "Take it one topic at a time. Progress comes quickly with regular practice."),
+    "brief": ("#cbd5e1", "#1e293b", "Your session was short", "We look forward to seeing a complete session from you."),
+    "exited": ("#fbbf24", "#2a1f06", "Your assessment ended early", "We look forward to seeing a complete session from you."),
+}
+FEEDBACK_SUBJECTS = {
+    "outstanding": "Outstanding result in your assessment · {code}",
+    "excellent": "Excellent work on your assessment · {code}",
+    "done_well": "Your assessment is complete · {code}",
+    "brief": "Your assessment summary · {code}",
+    "exited": "Your assessment report · {code}",
+}
+NEUTRAL_SUBJECT = "Your assessment report is ready · {code}"
+SIGN_OFF = "The AI Interview Platform team"
+_TAKEAWAY_ICONS = ["&#9733;", "&#9678;", "&#10148;"]
 
 # Colour of the numbered badge of each coaching section, by position.
 _SECTION_COLOURS = ["#00ffff", "#38bdf8", "#2dd4bf"]
@@ -202,6 +229,7 @@ body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
   .px{padding-left:20px !important;padding-right:20px !important}
   .h1{font-size:23px !important;line-height:1.3 !important}
   .score{font-size:46px !important}
+  .ring-cell{padding-top:16px !important;text-align:left !important}
   .stack{display:block !important;width:100% !important;text-align:left !important}
   .chip-cell{padding-top:12px !important}
   .card-pad{padding-left:18px !important;padding-right:18px !important}
@@ -211,7 +239,7 @@ body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
 }"""
 
 
-def _layout(title, preheader, body_html, footer_reason):
+def _layout(title, preheader, body_html, footer_reason, hero=""):
     logo = _logo_url()
     logo_cell = (f'<td width="40" style="width:40px;"><img src="{logo}" width="40" height="40" alt="" '
                  'style="display:block;border:0;outline:none;width:40px;height:40px;border-radius:11px;"></td>') if logo else (
@@ -239,6 +267,7 @@ def _layout(title, preheader, body_html, footer_reason):
       </tr></table>
     </td></tr>
     <tr><td style="height:3px;background:{_CYAN};background-image:linear-gradient(90deg,#00ffff,#0284c7);font-size:0;line-height:0;">&nbsp;</td></tr>
+    {hero}
     <tr><td class="px" style="padding:32px 32px 14px 32px;">{body_html}</td></tr>
     <tr><td class="px" bgcolor="#050b1c" style="padding:20px 32px 26px 32px;background:#050b1c;border-top:1px solid {_LINE};">
       <p style="margin:0 0 6px 0;font-family:{_FONT};font-size:12px;line-height:1.6;color:{_SOFT};">{escape(footer_reason)}</p>
@@ -329,22 +358,131 @@ def welcome_email(full_name, base_url, via_google=False):
         footer_reason="You received this email because you registered an account on our platform.")
 
 
-def assessment_email(full_name, opening, sections, band, domain, score, session_code, date_text, result_id, base_url):
-    """sections: list of {"title", "text"} - three short coaching lines. opening: the elaborated first paragraph."""
+def plain_text(value):
+    """The opening paragraphs mark key phrases with **...**; the plain-text part shows them without the markers."""
+    return (value or "").replace("**", "")
+
+
+def _rich_paragraph(text):
+    """A paragraph whose **...** phrases become bold white text. Escaped first, so nothing else can become HTML."""
+    body = re.sub(r"\*\*(.+?)\*\*", r'<strong style="color:#ffffff;font-weight:700;">\1</strong>', escape(text))
+    return (f'<p style="margin:0 0 24px 0;font-family:{_FONT};font-size:16px;line-height:1.75;'
+            f'color:{_MUTED};">{body}</p>')
+
+
+def _feedback_hero(band, headline, meta_line, score):
+    """Tinted top band: result chip, headline, the domain / level / date line and (when there is a score) a ring."""
+    tone, tint = FEEDBACK_LOOK[band][0], FEEDBACK_LOOK[band][1]
+    label = BAND_STYLE[band][0]
+    ring = ""
+    bar = ""
+    if score is not None:
+        ring = (f'<td width="124" class="stack ring-cell" align="right" valign="middle">'
+                f'<div style="width:104px;height:104px;border-radius:58px;background:{_BG};border:6px solid {tone};text-align:center;">'
+                f'<div style="font-family:{_FONT};font-size:32px;font-weight:900;color:#ffffff;line-height:1;padding-top:26px;">{score:.1f}</div>'
+                f'<div style="font-family:{_FONT};font-size:11px;font-weight:700;color:{_SOFT};margin-top:4px;">out of 10</div></div></td>')
+        pct = max(0, min(100, int(round(score * 10))))
+        bar = ('<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:18px;"><tr>'
+               f'<td style="height:8px;background:{_LINE};border-radius:8px;font-size:0;line-height:0;">'
+               f'<div style="width:{pct}%;height:8px;background:{tone};border-radius:8px;font-size:0;line-height:0;">&nbsp;</div>'
+               '</td></tr></table>')
+    return (
+        f'<tr><td class="px" bgcolor="{tint}" style="padding:30px 32px 26px 32px;background:{tint};'
+        f'background-image:linear-gradient(160deg,{tint} 0%,{_SURFACE} 100%);border-bottom:1px solid {_BORDER};">'
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+        '<td class="stack" valign="middle">'
+        f'<div style="display:inline-block;padding:5px 12px;border-radius:999px;background:{_BG};border:1px solid {tone};'
+        f'font-family:{_FONT};font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:{tone};">{escape(label)}</div>'
+        f'<div class="h1" style="font-family:{_FONT};font-size:26px;font-weight:800;line-height:1.25;color:#ffffff;margin:12px 0 6px;">{escape(headline)}</div>'
+        f'<div style="font-family:{_FONT};font-size:14px;line-height:1.5;color:{_MUTED};">{escape(meta_line)}</div>'
+        f'</td>{ring}</tr></table>{bar}</td></tr>')
+
+
+def _takeaway_cards(band, sections):
+    tone, tint = FEEDBACK_LOOK[band][0], FEEDBACK_LOOK[band][1]
+    rows = []
+    for index, section in enumerate(sections):
+        icon = _TAKEAWAY_ICONS[index % len(_TAKEAWAY_ICONS)]
+        rows.append(
+            '<tr><td style="padding:0 0 12px 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+            f'style="background:{_PANEL};border:1px solid {_BORDER};border-left:4px solid {tone};border-radius:12px;"><tr>'
+            f'<td width="52" valign="top" style="padding:16px 0 16px 16px;"><div style="width:34px;height:34px;line-height:34px;'
+            f'border-radius:10px;background:{tint};color:{tone};text-align:center;font-size:16px;font-family:{_FONT};">{icon}</div></td>'
+            f'<td style="padding:14px 16px 14px 12px;"><div style="font-family:{_FONT};font-size:12px;font-weight:800;letter-spacing:0.08em;'
+            f'text-transform:uppercase;color:{tone};margin-bottom:4px;">{escape(section["title"])}</div>'
+            f'<div style="font-family:{_FONT};font-size:15px;line-height:1.6;color:{_TEXT};">{escape(section["text"])}</div>'
+            '</td></tr></table></td></tr>')
+    return f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0">{"".join(rows)}</table>'
+
+
+def _feedback_email(*, band, subject, preheader, full_name, opening, sections, sections_title, score, facts,
+                    meta_line, button, footer_reason):
+    """The assessment feedback e-mail: tinted hero with the result, a short bold-highlighted opening, the takeaway
+    cards, the report button, a closing line and the team sign-off. Returns (subject, text, html)."""
+    _tone, _tint, headline, closing = FEEDBACK_LOOK[band]
+    greeting = greeting_for(full_name)
+
+    text = [headline, "", greeting, "", plain_text(opening), "", "YOUR RESULT"]
+    if score is not None:
+        text.append(f"Score: {score:.1f} / 10 ({BAND_STYLE[band][0]})")
+    text += [f"{k}: {v}" for k, v in facts] + ["", sections_title.upper()]
+    text += [f"{s['title']}: {s['text']}" for s in sections]
+    text += ["", f"{button[0]}: {button[1]}", "", closing, SIGN_OFF,
+             "--", footer_reason, f"{APP_NAME} - automated message, please do not reply."]
+
+    body = (
+        f'<p style="margin:0 0 14px 0;font-family:{_FONT};font-size:16px;color:{_MUTED};">{escape(greeting)}</p>'
+        + _rich_paragraph(opening)
+        + _section_heading(sections_title)
+        + _takeaway_cards(band, sections)
+        + _button(button[1], button[0] + " →")
+        + f'<p style="margin:6px 0 4px 0;font-family:{_FONT};font-size:15px;line-height:1.6;color:{_TEXT};">{escape(closing)}</p>'
+        + f'<p style="margin:0 0 10px 0;font-family:{_FONT};font-size:14px;color:{_SOFT};">{SIGN_OFF}</p>')
+    session = dict(facts).get("Session ID", "")
+    footer = (f"Session {session} · " if session else "") + footer_reason
+    html = _layout(headline, preheader, body, footer, hero=_feedback_hero(band, headline, meta_line, score))
+    return subject, "\n".join(text), html
+
+
+def _meta_line(domain_line, level_label, date_text):
+    return " · ".join(part for part in (domain_line, level_label, date_text) if part)
+
+
+def assessment_email(full_name, opening, sections, band, domain, score, session_code, date_text, result_id, base_url,
+                     level_label=None):
+    """sections: the takeaway lines [{"title", "text"}]. opening: the short first paragraph, with **key phrases**."""
     domain_line = one_line(domain) or "General"
-    return _build(
-        subject=(f"Your assessment summary · {session_code}" if band == "brief"
-                 else f"Your assessment is complete · {session_code}"),
-        preheader=f"Your report {session_code} is ready.",
-        badge="Assessment Feedback",
-        title="Your assessment is complete",
-        greeting=greeting_for(full_name),
-        paragraphs=[opening],
-        card=(score, band, [("Session ID", session_code), ("Domain", domain_line), ("Date", date_text)]),
-        sections=sections,
-        sections_title="What is next?",
+    facts = [("Session ID", session_code), ("Domain", domain_line)]
+    if level_label:
+        facts.append(("Level", level_label))
+    facts.append(("Date", date_text))
+    return _feedback_email(
+        band=band, subject=FEEDBACK_SUBJECTS.get(band, NEUTRAL_SUBJECT).format(code=session_code),
+        preheader=f"Your report {session_code} is ready.", full_name=full_name, opening=opening, sections=sections,
+        sections_title="Your next step" if band == "brief" else "Your three takeaways", score=score, facts=facts,
+        meta_line=_meta_line(domain_line, level_label, date_text),
         button=("View your full report", f"{base_url}/my-history/{result_id}"),
         footer_reason="You received this email because you completed an assessment on our platform.")
+
+
+def exited_email(full_name, opening, sections, domain, score, session_code, date_text, result_id, base_url, reviewed,
+                 level_label=None):
+    """The candidate exited a scored assessment early. With an analysis: the score ring and the takeaways. Without one
+    (no answers, or the AI analysis failed): no score at all, just the status and one next step."""
+    domain_line = one_line(domain) or "General"
+    facts = [("Session ID", session_code), ("Domain", domain_line)]
+    if level_label:
+        facts.append(("Level", level_label))
+    facts.append(("Date", date_text))
+    if not reviewed:
+        facts.append(("Status", "Exited before completion"))
+    return _feedback_email(
+        band="exited", subject=FEEDBACK_SUBJECTS["exited"].format(code=session_code),
+        preheader=f"Your report {session_code} is ready.", full_name=full_name, opening=opening, sections=sections,
+        sections_title="Your three takeaways" if reviewed else "Your next step", score=score if reviewed else None,
+        facts=facts, meta_line=_meta_line(domain_line, level_label, date_text),
+        button=("View your report", f"{base_url}/my-history/{result_id}"),
+        footer_reason="You received this email because you took an assessment on our platform.")
 
 
 def terminated_email(full_name, opening, domain, session_code, date_text, result_id, base_url):

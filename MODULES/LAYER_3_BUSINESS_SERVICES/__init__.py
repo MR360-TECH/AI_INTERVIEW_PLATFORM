@@ -13,5 +13,6 @@ from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import (
     queue_welcome_email,
     queue_assessment_feedback,
     queue_terminated_notice,
+    queue_exit_feedback,
     queue_feedback_notification
 )

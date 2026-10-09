@@ -911,6 +911,8 @@
                         <td>
                             {% if result.is_terminated or (result.status and "Terminated" in result.status) %}
                             <span class="verdict-terminated" title="{{ result.termination_reason or 'Interview terminated due to warning strikes / proctoring code-of-conduct breach' }}"><i class="bi bi-shield-slash-fill"></i> TERMINATED (BREACH)</span>
+                            {% elif result.is_exited %}
+                            <span class="verdict-rejected" style="background: rgba(245, 158, 11, 0.16) !important; color: #fbbf24 !important; border-color: rgba(245, 158, 11, 0.4) !important;" title="The candidate exited before the assessment was complete; only the answered questions were evaluated"><i class="bi bi-box-arrow-right"></i> Exited early</span>
                             {% elif result.status in ["Selected", "PASS"] or (result.status and "WELL DONE" in result.status) %}
                             <span class="verdict-recommended"><i class="bi bi-check-circle-fill"></i> Recommended</span>
                             {% else %}

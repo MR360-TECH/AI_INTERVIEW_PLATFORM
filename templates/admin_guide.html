@@ -537,7 +537,7 @@
             <div class="step-item">
                 <div class="step-num">Phase 2</div>
                 <div class="step-title">Quota Depletion</div>
-                <p class="step-desc">Each completed formal assessment consumes 1 token. Platform or AI errors, exiting and restarting never do. When remaining tokens reach 0, the candidate dashboard locks.</p>
+                <p class="step-desc">Each completed, terminated or exited formal assessment consumes 1 token. Platform, AI or connection errors never do: the interview is saved and the candidate continues where they left off. When remaining tokens reach 0, the candidate dashboard locks.</p>
             </div>
             <div class="step-item">
                 <div class="step-num">Phase 3</div>
@@ -580,7 +580,8 @@
             </div>
             <div class="feature-card" style="border-color: rgba(239, 68, 68, 0.4);">
                 <h4 style="color: #ef4444;"><i class="bi bi-x-octagon-fill"></i> Reaching the limit ends the session</h4>
-                <p>The session is recorded as <strong>Terminated (Breach)</strong> with a 0/10 score and the reason. It counts as one attempt, and the candidate receives a neutral email. Exiting, restarting or a platform error never counts.</p>
+                <p>The session is recorded as <strong>Terminated (Breach)</strong> with a 0/10 score and the reason. It counts as one attempt, and the candidate receives a neutral email. A platform or connection error never counts.</p>
+                <p><strong>Exited early.</strong> If the candidate presses <strong>Exit</strong>, the assessment ends for good. The questions they answered are evaluated by the AI and the candidate sees only that analysis; your admin report also lists each question with their answer. It counts as one attempt and it is never marked as recommended. The candidate receives the "incomplete session" feedback email (switched by the feedback-email setting).</p>
             </div>
             <div class="feature-card" style="border-color: rgba(16, 185, 129, 0.4);">
                 <h4 style="color: #34d399;"><i class="bi bi-journal-check"></i> Integrity log (only you see it)</h4>
