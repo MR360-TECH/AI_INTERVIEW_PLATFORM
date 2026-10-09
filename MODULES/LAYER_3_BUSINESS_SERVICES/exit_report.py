@@ -113,8 +113,7 @@ def record_exit(user_id, settings):
             if settings.enable_feedback_emails and user and user.email:
                 queue_exit_feedback(user.email, full_name=user.full_name, domain=domain, score=score,
                                     answered=len(answered), reviewed=reviewed, report_text=summary if reviewed else "",
-                                    session_code=record.session_code, result_id=result_id, when=datetime.now(),
-                                    difficulty=session.get("interview_difficulty") or settings.default_difficulty)
+                                    session_code=record.session_code, result_id=result_id, when=datetime.now())
         except Exception as err:
             print(f"[EXIT RECORD ERROR] {err}")
             db.session.rollback()

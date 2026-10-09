@@ -51,7 +51,7 @@ The **AI Interview Platform** is a full-stack web application that simulates rea
 
 When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **907 automated checks** plus real-browser tests.
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **908 automated checks** plus real-browser tests.
 
 ---
 
@@ -639,7 +639,7 @@ Scored assessments are protected by rules that are **counted and stored on the s
 
 Dark-theme, mobile-responsive HTML e-mails with a plain-text part: welcome (sent once), assessment feedback, exited-session feedback, session-ended notice, slot unlocked, one-time code, and feedback received (to the owner, with sender details).
 
-The **assessment feedback e-mail** has seven result levels (Outstanding, Excellent, Strong, Almost there, Room to grow, Building foundations, Short session) plus the incomplete-session e-mail after Exit. Each has its own tinted result band with a score ring, headline, two-sentence opening with the key phrases in bold, three AI-written takeaways (checked line by line against a banned-word filter), a report button and a closing line. Upbeat subjects are used only for the top results, so a low score is never announced in the inbox. Delivery tries **Gmail SMTP, then Resend, then SendGrid**, runs in the background, and never breaks the request. The admin can switch the assessment-feedback e-mail on or off without affecting any other e-mail.
+The **assessment feedback e-mail** has seven result levels (Outstanding, Excellent, Strong, Almost there, Room to grow, Building foundations, Short session) plus the incomplete-session e-mail after Exit. Each has its own tinted result band with a score ring, headline, the interview domain as a highlighted pill (the difficulty level is never shown to the candidate), two-sentence opening with the key phrases in bold, three AI-written takeaways (checked line by line against a banned-word filter), a report button and a closing line. Upbeat subjects are used only for the top results, so a low score is never announced in the inbox. Delivery tries **Gmail SMTP, then Resend, then SendGrid**, runs in the background, and never breaks the request. The admin can switch the assessment-feedback e-mail on or off without affecting any other e-mail.
 
 > [!WARNING]
 > **Deliverability.** Render's free plan blocks SMTP ports, so e-mails may be sent through an HTTP provider and land in spam until a verified sending domain (SPF, DKIM, DMARC) is configured. A temporary hint on the code page tells users to check Spam or Promotions. Set `SHOW_SPAM_HINT=false` once a domain is in place.
@@ -778,7 +778,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (907 checks, about one minute)
+python tests/e2e.py                          # all groups (908 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 

@@ -802,7 +802,9 @@ def t_assessment_email():
         check("the headline and closing match the band, signed by the team",
               text.split("\n")[0] == "You have done well" and "A little more depth will take you even further." in text
               and "The AI Interview Platform team" in text)
-        check("the hero shows the level from the interview difficulty", "Student level" in html and "Level: Student level" in text)
+        check("the interview domain is shown as a highlighted pill in the hero", "Interview domain" in html and "Python backend" in html and "Domain: Python backend" in text)
+        check("the difficulty level is never shown to the candidate",
+              not any(w in (html + text) for w in ("Student level", "Mid-level", "Senior level", "Level:")))
         check("each AI line appears under its own heading", all(v in text for v in GOOD_LINES.values()))
         check("email shows the tone chip and the score ring", "Strong performance" in html and "YOUR RESULT" in text and "out of 10" in html)
         check("html is responsive (viewport + mobile rules)", 'name="viewport"' in html and "max-width:520px" in html)

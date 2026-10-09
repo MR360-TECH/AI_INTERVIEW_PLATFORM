@@ -29,9 +29,6 @@ BAND_SECTION_TITLES = {
     "foundation": {"stood_out": "A good start", "focus": "Start with"},
 }
 
-# How the difficulty level is named in the e-mail.
-LEVEL_LABELS = {"student": "Student level", "mid": "Mid-level", "senior": "Senior level"}
-
 # The short first paragraph for each case. Fixed, reviewed copy (never AI-written): it says in plain words what the
 # result means. **...** marks the key phrases shown in bold. {domain} is the candidate's domain. No verdict words,
 # nothing about attempts.
@@ -156,10 +153,6 @@ def score_band(score, pass_score, answer_count):
     return "foundation"
 
 
-def level_label(difficulty):
-    return LEVEL_LABELS.get(difficulty or "")
-
-
 def opening_for(key, domain, table=None):
     """The fixed first paragraph for a band, with the candidate's domain filled in (one safe line)."""
     return (table or OPENINGS)[key].replace("{domain}", email_templates.one_line(domain, 60) or "your domain")
@@ -239,18 +232,18 @@ def coaching_sections(band, domain, report_text):
 # ──────────────────────────────────────────────────────────────────────────────
 
 def build_assessment_message(full_name, domain, score, pass_score, answer_count, report_text, session_code,
-                             result_id, when=None, sections=None, difficulty=None):
+                             result_id, when=None, sections=None):
     band = score_band(score, pass_score, answer_count)
     if sections is None:
         sections = coaching_sections(band, domain, report_text)
     return email_templates.assessment_email(
         full_name=full_name, opening=opening_for(band, domain), sections=sections, band=band, domain=domain,
         score=score, session_code=session_code, date_text=(when or datetime.now()).strftime("%d %B %Y"),
-        result_id=result_id, base_url=APP_BASE_URL, level_label=level_label(difficulty)), band
+        result_id=result_id, base_url=APP_BASE_URL), band
 
 
 def build_exit_message(full_name, domain, score, answered, reviewed, report_text, session_code, result_id, when=None,
-                       sections=None, difficulty=None):
+                       sections=None):
     if reviewed:
         opening = EXIT_OPENINGS["reviewed"]
         if sections is None:
@@ -261,7 +254,7 @@ def build_exit_message(full_name, domain, score, answered, reviewed, report_text
     return email_templates.exited_email(
         full_name=full_name, opening=opening, sections=sections, domain=domain, score=score, session_code=session_code,
         date_text=(when or datetime.now()).strftime("%d %B %Y"), result_id=result_id, base_url=APP_BASE_URL,
-        reviewed=reviewed, level_label=level_label(difficulty))
+        reviewed=reviewed)
 
 
 def _run_async(fn, kwargs):

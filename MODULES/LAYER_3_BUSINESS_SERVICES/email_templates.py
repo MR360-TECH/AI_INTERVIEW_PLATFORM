@@ -370,8 +370,9 @@ def _rich_paragraph(text):
             f'color:{_MUTED};">{body}</p>')
 
 
-def _feedback_hero(band, headline, meta_line, score):
-    """Tinted top band: result chip, headline, the domain / level / date line and (when there is a score) a ring."""
+def _feedback_hero(band, headline, meta_line, score, domain_line):
+    """Tinted top band: result chip, headline, the interview domain as a solid pill in the result colour, the
+    level / date line and (when there is a score) a ring."""
     tone, tint = FEEDBACK_LOOK[band][0], FEEDBACK_LOOK[band][1]
     label = BAND_STYLE[band][0]
     ring = ""
@@ -393,8 +394,11 @@ def _feedback_hero(band, headline, meta_line, score):
         '<td class="stack" valign="middle">'
         f'<div style="display:inline-block;padding:5px 12px;border-radius:999px;background:{_BG};border:1px solid {tone};'
         f'font-family:{_FONT};font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:{tone};">{escape(label)}</div>'
-        f'<div class="h1" style="font-family:{_FONT};font-size:26px;font-weight:800;line-height:1.25;color:#ffffff;margin:12px 0 6px;">{escape(headline)}</div>'
-        f'<div style="font-family:{_FONT};font-size:14px;line-height:1.5;color:{_MUTED};">{escape(meta_line)}</div>'
+        f'<div class="h1" style="font-family:{_FONT};font-size:26px;font-weight:800;line-height:1.25;color:#ffffff;margin:12px 0 14px;">{escape(headline)}</div>'
+        f'<div style="font-family:{_FONT};font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:{_SOFT};margin-bottom:6px;">Interview domain</div>'
+        f'<div style="display:inline-block;padding:8px 16px;border-radius:10px;background:{tone};font-family:{_FONT};'
+        f'font-size:17px;font-weight:800;line-height:1.3;color:{_BG};">&#9670;&nbsp; {escape(domain_line)}</div>'
+        f'<div style="font-family:{_FONT};font-size:14px;line-height:1.5;color:{_MUTED};margin-top:10px;">{escape(meta_line)}</div>'
         f'</td>{ring}</tr></table>{bar}</td></tr>')
 
 
@@ -416,7 +420,7 @@ def _takeaway_cards(band, sections):
 
 
 def _feedback_email(*, band, subject, preheader, full_name, opening, sections, sections_title, score, facts,
-                    meta_line, button, footer_reason):
+                    meta_line, button, footer_reason, domain_line="General"):
     """The assessment feedback e-mail: tinted hero with the result, a short bold-highlighted opening, the takeaway
     cards, the report button, a closing line and the team sign-off. Returns (subject, text, html)."""
     _tone, _tint, headline, closing = FEEDBACK_LOOK[band]
@@ -440,39 +444,34 @@ def _feedback_email(*, band, subject, preheader, full_name, opening, sections, s
         + f'<p style="margin:0 0 10px 0;font-family:{_FONT};font-size:14px;color:{_SOFT};">{SIGN_OFF}</p>')
     session = dict(facts).get("Session ID", "")
     footer = (f"Session {session} · " if session else "") + footer_reason
-    html = _layout(headline, preheader, body, footer, hero=_feedback_hero(band, headline, meta_line, score))
+    html = _layout(headline, preheader, body, footer, hero=_feedback_hero(band, headline, meta_line, score, domain_line))
     return subject, "\n".join(text), html
 
 
-def _meta_line(domain_line, level_label, date_text):
-    return " · ".join(part for part in (domain_line, level_label, date_text) if part)
+def _meta_line(date_text):
+    """The small grey line under the domain pill. The difficulty level is never shown to the candidate (admin only)."""
+    return date_text
 
 
-def assessment_email(full_name, opening, sections, band, domain, score, session_code, date_text, result_id, base_url,
-                     level_label=None):
+def assessment_email(full_name, opening, sections, band, domain, score, session_code, date_text, result_id, base_url):
     """sections: the takeaway lines [{"title", "text"}]. opening: the short first paragraph, with **key phrases**."""
     domain_line = one_line(domain) or "General"
     facts = [("Session ID", session_code), ("Domain", domain_line)]
-    if level_label:
-        facts.append(("Level", level_label))
     facts.append(("Date", date_text))
     return _feedback_email(
         band=band, subject=FEEDBACK_SUBJECTS.get(band, NEUTRAL_SUBJECT).format(code=session_code),
         preheader=f"Your report {session_code} is ready.", full_name=full_name, opening=opening, sections=sections,
         sections_title="Your next step" if band == "brief" else "Your three takeaways", score=score, facts=facts,
-        meta_line=_meta_line(domain_line, level_label, date_text),
+        meta_line=_meta_line(date_text), domain_line=domain_line,
         button=("View your full report", f"{base_url}/my-history/{result_id}"),
         footer_reason="You received this email because you completed an assessment on our platform.")
 
 
-def exited_email(full_name, opening, sections, domain, score, session_code, date_text, result_id, base_url, reviewed,
-                 level_label=None):
+def exited_email(full_name, opening, sections, domain, score, session_code, date_text, result_id, base_url, reviewed):
     """The candidate exited a scored assessment early. With an analysis: the score ring and the takeaways. Without one
     (no answers, or the AI analysis failed): no score at all, just the status and one next step."""
     domain_line = one_line(domain) or "General"
     facts = [("Session ID", session_code), ("Domain", domain_line)]
-    if level_label:
-        facts.append(("Level", level_label))
     facts.append(("Date", date_text))
     if not reviewed:
         facts.append(("Status", "Exited before completion"))
@@ -480,7 +479,7 @@ def exited_email(full_name, opening, sections, domain, score, session_code, date
         band="exited", subject=FEEDBACK_SUBJECTS["exited"].format(code=session_code),
         preheader=f"Your report {session_code} is ready.", full_name=full_name, opening=opening, sections=sections,
         sections_title="Your three takeaways" if reviewed else "Your next step", score=score if reviewed else None,
-        facts=facts, meta_line=_meta_line(domain_line, level_label, date_text),
+        facts=facts, meta_line=_meta_line(date_text), domain_line=domain_line,
         button=("View your report", f"{base_url}/my-history/{result_id}"),
         footer_reason="You received this email because you took an assessment on our platform.")
 

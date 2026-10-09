@@ -694,8 +694,7 @@ def interview_result():
                     full_name=candidate.full_name, domain=domain_val, score=score_num, pass_score=PASS_SCORE,
                     answer_count=sum(1 for entry in _result_history if entry.get("role") == "answer"),
                     report_text=summary_text, session_code=session_code_val, result_id=result_id_val,
-                    when=datetime.now(),
-                    difficulty=session.get("interview_difficulty") or settings.default_difficulty)
+                    when=datetime.now())
         except Exception as mail_err:
             print(f"[MAIL] feedback email not queued: {mail_err}")
 
