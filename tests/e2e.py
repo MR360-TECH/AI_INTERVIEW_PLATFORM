@@ -3555,7 +3555,39 @@ def t_route_smoke():
     check("unknown addresses give the friendly 404 page, not a crash", status(visitor, "/no/such/page") == 404)
 
 
-TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_attempt_accounting, t_error_does_not_consume,
+def t_database_driver():
+    section("Database driver: the PostgreSQL address always names psycopg2, so no library version can pick a driver that is not installed")
+    import sys
+    import sqlalchemy
+    from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import normalize_database_url
+    n = normalize_database_url
+    check("a plain postgresql:// address gets the driver named", n("postgresql://u:p@host/db?sslmode=require") == "postgresql+psycopg2://u:p@host/db?sslmode=require")
+    check("an old postgres:// address is also normalised", n("postgres://u:p@host/db") == "postgresql+psycopg2://u:p@host/db")
+    check("an address that already names a driver is left alone", n("postgresql+psycopg2://u:p@host/db") == "postgresql+psycopg2://u:p@host/db")
+    check("SQLite and empty values are untouched", n("sqlite:///x.db") == "sqlite:///x.db" and n("") == "" and n(None) == "")
+    check("surrounding spaces are removed", n("  postgresql://u:p@h/d  ") == "postgresql+psycopg2://u:p@h/d")
+
+    # what happened on the live host: a newer SQLAlchemy chose 'psycopg' (version 3), which was not installed
+    saved = sys.modules.get("psycopg", "absent")
+    sys.modules["psycopg"] = None
+    try:
+        try:
+            engine = sqlalchemy.create_engine(n("postgresql://u:p@localhost/db"))
+            built, driver = True, engine.dialect.driver
+        except Exception as err:
+            built, driver = False, repr(err)
+    finally:
+        if saved == "absent":
+            sys.modules.pop("psycopg", None)
+        else:
+            sys.modules["psycopg"] = saved
+    check("the engine builds even when the 'psycopg' package is not installed, and uses psycopg2", built and driver == "psycopg2", driver)
+
+    req = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "requirements.txt"), encoding="utf-8").read().lower()
+    check("requirements.txt installs the driver the address names (psycopg2-binary)", "psycopg2-binary" in req)
+
+
+TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
          t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]

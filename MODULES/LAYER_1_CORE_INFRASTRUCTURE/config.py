@@ -55,10 +55,20 @@ if not ADMIN_PASSWORD:
     print(f" * SECURE WARNING: ADMIN_PASSWORD environment variable was not set.")
     print(f" * A random temporary password has been generated for this session: {ADMIN_PASSWORD}")
 
+def normalize_database_url(url):
+    """Names the PostgreSQL driver (psycopg2) explicitly. A bare postgresql:// address lets SQLAlchemy choose the driver,
+    and SQLAlchemy 2.1 changed its choice from psycopg2 to psycopg (version 3): a deploy then crashed at start-up because
+    only psycopg2 is installed. Naming the driver makes the result the same with every SQLAlchemy version."""
+    url = (url or "").strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg2://" + url[len("postgresql://"):]
+    return url
+
+
 # Database: Neon PostgreSQL, selected with DATABASE_URL (the same database for local development and production).
-db_url = (os.environ.get("DATABASE_URL") or "").strip()
-if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+db_url = normalize_database_url(os.environ.get("DATABASE_URL"))
 
 if not db_url:
     if os.environ.get("RENDER"):
