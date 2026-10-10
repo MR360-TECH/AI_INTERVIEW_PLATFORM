@@ -1015,6 +1015,22 @@
             .page-header { align-items: flex-start; }
         }
 
+    
+        /* ── Dashboard: fill the cards and the page (both themes) ── */
+        .dash-points { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 7px; }
+        .dash-points li { font-size: 0.86rem; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .dash-points li i { color: var(--primary, #00e5ff); font-size: 1.05rem; flex-shrink: 0; }
+        .dash-steps { margin-top: 22px; border-radius: var(--radius-xl); padding: 22px 26px; background: var(--surface); border: 1px solid var(--border); }
+        .dash-steps-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem; color: var(--text-main); margin-bottom: 14px; }
+        .dash-steps-title i { color: var(--primary, #00e5ff); margin-right: 6px; }
+        .dash-steps-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .dash-step { display: flex; align-items: flex-start; gap: 13px; padding: 14px 16px; border-radius: 14px; background: rgba(0, 229, 255, 0.06); border: 1px solid rgba(0, 229, 255, 0.18); }
+        .dash-step b { display: block; font-size: 0.95rem; color: var(--text-main); margin-bottom: 2px; }
+        .dash-step small { display: block; font-size: 0.82rem; line-height: 1.4; color: var(--text-muted); }
+        .dash-num { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; background: #00e5ff; color: #020510; }
+        @media (max-width: 991px) { .dash-steps-row { grid-template-columns: 1fr; } }
+            .top-card { gap: 16px; }
+        .dash-points li { line-height: 1.3; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
@@ -1200,6 +1216,11 @@
                         <p class="card-body-text">
                             Adaptive AI-driven assessment tailored to your target domain. Evaluates technical depth, problem-solving, and professional logic.
                         </p>
+                        <ul class="dash-points">
+                            <li><i class="bi bi-check2-circle"></i> One adaptive question at a time</li>
+                            <li><i class="bi bi-check2-circle"></i> Type, speak or write code</li>
+                            <li><i class="bi bi-check2-circle"></i> Score, report and e-mail at the end</li>
+                        </ul>
                     </div>
                     <div>
                         {% if is_locked %}
@@ -1235,6 +1256,11 @@
                                 <div class="resume-status-sub">{% if user.resume_text %}ATS Optimized &amp; Tailored for AI evaluation{% else %}Attach PDF/DOCX to personalize assessment{% endif %}</div>
                             </div>
                         </div>
+                        <ul class="dash-points">
+                            <li><i class="bi bi-check2-circle"></i> Questions can use your real experience</li>
+                            <li><i class="bi bi-check2-circle"></i> Upload once, used by every interview</li>
+                            <li><i class="bi bi-check2-circle"></i> Replace it any time</li>
+                        </ul>
                     </div>
                     <div>
                         <button class="btn-emerald-grad w-100" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="uploadResumeBtn">
@@ -1349,6 +1375,17 @@
                         </div>
                     </div>
 
+                    {% if remaining_tokens is defined and allowed_total is defined %}
+                    <div class="stat-card">
+                        <div class="stat-icon si-blue"><i class="bi bi-ticket-perforated"></i></div>
+                        <div>
+                            <div class="stat-label">Assessment Attempts</div>
+                            <div class="stat-value">{{ remaining_tokens }} of {{ allowed_total }} left</div>
+                            <div class="stat-badge {{ 'sb-grey' if remaining_tokens else 'sb-grey' }}"><i class="bi bi-info-circle"></i> Practice never uses one</div>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="stat-card">
                         <div class="stat-icon {% if user.resume_text %}si-emerald{% else %}si-blue{% endif %}">
                             <i class="bi bi-{% if user.resume_text %}file-earmark-check-fill{% else %}file-earmark-arrow-up{% endif %}"></i>
@@ -1421,6 +1458,16 @@
                 {% endif %}
             </div>
 
+
+            <!-- How an assessment works -->
+            <div class="dash-steps anim d3">
+                <div class="dash-steps-title"><i class="bi bi-signpost-split"></i> How an assessment works</div>
+                <div class="dash-steps-row">
+                    <div class="dash-step"><span class="dash-num">1</span><div><b>Add your resume (optional)</b><small>Upload it once and the questions can use your real experience.</small></div></div>
+                    <div class="dash-step"><span class="dash-num">2</span><div><b>Answer one question at a time</b><small>Type, speak or write code. Stay in the exam window; the strike counter is always visible.</small></div></div>
+                    <div class="dash-step"><span class="dash-num">3</span><div><b>Get your report and e-mail</b><small>A score out of 10 and a written evaluation, saved under My History.</small></div></div>
+                </div>
+            </div>
         </div><!-- /page-content -->
     </div><!-- /main-content -->
 </div><!-- /layout -->
