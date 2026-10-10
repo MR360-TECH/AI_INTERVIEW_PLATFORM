@@ -51,7 +51,7 @@ The **AI Interview Platform** is a full-stack web application that simulates rea
 
 When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **968 automated checks** plus real-browser tests.
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **1005 automated checks** plus real-browser tests.
 
 ---
 
@@ -117,6 +117,7 @@ Interview preparation and assessment have five long-standing gaps:
 - 👥 **Candidate management:** summary cards, sorting, paging, attempts taken, one-click unlock, profile with resume viewer.
 - 📋 **Report page:** score against the passing mark, evaluation notes, candidate sidebar and an **admin-only integrity log**.
 - ⚙️ **Interview Settings:** question range, passing score, timer, level, attempts, a master switch with seven integrity switches, a strike limit, and the feedback-e-mail switch.
+- 📊 **Analytics page** and **CSV export** (results and candidates) for the administrator.
 - 🔗 **Link Health** checker for the library, and an interactive **guided tour** (38 steps) with an 11-module manual.
 
 **Platform qualities**
@@ -632,6 +633,8 @@ Scored assessments are protected by rules that are **counted and stored on the s
 | `/admin/interview/<id>` | Report: verdict-tinted header with score ring, summary tiles (score, passing mark, integrity, attempts), score bar, titled evaluation notes, the questions and answers of an exited session, **integrity log** timeline, candidate card |
 | `/admin/settings` | **Interview Settings** (questions, scoring, attempts, integrity switches) and Emails |
 | `/admin/links` | Link Health |
+| `/admin/analytics` | **Analytics**: pass rate, average score, how assessments ended, assessments per day, score distribution and results by domain (last 7, 30, 90 days or all time) |
+| `/admin/export/results.csv`, `/admin/export/candidates.csv` | **CSV export** of the results table or the candidate list, with the same filter, search and order as the screen; spreadsheet formulas typed by a candidate are neutralised |
 | `/admin/guide` | The interactive 38-step guided tour and the 11-module manual |
 
 ---
@@ -672,6 +675,8 @@ The **assessment feedback e-mail** has seven result levels (Outstanding, Excelle
 <details>
 <summary><b>Python dependencies (requirements.txt)</b></summary>
 
+Every library is **pinned to an exact version** (the versions that run on Render), so a new release can never change the live site by surprise. To upgrade one: change its version in `requirements.txt`, run `python tests/e2e.py`, start the app once, then deploy. `.python-version` and `runtime.txt` name the Python version. Render uses `/health` as its health check, and a GitHub workflow (`.github/workflows/tests.yml`) runs all the automatic checks on every push, once with the pinned libraries and once with the newest ones as an early warning.
+
 | Package | Used for |
 |---|---|
 | `Flask` | Web framework (app factory, blueprints, Jinja2 templates) |
@@ -702,6 +707,7 @@ ai_interview_platform/
 │   │   ├── ai_client.py           # Gemini access, prompts, difficulty levels
 │   │   ├── integrity.py           # strikes, one session, server timer, flags
 │   │   ├── mailer.py · email_templates.py · feedback_email.py
+│   │   ├── result_stats.py · csv_export.py   # analytics figures, spreadsheet export
 │   │   ├── auth_security.py       # hashed OTP, lockouts
 │   │   ├── web_security.py        # CSRF, timeouts, CSP, password rules
 │   │   └── link_checker.py
@@ -779,7 +785,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (968 checks, about one minute)
+python tests/e2e.py                          # all groups (1005 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 

@@ -3609,10 +3609,135 @@ def t_practice_page_layout():
     check("starting a viva from the new page still works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
 
 
+def t_admin_export_and_analytics():
+    section("Admin CSV export (results, candidates) and the Analytics page: correct figures, same filters as the screens, safe cells, admin only")
+    import csv as _csv
+    from datetime import datetime as _dt, timedelta as _td
+    from MODULES.LAYER_3_BUSINESS_SERVICES import csv_export as ce, result_stats as rs
+
+    # ---- pure helpers -----------------------------------------------------------------------------------------
+    check("cells that look like formulas are neutralised", all(ce.safe_cell(x).startswith("'") for x in ("=1+1", "+cmd", "-2", "@SUM(A1)", "\tx")))
+    check("ordinary cells, numbers and empty values are untouched", ce.safe_cell("Asha") == "Asha" and ce.safe_cell(7.5) == "7.5" and ce.safe_cell(None) == "")
+    csv_text = ce.build_csv(["a", "b"], [["x, with comma", 'say "hi"'], ["=HYPERLINK()", "ಕನ್ನಡ"]])
+    parsed = list(_csv.reader(csv_text.lstrip("﻿").splitlines()))
+    check("commas, quotes and non-Latin letters survive; the file starts with a byte-order mark for Excel",
+          csv_text.startswith("﻿") and parsed[1] == ["x, with comma", 'say "hi"'] and parsed[2][0] == "'=HYPERLINK()" and parsed[2][1] == "ಕನ್ನಡ", parsed)
+
+    class R:   # a stand-in result row
+        def __init__(self, status, score, terminated=False, when=None, domain="Python"):
+            self.status, self.score, self.is_terminated, self.domain = status, score, terminated, domain
+            self.interview_datetime = when or _dt.utcnow()
+    class U:
+        def __init__(self, i): self.id = i
+    check("outcomes are classified like the dashboard counters",
+          [rs.outcome_of(R(s, 5, t)) for s, t in (("PASS", False), ("FAIL", False), ("Exited (Incomplete)", False), ("Terminated (Breach)", True), ("WELL DONE", False), ("weird", False))]
+          == ["passed", "failed", "exited", "terminated", "passed", "other"])
+    now = _dt.utcnow()
+    sample = [(R("PASS", 8.0, when=now), U(1)), (R("PASS", 6.0, when=now - _td(days=1), domain="python"), U(2)), (R("FAIL", 2.0, when=now - _td(days=2)), U(3)),
+              (R("Exited (Incomplete)", 4.0, when=now - _td(days=3)), U(4)), (R("Terminated (Breach)", 0.0, True, now - _td(days=40)), U(5))]
+    st = rs.summarise(sample, 30, now)
+    check("30 days: the old session is left out, the rest counted", st["total"] == 4 and st["counts"]["terminated"] == 0 and st["counts"]["passed"] == 2, st["counts"])
+    check("pass rate and average score count completed assessments only", st["pass_rate"] == 66.7 and st["avg_score"] == 5.3, (st["pass_rate"], st["avg_score"]))
+    check("completion and exit rates", st["completion_rate"] == 75.0 and st["exit_rate"] == 25.0)
+    check("domains that differ only in letter case are one row", len(st["domains"]) == 1 and st["domains"][0]["count"] == 4, st["domains"])
+    check("the daily chart has one bar per day of the window", len(st["daily"]) == 30 and sum(d["count"] for d in st["daily"]) == 4)
+    check("the score histogram counts completed assessments, a 10 goes in the last bar",
+          sum(st["histogram"]) == 3 and rs.summarise([(R("PASS", 10.0), U(1))], 7)["histogram"][9] == 1)
+    empty = rs.summarise([], 30)
+    check("an empty period gives zero totals and no division errors", empty["total"] == 0 and empty["pass_rate"] is None and empty["avg_score"] is None)
+    check("'all time' keeps the old session", rs.summarise(sample, 0, now)["total"] == 5)
+
+    # ---- the pages --------------------------------------------------------------------------------------------
+    names = [("Asha Kumar", "PASS", 7.8, "Python backend developer", 0), ("Rahul Menon", "FAIL", 4.0, "=cmd|' /C calc'!A0", 1), ("Divya S", "Exited (Incomplete)", 5.0, "Data analyst", 2)]
+    for i, (nm, status, score, dom, ago) in enumerate(names):
+        uid = make_user(f"exp{i}@test.local", nm)
+        with app.app_context():
+            db.session.add(InterviewResult(user_id=uid, score=score, status=status, summary="s", domain=dom, interview_datetime=_dt.utcnow() - _td(days=ago)))
+            db.session.commit()
+    a = client()
+    post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    visitor, cand = client(), login_user("exp0@test.local")[0]
+    paths = ("/admin/analytics", "/admin/export/results.csv", "/admin/export/candidates.csv")
+    check("a visitor and a candidate cannot use the new pages", all(get(c, p).status_code in (302, 403) for c in (visitor, cand) for p in paths))
+    r = get(a, "/admin/export/results.csv")
+    rows = list(_csv.reader(r.data.decode("utf-8-sig").splitlines()))
+    check("results CSV: download headers, header line and a row per result",
+          r.status_code == 200 and r.mimetype == "text/csv" and "attachment" in r.headers["Content-Disposition"] and ".csv" in r.headers["Content-Disposition"]
+          and rows[0][0] == "Session ID" and len(rows) - 1 >= 3, (r.status_code, len(rows)))
+    flat = [c for row in rows for c in row]
+    check("results CSV: a domain typed as a spreadsheet formula is neutralised", "'=cmd|' /C calc'!A0" in flat and "=cmd|' /C calc'!A0" not in flat)
+    check("results CSV: result words and the recommended column", "Passed" in flat and "Failed" in flat and "Exited early" in flat)
+    only_pass = list(_csv.reader(get(a, "/admin/export/results.csv?filter=selected").data.decode("utf-8-sig").splitlines()))
+    check("results CSV: the filter gives exactly the rows the dashboard filter shows",
+          len(only_pass) - 1 == len(_apply_filter_rows("selected")), (len(only_pass) - 1, len(_apply_filter_rows("selected"))))
+    check("results CSV: an unknown filter falls back to everything", len(list(_csv.reader(get(a, "/admin/export/results.csv?filter=zzz").data.decode("utf-8-sig").splitlines()))) == len(rows))
+    cr = list(_csv.reader(get(a, "/admin/export/candidates.csv").data.decode("utf-8-sig").splitlines()))
+    check("candidates CSV: header and one row per candidate", cr[0][:3] == ["ID", "Name", "E-mail"] and len(cr) - 1 >= 3)
+    cn = list(_csv.reader(get(a, "/admin/export/candidates.csv?q=Asha").data.decode("utf-8-sig").splitlines()))
+    check("candidates CSV: the search gives only matching people", len(cn) - 1 == 1 and cn[1][1] == "Asha Kumar", cn)
+    for days in ("7", "30", "90", "0", "junk"):
+        check(f"analytics page opens for days={days}", get(a, "/admin/analytics?days=" + days).status_code == 200)
+    html = get(a, "/admin/analytics").data.decode()
+    check("analytics page shows the figures, the charts and the export button",
+          "Pass rate" in html and "Assessments per day" in html and "Score distribution" in html and "Results by domain" in html and "/admin/export/results.csv" in html)
+    check("the dashboard and the candidate list link to the new features",
+          "/admin/analytics" in get(a, "/admin").data.decode() and "/admin/export/results.csv" in get(a, "/admin").data.decode() and "/admin/export/candidates.csv" in get(a, "/admin/users").data.decode())
+    with app.app_context():
+        InterviewResult.query.delete()
+        db.session.commit()
+    check("analytics page with no results shows the friendly empty message", "No scored assessments" in get(a, "/admin/analytics").data.decode())
+
+
+def _apply_filter_rows(name):
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS import admin_env
+    with app.app_context():
+        return admin_env._apply_result_filter(admin_env._counted_results(), name)
+
+
+def t_deploy_safety():
+    section("Deploy safety: every library pinned, one Python version everywhere, Render health check, tests run on GitHub")
+    import re as _re
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    read = lambda name: open(os.path.join(root, name), encoding="utf-8").read()
+    reqs = [l.strip() for l in read("requirements.txt").splitlines() if l.strip() and not l.strip().startswith("#")]
+    check("every line of requirements.txt is pinned to one exact version", reqs and all(_re.fullmatch(r"[A-Za-z0-9_.\-]+==[0-9][0-9A-Za-z.\-]*", l) for l in reqs), [l for l in reqs if "==" not in l][:3])
+    names = {l.split("==")[0].lower().replace("_", "-") for l in reqs}
+    check("the libraries the app imports are listed", {"flask", "flask-sqlalchemy", "sqlalchemy", "psycopg2-binary", "google-genai", "authlib", "gunicorn", "python-dotenv", "cryptography", "werkzeug"} <= names)
+    check("no database driver the app does not use is installed", not ({"pymysql", "pg8000", "psycopg"} & names))
+    py = read(".python-version").strip()
+    check(".python-version and runtime.txt name the same Python version", _re.fullmatch(r"\d+\.\d+\.\d+", py) and read("runtime.txt").strip() == "python-" + py, (py, read("runtime.txt").strip()))
+    yml = read("render.yaml")
+    check("render.yaml tells Render to use /health as the health check", "healthCheckPath: /health" in yml)
+    wf = read(os.path.join(".github", "workflows", "tests.yml"))
+    check("the GitHub workflow runs the checks on every push, with the pinned and with the newest libraries",
+          "push:" in wf and "pull_request" in wf and "python tests/e2e.py" in wf and "requirements.txt" in wf and "continue-on-error: true" in wf)
+    check("the workflow needs no secrets", "secrets." not in wf)
+
+
+def t_content_above_background():
+    section("No page hides its text behind the fixed background layer (the Privacy page was blank for visitors before)")
+    import re as _re
+    tdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates")
+    problems = []
+    for name in sorted(os.listdir(tdir)):
+        if not name.endswith(".html"):
+            continue
+        src = open(os.path.join(tdir, name), encoding="utf-8").read()
+        if "db-bg" not in src or "position: fixed; inset: 0; z-index: 0" not in src.replace("position:fixed;", "position: fixed;").replace("inset:0;", "inset: 0;").replace("z-index:0", "z-index: 0"):
+            continue
+        for wrapper in ("page-wrap", "page-content", "main-content"):
+            m = _re.search(r"\.%s\s*\{([^}]*)\}" % wrapper, src)
+            if m and "z-index" not in m.group(1) and "position" not in m.group(1):
+                problems.append((name, wrapper))
+    check("every page that has the background layer lifts its content above it", not problems, problems)
+    html = get(client(), "/privacy").data.decode()
+    check("the privacy page content layer has a z-index", _re.search(r"\.page-wrap\s*\{[^}]*z-index:\s*1", html) is not None)
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_practice_page_layout, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

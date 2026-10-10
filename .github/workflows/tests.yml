@@ -1,0 +1,40 @@
+# Runs the automatic checks (tests/e2e.py) on every push and pull request, so a change that breaks the app is seen on GitHub
+# before it is deployed. The checks use stand-ins for Gemini and e-mail and a temporary database: no secrets are needed.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pinned:
+    name: Checks with the pinned libraries (what Render runs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Code compiles
+        run: python -m compileall -q MODULES app.py tests
+      - name: End-to-end checks
+        run: python tests/e2e.py
+
+  newest:
+    name: Early warning - checks with the newest libraries
+    runs-on: ubuntu-latest
+    continue-on-error: true      # a failure here is a warning that a library release will break the app; it does not block anything
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install the newest allowed versions
+        run: |
+          sed -i 's/==/>=/' requirements.txt
+          pip install -r requirements.txt
+      - name: End-to-end checks
+        run: python tests/e2e.py

@@ -3,6 +3,7 @@ services:
     name: ai-interview-platform
     env: python
     buildCommand: pip install -r requirements.txt
+    healthCheckPath: /health        # Render restarts the app by itself if this page stops answering (it never touches the database)
     startCommand: gunicorn app:app --workers 2 --threads 4 --worker-class gthread --worker-tmp-dir /dev/shm --timeout 120
     envVars:
       - key: DATABASE_URL          # your Neon *pooled* connection string (set it in the Render dashboard)

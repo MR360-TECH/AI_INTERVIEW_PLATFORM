@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, session, jsonify, current_app
+from flask import Blueprint, Response, render_template, request, redirect, session, jsonify, current_app
 from sqlalchemy import func
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
@@ -19,6 +19,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     Feedback
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
+from MODULES.LAYER_3_BUSINESS_SERVICES import csv_export, result_stats
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -41,6 +42,31 @@ def db_check():
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+RESULT_FILTERS = ("all", "today", "month", "selected", "rejected")
+
+
+def _counted_results():
+    """Every assessment result with its candidate, newest first. Practice results are never counted."""
+    return (db.session.query(InterviewResult, User).join(User, InterviewResult.user_id == User.id)
+            .filter(~InterviewResult.status.like('%Practice%'))
+            .order_by(InterviewResult.interview_datetime.desc(), InterviewResult.id.desc()).all())
+
+
+def _apply_result_filter(all_results, filter_type):
+    """The part of the results a dashboard filter shows (also used by the CSV export, so both always agree)."""
+    today = date.today()
+    current_month, current_year = today.month, today.year
+    if filter_type == "today":
+        return [(r, u) for r, u in all_results if r.interview_datetime and r.interview_datetime.date() == today]
+    if filter_type == "month":
+        return [(r, u) for r, u in all_results if r.interview_datetime and r.interview_datetime.year == current_year and r.interview_datetime.month == current_month]
+    if filter_type == "selected":
+        return [(r, u) for r, u in all_results if (r.status in ["Selected", "PASS"] or (r.status and "WELL DONE" in r.status)) and not r.is_terminated]
+    if filter_type == "rejected":
+        return [(r, u) for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "") or r.is_exited)]
+    return all_results
 
 
 @admin_bp.route("/admin")
@@ -66,16 +92,7 @@ def admin():
     selected_count = sum(1 for r, u in all_results if (r.status in ["Selected", "PASS"] or (r.status and "WELL DONE" in r.status)) and not r.is_terminated)
     rejected_count = sum(1 for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "") or r.is_exited))
 
-    if filter_type == "today":
-        results = [(r, u) for r, u in all_results if r.interview_datetime and r.interview_datetime.date() == today]
-    elif filter_type == "month":
-        results = [(r, u) for r, u in all_results if r.interview_datetime and r.interview_datetime.year == current_year and r.interview_datetime.month == current_month]
-    elif filter_type == "selected":
-        results = [(r, u) for r, u in all_results if (r.status in ["Selected", "PASS"] or (r.status and "WELL DONE" in r.status)) and not r.is_terminated]
-    elif filter_type == "rejected":
-        results = [(r, u) for r, u in all_results if (r.status in ["Rejected", "FAIL"] or r.is_terminated or "Terminated" in (r.status or "") or r.is_exited)]
-    else:
-        results = all_results
+    results = _apply_result_filter(all_results, filter_type)
 
     settings = get_settings()
 
@@ -283,23 +300,8 @@ def _is_recommended(result, settings):
         return False
 
 
-@admin_bp.route("/admin/users")
-def admin_users():
-    if not session.get("is_admin"):
-        return redirect("/login")
-
-    q = request.args.get("q", "").strip()
-    filter_type = request.args.get("filter", "all")
-    sort = request.args.get("sort", "newest")
-    if filter_type not in USER_FILTERS:
-        filter_type = "all"
-    if sort not in USER_SORTS:
-        sort = "newest"
-    try:
-        page = max(1, int(request.args.get("page", "1")))
-    except ValueError:
-        page = 1
-
+def _candidate_rows(q, filter_type, sort):
+    """The candidate list the admin page shows (before it is split into pages): rows, the summary counters and the settings."""
     settings = get_settings()
     query = User.query
     if q:
@@ -354,6 +356,27 @@ def admin_users():
         rows.sort(key=lambda r: (r["user"].full_name or "").lower())
     elif sort == "attempts":
         rows.sort(key=lambda r: r["used"], reverse=True)
+    return rows, stats, settings
+
+
+@admin_bp.route("/admin/users")
+def admin_users():
+    if not session.get("is_admin"):
+        return redirect("/login")
+
+    q = request.args.get("q", "").strip()
+    filter_type = request.args.get("filter", "all")
+    sort = request.args.get("sort", "newest")
+    if filter_type not in USER_FILTERS:
+        filter_type = "all"
+    if sort not in USER_SORTS:
+        sort = "newest"
+    try:
+        page = max(1, int(request.args.get("page", "1")))
+    except ValueError:
+        page = 1
+
+    rows, stats, settings = _candidate_rows(q, filter_type, sort)
 
     total_filtered = len(rows)
     pages = max(1, -(-total_filtered // USERS_PER_PAGE))
@@ -533,3 +556,86 @@ def admin_links_hide():
         db.session.commit()
     filter_type = request.form.get("filter", "all")
     return redirect(f"/admin/links?filter={filter_type if filter_type in LINK_FILTERS else 'all'}")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CSV EXPORT AND ANALYTICS (administrator only)
+# ══════════════════════════════════════════════════════════════════════════════
+
+OUTCOME_LABELS = {"passed": "Passed", "failed": "Failed", "exited": "Exited early", "terminated": "Terminated", "other": "Other"}
+
+
+def _csv_response(text, name):
+    return Response(text, mimetype="text/csv", headers={
+        "Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "no-store"})
+
+
+@admin_bp.route("/admin/export/results.csv")
+def export_results():
+    """The results table as a spreadsheet file, with the same filter as the dashboard (?filter=all|today|month|selected|rejected)."""
+    if not session.get("is_admin"):
+        return redirect("/login")
+    filter_type = request.args.get("filter", "all")
+    if filter_type not in RESULT_FILTERS:
+        filter_type = "all"
+    settings = get_settings()
+    rows = []
+    for r, u in _apply_result_filter(_counted_results(), filter_type):
+        rows.append([
+            r.session_code, r.interview_datetime.strftime("%Y-%m-%d %H:%M") if r.interview_datetime else "",
+            u.full_name, u.email, u.user_type or "", r.domain or "",
+            "" if r.score is None else f"{float(r.score):.1f}",
+            OUTCOME_LABELS[result_stats.outcome_of(r)], "Yes" if _is_recommended(r, settings) else "No",
+            r.termination_reason or ""])
+    header = ["Session ID", "Date (UTC)", "Candidate", "E-mail", "Account type", "Domain", "Score (out of 10)",
+              "Result", "Recommended", "Why the session ended early"]
+    return _csv_response(csv_export.build_csv(header, rows), csv_export.file_name("results", filter_type))
+
+
+@admin_bp.route("/admin/export/candidates.csv")
+def export_candidates():
+    """The candidate list as a spreadsheet file, with the same search, filter and order as the Candidates page."""
+    if not session.get("is_admin"):
+        return redirect("/login")
+    q = request.args.get("q", "").strip()
+    filter_type = request.args.get("filter", "all")
+    sort = request.args.get("sort", "newest")
+    if filter_type not in USER_FILTERS:
+        filter_type = "all"
+    if sort not in USER_SORTS:
+        sort = "newest"
+    rows, _stats, settings = _candidate_rows(q, filter_type, sort)
+    default_allowed = settings.default_allowed_interviews or 2
+    out = []
+    for r in rows:
+        u, last = r["user"], r["last"]
+        detail = (f"{u.current_designation or ''} ({u.years_of_experience or '?'} years)" if u.user_type == "professional"
+                  else " ".join(x for x in (u.education, u.course, u.semester) if x))
+        out.append([
+            u.id, u.full_name, u.email, u.user_type or "", detail.strip(),
+            {"local": "Password", "google": "Google", "otp": "E-mail code"}.get(u.auth_provider, u.auth_provider or ""),
+            u.registered_at.strftime("%Y-%m-%d") if u.registered_at else "",
+            r["taken"], r["used"], default_allowed + (u.extra_allowed_interviews or 0), u.extra_allowed_interviews or 0,
+            "Yes" if r["locked"] else "No",
+            OUTCOME_LABELS[result_stats.outcome_of(last)] if last else "",
+            "" if not last or last.score is None else f"{float(last.score):.1f}",
+            "Yes" if r["has_resume"] else "No"])
+    header = ["ID", "Name", "E-mail", "Account type", "Course / designation", "Signs in with", "Registered (UTC)",
+              "Assessments taken", "Attempts used", "Attempts allowed", "Extra attempts granted", "Locked",
+              "Last result", "Last score", "Has resume"]
+    return _csv_response(csv_export.build_csv(header, out), csv_export.file_name("candidates", filter_type))
+
+
+@admin_bp.route("/admin/analytics")
+def admin_analytics():
+    """Pass rate, scores, outcomes, busy days and results by domain (?days=7|30|90|0, 0 = everything)."""
+    if not session.get("is_admin"):
+        return redirect("/login")
+    try:
+        days = int(request.args.get("days", "30"))
+    except ValueError:
+        days = 30
+    if days not in result_stats.WINDOWS:
+        days = 30
+    stats = result_stats.summarise(_counted_results(), days)
+    return render_template("admin_analytics.html", stats=stats, days=days, windows=result_stats.WINDOWS, settings=get_settings())

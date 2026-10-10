@@ -750,6 +750,7 @@
         ::-webkit-scrollbar-track { background: #020510; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
+            .header-icon-btn { display: inline-flex; align-items: center; gap: 7px; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
@@ -785,6 +786,8 @@
             <a href="/admin/users" class="header-icon-btn btn-users-nav" title="Registered Candidates">
                 <i class="bi bi-people-fill"></i> Registered Users
             </a>
+            <a href="/admin/analytics" class="header-icon-btn" title="Pass rate, scores and results by domain"><i class="bi bi-bar-chart-line-fill"></i> Analytics</a>
+            <a href="/admin/export/results.csv?filter={{ filter_type }}" class="header-icon-btn" title="Download the results shown below as a spreadsheet file"><i class="bi bi-download"></i> Export</a>
             <a href="/admin/links" class="header-icon-btn" title="Check the preparation library links"><i class="bi bi-link-45deg"></i> Links</a>
             <a href="/admin/guide" class="header-icon-btn btn-info-nav" title="Platform Information &amp; System Manual">
                 <i class="bi bi-info-circle-fill"></i> Info
