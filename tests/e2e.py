@@ -3502,7 +3502,60 @@ def t_resume_first_question():
     r.close()
 
 
-TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_attempt_accounting, t_error_does_not_consume,
+def t_route_smoke():
+    section("Every page of the app opened as a visitor, a candidate and the administrator: nothing crashes (no 5xx), private pages stay private")
+    uid = make_user("smoke@test.local", "Smoke User")
+    with app.app_context():
+        rr = InterviewResult(user_id=uid, score=6.5, status="PASS", summary="Smoke test result", domain="Python")
+        db.session.add(rr)
+        db.session.commit()
+        rid = rr.id
+    visitor = client()
+    candidate, _ = login_user("smoke@test.local")
+    admin = client()
+    post(admin, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+
+    fillers = {"user_id": str(uid), "result_id": str(rid), "filename": "user_1_resume.pdf", "hub_key": "google", "company_key": "google"}
+    GET_ONLY_SKIP = ("/auth/google",)          # leaves the site for Google
+    paths = []
+    for rule in app.url_map.iter_rules():
+        if rule.endpoint == "static" or "GET" not in rule.methods:
+            continue
+        path = rule.rule
+        for name, value in fillers.items():
+            path = path.replace("<int:%s>" % name, value).replace("<%s>" % name, value)
+        if "<" in path or path.startswith(GET_ONLY_SKIP):
+            continue
+        paths.append(path)
+    paths = sorted(set(paths))
+
+    crashes = []
+    for who, c in (("visitor", visitor), ("candidate", candidate), ("admin", admin)):
+        for path in paths:
+            if path in ("/logout", "/admin/links/check"):
+                continue                                     # these change the session or start background work
+            r = get(c, path)
+            if r.status_code >= 500:
+                crashes.append((who, path, r.status_code))
+            r.close()
+    check("%d pages x 3 kinds of visitor: no page answers with a server error" % len(paths), not crashes, crashes[:5])
+
+    def status(c, path):
+        r = get(c, path)
+        code = r.status_code
+        r.close()
+        return code
+
+    check("admin pages send a visitor to the login page", all(status(visitor, p) == 302 for p in ("/admin", "/admin/users", "/admin/settings", "/admin/links", "/admin/guide")))
+    check("admin pages send a candidate away too", all(status(candidate, p) in (302, 403) for p in ("/admin", "/admin/users", "/admin/settings", "/admin/links")))
+    check("candidate pages send a visitor to the login page", all(status(visitor, p) == 302 for p in ("/dashboard", "/my-history", "/interview", "/library", "/practice-setup")))
+    check("a candidate cannot open another person's report", status(candidate, "/my-history/%d" % (rid + 999)) in (302, 403, 404))
+    check("the administrator opens every admin page", all(status(admin, p) == 200 for p in ("/admin", "/admin/users", "/admin/settings", "/admin/links", "/admin/guide", "/admin/user/%d" % uid, "/admin/interview/%d" % rid)))
+    check("the candidate opens every candidate page", all(status(candidate, p) == 200 for p in ("/dashboard", "/my-history", "/library", "/practice-setup", "/tech-questions", "/my-history/%d" % rid)))
+    check("unknown addresses give the friendly 404 page, not a crash", status(visitor, "/no/such/page") == 404)
+
+
+TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
          t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]

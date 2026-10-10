@@ -2,7 +2,7 @@ import os
 import re
 import json
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for, current_app
+from flask import Blueprint, render_template, request, redirect, session, jsonify, url_for
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     User,

@@ -1,8 +1,7 @@
-import os
 import re
 import json
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, session, send_from_directory, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, session, jsonify
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, FEEDBACK_TO_EMAIL
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     User,

@@ -1,6 +1,5 @@
-import os
 from datetime import date, datetime, timedelta
-from flask import Blueprint, render_template, request, redirect, session, jsonify, send_from_directory, current_app
+from flask import Blueprint, render_template, request, redirect, session, jsonify, current_app
 from sqlalchemy import func
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
