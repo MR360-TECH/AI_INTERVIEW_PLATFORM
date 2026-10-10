@@ -662,7 +662,7 @@ The **assessment feedback e-mail** has seven result levels (Outstanding, Excelle
 |---|---|
 | **Frontend** | HTML5, CSS3, JavaScript (vanilla), Jinja2 templates, Bootstrap 5.3, Bootstrap Icons, Google Fonts (Inter, Outfit), Monaco Editor, Web Speech API, browser Visibility, Fullscreen and Clipboard APIs |
 | **Backend** | Python 3.11+, Flask 3 (application factory, 6 blueprints), Werkzeug, Authlib (Google OAuth 2.0), python-dotenv, cryptography, gunicorn |
-| **Data** | Neon serverless PostgreSQL, SQLAlchemy 2 with Flask-SQLAlchemy, PostgreSQL drivers (`psycopg`, `psycopg2`, `pg8000`), SQLite for local use, automatic schema migration, 10 tables |
+| **Data** | Neon serverless PostgreSQL, SQLAlchemy 2 with Flask-SQLAlchemy, PostgreSQL driver (`psycopg2`), SQLite for local use, automatic schema migration, 10 tables |
 | **AI** | Google Gemini via `google-genai`, retries with backup API keys and models, a difficulty-level prompt library, evaluation and feedback prompts |
 | **E-mail and sign-in services** | Gmail SMTP, Resend and SendGrid HTTP APIs, Google OAuth, dark-theme responsive e-mail templates |
 | **Security** | CSRF tokens, session timeouts, Content-Security-Policy, keyed-hash one-time codes, brute-force lockouts, optional admin 2FA |
@@ -675,7 +675,7 @@ The **assessment feedback e-mail** has seven result levels (Outstanding, Excelle
 |---|---|
 | `Flask` | Web framework (app factory, blueprints, Jinja2 templates) |
 | `Flask-SQLAlchemy` / SQLAlchemy | ORM and database access |
-| `psycopg[binary]`, `psycopg2-binary`, `pg8000` | PostgreSQL drivers |
+| `psycopg2-binary` | PostgreSQL driver (Neon) |
 | `google-genai` | Google Gemini API |
 | `authlib` | Google OAuth 2.0 |
 | `cryptography` | Cryptographic primitives used by OAuth and TLS |
@@ -728,7 +728,7 @@ ai_interview_platform/
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | **Yes** | Administrator sign-in. If the password is missing, a random one is printed once at start-up |
 | `APP_BASE_URL` | Recommended | Public address, used for links inside e-mails |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional | Google sign-in |
-| `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | Optional | Gmail SMTP (app password) |
+| `MAIL_USERNAME`, `MAIL_PASSWORD` | Optional | Gmail SMTP (app password) |
 | `RESEND_API_KEY`, `RESEND_DOMAIN`, `SENDGRID_API_KEY` | Optional | HTTP mail providers |
 | `FEEDBACK_TO_EMAIL` | Optional | Mailbox that receives user feedback (default: `MAIL_USERNAME`) |
 | `GEMINI_BACKUP_KEYS`, `GEMINI_FALLBACK_MODELS` | Optional | Comma-separated backup keys and models |
