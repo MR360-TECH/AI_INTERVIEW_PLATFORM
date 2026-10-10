@@ -3759,10 +3759,89 @@ def t_brand_consistency():
     check("the logo file is served", r.status_code == 200 and r.mimetype == "image/png" and r.data[:4] == b"\x89PNG")
 
 
+def t_light_theme():
+    section("Light theme: eye switch on the dashboard and admin pages, generated stylesheets up to date, sign-up steps and attempt counter gone")
+    root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    tdir = os.path.join(root, "templates")
+    no_js, no_css, forced, always = [], [], [], []
+    for name in sorted(os.listdir(tdir)):
+        if not name.endswith(".html") or name.startswith("_") or name == "navbar.html":
+            continue
+        src = open(os.path.join(tdir, name), encoding="utf-8").read()
+        if name == "interview.html":
+            if "data-always-dark" not in src:
+                always.append(name)
+            continue
+        if "js/theme.js" not in src:
+            no_js.append(name)
+        if "css/light/%s.css" % name[:-5] not in src:
+            no_css.append(name)
+        if "classList.add('dark-theme')" in src or 'classList.add("dark-theme")' in src or "localStorage.setItem('theme', 'dark')" in src:
+            forced.append(name)
+    check("every page (except the live interview) loads theme.js", not no_js, no_js)
+    check("every page (except the live interview) loads its own light stylesheet", not no_css, no_css)
+    check("no page still forces dark mode with its own script", not forced, forced)
+    check("the live interview page is always dark", not always, always)
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("build_light_theme", os.path.join(root, "tools", "build_light_theme.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    stale = [os.path.basename(p) for p, content in mod.build().items()
+             if not os.path.exists(p) or open(p, encoding="utf-8").read() != content]
+    check("generated light stylesheets are up to date (run: python tools/build_light_theme.py)", not stale, stale)
+    for path in ("/static/js/theme.js", "/static/js/light-inline-map.js", "/static/css/light/base.css", "/static/css/light/dashboard.css"):
+        r = get(client(), path)
+        check("%s is served" % path, r.status_code == 200 and len(r.data) > 100, r.status_code)
+    for page in ("/", "/login", "/signup", "/privacy"):
+        html = get(client(), page).data.decode()
+        check("%s: theme.js and the light stylesheet are linked" % page, "js/theme.js" in html and "css/light/" in html)
+    no_vis = []
+    for name in sorted(os.listdir(tdir)):
+        if name.endswith(".html") and name != "interview.html":
+            src = open(os.path.join(tdir, name), encoding="utf-8").read()
+            if "css/visibility.css" in src and "css/light/visibility.css" not in src:
+                no_vis.append(name)
+    check("every page that loads the shared contrast layer also loads its light version", not no_vis, no_vis)
+    sys.path.insert(0, os.path.join(root, "tools"))
+    import light_compiler as LC
+    pale = []
+    for c in ("#64748b", "#94a3b8", "#0ea5e9", "#3b82f6", "#10b981", "#f59e0b", "#a9b8cc", "#cbd5e1", "rgba(255,255,255,.4)", "#ffffff"):
+        r, g, b, a = LC.parse_color(LC.text_color(LC.parse_color(c)))
+        if LC._ratio((r, g, b)) < 5.0 or a < 0.85:
+            pale.append(c)
+    check("the light compiler turns every pale text colour into one that reads clearly (contrast 5:1 or more)", not pale, pale)
+    css = open(os.path.join(root, "static", "css", "light", "visibility.css"), encoding="utf-8").read()
+    check("light mode keeps the dark text colour on yellow, cyan and green badges", "--v-ink:#0b1b44" in css)
+    check("theme.js leaves the interview page alone (data-always-dark)", "data-always-dark" in open(os.path.join(root, "static", "js", "theme.js"), encoding="utf-8").read())
+
+    make_user("light1@test.local", "Light Subject")
+    c, _ = login_user("light1@test.local")
+    html = get(c, "/dashboard").data.decode()
+    check("dashboard header has the eye switch", 'id="headerThemeBtn"' in html and "data-theme-toggle" in html)
+    check("dashboard menu has a Light mode option", 'id="themeNavBtn"' in html and "Light mode" in html)
+    check("dashboard has no number-of-attempts card", "Attempts Used" not in html and "Attempts Left" not in html and "Attempts Remaining" not in html)
+    for path in ("/my-history", "/edit-profile"):
+        r = get(c, path)
+        check("candidate page %s opens" % path, r.status_code in (200, 302), r.status_code)
+    for page in ("/signup", "/login", "/send-otp"):
+        html = get(client(), page).data.decode()
+        check("%s has no step indicator" % page, 'class="steps-bar"' not in html and "Step 1 of" not in html and "Step 2 of" not in html)
+    a = client()
+    post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    missing = []
+    for url in ("/admin", "/admin/users", "/admin/settings", "/admin/guide", "/admin/analytics"):
+        r = get(a, url)
+        if r.status_code != 200 or "data-theme-toggle" not in r.data.decode():
+            missing.append(url)
+    check("every admin page has the eye switch", not missing, missing)
+    html = get(client(), "/login").data.decode()
+    check("the password eye button is still on the login page", "bi-eye" in html)
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_practice_page_layout, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background, t_brand_consistency]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background, t_brand_consistency, t_light_theme]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

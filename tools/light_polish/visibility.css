@@ -1,0 +1,5 @@
+/* The shared contrast layer: its near-black "ink" colour must stay dark in light mode (it is the text colour on yellow / cyan / green badges). */
+html.light-theme{--v-ink:#0b1b44 !important}
+html.light-theme .badge.bg-success,html.light-theme .badge.text-bg-success{background:#d3f3e1 !important;color:#0b5a32 !important}
+html.light-theme .badge.bg-info,html.light-theme .badge.text-bg-info{background:#cdeefb !important;color:#0b3a6b !important}
+html.light-theme .badge.bg-warning,html.light-theme .badge.text-bg-warning{background:#fde9b0 !important;color:#5c3d00 !important}

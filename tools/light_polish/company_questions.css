@@ -1,0 +1,2 @@
+/* the small platform label takes each card's brand colour: keep the hue, make it readable */
+html.light-theme .res-platform-tag{color:color-mix(in srgb,var(--card-accent) 45%,#0b1b44) !important}

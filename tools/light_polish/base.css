@@ -1,0 +1,62 @@
+/* ── Blue-dominant light theme: blue everywhere; purple and pink only as soft background fill ── */
+html.light-theme body { background: linear-gradient(160deg, #e9f2ff 0%, #e2eeff 55%, #ecf0ff 100%) !important; background-image: none !important; color: #0e2250; }
+html.light-theme .db-bg { display: block !important; }
+html.light-theme .db-bg::before {
+  background:
+    radial-gradient(ellipse 85% 62% at 12% 12%, rgba(37,99,235,.38), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 62% 4%, rgba(14,165,233,.26), transparent 58%),
+    radial-gradient(ellipse 60% 52% at 50% 106%, rgba(59,130,246,.34), transparent 60%),
+    radial-gradient(ellipse 42% 36% at 100% 14%, rgba(168,85,247,.24), transparent 62%),
+    radial-gradient(ellipse 44% 34% at 98% 96%, rgba(236,72,153,.18), transparent 62%),
+    radial-gradient(ellipse 36% 30% at 0% 100%, rgba(168,85,247,.14), transparent 62%),
+    linear-gradient(160deg, #eef5ff, #e3eeff 55%, #edf2ff) !important;
+}
+html.light-theme .db-orb { opacity: .55 !important; }
+html.light-theme .db-orb-1 { background: radial-gradient(circle, rgba(37,99,235,.55), transparent 70%) !important; }
+html.light-theme .db-orb-2 { background: radial-gradient(circle, rgba(168,85,247,.30), transparent 70%) !important; }
+html.light-theme .db-orb-3 { background: radial-gradient(circle, rgba(14,165,233,.45), transparent 70%) !important; }
+html.light-theme .db-grid { background-image: linear-gradient(rgba(37,99,235,.09) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,.09) 1px, transparent 1px) !important; }
+html.light-theme .db-star { background: #2563eb !important; }
+html.light-theme .db-topbar-glow { background: linear-gradient(90deg, transparent, #1d4ed8, #0ea5e9, transparent) !important; }
+
+html.light-theme [class*="card"]:not([class*="title"]):not([class*="text"]):not([class*="label"]):not([class*="icon"]):not([class*="tag"]):not([class*="badge"]):not([class*="head"]):not([class*="hdr"]):not([class*="sub"]):not([class*="desc"]):not([class*="pill"]),
+html.light-theme [class*="panel"]:not([class*="title"]):not([class*="label"]):not([class*="head"]), html.light-theme .stat-card, html.light-theme .um-stat {
+  box-shadow: 0 14px 32px rgba(30,64,175,.14), 0 1px 3px rgba(30,64,175,.10) !important;
+}
+
+html.light-theme h1.hero-title { color: #0e2250 !important; }
+html.light-theme h1.hero-title span { background: linear-gradient(135deg, #0b3a9e 5%, #2563eb 55%, #0ea5e9 95%) !important; -webkit-background-clip: text !important; background-clip: text !important; -webkit-text-fill-color: transparent !important; }
+
+/* every button: blue family only */
+html.light-theme .btn-primary-grad, html.light-theme .btn-cta, html.light-theme .btn-primary-cyber, html.light-theme button[type="submit"].btn-primary,
+html.light-theme .btn-emerald-grad, html.light-theme .btn-purple-grad, html.light-theme .btn-secondary-grad, html.light-theme [class*="btn"][class*="purple"], html.light-theme [class*="btn"][class*="violet"] {
+  background: linear-gradient(135deg, #0b3a9e, #2563eb) !important; color: #ffffff !important; border-color: transparent !important; box-shadow: 0 8px 22px rgba(37,99,235,.35) !important;
+}
+html.light-theme .btn-purple-grad { background: linear-gradient(135deg, #1e40af, #3b82f6) !important; }
+html.light-theme * { text-shadow: none !important; }
+
+/* ── Sign-in pages (light): blue-dominant fill on the right side and a white glass card for the form ── */
+html.light-theme .auth-right {
+    background:
+        radial-gradient(ellipse 85% 62% at 100% 0%, rgba(37,99,235,.34), transparent 60%),
+        radial-gradient(ellipse 70% 55% at 0% 100%, rgba(14,165,233,.32), transparent 60%),
+        radial-gradient(ellipse 48% 40% at 100% 100%, rgba(168,85,247,.20), transparent 62%),
+        radial-gradient(ellipse 40% 34% at 0% 0%, rgba(236,72,153,.10), transparent 62%),
+        linear-gradient(160deg, #eef5ff, #e1ecff) !important;
+}
+html.light-theme .auth-right::before { background-image: radial-gradient(rgba(37,99,235,.22) 1.2px, transparent 1.8px) !important; }
+html.light-theme .auth-right .auth-form-wrap {
+    background: rgba(255,255,255,.78) !important; border: 1px solid rgba(37,99,235,.18) !important;
+    box-shadow: 0 24px 60px rgba(30,64,175,.18) !important;
+}
+
+/* small labels stay readable on the pale page */
+html.light-theme .brand-sub, html.light-theme .nav-section-label, html.light-theme .admin-brand-text p, html.light-theme .stat-label,
+html.light-theme .left-footer, html.light-theme .brand-tag { color: #3d5486 !important; }
+html.light-theme .form-subheading, html.light-theme .form-text, html.light-theme small { color: #4a5f8f !important; }
+
+/* ---- readability: text on blue buttons is always white; brand-coloured labels are darkened to the same hue ---- */
+html.light-theme .btn-primary-grad,html.light-theme .btn-primary-grad *{color:#ffffff !important}
+html.light-theme .item-card .category-badge-chip,
+html.light-theme .item-card .fs-7.fw-semibold{color:color-mix(in srgb,var(--brand-color) 36%,#0b1b44) !important}
+html.light-theme .badge.bg-dark{background:#e3ebfb !important;color:#1e3a8a !important}

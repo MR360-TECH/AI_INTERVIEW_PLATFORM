@@ -1,0 +1,6 @@
+/* the dashboard's own grey and sky tokens are too pale for small text on the light cards */
+html.light-theme{--text-muted:#3d5486;--text-desc:#4a5f8f;--text-light:#566a98}
+html.light-theme .page-eyebrow{color:#0b5fa8 !important}
+html.light-theme .score-chip.sc-mid,html.light-theme .card-pill.pill-blue,html.light-theme .profile-edit-hint{color:#1d4ed8 !important}
+html.light-theme [style*="var(--emerald)"]{color:#047857 !important}
+html.light-theme .btn-primary-grad,html.light-theme .btn-primary-grad:hover,html.light-theme .btn-primary-grad *{color:#ffffff !important}

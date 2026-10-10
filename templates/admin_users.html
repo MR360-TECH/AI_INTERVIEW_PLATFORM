@@ -11,12 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script>
-        (function() {
-            document.documentElement.classList.add('dark-theme');
-            localStorage.setItem('theme', 'dark');
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <style>
         :root {
             --surface:      #08122a;
@@ -281,6 +276,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/admin_users.css') }}">
 </head>
 <body>
 <!-- ══ ANIMATED NEURAL BACKGROUND ══ -->
@@ -312,6 +310,7 @@
             <a href="/admin" class="header-icon-btn" style="border-color: #00ffff !important; color: #00ffff !important; background: rgba(0, 255, 255, 0.08) !important; font-family: 'Outfit', sans-serif; font-weight: 800; box-shadow: 0 0 16px rgba(0, 255, 255, 0.25) !important;">
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
+            <button type="button" class="header-icon-btn" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
             <a href="/logout" class="header-icon-btn danger" style="width: 44px; padding: 0;" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>

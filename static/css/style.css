@@ -1731,7 +1731,28 @@ html.dark-theme ::-webkit-scrollbar-thumb:hover { background: rgba(0, 255, 255, 
     opacity: 0.8 !important;
 }
 
-/* Disable light/dark toggles since we only use one optimized theme */
-#headerThemeBtn, #themeToggle, .sidebar-theme-toggle, .theme-toggle-row {
-    display: none !important;
+
+/* ── Light / dark eye switch (see static/js/theme.js) ── */
+.theme-eye, [data-theme-toggle] i { transition: transform .2s ease; }
+[data-theme-toggle]:hover i { transform: scale(1.12); }
+[data-theme-toggle] { cursor: pointer; }
+.theme-state { margin-left: auto; font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: rgba(0,255,255,.12); color: #00ffff; }
+
+/* ── Sign-in pages: the right side is filled with soft colour and the form sits on a glass card ── */
+.auth-right {
+    position: relative;
+    background:
+        radial-gradient(ellipse 80% 60% at 100% 0%, rgba(0, 200, 255, .16), transparent 60%),
+        radial-gradient(ellipse 70% 55% at 0% 100%, rgba(59, 130, 246, .18), transparent 60%),
+        radial-gradient(ellipse 45% 38% at 100% 100%, rgba(139, 92, 246, .12), transparent 62%);
+}
+.auth-right::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(125, 211, 252, .20) 1.2px, transparent 1.8px); background-size: 28px 28px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 30%, transparent 85%); mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 30%, transparent 85%);
+}
+.auth-right .auth-form-wrap {
+    position: relative; max-width: 460px; padding: 34px 34px 30px; border-radius: 24px;
+    background: rgba(8, 14, 30, .62); border: 1px solid rgba(0, 255, 255, .16);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .35); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
 }

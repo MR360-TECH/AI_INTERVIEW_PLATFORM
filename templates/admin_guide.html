@@ -10,13 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/style.css">
-    <script>
-        (function() {
-            document.documentElement.classList.add('dark-theme');
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <style>
         :root {
             --surface: #08122a;
@@ -429,6 +423,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/admin_guide.css') }}">
 </head>
 <body>
 
@@ -459,6 +456,7 @@
             <a href="/admin/settings" class="header-btn">
                 <i class="bi bi-gear-fill"></i> Assessment Settings
             </a>
+            <button type="button" class="header-btn" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
             <a href="/logout" class="header-btn" style="color: #f87171; border-color: rgba(239, 68, 68, 0.35);">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>

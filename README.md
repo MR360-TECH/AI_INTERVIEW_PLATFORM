@@ -31,19 +31,20 @@
 14. [Security](#-security)
 15. [AI engine and reliability](#-ai-engine-and-reliability)
 16. [Preparation hub, library and practice labs](#-preparation-hub-library-and-practice-labs)
-17. [Admin console](#-admin-console)
-18. [E-mail system](#-e-mail-system)
-19. [Requirement analysis](#-requirement-analysis)
-20. [System stack](#-system-stack)
-21. [Project structure](#-project-structure)
-22. [Environment variables](#-environment-variables)
-23. [Local setup](#-local-setup)
-24. [Deployment](#-deployment-render-and-neon)
-25. [Testing](#-testing)
-26. [Roadmap](#-roadmap)
-27. [FAQ](#-faq)
-28. [Contact](#-contact)
-29. [License](#-license)
+17. [Light mode](#-light-mode)
+18. [Admin console](#-admin-console)
+19. [E-mail system](#-e-mail-system)
+20. [Requirement analysis](#-requirement-analysis)
+21. [System stack](#-system-stack)
+22. [Project structure](#-project-structure)
+23. [Environment variables](#-environment-variables)
+24. [Local setup](#-local-setup)
+25. [Deployment](#-deployment-render-and-neon)
+26. [Testing](#-testing)
+27. [Roadmap](#-roadmap)
+28. [FAQ](#-faq)
+29. [Contact](#-contact)
+30. [License](#-license)
 
 ---
 
@@ -625,6 +626,14 @@ Scored assessments are protected by rules that are **counted and stored on the s
 
 ---
 
+## 🌗 Light mode
+
+Every page has a dark theme (the default) and a light theme: soft blue-white with a gentle blue, purple and pink glow in the background, and blue buttons. The switch is an **eye button**: open eye = light mode on, slashed eye = off. Candidates find it in the dashboard header and in the dashboard menu ("Light mode"), the administrator in the header of every admin page. The choice is saved in the browser. The live interview page always stays dark, so the proctored session looks the same for everyone.
+
+How it works: `static/js/theme.js` applies the saved choice before the page is drawn and handles the switch. The light stylesheets in `static/css/light/` are **generated** from the dark ones by `tools/build_light_theme.py`, so both modes always have the same layout and content. After changing a page's CSS, run `python tools/build_light_theme.py`; the tests fail if the generated files are out of date.
+
+---
+
 ## ⚙️ Admin console
 
 | Page | Purpose |
@@ -719,8 +728,10 @@ ai_interview_platform/
 ├── templates/                     # Jinja pages (candidate, admin, error)
 ├── static/
 │   ├── css/ (style.css, visibility.css)   # theme, contrast, smoothness, floating Back
-│   ├── js/ (speech.js)
+│   ├── css/light/                         # generated light-mode stylesheets (one per page)
+│   ├── js/ (speech.js, theme.js, light-inline-map.js)   # theme.js = the eye switch
 │   └── images/ (backgrounds, sites/ = logos of linked sites)
+├── tools/                         # build_light_theme.py + light_compiler.py + light_polish/ (light-mode generator)
 └── tests/e2e.py                   # automated end-to-end checks
 ```
 
@@ -787,7 +798,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (1013 checks, about one minute)
+python tests/e2e.py                          # all groups (1040 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 

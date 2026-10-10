@@ -13,13 +13,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- Dark mode applied before paint to prevent flicker -->
-    <script>
-        (function() {
-            document.documentElement.classList.add('dark-theme');
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        })();
-    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 
     <style>
         /* ═══════════════════════════════════════════════════════
@@ -1035,6 +1029,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/dashboard.css') }}">
 </head>
 <body>
 
@@ -1108,6 +1105,11 @@
                 <span class="nav-icon"><i class="bi bi-person-gear"></i></span>
                 Edit Profile
             </a>
+            <button type="button" class="nav-item" data-theme-toggle id="themeNavBtn" aria-label="Light mode on or off">
+                <span class="nav-icon"><i class="bi bi-eye-slash"></i></span>
+                <span class="nav-label">Light mode</span>
+                <span class="theme-state" data-theme-label>Off</span>
+            </button>
             <button class="nav-item" data-bs-toggle="modal" data-bs-target="#howItWorksModal" id="helpNavBtn">
                 <span class="nav-icon"><i class="bi bi-question-circle-fill"></i></span>
                 Help / FAQ
@@ -1166,9 +1168,7 @@
                     </button>
 
                     <!-- Theme Toggle button (Sun / Moon) -->
-                    <button class="header-theme-btn" id="headerThemeBtn" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
-                        <i class="bi bi-sun-fill" id="headerThemeIcon"></i>
-                    </button>
+                    <button type="button" class="header-theme-btn" id="headerThemeBtn" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
 
                     <!-- Candidate profile dropdown -->
                     <div class="profile-dropdown-container" id="profileDropdownContainer">
@@ -1374,17 +1374,6 @@
                             <div class="stat-badge sb-grey"><i class="bi bi-circle"></i> Not Started</div>
                         </div>
                     </div>
-
-                    {% if remaining_tokens is defined and allowed_total is defined %}
-                    <div class="stat-card">
-                        <div class="stat-icon si-blue"><i class="bi bi-ticket-perforated"></i></div>
-                        <div>
-                            <div class="stat-label">Assessment Attempts</div>
-                            <div class="stat-value">{{ remaining_tokens }} of {{ allowed_total }} left</div>
-                            <div class="stat-badge {{ 'sb-grey' if remaining_tokens else 'sb-grey' }}"><i class="bi bi-info-circle"></i> Practice never uses one</div>
-                        </div>
-                    </div>
-                    {% endif %}
 
                     <div class="stat-card">
                         <div class="stat-icon {% if user.resume_text %}si-emerald{% else %}si-blue{% endif %}">
@@ -2111,52 +2100,6 @@
 
 <script>
 (function() {
-    /* ── THEME TOGGLE ── */
-    var toggleInput     = document.getElementById('themeToggle');
-    var themeIcon       = document.getElementById('sidebarThemeIcon');
-    var themeLabel      = document.getElementById('sidebarThemeLabel');
-    var headerThemeBtn  = document.getElementById('headerThemeBtn');
-    var headerThemeIcon = document.getElementById('headerThemeIcon');
-
-    function applyTheme(theme) {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark-theme');
-            document.documentElement.setAttribute('data-theme', 'dark');
-            document.body.classList.add('dark-theme');
-            if (themeIcon)       themeIcon.className       = 'bi bi-sun-fill';
-            if (headerThemeIcon) headerThemeIcon.className = 'bi bi-sun-fill';
-            if (themeLabel)      themeLabel.textContent    = 'Light Mode';
-            if (toggleInput)     toggleInput.checked       = true;
-        } else {
-            document.documentElement.classList.remove('dark-theme');
-            document.documentElement.setAttribute('data-theme', 'light');
-            document.body.classList.remove('dark-theme');
-            if (themeIcon)       themeIcon.className       = 'bi bi-moon-stars-fill';
-            if (headerThemeIcon) headerThemeIcon.className = 'bi bi-moon-stars-fill';
-            if (themeLabel)      themeLabel.textContent    = 'Dark Mode';
-            if (toggleInput)     toggleInput.checked       = false;
-        }
-    }
-
-    applyTheme(localStorage.getItem('theme') || 'dark');
-
-    if (toggleInput) {
-        toggleInput.addEventListener('change', function() {
-            var t = this.checked ? 'dark' : 'light';
-            localStorage.setItem('theme', t);
-            applyTheme(t);
-        });
-    }
-
-    if (headerThemeBtn) {
-        headerThemeBtn.addEventListener('click', function() {
-            var currentTheme = localStorage.getItem('theme') || 'dark';
-            var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        });
-    }
-
     /* ── PROFILE DROPDOWN MENU ── */
     var profileTrigger   = document.getElementById('profilePillTrigger');
     var profileMenu      = document.getElementById('profileDropdownMenu');
