@@ -484,6 +484,24 @@ def resume_response(user):
     return send_file(io.BytesIO(data), mimetype=kind, download_name=name, max_age=0)
 
 
+def user_has_resume(user):
+    """True when the candidate already has a resume on file (the stored file, or the text read from it)."""
+    return bool(user and (user.resume_filename or user.resume_text))
+
+
+def resume_info(user):
+    """What the admin pages show about a stored resume: where it is kept, how big it is and when it was saved.
+    Only the small columns are read, never the file itself."""
+    if not user or not user.resume_filename:
+        return None
+    row = db.session.query(ResumeFile.size, ResumeFile.updated_at).filter_by(user_id=user.id).first()
+    if row:
+        return {"where": "database", "size_kb": max(1, round((row.size or 0) / 1024)), "saved": row.updated_at}
+    if _legacy_resume_path(user):
+        return {"where": "old disk copy", "size_kb": max(1, round(os.path.getsize(_legacy_resume_path(user)) / 1024)), "saved": None}
+    return None
+
+
 def resume_file_exists(user):
     """True when the candidate's original resume file is stored (database, or an older file still on disk)."""
     if not user or not user.resume_filename:

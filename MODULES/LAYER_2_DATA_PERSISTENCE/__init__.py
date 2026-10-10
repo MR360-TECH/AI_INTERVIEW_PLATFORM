@@ -19,6 +19,8 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     delete_resume_file,
     load_resume_file,
     resume_response,
+    user_has_resume,
+    resume_info,
     move_disk_resumes_to_database,
     is_valid_email,
     profile_is_complete,

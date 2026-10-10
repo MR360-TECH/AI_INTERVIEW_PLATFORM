@@ -11,6 +11,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     allowed_file,
     allowed_resume_file,
     save_resume_file,
+    user_has_resume,
     get_settings,
     save_progress,
     clear_progress,
@@ -61,12 +62,14 @@ def _guard_response(guard, as_json=False):
 
 def _integrity_view(settings, user_id, is_practice, timer_total, new_question):
     """Extra variables for interview.html: the server-side clock and the integrity features switched on by the admin."""
+    # The first question offers a resume upload only to a candidate who has no resume on file yet.
+    has_resume = user_has_resume(db.session.get(User, user_id))
     if not integrity.proctored(settings, is_practice):
-        return {"timer_seconds": timer_total, "timer_total": timer_total, "integrity": None}
+        return {"timer_seconds": timer_total, "timer_total": timer_total, "integrity": None, "has_resume": has_resume}
     integrity.touch(user_id, new_question=new_question)
     left = integrity.seconds_left(integrity.get_progress(user_id), settings, timer_total)
     return {"timer_seconds": timer_total if left is None else left, "timer_total": timer_total,
-            "integrity": integrity.template_context(user_id, settings)}
+            "integrity": integrity.template_context(user_id, settings), "has_resume": has_resume}
 
 
 @interview_bp.route("/interview", methods=["GET", "POST"])
@@ -174,7 +177,7 @@ def interview():
                 resume_file.seek(0)
                 file_bytes = resume_file.read()
 
-                if user:
+                if user and not user_has_resume(user):         # a resume already on file is never replaced from here
                     resume_analysis = analyze_attachment(
                         file_bytes, resume_file.mimetype,
                         context_hint="Verify this is a candidate resume. If not, output NOT_A_RESUME. Otherwise summarize their role, key skills, and experience level in 2 concise sentences."

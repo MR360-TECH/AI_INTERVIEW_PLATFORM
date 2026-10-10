@@ -51,7 +51,7 @@ The **AI Interview Platform** is a full-stack web application that simulates rea
 
 When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **930 automated checks** plus real-browser tests.
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **941 automated checks** plus real-browser tests.
 
 ---
 
@@ -779,7 +779,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (930 checks, about one minute)
+python tests/e2e.py                          # all groups (941 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 
@@ -817,6 +817,8 @@ The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in
 **What counts as an attempt?** A completed, terminated or exited scored assessment. An AI problem, a server error or a dropped connection never counts: the interview is saved and you continue where you left off.
 
 **What happens if I press Exit?** The assessment ends for good. The AI analyses the questions you answered, you receive a report and a feedback e-mail, and the session counts as one attempt. The administrator also sees the questions and your answers.
+
+**Will I be asked for my resume again?** No. A resume uploaded on the dashboard is stored in the database and used by every interview, so the first question shows no upload box. If no resume is on file, the first question offers an optional upload, and the file goes into the database for next time. The server never replaces a resume that is already on file from the interview page.
 
 **Is it safe on a free host?** Resumes are kept in the database, not on the server disk, so a restart or redeploy never loses them. `/health` answers "ok" without touching the database, so a free uptime monitor (for example UptimeRobot, every 5 minutes) can keep a free Render service awake without keeping the free Neon database awake or using its compute hours.
 

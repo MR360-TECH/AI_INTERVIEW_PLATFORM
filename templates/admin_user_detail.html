@@ -708,6 +708,7 @@ html.dark-theme .db-bg { display: block; }
         </div>
       </div>
       <div class="modal-body p-4 pt-2">
+        {% if resume_info %}<p class="small mb-2" style="color:#94a3b8;">Stored in the {{ resume_info.where }} &middot; {{ resume_info.size_kb }} KB{% if resume_info.saved %} &middot; saved {{ resume_info.saved.strftime('%d %b %Y, %H:%M') }} UTC{% endif %}</p>{% endif %}
         {% if resume_file_exists %}
           {% set ext = user.resume_filename.rsplit('.', 1)[-1].lower() %}
           {% if ext in ['png', 'jpg', 'jpeg'] %}

@@ -3441,7 +3441,68 @@ def t_health_and_keys():
         ai_mod.reset_key_cooldowns()
 
 
-TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_health_and_keys, t_attempt_accounting, t_error_does_not_consume,
+def t_resume_first_question():
+    section("First interview question: resume upload only when no resume is on file; it is saved in the database; admin sees where it is kept")
+    pdf_a = b"%PDF-1.4 resume uploaded on the dashboard %%EOF"
+    pdf_b = b"%PDF-1.4 a different resume sent from the interview %%EOF"
+
+    # 1. no resume yet -> the first question offers the upload, and what is uploaded goes into the database
+    uid1 = make_user("firstq1@test.local", "First Q One")
+    c1, _ = login_user("firstq1@test.local")
+    r = get(c1, "/interview?restart=1", follow_redirects=True)
+    html = r.data.decode()
+    check("no resume on file: the first question shows the resume upload", 'name="resume"' in html and "Candidate Profile Resume" in html)
+    check("no resume on file: no 'saved resume' note", "Your saved resume will be used" not in html)
+    r = post(c1, "/interview", data={"answer": "Python", "resume": (io.BytesIO(pdf_a), "cv.pdf")},
+             content_type="multipart/form-data")
+    with app.app_context():
+        row = ResumeFile.query.filter_by(user_id=uid1).first()
+        u1 = db.session.get(User, uid1)
+        saved_name = u1.resume_filename
+    check("a resume sent with the first answer is saved in the database", row is not None and row.data == pdf_a and bool(saved_name))
+    check("...and not on the disk", not os.path.exists(os.path.join(app.config["UPLOAD_FOLDER"], saved_name or "x")))
+
+    # 2. resume already uploaded from the dashboard -> the first question never offers the upload
+    uid2 = make_user("firstq2@test.local", "First Q Two")
+    c2, _ = login_user("firstq2@test.local")
+    post(c2, "/dashboard/update-resume", data={"resume_file": (io.BytesIO(pdf_a), "dash.pdf")}, content_type="multipart/form-data")
+    r = get(c2, "/interview?restart=1", follow_redirects=True)
+    html = r.data.decode()
+    check("resume from the dashboard: the first question has NO upload box", 'name="resume"' not in html and "Candidate Profile Resume" not in html)
+    check("resume from the dashboard: the page says the saved resume will be used", "Your saved resume will be used" in html)
+    post(c2, "/interview", data={"answer": "Python", "resume": (io.BytesIO(pdf_b), "other.pdf")}, content_type="multipart/form-data")
+    with app.app_context():
+        row2 = ResumeFile.query.filter_by(user_id=uid2).first()
+    check("a crafted upload cannot replace the resume already on file", row2 is not None and row2.data == pdf_a)
+
+    # 3. only the extracted text exists (file never stored) -> still counts as 'has a resume'
+    uid3 = make_user("firstq3@test.local", "First Q Three")
+    with app.app_context():
+        db.session.get(User, uid3).resume_text = "Plain text resume"
+        db.session.commit()
+    c3, _ = login_user("firstq3@test.local")
+    html = get(c3, "/interview?restart=1", follow_redirects=True).data.decode()
+    check("a resume that exists only as text also hides the upload", 'name="resume"' not in html)
+
+    # 4. removing the resume brings the upload back
+    make_user("firstq4@test.local", "First Q Four")
+    c4, _ = login_user("firstq4@test.local")
+    post(c4, "/dashboard/update-resume", data={"resume_file": (io.BytesIO(pdf_a), "dash.pdf")}, content_type="multipart/form-data")
+    post(c4, "/dashboard/remove-resume")
+    html = get(c4, "/interview?restart=1", follow_redirects=True).data.decode()
+    check("after the resume is removed the first question offers the upload again", 'name="resume"' in html)
+
+    # 5. the admin sees where the resume is kept
+    a = client()
+    post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    html = get(a, f"/admin/user/{uid1}").data.decode()
+    check("admin user page: shows the resume is stored in the database with its size", "Stored in the database" in html and "KB" in html)
+    r = get(a, f"/admin/user/{uid1}/resume")
+    check("admin can open that resume", r.status_code == 200 and r.data == pdf_a)
+    r.close()
+
+
+TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
          t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]

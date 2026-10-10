@@ -11,6 +11,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     get_settings,
     invalidate_settings_cache,
     resume_file_exists,
+    resume_info,
     delete_resume_file,
     resume_response,
     INTEGRITY_SWITCHES,
@@ -396,7 +397,8 @@ def admin_user_detail(user_id):
         allowed_total=allowed_total,
         remaining_tokens=remaining_tokens,
         is_locked=is_locked,
-        resume_file_exists=resume_file_exists(user)
+        resume_file_exists=resume_file_exists(user),
+        resume_info=resume_info(user)
     )
 
 
@@ -445,7 +447,7 @@ def admin_interview_detail(result_id):
                       .order_by(InterviewViolation.created_at, InterviewViolation.id).all())
 
     return render_template("admin_interview_detail.html", result=result, candidate=candidate, score_percent=score_percent,
-                           resume_file_exists=resume_file_exists(candidate), settings=settings, others=others,
+                           resume_file_exists=resume_file_exists(candidate), resume_info=resume_info(candidate), settings=settings, others=others,
                            recommended=_is_recommended(result, settings), terminated=terminated, paragraphs=paragraphs,
                            attempts_used=attempts_used, allowed_total=allowed_total, is_locked=is_locked,
                            violations=violations, strike_count=sum(1 for v in violations if v.strike_no),

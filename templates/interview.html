@@ -831,7 +831,12 @@
                         <input type="hidden" name="voice" id="voiceUsed" value="0">
                         {% endif %}
 
-                        {% if q_num == 1 and not is_practice %}
+                        {% if q_num == 1 and not is_practice and has_resume %}
+                        <div class="upload-box mb-3" id="resumeOnFile">
+                            <label class="upload-title"><i class="bi bi-file-earmark-check"></i> Your saved resume will be used</label>
+                            <div style="font-size:0.85rem;color:var(--ai-sub-color);">The resume from your dashboard is already on file, so this interview can ask about your real experience.</div>
+                        </div>
+                        {% elif q_num == 1 and not is_practice %}
                         <div class="upload-box mb-3">
                             <label class="upload-title"><i class="bi bi-file-earmark-person"></i> Candidate Profile Resume (Optional)</label>
                             <div class="upload-row">
