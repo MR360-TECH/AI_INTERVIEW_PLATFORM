@@ -3587,7 +3587,29 @@ def t_database_driver():
     check("requirements.txt installs the driver the address names (psycopg2-binary)", "psycopg2-binary" in req)
 
 
-TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_attempt_accounting, t_error_does_not_consume,
+def t_practice_page_layout():
+    section("Practice Lab page: full-window two-column layout, four labs, working form, no leftover old layout")
+    make_user("lab@test.local", "Lab Tester")
+    c, _ = login_user("lab@test.local")
+    html = get(c, "/practice-setup").data.decode()
+    check("the page is the new full-width layout (no narrow centred container)", 'class="lab-page"' in html and 'class="container mt-3"' not in html)
+    check("all five labs are shown as cards (viva, language, concept drill, debate, convo)", all(('id="card-%s"' % m) in html for m in ("viva", "lang", "drill", "debate", "convo")))
+    check("each lab card says what it is best for and lists what you practise", html.count("lab-best") >= 5 and html.count('class="lab-points"') == 5)
+    check("the form still posts to /practice-start with the mode field and the viva subject is required",
+          'action="/practice-start"' in html and 'name="mode"' in html and 'name="viva_subject"' in html and "required" in html)
+    check("the language settings (language, focus, level) are still there", all(n in html for n in ('name="lang_target"', 'name="lang_focus"', 'name="lang_level"')))
+    check("every lab has its settings block with a tip and an example conversation", all(("%s-details" % m) in html for m in ("viva", "lang", "drill", "debate", "convo")) and html.count("lab-example") >= 5 + 1)
+    check("the 'what you get' list and the how-it-works strip fill the lower part of the page", html.count("lab-get") >= 4 and "How a practice session works" in html)
+    check("the page works on small screens (responsive rules present)", "@media (max-width: 991px)" in html and "@media (max-width: 575px)" in html)
+    check("switching lab shows the right settings (the script sets flex layout)", "'flex' : 'none'" in html)
+    check("the Concept Drill setting field is on the page", 'name="drill_subject"' in html)
+    r = post(c, "/practice-start", data={"mode": "drill", "drill_subject": "Recursion"})
+    check("starting a concept drill from the page works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
+    r = post(c, "/practice-start", data={"mode": "viva", "viva_subject": "Operating Systems"})
+    check("starting a viva from the new page still works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
+
+
+TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_practice_page_layout, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
          t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]

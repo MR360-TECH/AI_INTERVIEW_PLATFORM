@@ -364,7 +364,119 @@
             color: #00ff9d !important;
             border: 1px solid rgba(0, 255, 255, 0.15) !important;
         }
-        </style>
+        
+        /* ── Practice Lab layout: fills the whole window, no empty areas ── */
+        .lab-page {
+            position: relative; z-index: 1;
+            min-height: 100vh;
+            display: flex; flex-direction: column; gap: 22px;
+            padding: 26px clamp(18px, 3.5vw, 80px) 30px;
+            width: 100%;
+        }
+        .lab-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+        .lab-kicker { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #00e5ff; }
+        .lab-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: clamp(1.6rem, 2.6vw, 2.3rem); margin: 4px 0 4px; color: var(--text-main); }
+        .lab-sub { margin: 0; color: var(--text-muted); font-size: 0.98rem; max-width: 760px; }
+
+        .lab-grid { flex: 1; display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 26px; align-items: stretch; }
+        .lab-left, .lab-right { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+        .lab-step-label { display: flex; align-items: center; gap: 10px; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--text-main); }
+        .lab-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: #00e5ff; color: #020510; font-weight: 800; font-size: 0.88rem; flex-shrink: 0; }
+
+        .lab-cards { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 16px; }
+        .lab-cards .practice-card { position: relative; padding: 22px 22px 20px; display: flex; flex-direction: column; height: 100%; }
+        .lab-cards .practice-icon { font-size: 2.4rem; margin-bottom: 10px; }
+        .lab-cards h5 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.25rem; margin: 0 0 6px; color: var(--text-main); }
+        .lab-cards p { font-size: 0.98rem; line-height: 1.5; color: var(--text-muted); margin: 0 0 14px; }
+        .lab-best { margin-top: auto; font-size: 0.86rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .lab-check { position: absolute; top: 16px; right: 16px; font-size: 1.35rem; color: #00e5ff; opacity: 0; transform: scale(0.6); transition: all 0.2s ease; }
+        .selected-card .lab-check { opacity: 1; transform: scale(1); }
+
+        .lab-panel { background: var(--card-bg); border: 1px solid var(--settings-border); border-radius: 16px; padding: 22px; flex: 1; display: flex; flex-direction: column; }
+        html.dark-theme .lab-panel { background: rgba(8, 14, 30, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .lab-panel h6 { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.1rem; }
+        .lab-panel .form-label { font-size: 0.95rem; }
+        .lab-panel .form-control, .lab-panel .form-select { padding: 12px 14px; font-size: 1rem; }
+        .lab-panel .form-text { font-size: 0.92rem; color: var(--text-muted); }
+        .lab-tip { margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 0.92rem; line-height: 1.5; color: var(--highlight-color); background: rgba(0, 229, 255, 0.07); border: 1px dashed rgba(0, 229, 255, 0.35); }
+        .lab-tip i { color: #f5b942; margin-right: 4px; }
+
+        .lab-gets { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .lab-get { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: 14px; background: var(--highlights-bg); border: 1px solid var(--highlights-border); }
+        html.dark-theme .lab-get { background: rgba(8, 14, 30, 0.75); border-color: rgba(0, 255, 255, 0.14); }
+        .lab-get > i { font-size: 1.4rem; flex-shrink: 0; }
+        .lab-get .pulse-dot { width: 12px; height: 12px; margin: 0 5px; }
+        .lab-get b { display: block; font-size: 0.95rem; color: var(--text-main); }
+        .lab-get small { display: block; font-size: 0.82rem; color: var(--text-muted); line-height: 1.3; }
+
+        .lab-launch { width: 100%; padding: 17px 20px; border: none; border-radius: 14px; font-size: 1.15rem; font-weight: 800; color: #020510;
+            background: linear-gradient(135deg, var(--primary, #00ffff), var(--primary-hover, #0284c7)); box-shadow: 0 6px 20px rgba(0, 255, 255, 0.28); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .lab-launch:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0, 255, 255, 0.4); color: #020510; }
+
+        .lab-steps { border-radius: 18px; padding: 20px 24px; background: var(--highlights-bg); border: 1px solid var(--highlights-border); }
+        html.dark-theme .lab-steps { background: rgba(8, 14, 30, 0.75); border-color: rgba(0, 255, 255, 0.14); }
+        .lab-steps-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.05rem; color: var(--text-main); margin-bottom: 14px; }
+        .lab-steps-title i { color: #00e5ff; margin-right: 6px; }
+        .lab-steps-row { display: flex; align-items: stretch; gap: 14px; }
+        .lab-stepcard { flex: 1; display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-radius: 14px; background: rgba(0, 229, 255, 0.05); border: 1px solid rgba(0, 229, 255, 0.16); }
+        .lab-stepcard b { display: block; font-size: 1rem; color: var(--text-main); margin-bottom: 2px; }
+        .lab-stepcard small { display: block; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+        .lab-arrow { display: flex; align-items: center; color: #00e5ff; font-size: 1.3rem; }
+
+        @media (max-width: 991px) {
+            .lab-grid { grid-template-columns: minmax(0, 1fr); }
+            .lab-steps-row { flex-direction: column; }
+            .lab-arrow { display: none; }
+            .lab-head { flex-direction: column-reverse; align-items: stretch; }
+            .lab-head .back-btn-global { align-self: flex-start; }
+        }
+        @media (max-width: 575px) {
+            .lab-cards, .lab-gets { grid-template-columns: 1fr; }
+        }
+    
+        .lab-panel > div { display: flex; flex-direction: column; flex: 1; }
+        .lab-example { margin-top: auto; padding-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+        .lab-example-title { font-size: 0.84rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+        .lab-bubble { padding: 10px 14px; border-radius: 14px; font-size: 0.95rem; line-height: 1.45; max-width: 92%; }
+        .lab-bubble b { display: block; font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+        .lab-bubble-ai { background: rgba(0, 229, 255, 0.09); border: 1px solid rgba(0, 229, 255, 0.28); color: var(--text-main); align-self: flex-start; }
+        .lab-bubble-ai b { color: #00e5ff; }
+        .lab-bubble-me { background: rgba(167, 139, 250, 0.12); border: 1px solid rgba(167, 139, 250, 0.32); color: var(--text-main); align-self: flex-end; }
+        .lab-bubble-me b { color: #a78bfa; text-align: right; }
+    
+        .lab-points { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 7px; }
+        .lab-points li { position: relative; padding-left: 22px; font-size: 0.95rem; color: var(--text-main); }
+        .lab-points li::before { content: "\2713"; position: absolute; left: 0; top: 0; font-weight: 800; color: #00e5ff; }
+    
+        .lab-cards .practice-card, .lab-get, .lab-stepcard, .lab-panel { min-width: 0; overflow-wrap: anywhere; }
+    
+        .drill-theme { color: #f59e0b; }
+        html.dark-theme .drill-theme { color: #fbbf24; }
+        .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+        @media (max-width: 575px) { .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: auto; } }
+    
+        /* ── Practice Lab, final layout: five labs across the page, setup and launch below ── */
+        .lab-grid { display: flex; flex-direction: column; grid-template-columns: none; gap: 22px; }
+        .lab-choose { display: flex; flex-direction: column; gap: 14px; }
+        .lab-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: auto; flex: none; }
+        .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: auto; }
+        .lab-setup { flex: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 26px; align-items: stretch; }
+        .lab-gets { grid-template-columns: 1fr; flex: 1; align-content: start; }
+        .lab-launch { margin-top: auto; }
+        @media (max-width: 1099px) {
+            .lab-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+        }
+        @media (max-width: 991px) { .lab-setup { grid-template-columns: minmax(0, 1fr); } }
+        @media (max-width: 575px) {
+            .lab-cards { grid-template-columns: 1fr; }
+            .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: auto; }
+        }
+    
+        .lab-gets { display: flex; flex-direction: column; gap: 12px; align-content: normal; }
+        .lab-get { flex: 1; }
+        .lab-launch { margin-top: 0; }
+    </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
 </head>
 <body>
@@ -382,140 +494,189 @@
 
     {% include 'navbar.html' %}
 
-    <div class="container mt-3">
-        <div class="row justify-content-center">
-            <div class="col-lg-10 col-xl-9">
+    <main class="lab-page">
 
-                <!-- Page header -->
-                <div class="topbar mb-3">
-                    <div>
-                        <h4 class="mb-0"><i class="bi bi-mortarboard"></i> Practice Mode</h4>
-                        <p class="mb-0 text-muted" style="font-size:0.83rem; margin-top:2px;">
-                            Sharpen your skills with informal, examiner-led feedback sessions.
-                        </p>
+        <!-- Page header -->
+        <div class="lab-head">
+            <div>
+                <span class="lab-kicker"><i class="bi bi-stars"></i> Practice Lab</span>
+                <h1 class="lab-title"><i class="bi bi-mortarboard"></i> Practice Mode</h1>
+                <p class="lab-sub">Five practice labs to sharpen your skills with informal, examiner-led feedback sessions. Nothing here is scored, timed or counted as an attempt.</p>
+            </div>
+            <a href="/dashboard" class="back-btn-global">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+
+        <form method="POST" action="/practice-start" id="practiceForm" class="lab-grid">
+            <input type="hidden" name="mode" id="selectedMode" value="viva">
+
+            <!-- 1: choose a lab (all five across the page) -->
+            <section class="lab-choose">
+                <div class="lab-step-label"><span class="lab-num">1</span> Choose your lab</div>
+                <div class="lab-cards">
+                    <div class="card practice-card selected-card" id="card-viva" onclick="selectMode('viva')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon viva-theme"><i class="bi bi-person-workspace"></i></div>
+                        <h5>Academic Viva Voce</h5>
+                        <p>Simulates an oral university exam. Practises technical questions and definitions.</p>
+                        <ul class="lab-points"><li>Definitions and short explanations</li><li>Follow-up &ldquo;why&rdquo; questions</li><li>Feedback on how clearly you explain</li></ul>
+                        <span class="lab-best viva-theme"><i class="bi bi-bullseye"></i> Best for oral exams and technical rounds</span>
                     </div>
-                    <a href="/dashboard" class="back-btn-global">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </a>
+                    <div class="card practice-card" id="card-lang" onclick="selectMode('lang')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon lang-theme"><i class="bi bi-translate"></i></div>
+                        <h5>FluentFlow</h5>
+                        <p>Improve spoken fluency in any language. Practice everyday conversation.</p>
+                        <ul class="lab-points"><li>Everyday conversation</li><li>Gentle corrections as you go</li><li>Useful words and phrases to remember</li></ul>
+                        <span class="lab-best lang-theme"><i class="bi bi-bullseye"></i> Best for speaking confidence</span>
+                    </div>
+                    <div class="card practice-card" id="card-drill" onclick="selectMode('drill')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon drill-theme"><i class="bi bi-bullseye"></i></div>
+                        <h5>Concept Drill</h5>
+                        <p>Focused conceptual questions on one topic that challenge your logic and reasoning.</p>
+                        <ul class="lab-points"><li>One concept at a time</li><li>Questions that test your reasoning</li><li>A friendly, mentor-style tone</li></ul>
+                        <span class="lab-best drill-theme"><i class="bi bi-bullseye"></i> Best for revising a topic before an assessment</span>
+                    </div>
+                    <div class="card practice-card" id="card-debate" onclick="selectMode('debate')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon debate-theme"><i class="bi bi-lightning-charge"></i></div>
+                        <h5>Debate with AI</h5>
+                        <p>Sharp counter-arguments and language-sensitive debates limited to 2 lines.</p>
+                        <ul class="lab-points"><li>Taking a side and defending it</li><li>Short, two-line rebuttals</li><li>Spotting weak arguments</li></ul>
+                        <span class="lab-best debate-theme"><i class="bi bi-bullseye"></i> Best for quick, clear reasoning</span>
+                    </div>
+                    <div class="card practice-card" id="card-convo" onclick="selectMode('convo')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon convo-theme"><i class="bi bi-chat-left-heart"></i></div>
+                        <h5>Healthy Convo</h5>
+                        <p>Engage in warm, meaningful, and healthy discussions with moderate friendliness.</p>
+                        <ul class="lab-points"><li>Warm, friendly small talk</li><li>Longer, more natural answers</li><li>Confidence in speaking</li></ul>
+                        <span class="lab-best convo-theme"><i class="bi bi-bullseye"></i> Best for relaxed, friendly practice</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="lab-setup">
+                <!-- 2: set it up -->
+                <section class="lab-left">
+                    <div class="lab-step-label"><span class="lab-num">2</span> Set it up</div>
+                <div class="lab-panel">
+                    <div id="viva-details">
+                        <h6 class="mb-3 viva-theme"><i class="bi bi-sliders"></i> Viva Voce Settings</h6>
+                        <label class="form-label fw-semibold mb-1">Target Topic / Course Subject</label>
+                        <input type="text" name="viva_subject" class="form-control" placeholder="e.g., Data Structures, Classical Mechanics, Organic Chemistry" required>
+                        <div class="form-text mt-2">The AI examiner will focus 100% of the viva questions on this specific course subject.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Tip: a narrow subject (for example "Operating Systems") gives sharper questions than a broad one.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>Explain the difference between a process and a thread.</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>A process has its own memory space, while threads of one process share it...</div>
+                        </div>
+                    </div>
+
+                    <div id="lang-details" style="display:none;">
+                        <h6 class="mb-3 lang-theme"><i class="bi bi-sliders"></i> FluentFlow Settings</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-semibold mb-1">Language to Practise</label>
+                                <input type="text" name="lang_target" id="langTargetInput" class="form-control" placeholder="e.g., French, Spanish, Hindi, Japanese">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold mb-1">Focus Category</label>
+                                <select name="lang_focus" class="form-select">
+                                    <option value="conversation">Conversational Fluency</option>
+                                    <option value="grammar">Grammar &amp; Sentence Correction</option>
+                                    <option value="fundamentals">Fundamental Language Q&amp;A</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label fw-semibold mb-1">Proficiency Level</label>
+                                <select name="lang_level" class="form-select">
+                                    <option value="beginner">Beginner (A1-A2)</option>
+                                    <option value="intermediate" selected>Intermediate (B1-B2)</option>
+                                    <option value="advanced">Advanced (C1-C2)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-text mt-2">The AI will conduct the session based on these preferences in a language-sensitive manner.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Tip: you can answer in the target language or mix in your own; the AI gently corrects as you go.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>Hello! Tell me about your day, in the language you chose.</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>My day was busy, but I enjoyed the lunch with my friends...</div>
+                        </div>
+                    </div>
+
+                    <div id="drill-details" style="display:none;">
+                        <h6 class="mb-3 drill-theme"><i class="bi bi-sliders"></i> Concept Drill Settings</h6>
+                        <label class="form-label fw-semibold mb-1">Concept or Topic to Drill</label>
+                        <input type="text" name="drill_subject" class="form-control" placeholder="e.g., Recursion, Normalisation, Supply and Demand">
+                        <div class="form-text mt-2">The mentor asks open conceptual questions about this topic. Leave it empty to drill general concepts.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Tip: pick one concept (for example "Recursion") rather than a whole subject, so each question can go deeper.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>What is recursion, and when would you choose it over a loop?</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>Recursion solves a problem by calling itself on a smaller part of it...</div>
+                        </div>
+                    </div>
+
+                    <div id="debate-details" style="display:none;">
+                        <h6 class="mb-3 debate-theme"><i class="bi bi-sliders"></i> Debate Settings</h6>
+                        <div class="form-text">No upfront settings required! The AI will ask you for your chosen debate topic and stance once the session starts.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Example topics: "Social media does more harm than good", "Remote work beats office work", "AI should be allowed in exams".</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>Remote work beats office work. Argue against it in two lines.</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>Offices build teamwork and make it easier to learn from others...</div>
+                        </div>
+                    </div>
+
+                    <div id="convo-details" style="display:none;">
+                        <h6 class="mb-3 convo-theme"><i class="bi bi-sliders"></i> Healthy Conversation Settings</h6>
+                        <div class="form-text">No upfront settings required! The AI will ask you what you would like to discuss once the session starts.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Good starters: your day, a hobby, a book or film you liked, or a plan you are excited about.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>What is something you enjoyed this week?</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>I watched a film with my family, and we talked about it for hours...</div>
+                        </div>
+                    </div>
                 </div>
 
-                <form method="POST" action="/practice-start" id="practiceForm">
-                    <input type="hidden" name="mode" id="selectedMode" value="viva">
+                </section>
 
-                    <!-- Mode cards -->
-                    <div class="row g-3">
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card practice-card p-3 h-100 selected-card" id="card-viva" onclick="selectMode('viva')">
-                                <div class="practice-icon viva-theme"><i class="bi bi-person-workspace"></i></div>
-                                <h5 class="mb-1" style="font-size:0.95rem;">Academic Viva Voce</h5>
-                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Simulates an oral university exam. Practises technical questions and definitions.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card practice-card p-3 h-100" id="card-lang" onclick="selectMode('lang')">
-                                <div class="practice-icon lang-theme"><i class="bi bi-translate"></i></div>
-                                <h5 class="mb-1" style="font-size:0.95rem;">FluentFlow</h5>
-                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Improve spoken fluency in any language. Practice everyday conversation.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card practice-card p-3 h-100" id="card-debate" onclick="selectMode('debate')">
-                                <div class="practice-icon debate-theme"><i class="bi bi-lightning-charge"></i></div>
-                                <h5 class="mb-1" style="font-size:0.95rem;">Debate with AI</h5>
-                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Sharp counter-arguments and language-sensitive debates limited to 2 lines.</p>
-                            </div>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <div class="card practice-card p-3 h-100" id="card-convo" onclick="selectMode('convo')">
-                                <div class="practice-icon convo-theme"><i class="bi bi-chat-left-heart"></i></div>
-                                <h5 class="mb-1" style="font-size:0.95rem;">Healthy Convo</h5>
-                                <p class="small text-muted mb-0" style="font-size:0.75rem;">Engage in warm, meaningful, and healthy discussions with moderate friendliness.</p>
-                            </div>
-                        </div>
-                    </div>
+                <!-- 3: what you get, and launch -->
+                <section class="lab-right">
+                    <div class="lab-step-label"><span class="lab-num">3</span> What you get, then launch</div>
+                <div class="lab-gets">
+                    <div class="lab-get"><span class="pulse-dot"></span><div><b>Unlimited Questions</b><small>Keep going for as long as you like.</small></div></div>
+                    <div class="lab-get"><i class="bi bi-shield-check" style="color:#17b978;"></i><div><b>No pressure, no timer</b><small>Nothing is scored or counted.</small></div></div>
+                    <div class="lab-get"><i class="bi bi-check2-circle" style="color:#4e73df;"></i><div><b>Finish when you're ready</b><small>End the session at any moment.</small></div></div>
+                    <div class="lab-get"><i class="bi bi-bar-chart-line" style="color:#8e44ad;"></i><div><b>AI report at the end</b><small>A written review of how you did.</small></div></div>
+                </div>
 
-                    <!-- Settings panel -->
-                    <div class="card p-3 mt-3" style="border-radius:12px; border:1px solid var(--border-light);">
-
-                        <div id="viva-details">
-                            <h6 class="mb-2 viva-theme"><i class="bi bi-sliders"></i> Viva Voce Settings</h6>
-                            <label class="form-label fw-semibold mb-1" style="font-size:0.88rem;">Target Topic / Course Subject</label>
-                            <input type="text" name="viva_subject" class="form-control" placeholder="e.g., Data Structures, Classical Mechanics, Organic Chemistry" required>
-                            <div class="form-text mt-1">The AI examiner will focus 100% of the viva questions on this specific course subject.</div>
-                        </div>
-
-                        <div id="lang-details" style="display:none;">
-                            <h6 class="mb-2 lang-theme"><i class="bi bi-sliders"></i> FluentFlow Settings</h6>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold mb-1" style="font-size:0.88rem;">Language to Practise</label>
-                                    <input type="text" name="lang_target" id="langTargetInput" class="form-control" placeholder="e.g., French, Spanish, Hindi, Japanese">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold mb-1" style="font-size:0.88rem;">Focus Category</label>
-                                    <select name="lang_focus" class="form-select">
-                                        <option value="conversation">Conversational Fluency</option>
-                                        <option value="grammar">Grammar &amp; Sentence Correction</option>
-                                        <option value="fundamentals">Fundamental Language Q&amp;A</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold mb-1" style="font-size:0.88rem;">Proficiency Level</label>
-                                    <select name="lang_level" class="form-select">
-                                        <option value="beginner">Beginner (A1-A2)</option>
-                                        <option value="intermediate" selected>Intermediate (B1-B2)</option>
-                                        <option value="advanced">Advanced (C1-C2)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-text mt-2">The AI will conduct the session based on these preferences in a language-sensitive manner.</div>
-                        </div>
-
-                        <div id="debate-details" style="display:none;">
-                            <h6 class="mb-2 debate-theme"><i class="bi bi-sliders"></i> Debate Settings</h6>
-                            <div class="form-text mt-1">No upfront settings required! The AI will ask you for your chosen debate topic and stance once the session starts.</div>
-                        </div>
-
-                        <div id="convo-details" style="display:none;">
-                            <h6 class="mb-2 convo-theme"><i class="bi bi-sliders"></i> Healthy Conversation Settings</h6>
-                            <div class="form-text mt-1">No upfront settings required! The AI will ask you what you would like to discuss once the session starts.</div>
-                        </div>
-
-                    </div>
-
-                    <!-- Practice highlights strip -->
-                    <div class="practice-highlights">
-                        <div class="practice-highlight-item">
-                            <span class="pulse-dot"></span>
-                            Unlimited Questions
-                        </div>
-                        <div class="ph-divider"></div>
-                        <div class="practice-highlight-item">
-                            <i class="bi bi-shield-check" style="color:#17b978;"></i>
-                            No pressure, no timer
-                        </div>
-                        <div class="ph-divider"></div>
-                        <div class="practice-highlight-item">
-                            <i class="bi bi-check2-circle" style="color:#4e73df;"></i>
-                            Finish when you're ready
-                        </div>
-                        <div class="ph-divider"></div>
-                        <div class="practice-highlight-item">
-                            <i class="bi bi-bar-chart-line" style="color:#8e44ad;"></i>
-                            AI report at the end
-                        </div>
-                    </div>
-
-                    <!-- Launch button -->
-                    <button type="submit" class="btn w-100 mt-3 py-3"
-                        style="color:#020510; border-radius:12px; background:linear-gradient(135deg,var(--primary,#00ffff),var(--primary-hover,#0284c7)); font-size:1.05rem; font-weight:700; box-shadow:0 4px 14px rgba(0,255,255,0.25); border:none;">
-                        Launch Practice Session <i class="bi bi-rocket-takeoff ms-1"></i>
-                    </button>
-
-                </form>
+                <button type="submit" class="btn lab-launch">
+                    Launch Practice Session <i class="bi bi-rocket-takeoff ms-1"></i>
+                </button>
+                </section>
             </div>
-        </div>
-    </div>
+        </form>
+
+        <!-- How a session works -->
+        <section class="lab-steps">
+            <div class="lab-steps-title"><i class="bi bi-signpost-split"></i> How a practice session works</div>
+            <div class="lab-steps-row">
+                <div class="lab-stepcard"><span class="lab-num">1</span><div><b>Pick a lab</b><small>Choose the kind of practice you want and fill in the short setup.</small></div></div>
+                <div class="lab-arrow"><i class="bi bi-chevron-right"></i></div>
+                <div class="lab-stepcard"><span class="lab-num">2</span><div><b>Talk at your own pace</b><small>Type or speak your answers. There is no timer and no strike counter.</small></div></div>
+                <div class="lab-arrow"><i class="bi bi-chevron-right"></i></div>
+                <div class="lab-stepcard"><span class="lab-num">3</span><div><b>Get your AI report</b><small>Press Finish Session to receive a written review and what to practise next.</small></div></div>
+            </div>
+        </section>
+
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -526,10 +687,11 @@
             document.querySelectorAll('.practice-card').forEach(c => c.classList.remove('selected-card'));
             document.getElementById('card-' + mode).classList.add('selected-card');
 
-            document.getElementById('viva-details').style.display  = (mode === 'viva')   ? 'block' : 'none';
-            document.getElementById('lang-details').style.display  = (mode === 'lang')   ? 'block' : 'none';
-            document.getElementById('debate-details').style.display = (mode === 'debate') ? 'block' : 'none';
-            document.getElementById('convo-details').style.display = (mode === 'convo')  ? 'block' : 'none';
+            document.getElementById('viva-details').style.display  = (mode === 'viva')   ? 'flex' : 'none';
+            document.getElementById('lang-details').style.display  = (mode === 'lang')   ? 'flex' : 'none';
+            document.getElementById('drill-details').style.display = (mode === 'drill')  ? 'flex' : 'none';
+            document.getElementById('debate-details').style.display = (mode === 'debate') ? 'flex' : 'none';
+            document.getElementById('convo-details').style.display = (mode === 'convo')  ? 'flex' : 'none';
 
             const vivaInput  = document.querySelector('input[name="viva_subject"]');
             const langInput  = document.getElementById('langTargetInput');
