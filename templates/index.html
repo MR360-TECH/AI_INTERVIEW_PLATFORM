@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Recruitment &amp; Assessment Platform</title>
+    <title>AI Interview Platform</title>
     <meta name="description" content="A professional, enterprise-grade AI-powered interview and assessment platform for organisations.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -363,6 +363,8 @@
         .how-step p { color: #cbd5e1; font-size: 0.98rem; line-height: 1.65; margin: 0; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -379,7 +381,7 @@
 
 <nav class="hero-nav">
     <a class="brand" href="/">
-        <div class="brand-icon"><i class="bi bi-cpu-fill"></i></div>
+        <div class="brand-icon" style="background:none;padding:0;box-shadow:none;"><img src="{{ url_for('static', filename='images/logo-icon.png') }}" alt="AI Interview Platform" style="width:100%;height:100%;display:block;border-radius:inherit;"></div>
         AI Interview Platform
     </a>
     <div class="nav-links">
@@ -460,7 +462,7 @@
         <div class="footer-top">
             <div>
                 <div class="footer-brand">
-                    <div class="footer-brand-icon"><i class="bi bi-cpu-fill"></i></div>
+                    <div class="footer-brand-icon" style="background:none;padding:0;box-shadow:none;"><img src="{{ url_for('static', filename='images/logo-icon.png') }}" alt="AI Interview Platform" style="width:100%;height:100%;display:block;border-radius:inherit;"></div>
                     AI Interview Platform
                 </div>
                 <p class="footer-tagline">Professional AI-powered interview and candidate assessment suite for organisations and institutions.</p>

@@ -3734,10 +3734,35 @@ def t_content_above_background():
     check("the privacy page content layer has a z-index", _re.search(r"\.page-wrap\s*\{[^}]*z-index:\s*1", html) is not None)
 
 
+def t_brand_consistency():
+    section("One brand everywhere: the real app logo and the name 'AI Interview Platform' on every page, favicon on every page")
+    tdir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates")
+    full, no_icon, old_name, fake_logo = [], [], [], []
+    for name in sorted(os.listdir(tdir)):
+        if not name.endswith(".html") or name.startswith("_") or name == "navbar.html":
+            continue
+        src = open(os.path.join(tdir, name), encoding="utf-8").read()
+        full.append(name)
+        if 'rel="icon"' not in src or "images/logo-icon.png" not in src:
+            no_icon.append(name)
+        if "AI Assessment Platform" in src or "AI Interview Studio" in src or "AI Recruitment &amp; Assessment" in src:
+            old_name.append(name)
+        if '<div class="brand-icon"><i class="bi bi-cpu-fill"></i></div>' in src or '<div class="admin-brand-icon"><i' in src:
+            fake_logo.append(name)
+    check("every full page has the favicon and uses the logo file (%d pages)" % len(full), not no_icon, no_icon)
+    check("no page still uses an old product name", not old_name, old_name)
+    check("no page draws a look-alike logo with an icon font instead of the real logo", not fake_logo, fake_logo)
+    for path in ("/", "/login", "/signup", "/privacy"):
+        html = get(client(), path).data.decode()
+        check("%s: favicon link and the real logo are in the page" % path, 'rel="icon"' in html and "logo-icon.png" in html)
+    r = get(client(), "/static/images/logo-icon.png")
+    check("the logo file is served", r.status_code == 200 and r.mimetype == "image/png" and r.data[:4] == b"\x89PNG")
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_practice_page_layout, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background, t_brand_consistency]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

@@ -1017,6 +1017,8 @@
 
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
 </head>
 <body>
 
@@ -1037,7 +1039,7 @@
     <!-- ══ SIDEBAR ══ -->
     <nav class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
         <div class="sidebar-brand">
-            <div class="brand-icon"><i class="bi bi-cpu-fill"></i></div>
+            <div class="brand-icon" style="background:none;padding:0;box-shadow:none;"><img src="{{ url_for('static', filename='images/logo-icon.png') }}" alt="AI Interview Platform" style="width:100%;height:100%;display:block;border-radius:inherit;"></div>
             <div>
                 <div class="brand-name">AI Interview</div>
                 <div class="brand-sub">Career Platform</div>

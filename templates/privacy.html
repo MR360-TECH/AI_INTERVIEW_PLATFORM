@@ -400,6 +400,8 @@ html.dark-theme .db-bg { display: block; }
 ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
 </head>
 <body>
 <!-- ══ GOATED ANIMATED BACKGROUND ══ -->
@@ -416,7 +418,7 @@ html.dark-theme .db-bg { display: block; }
 
 <nav class="top-nav">
     <a class="nav-brand" href="/">
-        <div class="nav-icon"><i class="bi bi-cpu-fill"></i></div>
+        <div class="nav-icon" style="background:none;padding:0;box-shadow:none;"><img src="{{ url_for('static', filename='images/logo-icon.png') }}" alt="AI Interview Platform" style="width:100%;height:100%;display:block;border-radius:inherit;"></div>
         AI Interview Platform
     </a>
     <a href="/" class="nav-back">

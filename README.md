@@ -1,3 +1,5 @@
+<p align="center"><img src="static/images/logo-icon.png" alt="AI Interview Platform logo" width="120"></p>
+
 # 🤖 AI Interview Platform
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -51,7 +53,7 @@ The **AI Interview Platform** is a full-stack web application that simulates rea
 
 When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **1005 automated checks** plus real-browser tests.
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **1013 automated checks** plus real-browser tests.
 
 ---
 
@@ -785,7 +787,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (1005 checks, about one minute)
+python tests/e2e.py                          # all groups (1013 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 
