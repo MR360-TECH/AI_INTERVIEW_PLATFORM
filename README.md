@@ -51,7 +51,7 @@ The **AI Interview Platform** is a full-stack web application that simulates rea
 
 When the interview ends, the platform produces a **score out of 10** and a professional **four-paragraph evaluation**, a printable PDF scorecard with a unique session code, and a feedback e-mail with next steps. For learning, there are **five unscored practice labs** and a **searchable preparation library** with bookmarks and study plans.
 
-For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **908 automated checks** plus real-browser tests.
+For institutions, the **admin console** shows live results, manages candidates and attempts, and exposes every rule as a switch. A set of **server-side integrity rules** keeps scored assessments fair: every violation is a strike, the candidate always sees a box naming the exact mistake, and the administrator gets a private integrity log on every report. The system uses **Neon PostgreSQL**, is deployed on **Render**, and is verified by **930 automated checks** plus real-browser tests.
 
 ---
 
@@ -352,6 +352,7 @@ erDiagram
     interview_results ||--o{ interview_violations : records
     users ||--o{ feedback : sends
     users ||--o{ resource_bookmarks : saves
+    users ||--o| resume_files : "has stored resume"
 
     users {
         int id PK
@@ -604,7 +605,7 @@ Scored assessments are protected by rules that are **counted and stored on the s
 
 ## 🧠 AI engine and reliability
 
-- **Models:** Google Gemini through `google-genai`, with retries, optional **backup API keys** (`GEMINI_BACKUP_KEYS`) and **backup models** (`GEMINI_FALLBACK_MODELS`).
+- **Models:** Google Gemini through `google-genai`, with retries, optional **backup API keys** (`GEMINI_BACKUP_KEYS`, which share the load, and a key that just ran out of quota is skipped for a while) and **backup models** (`GEMINI_FALLBACK_MODELS`).
 - **Levels:** one definition per level (Student, Mid-level, Senior) feeds the question prompt, the system prompt and the evaluation prompt, so the way questions are asked and the way answers are scored always agree. Each level has its own scoring guide.
 - **Evaluation:** a score out of 10 plus four professional paragraphs (overall, strengths, gaps, guidance) in a calm third-person tone, with rules against inventing answers and against instructions hidden inside answers.
 - **Resilience:** if the AI is slow or down, a non-repeating fallback question keeps the interview going. A failed evaluation stores nothing and uses no attempt. The interview is saved on the server after every step.
@@ -627,7 +628,7 @@ Scored assessments are protected by rules that are **counted and stored on the s
 |---|---|
 | `/admin` | Counters, filters, instant search, the results table |
 | `/admin/users` | Summary cards, filters, sorting, paging, attempts taken, unlock |
-| `/admin/user/<id>` | Profile, resume viewer, attempts, history |
+| `/admin/user/<id>` | Profile, resume viewer (the file is stored in the database, so it survives restarts), attempts, history |
 | `/admin/interview/<id>` | Report: verdict-tinted header with score ring, summary tiles (score, passing mark, integrity, attempts), score bar, titled evaluation notes, the questions and answers of an exited session, **integrity log** timeline, candidate card |
 | `/admin/settings` | **Interview Settings** (questions, scoring, attempts, integrity switches) and Emails |
 | `/admin/links` | Link Health |
@@ -662,7 +663,7 @@ The **assessment feedback e-mail** has seven result levels (Outstanding, Excelle
 |---|---|
 | **Frontend** | HTML5, CSS3, JavaScript (vanilla), Jinja2 templates, Bootstrap 5.3, Bootstrap Icons, Google Fonts (Inter, Outfit), Monaco Editor, Web Speech API, browser Visibility, Fullscreen and Clipboard APIs |
 | **Backend** | Python 3.11+, Flask 3 (application factory, 6 blueprints), Werkzeug, Authlib (Google OAuth 2.0), python-dotenv, cryptography, gunicorn |
-| **Data** | Neon serverless PostgreSQL, SQLAlchemy 2 with Flask-SQLAlchemy, PostgreSQL driver (`psycopg2`), SQLite for local use, automatic schema migration, 10 tables |
+| **Data** | Neon serverless PostgreSQL, SQLAlchemy 2 with Flask-SQLAlchemy, PostgreSQL driver (`psycopg2`), SQLite for local use, automatic schema migration, 11 tables |
 | **AI** | Google Gemini via `google-genai`, retries with backup API keys and models, a difficulty-level prompt library, evaluation and feedback prompts |
 | **E-mail and sign-in services** | Gmail SMTP, Resend and SendGrid HTTP APIs, Google OAuth, dark-theme responsive e-mail templates |
 | **Security** | CSRF tokens, session timeouts, Content-Security-Policy, keyed-hash one-time codes, brute-force lockouts, optional admin 2FA |
@@ -735,7 +736,7 @@ ai_interview_platform/
 | `ADMIN_2FA` | Optional | `true` adds an e-mailed code after the admin password |
 | `ADMIN_IDLE_MINUTES`, `USER_IDLE_MINUTES`, `SESSION_MAX_HOURS` | Optional | Session timeouts (30, 120, 12) |
 | `SHOW_SPAM_HINT` | Optional | `false` hides the spam-folder hint on the code page |
-| `UPLOAD_FOLDER` | Optional | Where resumes are stored |
+| `UPLOAD_FOLDER` | Optional | Only for resumes saved before they moved into the database; they are copied into it when first opened |
 
 > [!CAUTION]
 > Never commit secrets. `.env` is git-ignored. Rotate any key that has been shared publicly.
@@ -778,7 +779,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (908 checks, about one minute)
+python tests/e2e.py                          # all groups (930 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 
@@ -816,6 +817,8 @@ The suite uses a temporary SQLite database, a stand-in for Gemini and a stand-in
 **What counts as an attempt?** A completed, terminated or exited scored assessment. An AI problem, a server error or a dropped connection never counts: the interview is saved and you continue where you left off.
 
 **What happens if I press Exit?** The assessment ends for good. The AI analyses the questions you answered, you receive a report and a feedback e-mail, and the session counts as one attempt. The administrator also sees the questions and your answers.
+
+**Is it safe on a free host?** Resumes are kept in the database, not on the server disk, so a restart or redeploy never loses them. `/health` answers "ok" without touching the database, so a free uptime monitor (for example UptimeRobot, every 5 minutes) can keep a free Render service awake without keeping the free Neon database awake or using its compute hours.
 
 **What if the AI is slow?** The platform retries, switches to backup keys and models, and finally uses a fallback question. The interview continues.
 

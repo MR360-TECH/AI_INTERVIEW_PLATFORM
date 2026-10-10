@@ -11,6 +11,8 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     get_settings,
     invalidate_settings_cache,
     resume_file_exists,
+    delete_resume_file,
+    resume_response,
     INTEGRITY_SWITCHES,
     InterviewViolation,
     ResourceBookmark,
@@ -248,9 +250,8 @@ def delete_user(user_id):
         return redirect("/login")
 
     user = db.session.get(User, user_id)
-    resume_path = None
-    if user and user.resume_filename:
-        resume_path = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), user.resume_filename)
+    if user:
+        delete_resume_file(user)          # the stored resume goes with the user
 
     InterviewViolation.query.filter_by(user_id=user_id).delete()
     ResourceBookmark.query.filter_by(user_id=user_id).delete()
@@ -260,12 +261,6 @@ def delete_user(user_id):
     if user:
         db.session.delete(user)
     db.session.commit()
-
-    if resume_path and os.path.isfile(resume_path):
-        try:
-            os.remove(resume_path)
-        except OSError as e:
-            print(f"Error removing resume file of deleted user: {e}")
 
     # Only allow redirects to local admin pages (no open redirect)
     next_url = request.args.get("next") or request.form.get("next") or "/admin"
@@ -412,8 +407,7 @@ def admin_view_user_resume(user_id):
     user = db.session.get(User, user_id)
     if not user or not resume_file_exists(user):
         return redirect(f"/admin/user/{user_id}")
-    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-    return send_from_directory(upload_folder, user.resume_filename)
+    return resume_response(user) or redirect(f"/admin/user/{user_id}")
 
 
 @admin_bp.route("/admin/interview/<int:result_id>")

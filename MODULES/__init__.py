@@ -163,6 +163,13 @@ def create_app():
             client_kwargs={'scope': 'openid email profile'}
         )
 
+    # Liveness page for an uptime monitor (a free monitor pinging it every few minutes keeps a free host awake).
+    # It deliberately does NOT touch the database: a ping every few minutes would keep the free Neon database awake
+    # around the clock and use up its monthly compute hours.
+    @app.route("/health")
+    def health():
+        return "ok", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"}
+
     # Performance optimization: static asset caching
     @app.after_request
     def add_performance_headers(response):
@@ -261,6 +268,10 @@ def create_app():
         try:
             db.create_all()
             ensure_columns()
+            from MODULES.LAYER_2_DATA_PERSISTENCE.models import move_disk_resumes_to_database
+            moved = move_disk_resumes_to_database()
+            if moved:
+                print(f"Moved {moved} resume file(s) from the disk into the database.")
             print("Database tables verified/created successfully.")
         except Exception as e:
             print(f"Error creating/verifying database tables: {e}")

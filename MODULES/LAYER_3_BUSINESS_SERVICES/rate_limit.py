@@ -148,15 +148,15 @@ def init_rate_limits(app):
             return None
 
     def _check():
+        path = request.path
+        if path in EXEMPT_PATHS or path.startswith(EXEMPT_PREFIXES):
+            return None                                   # first, so /health never even reads the database
         forced = app.config.get("RATE_LIMIT_ENABLED")                    # None = use the environment and the admin switch
         if forced is False or os.environ.get("RATE_LIMITS_ENABLED", "true").strip().lower() in ("0", "false", "no", "off"):
             return None
         from MODULES.LAYER_2_DATA_PERSISTENCE.models import get_settings
         if forced is not True and not get_settings().enable_rate_limits:
             return None                                                    # the administrator switched it off in Settings
-        path = request.path
-        if path in EXEMPT_PATHS or path.startswith(EXEMPT_PREFIXES):
-            return None
         if session.get("is_admin"):
             return None                                   # the administrator is never limited
         user_id = session.get("user_id")

@@ -12,7 +12,10 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     profile_is_complete,
     allowed_resume_file,
     get_settings,
-    clear_progress
+    clear_progress,
+    save_resume_file,
+    delete_resume_file,
+    resume_response
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment, attachment_analysis_failed
 from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_feedback_notification
@@ -108,25 +111,16 @@ def dashboard_update_resume():
             return redirect("/dashboard?error=invalid_file_type")
 
         ext = filename.rsplit('.', 1)[1].lower()
-        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-        saved_filename = f"user_{user.id}_resume.{ext}"
         file_bytes = resume_file.read()
 
-        try:
-            os.makedirs(upload_folder, exist_ok=True)
-            # A new upload replaces the old one (the extension may differ, e.g. .pdf -> .png)
-            if user.resume_filename and user.resume_filename != saved_filename:
-                old_path = os.path.join(upload_folder, user.resume_filename)
-                if os.path.isfile(old_path):
-                    os.remove(old_path)
-            with open(os.path.join(upload_folder, saved_filename), "wb") as f:
-                f.write(file_bytes)
-        except OSError as e:
-            print(f"Error saving uploaded resume: {e}")
-            return redirect("/dashboard?error=resume_save_failed")
-
         # The original file is the source of truth for admins, so record it even if text extraction fails.
-        user.resume_filename = saved_filename
+        # It is stored in the database (a free host has no permanent disk) and replaces any earlier resume.
+        try:
+            save_resume_file(user, ext, file_bytes)
+        except Exception as e:
+            print(f"Error saving uploaded resume: {e}")
+            db.session.rollback()
+            return redirect("/dashboard?error=resume_save_failed")
         extracted_text = analyze_attachment(
             file_bytes, resume_file.mimetype,
             context_hint="Extract the text content and structure from this resume as cleanly as possible. Provide only the text transcription.",
@@ -152,15 +146,8 @@ def dashboard_remove_resume():
         return redirect("/login")
     user = db.session.get(User, session["user_id"])
     if user:
-        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-        if user.resume_filename:
-            file_path = os.path.join(upload_folder, user.resume_filename)
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                except Exception as e:
-                    print(f"Error removing resume file: {e}")
-            user.resume_filename = None
+        delete_resume_file(user)
+        user.resume_filename = None
         user.resume_text = None
         db.session.commit()
     return redirect("/dashboard")
@@ -174,10 +161,11 @@ def view_original_resume(filename):
         user = db.session.get(User, session["user_id"])
         if not user or user.resume_filename != filename:
             return "Unauthorized", 403
-    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-    if not os.path.isfile(os.path.join(upload_folder, filename)):
+    owner = db.session.query(User).filter_by(resume_filename=filename).first()
+    response = resume_response(owner) if owner else None
+    if response is None:
         return "Resume file not found on the server.", 404
-    return send_from_directory(upload_folder, filename)
+    return response
 
 
 @dashboard_bp.route("/latest-result")

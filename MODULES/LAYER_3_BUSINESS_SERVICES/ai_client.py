@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 import time
@@ -13,6 +14,8 @@ from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import GEMINI_API_KEY, MODEL_NAM
 #   * optional extras, all off unless configured in the environment:
 #       GEMINI_BACKUP_KEYS       comma-separated keys from OTHER Google projects (separate free-tier quota)
 #       GEMINI_FALLBACK_MODELS   comma-separated backup models tried only if MODEL_NAME keeps failing
+#   * several keys share the load (each call starts with the next key), and a key that just hit its quota (429) is
+#     skipped for a while instead of being tried first on every question. If every key is cooling, all are tried anyway.
 #   MODEL_NAME itself is untouched and always tried first.
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -20,6 +23,10 @@ TRANSIENT_CODES = (408, 429, 500, 502, 503, 504)
 DEFAULT_FALLBACK_MODELS = "gemini-3.5-flash-lite,gemini-3.1-flash-lite"   # set GEMINI_FALLBACK_MODELS="" to disable
 
 _clients = {}
+_rotation = itertools.count()      # which key starts the next call, so the keys share the load
+_cooling = {}                      # (key position, model) -> time until which that combination is skipped
+COOLDOWN_RATE_LIMIT_S = 60.0       # a per-minute limit clears within a minute
+COOLDOWN_DAILY_LIMIT_S = 1800.0    # a daily quota will not clear soon: stop trying that key for half an hour
 # Calls run on this pool so the request thread can stop waiting after per_call_timeout_s. The Gemini server
 # refuses deadlines under 10 s, so a stuck call is left to expire by itself while we move on to the next model.
 _pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix="gemini")
@@ -63,6 +70,24 @@ def _model_chain():
         configured = DEFAULT_FALLBACK_MODELS
     extra = [m.strip() for m in configured.split(",") if m.strip()]
     return [MODEL_NAME] + [m for m in extra if m != MODEL_NAME]
+
+
+def _is_cooling(client_index, model):
+    until = _cooling.get((client_index, model))
+    return until is not None and time.monotonic() < until
+
+
+def _start_cooldown(client_index, model, error):
+    """A 429 means this key has no quota left for this model right now: skip it for a while."""
+    if getattr(error, "code", None) != 429:
+        return
+    text = str(error).lower()
+    daily = "perday" in text or "per day" in text or "daily" in text
+    _cooling[(client_index, model)] = time.monotonic() + (COOLDOWN_DAILY_LIMIT_S if daily else COOLDOWN_RATE_LIMIT_S)
+
+
+def reset_key_cooldowns():
+    _cooling.clear()
 
 
 def _is_transient(error):
@@ -109,12 +134,16 @@ def generate_text(contents, *, max_output_tokens, temperature, system_instructio
         raise AIUnavailable("no Gemini API key configured")
 
     started = time.monotonic()
-    combos = [(model, index) for model in _model_chain() for index in range(len(clients))]
+    start = next(_rotation) % len(clients)
+    key_order = [(start + step) % len(clients) for step in range(len(clients))]
+    combos = [(model, index) for model in _model_chain() for index in key_order]
     last_error = "unknown"
 
     for round_number in range(3):
         retry_worthwhile = False
-        for model, client_index in combos:
+        # leave out the keys that just ran out of quota - unless that would leave nothing to try
+        active = [c for c in combos if not _is_cooling(c[1], c[0])] or combos
+        for model, client_index in active:
             remaining = deadline_s - (time.monotonic() - started)
             if remaining < 1.5:
                 raise AIUnavailable(f"time budget used up ({last_error})")
@@ -132,11 +161,13 @@ def generate_text(contents, *, max_output_tokens, temperature, system_instructio
                     raise TimeoutError(f"no reply within {wait_s:.0f}s")
                 text = _response_text(response)
                 if text:
+                    _cooling.pop((client_index, model), None)
                     return _trim_to_sentence(text) if (trim_truncated and _was_truncated(response)) else text
                 last_error = "empty reply"
                 retry_worthwhile = True
             except Exception as e:
                 last_error = f"{type(e).__name__}: {str(e)[:120]}"
+                _start_cooldown(client_index, model, e)
                 retry_worthwhile = retry_worthwhile or _is_transient(e)
                 print(f"[GEMINI] {model} key#{client_index + 1} -> {last_error}")
         if not retry_worthwhile:

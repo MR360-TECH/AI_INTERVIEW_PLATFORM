@@ -32,7 +32,7 @@ for k in ("MAIL_USERNAME", "MAIL_PASSWORD", "RESEND_API_KEY", "SENDGRID_API_KEY"
 from MODULES import create_app                                             # noqa: E402
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db                  # noqa: E402
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (                      # noqa: E402
-    User, InterviewResult, InterviewProgress, AdminSettings, invalidate_settings_cache)
+    User, InterviewResult, InterviewProgress, AdminSettings, ResumeFile, invalidate_settings_cache)
 from MODULES.LAYER_4_ROUTE_CONTROLLERS import interview_engine, login_env, dashboard  # noqa: E402
 from MODULES.LAYER_3_BUSINESS_SERVICES import feedback_email, mailer, email_templates  # noqa: E402
 
@@ -290,8 +290,11 @@ def t_resume_flow():
         fname, text = u.resume_filename, u.resume_text
     check("resume_filename saved on user", bool(fname), fname)
     check("resume_text saved on user", bool(text), text)
-    check("resume file physically written to UPLOAD_FOLDER",
-          bool(fname) and os.path.exists(os.path.join(app.config["UPLOAD_FOLDER"], fname)))
+    with app.app_context():
+        stored = ResumeFile.query.filter_by(user_id=uid).first()
+    check("resume file stored in the database (not on the disk)",
+          bool(fname) and stored is not None and stored.data == pdf
+          and not os.path.exists(os.path.join(app.config["UPLOAD_FOLDER"], fname)))
     r = post(c, "/dashboard/update-resume", data={"resume_file": (io.BytesIO(b"x"), "cv.exe")},
              content_type="multipart/form-data")
     check("invalid resume type handled", r.status_code == 302 and "error=invalid_file_type" in r.headers["Location"])
@@ -357,12 +360,16 @@ def t_resume_flow():
     with app.app_context():
         u4 = db.session.get(User, uid4)
         f4 = u4.resume_filename
-    check("interview-page resume recorded + file on disk", bool(f4) and os.path.exists(os.path.join(app.config["UPLOAD_FOLDER"], f4)), f4)
+    with app.app_context():
+        stored4 = ResumeFile.query.filter_by(user_id=uid4).first()
+    check("interview-page resume recorded + file stored in the database", bool(f4) and stored4 is not None and stored4.data == pdf, f4)
     r = get(a, f"/uploads/resumes/{f4}") if f4 else None
     check("admin can open the interview-page resume", r is not None and r.status_code == 200 and r.data.startswith(b"%PDF"), getattr(r, "status_code", None))
     r.close()  # release the served file handle (Windows keeps it locked otherwise)
     r = post(a, f"/admin/delete-user/{uid4}")
-    check("deleting user also removes the resume file from disk", bool(f4) and not os.path.exists(os.path.join(app.config["UPLOAD_FOLDER"], f4)))
+    with app.app_context():
+        gone = ResumeFile.query.filter_by(user_id=uid4).first() is None
+    check("deleting user also removes the stored resume", bool(f4) and gone)
 
     # remove resume
     r = post(c, "/dashboard/remove-resume")
@@ -370,6 +377,7 @@ def t_resume_flow():
     with app.app_context():
         u = db.session.get(User, uid)
         check("resume cleared in DB", u.resume_filename is None and u.resume_text is None)
+        check("remove-resume also deletes the stored file", ResumeFile.query.filter_by(user_id=uid).first() is None)
 
 
 def t_attempt_accounting():
@@ -1063,6 +1071,7 @@ def t_ai_layer():
 
     def use(outcomes):
         client_obj = Scripted(outcomes)
+        ai_mod.reset_key_cooldowns()
         ai_mod._get_clients = lambda: [client_obj]
         return client_obj
 
@@ -3266,7 +3275,173 @@ def t_exit_report():
         check(f"exit e-mail ({answered} answered, reviewed={reviewed}) has no question count", _re.search(r"\b\d+\s+questions?\b", t) is None, t)
 
 
-TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_attempt_accounting, t_error_does_not_consume,
+def t_resume_storage():
+    section("Resume files live in the database: survive a wiped disk, older disk files move over, replaced and deleted cleanly")
+    pdf1 = b"%PDF-1.4 first resume %%EOF"
+    pdf2 = b"%PDF-1.4 second resume, replaces the first %%EOF"
+    uid = make_user("store@test.local", "Store User")
+    c, _ = login_user("store@test.local")
+
+    def up(data, name):
+        return post(c, "/dashboard/update-resume", data={"resume_file": (io.BytesIO(data), name)},
+                    content_type="multipart/form-data")
+
+    up(pdf1, "cv.pdf")
+    with app.app_context():
+        fname = db.session.get(User, uid).resume_filename
+    folder = app.config["UPLOAD_FOLDER"]
+    check("upload writes nothing to the disk", bool(fname) and not os.path.exists(os.path.join(folder, fname)))
+    for leftover in os.listdir(folder):               # a restart / redeploy on a free host empties the disk
+        if leftover.startswith(f"user_{uid}_"):
+            os.remove(os.path.join(folder, leftover))
+    r = get(c, f"/uploads/resumes/{fname}")
+    check("resume is still served after the disk was emptied", r.status_code == 200 and r.data == pdf1, r.status_code)
+    check("the file is served with the right type", r.mimetype == "application/pdf", r.mimetype)
+
+    up(pdf2, "newer.pdf")
+    with app.app_context():
+        rows = ResumeFile.query.filter_by(user_id=uid).all()
+    check("a new upload replaces the old one (one row, new bytes)", len(rows) == 1 and rows[0].data == pdf2)
+    up(b"PNG fake image bytes", "photo.png")
+    with app.app_context():
+        rows = ResumeFile.query.filter_by(user_id=uid).all()
+        name = db.session.get(User, uid).resume_filename
+    r = get(c, f"/uploads/resumes/{name}")
+    check("changing the file type keeps a single stored resume",
+          len(rows) == 1 and name.endswith(".png") and r.mimetype == "image/png", name)
+
+    make_user("peek@test.local", "Peek")
+    other, _ = login_user("peek@test.local")
+    r = get(other, f"/uploads/resumes/{name}")
+    check("another candidate cannot open this resume", r.status_code in (302, 403), r.status_code)
+
+    # an older resume that only exists as a file on disk is moved into the database when first opened
+    uid_old = make_user("older@test.local", "Older Resume")
+    legacy = b"%PDF-1.4 legacy file on disk %%EOF"
+    legacy_path = os.path.join(folder, f"user_{uid_old}_resume.pdf")
+    with open(legacy_path, "wb") as f:
+        f.write(legacy)
+    with app.app_context():
+        db.session.get(User, uid_old).resume_filename = f"user_{uid_old}_resume.pdf"
+        db.session.commit()
+    a = client()
+    post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+    r = get(a, f"/admin/user/{uid_old}/resume")
+    with app.app_context():
+        moved = ResumeFile.query.filter_by(user_id=uid_old).first()
+    check("an older disk resume is served and copied into the database",
+          r.status_code == 200 and r.data == legacy and moved is not None and moved.data == legacy)
+    r.close()
+    os.remove(legacy_path)
+    r = get(a, f"/admin/user/{uid_old}/resume")
+    check("after the copy the disk file is not needed any more", r.status_code == 200 and r.data == legacy)
+
+    # at startup every older disk resume is copied over in one go
+    uid_boot = make_user("boot@test.local", "Boot Move")
+    boot_path = os.path.join(folder, f"user_{uid_boot}_resume.pdf")
+    with open(boot_path, "wb") as f:
+        f.write(legacy)
+    with app.app_context():
+        db.session.get(User, uid_boot).resume_filename = f"user_{uid_boot}_resume.pdf"
+        db.session.commit()
+        from MODULES.LAYER_2_DATA_PERSISTENCE.models import move_disk_resumes_to_database
+        first = move_disk_resumes_to_database()
+        again = move_disk_resumes_to_database()
+        copied = ResumeFile.query.filter_by(user_id=uid_boot).first()
+    check("the startup move copies older disk resumes into the database, once", first >= 1 and again == 0 and copied is not None and copied.data == legacy, (first, again))
+    check("the startup move leaves the disk file in place", os.path.exists(boot_path))
+    os.remove(boot_path)
+
+    r = post(a, f"/admin/delete-user/{uid_old}")
+    with app.app_context():
+        left = ResumeFile.query.filter_by(user_id=uid_old).count()
+    check("deleting a user with a stored resume works and removes it", r.status_code == 302 and left == 0)
+
+
+def t_health_and_keys():
+    section("Health page for an uptime monitor (no database, never limited) and Gemini keys that share the load")
+    from sqlalchemy import event
+    from google.genai import errors as gerrors
+
+    # --- /health -----------------------------------------------------------------------------------------------
+    c = client()
+    queries = []
+
+    def count(conn, cursor, statement, parameters, context, executemany):
+        queries.append(statement)
+
+    with app.app_context():
+        event.listen(db.engine, "before_cursor_execute", count)
+    app.config["RATE_LIMIT_ENABLED"] = True               # prove the page is exempt even with the limiter on
+    try:
+        r = get(c, "/health")
+        h = c.head("/health", base_url="https://localhost")
+        statuses = [get(c, "/health").status_code for _ in range(450)]      # more than the 400/min visitor limit
+    finally:
+        app.config["RATE_LIMIT_ENABLED"] = bool(os.environ.get("E2E_RATE_LIMITS"))
+        with app.app_context():
+            event.remove(db.engine, "before_cursor_execute", count)
+    check("/health answers 200 'ok' as plain text", r.status_code == 200 and r.data == b"ok" and r.mimetype == "text/plain", r.status_code)
+    check("/health also answers a HEAD request", h.status_code == 200)
+    check("/health is never rate limited", all(s == 200 for s in statuses), set(statuses))
+    check("/health does not touch the database (so it never wakes a sleeping Neon database)", queries == [], queries[:2])
+    check("/health sets no cookie and is not cached", "Set-Cookie" not in r.headers and r.headers.get("Cache-Control") == "no-store")
+
+    # --- Gemini keys -------------------------------------------------------------------------------------------
+    class Key:
+        def __init__(self, fail_first=None):
+            self.calls, self.fail_first = 0, fail_first
+            self.models = self
+
+        def generate_content(self, model=None, contents=None, config=None):
+            self.calls += 1
+            if self.fail_first is not None and self.calls == 1:
+                raise self.fail_first
+            return _Resp("A question? [TYPE: TEXT]")
+
+    real_get = ai_mod._get_clients
+    quota = lambda text="quota": gerrors.ClientError(429, {"error": {"message": text}})
+    ask = lambda: ai_mod.generate_text("p", max_output_tokens=80, temperature=0.2)
+    try:
+        a, b = Key(), Key()
+        ai_mod.reset_key_cooldowns()
+        ai_mod._get_clients = lambda: [a, b]
+        for _ in range(4):
+            ask()
+        check("two healthy keys share the load", a.calls == 2 and b.calls == 2, (a.calls, b.calls))
+
+        a, b = Key(fail_first=quota()), Key()
+        ai_mod.reset_key_cooldowns()
+        ai_mod._get_clients = lambda: [a, b]
+        outs = [ask() for _ in range(4)]
+        check("a key that ran out of quota is skipped afterwards (tried once, not on every question)",
+              a.calls == 1 and b.calls == 4 and all(o == "A question? [TYPE: TEXT]" for o in outs), (a.calls, b.calls))
+
+        a, b = Key(fail_first=quota()), Key(fail_first=quota())
+        ai_mod.reset_key_cooldowns()
+        ai_mod._get_clients = lambda: [a, b]
+        ask()
+        out = ask()
+        check("when every key is cooling, they are all tried anyway (never gives up early)", out == "A question? [TYPE: TEXT]", out)
+
+        a = Key(fail_first=quota("Quota exceeded for metric ... PerDay"))
+        ai_mod.reset_key_cooldowns()
+        ai_mod._get_clients = lambda: [a]
+        ask()
+        longest = max(ai_mod._cooling.values()) - ai_mod.time.monotonic()
+        check("a daily quota pauses that key much longer than a per-minute limit", longest > 600, longest)
+
+        a = Key(fail_first=gerrors.ServerError(503, {"error": {"message": "overloaded"}}))
+        ai_mod.reset_key_cooldowns()
+        ai_mod._get_clients = lambda: [a]
+        ask()
+        check("a temporary server error (503) does not put a key on pause", ai_mod._cooling == {}, ai_mod._cooling)
+    finally:
+        ai_mod._get_clients = real_get
+        ai_mod.reset_key_cooldowns()
+
+
+TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_health_and_keys, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
          t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report]

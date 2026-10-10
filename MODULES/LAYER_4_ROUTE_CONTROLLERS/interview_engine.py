@@ -10,6 +10,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     InterviewProgress,
     allowed_file,
     allowed_resume_file,
+    save_resume_file,
     get_settings,
     save_progress,
     clear_progress,
@@ -167,8 +168,6 @@ def interview():
 
         if q_count == 0 and not session.get("interview_mode") and resume_file and resume_file.filename and allowed_resume_file(resume_file.filename):
             try:
-                upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-                os.makedirs(upload_folder, exist_ok=True)
                 ext = resume_file.filename.rsplit('.', 1)[1].lower()
                 user = db.session.get(User, user_id)
 
@@ -181,14 +180,7 @@ def interview():
                         context_hint="Verify this is a candidate resume. If not, output NOT_A_RESUME. Otherwise summarize their role, key skills, and experience level in 2 concise sentences."
                     )
                     if "NOT_A_RESUME" not in resume_analysis:
-                        saved_filename = f"user_{user.id}_resume.{ext}"
-                        if user.resume_filename and user.resume_filename != saved_filename:
-                            old_path = os.path.join(upload_folder, user.resume_filename)
-                            if os.path.isfile(old_path):
-                                os.remove(old_path)
-                        with open(os.path.join(upload_folder, saved_filename), "wb") as f:
-                            f.write(file_bytes)
-                        user.resume_filename = saved_filename
+                        save_resume_file(user, ext, file_bytes)
                         if not attachment_analysis_failed(resume_analysis):
                             user.resume_text = resume_analysis
                             session["resume_summary"] = resume_analysis

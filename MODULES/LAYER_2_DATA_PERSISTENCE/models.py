@@ -2,8 +2,11 @@ import os
 import re
 import json
 import time
-from flask import current_app
-from sqlalchemy import String, event
+from datetime import datetime
+import io
+import mimetypes
+from flask import current_app, send_file
+from sqlalchemy import String, LargeBinary, event
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import (
     db,
     UPLOAD_FOLDER,
@@ -118,6 +121,18 @@ class InterviewProgress(db.Model):
     sid = db.Column(db.String(40))                        # which browser / device currently holds this interview
     last_seen_at = db.Column(db.DateTime)                 # last page load or heartbeat from that browser
     question_shown_at = db.Column(db.DateTime)            # when the current question was first shown
+
+
+class ResumeFile(db.Model):
+    """The candidate's original resume file, kept in the database. A free host (Render) has no permanent disk, so a
+    file written to disk would be lost on a restart or redeploy. One row per user; a new upload replaces it."""
+    __tablename__ = 'resume_files'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    filename = db.Column(db.String(255), nullable=False)
+    size = db.Column(db.Integer, default=0)
+    data = db.Column(LargeBinary, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class InterviewViolation(db.Model):
@@ -372,12 +387,110 @@ def record_counted_attempt(user, result_record):
         user.attempts_count = used_so_far + 1
 
 
+def _legacy_resume_path(user):
+    """Resumes saved before they moved into the database were files in UPLOAD_FOLDER."""
+    if not user or not user.resume_filename:
+        return None
+    folder = current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER)
+    path = os.path.join(folder, user.resume_filename)
+    return path if os.path.isfile(path) else None
+
+
+def save_resume_file(user, ext, data):
+    """Stores the original resume in the database (replacing the previous one) and returns its file name.
+    The caller commits. Nothing is written to disk."""
+    saved = f"user_{user.id}_resume.{ext}"
+    row = ResumeFile.query.filter_by(user_id=user.id).first()
+    if row is None:
+        row = ResumeFile(user_id=user.id)
+        db.session.add(row)
+    row.filename, row.size, row.data, row.updated_at = saved, len(data), data, datetime.utcnow()
+    legacy = _legacy_resume_path(user)          # an older copy on disk is now obsolete
+    if legacy and os.path.basename(legacy) != saved:
+        _remove_quietly(legacy)
+    user.resume_filename = saved
+    return saved
+
+
+def _remove_quietly(path):
+    try:
+        os.remove(path)
+    except OSError as e:
+        print(f"Could not remove old resume file: {e}")
+
+
+def delete_resume_file(user):
+    """Removes the stored resume (database row and any older file on disk). The caller commits."""
+    if not user:
+        return
+    ResumeFile.query.filter_by(user_id=user.id).delete()
+    legacy = _legacy_resume_path(user)
+    if legacy:
+        _remove_quietly(legacy)
+
+
+def load_resume_file(user):
+    """Returns (file name, bytes) of the candidate's resume, or None. A file that still only exists on disk is
+    copied into the database the first time it is opened, so older resumes are kept too."""
+    if not user or not user.resume_filename:
+        return None
+    row = ResumeFile.query.filter_by(user_id=user.id).first()
+    if row:
+        return row.filename, bytes(row.data)
+    legacy = _legacy_resume_path(user)
+    if not legacy:
+        return None
+    with open(legacy, "rb") as f:
+        data = f.read()
+    try:
+        db.session.add(ResumeFile(user_id=user.id, filename=user.resume_filename, size=len(data), data=data))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Could not move an older resume into the database: {e}")
+    return user.resume_filename, data
+
+
+def move_disk_resumes_to_database():
+    """At startup: copies every resume that still exists only as a file on disk into the database (the files are left
+    in place). Safe to run on every start; it does nothing once everything has been copied. Returns how many moved."""
+    moved = 0
+    stored = {uid for (uid,) in db.session.query(ResumeFile.user_id).all()}
+    for user in User.query.filter(User.resume_filename.isnot(None)).all():
+        if user.id in stored:
+            continue
+        path = _legacy_resume_path(user)
+        if not path:
+            continue
+        try:
+            with open(path, "rb") as f:
+                data = f.read()
+            db.session.add(ResumeFile(user_id=user.id, filename=user.resume_filename, size=len(data), data=data))
+            db.session.commit()
+            moved += 1
+        except Exception as e:
+            db.session.rollback()
+            print(f"Could not move the resume of user {user.id} into the database: {e}")
+    return moved
+
+
+def resume_response(user):
+    """The resume as a Flask response (shown in the browser), or None when there is no stored file."""
+    found = load_resume_file(user)
+    if not found:
+        return None
+    name, data = found
+    kind = mimetypes.guess_type(name)[0] or "application/octet-stream"   # from our own extension, never the client's
+    return send_file(io.BytesIO(data), mimetype=kind, download_name=name, max_age=0)
+
+
 def resume_file_exists(user):
-    """True only if the candidate's original resume file is actually present on disk."""
+    """True when the candidate's original resume file is stored (database, or an older file still on disk)."""
     if not user or not user.resume_filename:
         return False
-    folder = current_app.config.get('UPLOAD_FOLDER', UPLOAD_FOLDER)
-    return os.path.isfile(os.path.join(folder, user.resume_filename))
+    if db.session.query(ResumeFile.id).filter_by(user_id=user.id).first():
+        return True
+    return _legacy_resume_path(user) is not None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
