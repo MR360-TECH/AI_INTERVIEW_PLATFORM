@@ -1,0 +1,2 @@
+/* the footer note is faded on purpose in dark mode; on the light page it keeps full strength */
+html.light-theme [style="font-size: 0.78rem; opacity: 0.7;"]{opacity:1 !important;color:#2c3e66 !important}

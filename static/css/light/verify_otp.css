@@ -2,42 +2,44 @@
 html.light-theme .anim-bg::before{background:radial-gradient(ellipse 80% 60% at 10% 15%, rgba(0,102,255,0.18) 0%, transparent 55%),
                 radial-gradient(ellipse 60% 50% at 88% 8%, rgba(187,205,232,0.16) 0%, transparent 50%),
                 radial-gradient(ellipse 70% 55% at 50% 105%, rgba(0,102,255,0.1) 0%, transparent 55%),
-                linear-gradient(160deg,#fafbfd 0%,#f7f8fc 35%,#f4f5fb 65%,#f9fafd 100%) !important}
+                linear-gradient(160deg,rgba(240,246,255,0.62) 0%,rgba(240,246,255,0.62) 35%,rgba(240,246,255,0.62) 65%,rgba(240,246,255,0.62) 100%) !important}
 html.light-theme .anim-orb-1{background:radial-gradient(circle,rgba(0,102,255,0.22) 0%,transparent 70%) !important}
 html.light-theme .anim-orb-2{background:radial-gradient(circle,rgba(187,205,232,0.2) 0%,transparent 70%) !important}
 html.light-theme .anim-orb-3{background:radial-gradient(circle,rgba(0,102,255,0.15) 0%,transparent 70%) !important}
 html.light-theme .anim-grid{background-image:linear-gradient(rgba(0,102,255,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(0,102,255,0.03) 1px,transparent 1px) !important}
+html.light-theme .anim-star{background:rgba(240,246,255,0.62) !important}
 html.light-theme .anim-topbar{background:linear-gradient(90deg,transparent 0%,rgba(0,102,255,0.8) 30%,rgba(187,205,232,0.8) 70%,transparent 100%) !important}
 html.light-theme .auth-left{border-right:1px solid rgba(0,102,255,0.1) !important}
 html.light-theme .auth-left::before{background:linear-gradient(160deg, rgba(0,102,255,0.06) 0%, rgba(187,205,232,0.04) 60%, transparent 100%) !important}
-html.light-theme .brand-icon{box-shadow:0 6px 24px rgba(37,99,235,0.315) !important;background:linear-gradient(135deg,#0b3a9e,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
+html.light-theme .brand-icon{box-shadow:0 6px 24px rgba(37,99,235,0.315) !important;background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 html.light-theme .brand-name{color:#102146 !important}
-html.light-theme .brand-sub{color:#546175 !important}
-html.light-theme .left-badge{background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.22) !important;color:#094bae !important}
+html.light-theme .brand-sub{color:#3e4756 !important}
+html.light-theme .left-badge{background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.22) !important;color:#084298 !important}
 html.light-theme .left-heading{color:#102146 !important}
-html.light-theme .left-heading .grad{background:linear-gradient(135deg, #094bae 10%, #1839bf 60%, #1839bf 90%) !important;-webkit-background-clip:text !important;background-clip:text !important}
-html.light-theme .left-desc{color:#264aa0 !important}
-html.light-theme .feature-icon.c1{background:rgba(0,102,255,0.1) !important;color:#094bae !important;border:1px solid rgba(0,102,255,0.2) !important}
+html.light-theme .left-heading .grad{background:linear-gradient(135deg, #084298 10%, #1839bf 60%, #1839bf 90%) !important;-webkit-background-clip:text !important;background-clip:text !important}
+html.light-theme .left-desc{color:#22418d !important}
+html.light-theme .feature-icon.c1{background:rgba(0,102,255,0.1) !important;color:#084298 !important;border:1px solid rgba(0,102,255,0.2) !important}
 html.light-theme .feature-icon.c2{background:rgba(85,117,247,0.1) !important;color:#112fa7 !important;border:1px solid rgba(25,114,230,0.22) !important}
-html.light-theme .feature-icon.c3{background:rgba(34,116,238,0.1) !important;color:#154ea3 !important;border:1px solid rgba(34,116,238,0.2) !important}
+html.light-theme .feature-icon.c3{background:rgba(34,116,238,0.1) !important;color:#12448f !important;border:1px solid rgba(34,116,238,0.2) !important}
 html.light-theme .feature-text{color:#1a3470 !important}
-html.light-theme .feature-text strong{color:#3b5c7d !important}
-html.light-theme .back-link{color:#102146 !important;background:#e9ecf4 !important;border:1.5px solid #ccd5e3 !important}
-html.light-theme .back-link:hover{color:#094bae !important;border-color:#0066ff !important;background:#e2e6f0 !important}
+html.light-theme .feature-text strong{color:#2f4963 !important}
+html.light-theme .back-link{color:#102146 !important;background:rgba(240,246,255,0.62) !important;border:1.5px solid #ccd5e3 !important}
+html.light-theme .back-link:hover{color:#084298 !important;border-color:#0066ff !important;background:rgba(240,246,255,0.62) !important}
 html.light-theme .form-heading{color:#102146 !important}
-html.light-theme .form-subheading{color:#546175 !important}
-html.light-theme .email-pill{background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.22) !important;color:#094bae !important}
-html.light-theme .otp-box{background:#f0f2f7 !important;border:2px solid #ccd5e3 !important;color:#094bae !important;box-shadow:0 2px 8px rgba(30,64,175,0.12) !important}
-html.light-theme .otp-box:focus{border-color:#0066ff !important;background:#e8ebf4 !important;box-shadow:0 0 18px rgba(37,99,235,0.315) !important}
-html.light-theme .btn-primary-auth{box-shadow:0 6px 24px rgba(37,99,235,0.21) !important;background:linear-gradient(135deg,#0b3a9e,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
+html.light-theme .form-subheading{color:#3e4756 !important}
+html.light-theme .email-pill{background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.22) !important;color:#084298 !important}
+html.light-theme .otp-box{background:rgba(240,246,255,0.62) !important;border:2px solid #ccd5e3 !important;color:#084298 !important;box-shadow:0 2px 8px rgba(30,64,175,0.12) !important}
+html.light-theme .otp-box:focus{border-color:#0066ff !important;background:rgba(240,246,255,0.62) !important;box-shadow:0 0 18px rgba(37,99,235,0.315) !important}
+html.light-theme .btn-primary-auth{box-shadow:0 6px 24px rgba(37,99,235,0.21) !important;background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 html.light-theme .btn-primary-auth:hover{box-shadow:0 12px 32px rgba(37,99,235,0.315) !important}
-html.light-theme .spam-hint{background:rgba(251,191,36,0.08) !important;border:1px solid rgba(251,191,36,0.35) !important;color:#735d08 !important}
-html.light-theme .spam-hint i{color:#795a08 !important}
+html.light-theme .spam-hint{background:rgba(251,191,36,0.08) !important;border:1px solid rgba(251,191,36,0.35) !important;color:#564606 !important}
+html.light-theme .spam-hint i{color:#5c4506 !important}
 html.light-theme .spam-hint strong{color:#102146 !important}
-html.light-theme .auth-footer-note a{color:#094bae !important}
-html.light-theme .auth-alert.danger{background:rgba(239,68,68,0.12) !important;border:1.5px solid rgba(25,114,230,0.418) !important;color:#a71111 !important}
-html.light-theme .auth-alert.danger i{color:#a71111 !important}
+html.light-theme .auth-footer-note{color:#3b4657 !important}
+html.light-theme .auth-footer-note a{color:#084298 !important}
+html.light-theme .auth-alert.danger{background:rgba(239,68,68,0.12) !important;border:1.5px solid rgba(25,114,230,0.418) !important;color:#920f0f !important}
+html.light-theme .auth-alert.danger i{color:#920f0f !important}
 html.light-theme ::-webkit-scrollbar-thumb{background:rgba(0,102,255,0.18) !important}
-html.light-theme ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#0b3a9e,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
+html.light-theme ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 
 

@@ -1,16 +1,19 @@
 /* ── Blue-dominant light theme: blue everywhere; purple and pink only as soft background fill ── */
-html.light-theme body { background: linear-gradient(160deg, #e9f2ff 0%, #e2eeff 55%, #ecf0ff 100%) !important; background-image: none !important; color: #0e2250; }
-html.light-theme .db-bg { display: block !important; }
-html.light-theme .db-bg::before {
+/* ── Light theme: frosted glass over a blue aurora (blue leads; lavender and a little pink only fill the far corners) ── */
+html.light-theme { background: #e4eeff; }
+html.light-theme body {
+  color: #0e2250;
   background:
-    radial-gradient(ellipse 85% 62% at 12% 12%, rgba(37,99,235,.38), transparent 60%),
-    radial-gradient(ellipse 70% 55% at 62% 4%, rgba(14,165,233,.26), transparent 58%),
-    radial-gradient(ellipse 60% 52% at 50% 106%, rgba(59,130,246,.34), transparent 60%),
-    radial-gradient(ellipse 42% 36% at 100% 14%, rgba(168,85,247,.24), transparent 62%),
-    radial-gradient(ellipse 44% 34% at 98% 96%, rgba(236,72,153,.18), transparent 62%),
-    radial-gradient(ellipse 36% 30% at 0% 100%, rgba(168,85,247,.14), transparent 62%),
-    linear-gradient(160deg, #eef5ff, #e3eeff 55%, #edf2ff) !important;
+    radial-gradient(ellipse 70% 60% at 6% 10%, rgba(59,130,246,.42), transparent 62%),
+    radial-gradient(ellipse 55% 45% at 45% 0%, rgba(14,165,233,.30), transparent 60%),
+    radial-gradient(ellipse 50% 55% at 96% 30%, rgba(139,92,246,.30), transparent 62%),
+    radial-gradient(ellipse 60% 50% at 18% 100%, rgba(56,189,248,.38), transparent 62%),
+    radial-gradient(ellipse 45% 40% at 90% 100%, rgba(236,72,153,.16), transparent 62%),
+    linear-gradient(160deg, #e6f0ff 0%, #dde9ff 55%, #e8eaff 100%) !important;
+  background-attachment: fixed !important;
 }
+html.light-theme .db-bg { display: block !important; }
+html.light-theme .db-bg::before { background: none !important; }
 html.light-theme .db-orb { opacity: .55 !important; }
 html.light-theme .db-orb-1 { background: radial-gradient(circle, rgba(37,99,235,.55), transparent 70%) !important; }
 html.light-theme .db-orb-2 { background: radial-gradient(circle, rgba(168,85,247,.30), transparent 70%) !important; }
@@ -30,7 +33,7 @@ html.light-theme h1.hero-title span { background: linear-gradient(135deg, #0b3a9
 /* every button: blue family only */
 html.light-theme .btn-primary-grad, html.light-theme .btn-cta, html.light-theme .btn-primary-cyber, html.light-theme button[type="submit"].btn-primary,
 html.light-theme .btn-emerald-grad, html.light-theme .btn-purple-grad, html.light-theme .btn-secondary-grad, html.light-theme [class*="btn"][class*="purple"], html.light-theme [class*="btn"][class*="violet"] {
-  background: linear-gradient(135deg, #0b3a9e, #2563eb) !important; color: #ffffff !important; border-color: transparent !important; box-shadow: 0 8px 22px rgba(37,99,235,.35) !important;
+  background: linear-gradient(135deg, #1e40af, #2563eb) !important; color: #ffffff !important; border-color: transparent !important; box-shadow: 0 8px 22px rgba(37,99,235,.32) !important;
 }
 html.light-theme .btn-purple-grad { background: linear-gradient(135deg, #1e40af, #3b82f6) !important; }
 html.light-theme * { text-shadow: none !important; }
@@ -46,17 +49,39 @@ html.light-theme .auth-right {
 }
 html.light-theme .auth-right::before { background-image: radial-gradient(rgba(37,99,235,.22) 1.2px, transparent 1.8px) !important; }
 html.light-theme .auth-right .auth-form-wrap {
-    background: rgba(255,255,255,.78) !important; border: 1px solid rgba(37,99,235,.18) !important;
+    background: rgba(240,246,255,.62) !important; border: 1px solid rgba(255,255,255,.7) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     box-shadow: 0 24px 60px rgba(30,64,175,.18) !important;
 }
 
 /* small labels stay readable on the pale page */
 html.light-theme .brand-sub, html.light-theme .nav-section-label, html.light-theme .admin-brand-text p, html.light-theme .stat-label,
-html.light-theme .left-footer, html.light-theme .brand-tag { color: #3d5486 !important; }
-html.light-theme .form-subheading, html.light-theme .form-text, html.light-theme small { color: #4a5f8f !important; }
+html.light-theme .left-footer, html.light-theme .brand-tag { color: #24365f !important; }
+html.light-theme .form-subheading, html.light-theme .form-text, html.light-theme small { color: #2c3e66 !important; }
 
 /* ---- readability: text on blue buttons is always white; brand-coloured labels are darkened to the same hue ---- */
 html.light-theme .btn-primary-grad,html.light-theme .btn-primary-grad *{color:#ffffff !important}
 html.light-theme .item-card .category-badge-chip,
 html.light-theme .item-card .fs-7.fw-semibold{color:color-mix(in srgb,var(--brand-color) 36%,#0b1b44) !important}
 html.light-theme .badge.bg-dark{background:#e3ebfb !important;color:#1e3a8a !important}
+
+/* glass edges: a thin white rim like frosted glass, and the dashboard sidebar becomes glass too */
+html.light-theme .sidebar, html.light-theme .admin-sidebar { background: rgba(240,246,255,.55) !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+/* ---- details from the reference ---- */
+/* form fields: a soft tinted fill with a visible blue outline */
+html.light-theme .field-input, html.light-theme .form-control, html.light-theme .form-select, html.light-theme textarea,
+html.light-theme input[type="text"], html.light-theme input[type="email"], html.light-theme input[type="password"], html.light-theme input[type="search"], html.light-theme input[type="number"], html.light-theme select {
+  background-color: rgba(236,242,253,.88) !important; border: 1px solid rgba(37,99,235,.24) !important;
+}
+html.light-theme .field-input:focus, html.light-theme .form-control:focus, html.light-theme textarea:focus, html.light-theme input:focus, html.light-theme select:focus {
+  border-color: #2563eb !important; box-shadow: 0 0 0 3px rgba(37,99,235,.16) !important; background-color: rgba(246,249,255,.96) !important;
+}
+/* every Back button: a light pill with a clear outline */
+html.light-theme .back-btn-global, html.light-theme .back-link, html.light-theme .float-back, html.light-theme .nav-back, html.light-theme .btn-back,
+html.light-theme .btn-back-hub, html.light-theme .btn-back-detail, html.light-theme .back-btn {
+  background: rgba(240,246,255,.75) !important; border: 1px solid rgba(37,99,235,.28) !important; color: #0e2250 !important;
+  box-shadow: 0 4px 12px rgba(30,64,175,.10) !important;
+}
+/* report: "Give Feedback" is the dark navy button, as in the reference */
+html.light-theme .btn-action[data-feedback-open] { background: #0e1a33 !important; color: #ffffff !important; border-color: #0e1a33 !important; }
+html.light-theme .btn-action[data-feedback-open] * { color: #ffffff !important; }

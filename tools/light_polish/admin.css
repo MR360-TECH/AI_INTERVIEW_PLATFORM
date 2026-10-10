@@ -1,0 +1,7 @@
+/* stat cards: a vivid coloured top line each, as in the reference */
+html.light-theme .sc-total{--accent-color:#2563eb !important}
+html.light-theme .sc-month{--accent-color:#0ea5e9 !important}
+html.light-theme .sc-today{--accent-color:#6366f1 !important}
+html.light-theme .sc-selected{--accent-color:#10b981 !important}
+html.light-theme .sc-rejected{--accent-color:#ef4444 !important}
+html.light-theme .stat-card.active-filter{border-color:var(--accent-color) !important;background:rgba(219,232,254,.78) !important}

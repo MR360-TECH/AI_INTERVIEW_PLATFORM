@@ -3781,7 +3781,7 @@ def t_light_theme():
     check("every page (except the live interview) loads theme.js", not no_js, no_js)
     check("every page (except the live interview) loads its own light stylesheet", not no_css, no_css)
     check("no page still forces dark mode with its own script", not forced, forced)
-    check("the live interview page is always dark", not always, always)
+    check("the live interview page is always dark, with its original layout", not always, always)
     import importlib.util
     spec = importlib.util.spec_from_file_location("build_light_theme", os.path.join(root, "tools", "build_light_theme.py"))
     mod = importlib.util.module_from_spec(spec)
@@ -3807,11 +3807,13 @@ def t_light_theme():
     pale = []
     for c in ("#64748b", "#94a3b8", "#0ea5e9", "#3b82f6", "#10b981", "#f59e0b", "#a9b8cc", "#cbd5e1", "rgba(255,255,255,.4)", "#ffffff"):
         r, g, b, a = LC.parse_color(LC.text_color(LC.parse_color(c)))
-        if LC._ratio((r, g, b)) < 5.0 or a < 0.85:
+        if LC._ratio((r, g, b)) < LC.MIN_RATIO - 0.01 or a < 0.85:
             pale.append(c)
-    check("the light compiler turns every pale text colour into one that reads clearly (contrast 5:1 or more)", not pale, pale)
+    check("the light compiler turns every pale text colour into one that reads clearly, even on the deepest blue of the background", not pale, pale)
     css = open(os.path.join(root, "static", "css", "light", "visibility.css"), encoding="utf-8").read()
     check("light mode keeps the dark text colour on yellow, cyan and green badges", "--v-ink:#0b1b44" in css)
+    tpl = open(os.path.join(tdir, "interview.html"), encoding="utf-8").read()
+    check("the interview page has no broken characters", "\u00c2\u00b7" not in tpl)
     check("theme.js leaves the interview page alone (data-always-dark)", "data-always-dark" in open(os.path.join(root, "static", "js", "theme.js"), encoding="utf-8").read())
 
     make_user("light1@test.local", "Light Subject")

@@ -78,7 +78,26 @@ def to_palette(rgba):
     return rgba
 
 
-def bg_color(rgba):
+GLASS_ALPHA = 0.62             # pale surfaces become frosted glass: the aurora behind the page shows through
+GLASS_TINT = (240, 246, 255)
+OPAQUE_WORDS = re.compile(r"modal|dropdown|popover|toast|offcanvas|tooltip|swal|select2|autocomplete|datepicker|overlay|sticky|loader|spinner", re.I)
+_opaque = False
+
+
+def set_context(selectors):
+    """Menus, dialogs and overlays must stay solid so the text under them cannot show through."""
+    global _opaque
+    _opaque = any(OPAQUE_WORDS.search(x) for x in selectors)
+
+
+def glass(r, g, b, a):
+    h, l, s = hls(r, g, b)
+    if _opaque or l < 0.80 or a < 0.62 or (max(r, g, b) - min(r, g, b)) > 40:
+        return fmt(r, g, b, a)
+    return fmt(GLASS_TINT[0], GLASS_TINT[1], GLASS_TINT[2], min(a, GLASS_ALPHA))
+
+
+def bg_color(rgba, frosted=True):
     rgba = to_palette(rgba)
     r, g, b, a = rgba
     h, l, s = hls(r, g, b)
@@ -87,8 +106,8 @@ def bg_color(rgba):
         ns = max(min(s, 0.9) * 0.55, 0.30) if s > 0.05 else 0.30
         nh = h if s > 0.15 else NAVY_H
         r2, g2, b2 = from_hls(nh, nl, ns)
-        return fmt(r2, g2, b2, a)
-    return fmt(r, g, b, a)
+        return glass(r2, g2, b2, a) if frosted else fmt(r2, g2, b2, a)
+    return glass(r, g, b, a) if frosted else fmt(r, g, b, a)
 
 
 def _text_color(rgba):
@@ -108,8 +127,8 @@ def _text_color(rgba):
     return fmt(r, g, b, a)
 
 
-REF_BG = (232, 238, 250)       # the darkest ordinary card colour on a light page: text must read clearly on it
-MIN_RATIO = 5.2
+REF_BG = (150, 188, 250)       # the deepest blue of the aurora behind a label: text must still read clearly there
+MIN_RATIO = 4.7
 
 
 def _luminance(r, g, b):
@@ -165,7 +184,7 @@ def border_color(rgba):
             r2, g2, b2 = from_hls(214 / 360, 0.5, 0.8)
             return fmt(r2, g2, b2, min(1, a * 1.1))
         return fmt(30, 64, 175, min(1, a * 0.8))
-    return bg_color(rgba)
+    return bg_color(rgba, frosted=False)                   # borders stay solid lines, never frosted glass
 
 
 def shadow_color(rgba):
@@ -203,7 +222,8 @@ def transform_decl(prop, value, text_clip):
     elif p in ("box-shadow", "text-shadow", "drop-shadow"):
         new = convert(value, shadow_color)
     elif p.startswith("--"):
-        new = convert(value, bg_color if is_dark_value(value) else text_color)
+        solid = bool(re.search(r"border|line|ring|outline|divider|stroke|track", p))
+        new = convert(value, (lambda c: bg_color(c, frosted=not solid)) if is_dark_value(value) else text_color)
     else:
         return None
     return new if new != value else None
@@ -281,9 +301,23 @@ def compile_light(css, skip_root=False):
         if any("dark-theme" in s or '[data-theme="dark"]' in s or "[data-theme='dark']" in s for s in sels):
             continue                                       # dark-only rules do not apply in light mode
         is_root = all(s.startswith((":root", "html")) and "." not in s.split(":")[0][4:] for s in sels) and any(s.startswith(":root") for s in sels)
-        if is_root and skip_root:
-            continue
+        set_context(sels)
         decls = split_decls(body)
+        if is_root and skip_root:                          # the page's own light palette stays, but its solid surfaces become glass
+            tokens = []
+            for d in decls:
+                if ":" not in d:
+                    continue
+                prop, val = d.split(":", 1)
+                if re.search(r"surface|sidebar-bg|card|panel|glass", prop) and "var(" not in val:
+                    c = parse_color(val.strip())
+                    if c:
+                        gl = glass(*c)
+                        if gl != fmt(*c):
+                            tokens.append("%s:%s !important" % (prop.strip(), gl))
+            if tokens:
+                out.append("%s{%s}" % (",".join(scope_selector(x) for x in sels), ";".join(tokens)))
+            continue
         clip = any(d.split(":", 1)[0].strip().lower().endswith("background-clip") and "text" in d for d in decls if ":" in d)
         new = []
         for d in decls:
@@ -302,9 +336,19 @@ def compile_light(css, skip_root=False):
             for d in decls if ":" in d)
         if solid_cyan:                                     # a primary button: navy-to-blue fill, white text
             new = [x for x in new if not x.lower().startswith(("background", "color"))]
-            new.append("background:linear-gradient(135deg,#0b3a9e,#2563eb) !important" if PALETTE == "navy" else "background:linear-gradient(135deg,#2563eb,#7c3aed) !important")
+            new.append("background:linear-gradient(135deg,#1e40af,#2563eb) !important" if PALETTE == "navy" else "background:linear-gradient(135deg,#2563eb,#7c3aed) !important")
             new.append("color:#ffffff !important")
             new.append("border-color:transparent !important")
+        if any(x.lower().startswith("border:") for x in new):     # a rewritten border shorthand must not wipe out a coloured edge of the same rule
+            have = {x.split(":", 1)[0].strip().lower() for x in new}
+            for d in decls:
+                if ":" not in d:
+                    continue
+                prop, val = d.split(":", 1)
+                pl = prop.strip().lower()
+                if re.match(r"border-(top|bottom|left|right)(-color)?$", pl) and pl not in have:
+                    v = val.replace("!important", "").strip()
+                    new.append("%s:%s !important" % (prop.strip(), transform_decl(prop, v, False) or v))
         if not new:
             continue
         if clip:                                           # the background shorthand resets the clip: keep gradient text as text
