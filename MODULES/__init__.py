@@ -14,6 +14,7 @@ _REQUIRED_COLUMNS = {
         ('extra_allowed_interviews', 'INTEGER DEFAULT 0'),
         ('attempts_count', 'INTEGER DEFAULT 0'),
         ('welcome_sent', 'BOOLEAN DEFAULT FALSE'),
+        ('user_code', 'VARCHAR(20)'),
     ],
     'interview_results': [
         ('is_terminated', 'BOOLEAN DEFAULT FALSE'),
@@ -63,6 +64,13 @@ def ensure_columns():
                         conn.execute(text("UPDATE users SET welcome_sent = TRUE"))
             except Exception as schema_err:
                 print(f"Schema check notice ({table}.{column_name}): {schema_err}")
+    # Member IDs must be unique. New databases get this index from the model; older ones get it here.
+    if inspector.has_table('users'):
+        try:
+            with db.engine.begin() as conn:
+                conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_user_code ON users (user_code)"))
+        except Exception as index_err:
+            print(f"Schema check notice (users.user_code index): {index_err}")
 
 
 def _rgb(hex_color):
@@ -132,6 +140,10 @@ def create_app():
     # Session cookie security
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    # "Keep me signed in": the cookie lives until Logout (renewed on every visit). Changing the password, or removing an
+    # admin device, still ends it at once (see web_security).
+    from datetime import timedelta
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=3650)
 
     if config.IS_PRODUCTION:
         from werkzeug.middleware.proxy_fix import ProxyFix
@@ -268,7 +280,10 @@ def create_app():
         try:
             db.create_all()
             ensure_columns()
-            from MODULES.LAYER_2_DATA_PERSISTENCE.models import move_disk_resumes_to_database
+            from MODULES.LAYER_2_DATA_PERSISTENCE.models import move_disk_resumes_to_database, assign_missing_user_codes
+            given = assign_missing_user_codes()
+            if given:
+                print(f"Gave {given} existing account(s) a member ID.")
             moved = move_disk_resumes_to_database()
             if moved:
                 print(f"Moved {moved} resume file(s) from the disk into the database.")

@@ -342,7 +342,7 @@
         .page-header {
             display: flex; align-items: flex-start; justify-content: space-between;
             margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
-            position: relative; z-index: 10;
+            position: relative; z-index: 60;   /* above the cards, so the account menu opens on top of them */
         }
         .page-eyebrow {
             font-family: 'Outfit', sans-serif; font-size: 0.63rem; font-weight: 700;
@@ -402,7 +402,7 @@
             position: absolute;
             top: calc(100% + 10px);
             right: 0;
-            width: 200px;
+            width: 220px;
             background: var(--surface-elevated, var(--surface));
             border: 1.5px solid var(--border);
             border-radius: var(--radius-md);
@@ -411,6 +411,7 @@
             z-index: 1000;
             display: none;
         }
+        html.dark-theme .profile-dropdown-menu { background: #0b1430 !important; }   /* solid, so the cards behind never show through */
         .profile-dropdown-menu.show {
             display: block !important;
             opacity: 1 !important;
@@ -1025,6 +1026,28 @@
         @media (max-width: 991px) { .dash-steps-row { grid-template-columns: 1fr; } }
             .top-card { gap: 16px; }
         .dash-points li { line-height: 1.3; }
+        /* request another assessment slot */
+        .btn-stay-tuned { background: rgba(255,255,255,0.06); color: var(--text-muted); border: 1px solid var(--border-strong); }
+        .btn-stay-tuned:hover { color: var(--text-main); border-color: var(--primary); }
+        .btn-request-slot { background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; border: none; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 18px rgba(0, 255, 255, 0.3); }
+        .btn-request-slot:disabled { opacity: .55; box-shadow: none; }
+        .slot-modal { border-radius: var(--radius-lg); border: 1.5px solid rgba(0, 255, 255, 0.35); background: var(--surface-elevated); }
+        .slot-modal .modal-title { color: var(--primary); font-family: 'Outfit', sans-serif; }
+        .slot-lead { color: var(--text-desc); font-size: .9rem; line-height: 1.6; }
+        .slot-done-title { color: var(--text-main); font-family: 'Outfit', sans-serif; }
+        .slot-code { display: inline-block; padding: 1px 8px; border-radius: 6px; font-family: 'Outfit', sans-serif; font-weight: 800; letter-spacing: .04em; color: var(--primary); background: var(--primary-light); border: 1px solid var(--border-strong); }
+        .slot-label { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+        .slot-text { border-radius: 12px; font-size: .92rem; resize: vertical; }
+        .slot-hint, .slot-count { font-size: .78rem; color: var(--text-desc); }
+        .slot-error { padding: 10px 12px; border-radius: 10px; font-size: .85rem; color: #f87171; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.35); }
+        .slot-done-icon { width: 64px; height: 64px; margin: 6px auto 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: #10b981; background: rgba(16,185,129,.12); border: 1.5px solid rgba(16,185,129,.4); }
+        .slot-sent-note { padding: 10px 14px; border-radius: 12px; font-size: .85rem; color: var(--text-muted); background: var(--primary-light); border: 1px solid var(--border-strong); }
+        /* the member's own ID, with a copy button */
+        .my-member-id { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; margin-bottom: 4px; border-radius: var(--radius-sm, 8px); background: var(--primary-light, rgba(0,255,255,.08)); border: 1px solid var(--border-strong, rgba(0,255,255,.3)); }
+        .my-member-id small { display: block; font-size: .64rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-desc, #94a3b8); }
+        .my-member-id b { font-family: 'Outfit', sans-serif; font-size: .9rem; letter-spacing: .05em; color: var(--primary, #00ffff); }
+        .my-member-id button { border: 0; background: transparent; color: var(--primary, #00ffff); font-size: 1rem; padding: 2px 4px; }
+        .my-member-id button.copied { color: #10b981; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
@@ -1181,6 +1204,7 @@
                         </div>
 
                         <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                            {% if user.user_code %}<div class="my-member-id"><div><small>Member ID</small><b>{{ user.user_code }}</b></div><button type="button" data-copy-id="{{ user.user_code }}" title="Copy your member ID" aria-label="Copy your member ID"><i class="bi bi-copy"></i></button></div>{% endif %}
                             <a href="/edit-profile" class="profile-dropdown-item">
                                 <i class="bi bi-person-gear text-primary"></i> Edit Profile
                             </a>
@@ -1497,11 +1521,98 @@
         </div>
       </div>
       <div class="modal-footer border-0 px-4 pb-4 pt-0">
-        <button type="button" class="btn rounded-pill px-4 fw-bold w-100" data-bs-dismiss="modal" style="background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; border: none; font-family: 'Outfit', sans-serif; box-shadow: 0 4px 18px rgba(0, 255, 255, 0.35);">Got it, Stay Tuned!</button>
+        {% if pending_request %}
+        <div class="slot-sent-note w-100 mb-2"><i class="bi bi-envelope-check-fill me-2"></i>Your request was sent on {{ pending_request.created_at.strftime('%d %b %Y') }}. You will get an e-mail when it is answered.</div>
+        {% endif %}
+        <div class="d-flex gap-2 w-100">
+          <button type="button" class="btn rounded-pill px-3 fw-semibold flex-fill btn-stay-tuned" data-bs-dismiss="modal">Got it, Stay Tuned</button>
+          {% if is_locked and not pending_request %}
+          <button type="button" class="btn rounded-pill px-3 fw-bold flex-fill btn-request-slot" id="openSlotRequest"><i class="bi bi-send-fill me-1"></i> Request Assessment</button>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ══ REQUEST ANOTHER ASSESSMENT SLOT ══ -->
+{% if is_locked and not pending_request %}
+<div class="modal fade" id="slotRequestModal" tabindex="-1" aria-labelledby="slotRequestLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content slot-modal">
+      <div class="modal-header border-0 p-4 pb-2">
+        <h5 class="modal-title fw-bold" id="slotRequestLabel"><i class="bi bi-send-fill me-2"></i>Request Another Assessment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 pt-2" id="slotRequestForm">
+        <p class="slot-lead">Tell the administrator why you need one more assessment slot. Your request is sent with your
+          member ID <span class="slot-code">{{ user.user_code }}</span>, and the administrator replies by e-mail.</p>
+        <label for="slotReason" class="slot-label">Your reason</label>
+        <textarea id="slotReason" class="form-control slot-text" rows="5" maxlength="500"
+                  placeholder="For example: my first attempt was interrupted by a power cut, and I have prepared again for the Python backend role."></textarea>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <span class="slot-hint">20 to 500 characters</span>
+          <span class="slot-count" id="slotCount">0 / 500</span>
+        </div>
+        <div class="slot-error mt-2" id="slotError" role="alert" hidden></div>
+      </div>
+      <div class="modal-body p-4 pt-2 text-center" id="slotRequestDone" hidden>
+        <div class="slot-done-icon"><i class="bi bi-envelope-check-fill"></i></div>
+        <h6 class="slot-done-title fw-bold mt-3 mb-2">Request sent</h6>
+        <p class="slot-lead mb-0">The administrator will review it. You will get an e-mail as soon as it is answered.</p>
+      </div>
+      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2" id="slotRequestFooter">
+        <button type="button" class="btn rounded-pill px-3 fw-semibold flex-fill btn-stay-tuned" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn rounded-pill px-3 fw-bold flex-fill btn-request-slot" id="sendSlotRequest" disabled><i class="bi bi-send-fill me-1"></i> Send Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+    var openBtn = document.getElementById('openSlotRequest');
+    var modalEl = document.getElementById('slotRequestModal');
+    if (!openBtn || !modalEl) return;
+    var reason = document.getElementById('slotReason'), count = document.getElementById('slotCount');
+    var send = document.getElementById('sendSlotRequest'), err = document.getElementById('slotError');
+    var sendLabel = send.innerHTML;
+    openBtn.addEventListener('click', function () {
+        var limit = bootstrap.Modal.getInstance(document.getElementById('attemptLimitReachedModal'));
+        if (limit) limit.hide();
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        setTimeout(function () { reason.focus(); }, 350);
+    });
+    reason.addEventListener('input', function () {
+        var n = reason.value.trim().length;
+        count.textContent = reason.value.length + ' / 500';
+        send.disabled = n < 20 || n > 500;
+    });
+    function failed(message) {
+        err.textContent = message; err.hidden = false;
+        send.disabled = false; send.innerHTML = sendLabel;
+    }
+    send.addEventListener('click', function () {
+        send.disabled = true; err.hidden = true;
+        send.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending';
+        fetch('/assessment-request', {
+            method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reason: reason.value })
+        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+              if (res.ok && res.j.status === 'ok') {
+                  document.getElementById('slotRequestForm').hidden = true;
+                  document.getElementById('slotRequestDone').hidden = false;
+                  document.getElementById('slotRequestFooter').innerHTML =
+                      '<button type="button" class="btn rounded-pill px-3 fw-bold w-100 btn-request-slot" data-bs-dismiss="modal">Done</button>';
+                  openBtn.remove();
+              } else {
+                  failed((res.j && res.j.message) || 'Could not send your request. Please try again.');
+              }
+          }).catch(function () { failed('No connection. Please check your internet and try again.'); });
+    });
+})();
+</script>
+{% endif %}
 
 <!-- ══ START ASSESSMENT CONFIRMATION MODAL ══ -->
 <div class="modal fade" id="confirmStartAssessmentModal" tabindex="-1" aria-labelledby="confirmStartAssessmentModalLabel" aria-hidden="true">
@@ -2266,51 +2377,6 @@ function handleFileDrop(event) {
 }
 </script>
 
-<!-- ══ ATTEMPT LIMIT REACHED MODAL ══ -->
-<div class="modal fade" id="attemptLimitReachedModal" tabindex="-1" aria-labelledby="attemptLimitReachedModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:20px; border:1.5px solid #ef4444; background:#08122a; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85); backdrop-filter: blur(20px);">
-      <div class="modal-header border-0 p-4 pb-2">
-        <h5 class="modal-title fw-bold" id="attemptLimitReachedModalLabel" style="color:#f87171; font-family:'Outfit',sans-serif; letter-spacing:0.02em;">
-          <i class="bi bi-lock-fill me-2"></i>Assessment Limit Reached
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4 pt-2">
-        <div class="d-flex align-items-start gap-3 mb-3">
-          <div style="background:rgba(239, 68, 68, 0.15); border-radius:14px; width:52px; height:52px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);">
-            <i class="bi bi-shield-x fs-3" style="color:#f87171;"></i>
-          </div>
-          <div>
-            <p class="fw-bold mb-1" style="color:#ffffff; font-family:'Outfit',sans-serif; font-size:1.15rem;">
-              Assessment Session Limit Reached
-            </p>
-            <p style="color:#cbd5e1; font-size:0.88rem; margin:0; line-height:1.6;">
-              You have completed all scheduled standard evaluation sessions authorized for your account in this placement round.
-            </p>
-          </div>
-        </div>
-
-        <div class="p-3 mb-3" style="background:#0b1329; border:1.5px solid #334155; border-radius:14px;">
-          <div class="fw-bold mb-2" style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:#38bdf8; font-family:'Outfit', sans-serif;">
-            <i class="bi bi-info-circle me-1"></i> Next Steps &amp; Practice:
-          </div>
-          <ul class="mb-0 ps-3" style="font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
-            <li>Contact your recruitment coordinator or placement administrator to request an assessment slot extension.</li>
-            <li>In the meantime, you can sharpen your skills with unlimited sessions in <strong>Practice Mode (Viva, Drills, Language Speaking)</strong>.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="modal-footer border-0 px-4 pb-4 pt-0 d-flex gap-2">
-        <button type="button" class="btn rounded-pill px-4 fw-semibold flex-fill" data-bs-dismiss="modal" style="background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid #475569;">Close</button>
-        <a href="/practice-setup" class="btn rounded-pill px-4 fw-bold flex-fill" style="background:linear-gradient(135deg, #00ffff, #0284c7) !important; color:#020510 !important; border:none; font-family:'Outfit',sans-serif; font-weight: 800; box-shadow: 0 4px 18px rgba(0, 255, 255, 0.4); text-decoration: none; text-align: center; padding: 8px 16px;">
-          <i class="bi bi-mortarboard-fill me-1"></i> Try Practice Mode
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
 sessionStorage.removeItem('interview_proctor_strikes');
 /* ── Dashboard background particle spawner ── */
@@ -2336,5 +2402,17 @@ sessionStorage.removeItem('interview_proctor_strikes');
 </script>
 
 {% include "_feedback_modal.html" %}
+<script>
+/* copy the member's own ID */
+document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-copy-id]') : null;
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var code = b.getAttribute('data-copy-id');
+    function done() { b.classList.add('copied'); b.innerHTML = '<i class="bi bi-check2"></i>'; setTimeout(function () { b.classList.remove('copied'); b.innerHTML = '<i class="bi bi-copy"></i>'; }, 1300); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(done, done);
+    else { var a = document.createElement('textarea'); a.value = code; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (x) {} a.remove(); done(); }
+}, true);
+</script>
 </body>
 </html>

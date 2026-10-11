@@ -2,8 +2,10 @@
 
   * CSRF protection: every state-changing request (POST/PUT/PATCH/DELETE) must carry the per-session token. The token is
     added to every HTML form and to every same-site fetch() automatically, so no template needs to remember it.
-  * Session timeout: an idle admin is signed out after ADMIN_IDLE_MINUTES (30), an idle candidate after
-    USER_IDLE_MINUTES (120); no session lives longer than SESSION_MAX_HOURS (12).
+  * Staying signed in: a "Keep me signed in" session lasts until Logout. A session without it (shared computer) ends
+    with the browser, after ADMIN_IDLE_MINUTES (30) / USER_IDLE_MINUTES (120) idle, or after SESSION_MAX_HOURS (12).
+  * Password fingerprint: a session ends as soon as the password it was opened with changes (admin and candidates),
+    and an admin session also ends when its device is removed from Registered devices.
   * Content-Security-Policy and "do not cache signed-in pages" headers.
   * Password rules shared by sign-up and reset.
 """
@@ -86,6 +88,31 @@ def _reject(code, message, login_error=None):
     return (f"<h3>{message}</h3><p><a href='/'>Back</a></p>", 400)
 
 
+def _account_problem(is_admin, user_id):
+    """None while the session is still valid; otherwise the reason shown on the sign-in page."""
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, AdminDevice
+    from MODULES.LAYER_3_BUSINESS_SERVICES import admin_access as AA
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS import login_env as L
+    if is_admin:
+        current = L.admin_password_print()
+        if session.setdefault("admin_print", current) != current:
+            return "session_expired"                     # the admin password changed: every device is signed out
+        if L.device_approval_on():
+            token = request.cookies.get(AA.DEVICE_COOKIE) or ""
+            device = AdminDevice.query.filter_by(id=session.get("admin_device")).first() if session.get("admin_device") else None
+            if (not device or device.status != "approved" or device.password_print != current
+                    or not hmac.compare_digest(device.token_hash, AA.token_hash(token))):
+                return "device_removed"
+        return None
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return "session_expired"
+    current = AA.fingerprint(user.password or "", "user|%s" % user.id)
+    if session.setdefault("user_print", current) != current:
+        return "session_expired"                         # the password was reset: the member's other devices are signed out
+    return None
+
+
 def init_web_security(app):
     app.jinja_env.globals["csrf_token"] = csrf_token
 
@@ -97,12 +124,19 @@ def init_web_security(app):
         if not (is_admin or is_user):
             return None
         now = time.time()
-        started, last = session.setdefault("_started", now), session.get("_last_seen", now)
-        idle_limit = ADMIN_IDLE_SECONDS if is_admin else USER_IDLE_SECONDS
-        if now - last > idle_limit or now - started > SESSION_MAX_SECONDS:
+        if session.get("remember", True):
+            session.permanent = True               # the cookie survives closing the browser: signed in until Logout
+        else:
+            started, last = session.setdefault("_started", now), session.get("_last_seen", now)
+            idle_limit = ADMIN_IDLE_SECONDS if is_admin else USER_IDLE_SECONDS
+            if now - last > idle_limit or now - started > SESSION_MAX_SECONDS:
+                session.clear()
+                return _reject("session_expired", "Your session expired for security. Please sign in again.", "session_expired")
+            session["_last_seen"] = now
+        problem = _account_problem(is_admin, is_user)
+        if problem:
             session.clear()
-            return _reject("session_expired", "Your session expired for security. Please sign in again.", "session_expired")
-        session["_last_seen"] = now
+            return _reject("session_expired", "Please sign in again.", problem)
         return None
 
     @app.before_request

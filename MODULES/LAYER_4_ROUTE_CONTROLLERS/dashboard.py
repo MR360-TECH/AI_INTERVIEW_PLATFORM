@@ -2,12 +2,14 @@ import re
 import json
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, redirect, session, jsonify
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, FEEDBACK_TO_EMAIL
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, FEEDBACK_TO_EMAIL, APP_BASE_URL
 from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     User,
     InterviewResult,
     InterviewProgress,
     Feedback,
+    SlotRequest,
+    pending_slot_request,
     profile_is_complete,
     allowed_resume_file,
     get_settings,
@@ -17,7 +19,7 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     resume_response
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.ai_client import analyze_attachment, attachment_analysis_failed
-from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_feedback_notification
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_feedback_notification, queue_slot_request_notification
 
 dashboard_bp = Blueprint('dashboard_bp', __name__)
 
@@ -85,7 +87,9 @@ def dashboard():
         if attempts_used >= allowed_total and not has_progress:
             is_locked = True
 
+    pending_request = pending_slot_request(current_user.id) if is_locked else None
     return render_template("dashboard.html", name=session.get("user_name") or current_user.full_name, user=current_user,
+                           pending_request=pending_request,
                            has_progress=has_progress, has_result=has_result,
                            recent_results=recent_results, error=error_msg,
                            is_locked=is_locked, attempts_used=attempts_used,
@@ -363,10 +367,74 @@ def submit_feedback():
         FEEDBACK_TO_EMAIL, user_name=user.full_name, user_email=user.email, rating=rating,
         category_label=FEEDBACK_CATEGORIES[category], message=message, page_label=FEEDBACK_PAGES[page],
         session_code=session_code, when_text=now.strftime("%d %B %Y, %H:%M UTC"), contact_ok=contact_ok,
-        user_id=user.id,
-        account_type="Professional" if user.user_type == "professional" else "Student",
-        course_or_role=(user.current_designation if user.user_type == "professional" else user.course) or "",
-        member_since=user.registered_at.strftime("%d %B %Y") if user.registered_at else "",
-        sign_in_method={"local": "Email and password", "google": "Google", "otp": "Email code"}.get(user.auth_provider, ""),
-        reply_to=(user.email if contact_ok else None))
+        **_member_details(user), reply_to=(user.email if contact_ok else None))
+    return jsonify({"status": "ok"})
+
+
+def _member_details(user):
+    """What the administrator's e-mails show about a member: enough to recognise and find them, nothing more."""
+    return dict(user_code=user.user_code or "",
+                account_type="Professional" if user.user_type == "professional" else "Student",
+                course_or_role=(user.current_designation if user.user_type == "professional" else user.course) or "",
+                admin_url=(f"{APP_BASE_URL}/admin/users?q={user.user_code}&open=1" if user.user_code
+                           else f"{APP_BASE_URL}/admin/user/{user.id}"))
+
+
+SLOT_REASON_MIN, SLOT_REASON_MAX, SLOT_REQUESTS_PER_DAY = 20, 500, 3
+
+
+@dashboard_bp.route("/assessment-request", methods=["POST"])
+def request_assessment_slot():
+    """A candidate who has used every assessment slot asks the administrator for one more, with a reason."""
+    if "user_id" not in session or session.get("is_admin"):
+        return _feedback_error("Please log in to send a request.", 401)
+    user = db.session.get(User, session["user_id"])
+    if not user:
+        return _feedback_error("Please log in to send a request.", 401)
+
+    settings = get_settings()
+    allowed = (settings.default_allowed_interviews or 2) + (user.extra_allowed_interviews or 0)
+    used = user.get_attempts_used()
+    if not settings.enable_attempt_limits or used < allowed:
+        return _feedback_error("You still have an assessment slot. Start it from your dashboard.", 400)
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return _feedback_error("Invalid request.", 400)
+    reason = str(data.get("reason") or "").strip()
+    if not SLOT_REASON_MIN <= len(reason) <= SLOT_REASON_MAX:
+        return _feedback_error(f"Please write between {SLOT_REASON_MIN} and {SLOT_REASON_MAX} characters.", 400)
+
+    pending = pending_slot_request(user.id)
+    if pending:
+        return _feedback_error("You already sent a request on " + pending.created_at.strftime("%d %b %Y")
+                               + ". The administrator will reply by e-mail.", 409)
+    now = datetime.utcnow()
+    today = SlotRequest.query.filter(SlotRequest.user_id == user.id, SlotRequest.created_at >= now - timedelta(days=1)).count()
+    if today >= SLOT_REQUESTS_PER_DAY:
+        return _feedback_error("You have sent several requests today. Please try again tomorrow.", 429)
+
+    try:
+        db.session.add(SlotRequest(user_id=user.id, reason=reason, status="pending", created_at=now))
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"[SLOT REQUEST] could not save: {e}")
+        return _feedback_error("Could not send your request right now. Please try again.", 500)
+
+    last = (InterviewResult.query.filter(InterviewResult.user_id == user.id, InterviewResult.real_attempt_filter())
+            .order_by(InterviewResult.interview_datetime.desc()).first())
+    last_text = ""
+    if last:
+        try:
+            last_text = f"{float(last.score or 0):.1f} / 10 · {last.domain or 'Assessment'}"
+        except (TypeError, ValueError):
+            last_text = last.domain or "Assessment"
+        if last.interview_datetime:
+            last_text += " · " + last.interview_datetime.strftime("%d %b %Y")
+    # The e-mail is a bonus: the request is already saved and is listed on the admin pages.
+    queue_slot_request_notification(
+        FEEDBACK_TO_EMAIL, user_name=user.full_name, user_email=user.email, attempts_text=f"{used} of {allowed}",
+        last_result=last_text, reason=reason, when_text=now.strftime("%d %B %Y, %H:%M UTC"),
+        reply_to=user.email, **_member_details(user))
     return jsonify({"status": "ok"})

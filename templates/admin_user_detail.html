@@ -428,6 +428,11 @@ html.dark-theme .db-bg { display: block; }
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(0,255,255,0.2);border-radius:99px;}
 ::-webkit-scrollbar-thumb:hover{background:#00ffff;}
+        /* member ID chip: click to copy */
+        .member-id { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .05em; color: #a5f3fc; background: rgba(0,255,255,.08); border: 1px solid rgba(0,255,255,.3); cursor: pointer; white-space: nowrap; }
+        .member-id:hover { border-color: #00ffff; color: #ffffff; }
+        .member-id.copied { color: #34d399; border-color: rgba(52,211,153,.6); }
+        .req-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #fbbf24; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.4); }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
@@ -482,6 +487,7 @@ html.dark-theme .db-bg { display: block; }
                 </h1>
                 <div class="d-flex align-items-center gap-3 flex-wrap mt-2">
                     <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ user.email }}" target="_blank" rel="noopener noreferrer" style="font-size: 0.9rem; color: #94a3b8; font-weight: 500; text-decoration: none; transition: color 0.2s ease;" onmouseover="this.style.color='#00ffff';" onmouseout="this.style.color='#94a3b8';" title="Compose email in Gmail for {{ user.email }}"><i class="bi bi-envelope-fill me-1"></i>{{ user.email }}</a>
+                    {% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}
                     {% if user.auth_provider == "google" %}
                         <span class="auth-badge google d-inline-flex align-items-center" style="font-weight:700;font-size:0.75rem;letter-spacing:0.02em; border-color: rgba(66, 133, 244, 0.4) !important; color: #60a5fa !important; background: rgba(66, 133, 244, 0.15) !important; border: 1.5px solid rgba(66, 133, 244, 0.4); padding: 2px 8px; border-radius: 6px;">
                             <svg class="google-g-icon" viewBox="0 0 48 48" style="width:16px;height:16px;margin-right:4px;flex-shrink:0;">
@@ -593,6 +599,59 @@ html.dark-theme .db-bg { display: block; }
             <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: #00ffff;">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p')|upper }}</span>
         </div>
     </div>
+
+    {% if found_code %}
+    <div class="found-bar"><i class="bi bi-search"></i> Found by member ID <b>{{ found_code }}</b><a href="/admin/users?q={{ found_code }}"><i class="bi bi-list-ul"></i> Back to list</a></div>
+    <style>.found-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:10px 16px;border-radius:12px;background:rgba(0,255,255,.07);border:1px solid rgba(0,255,255,.3);color:#cbd5e1;font-size:.9rem}.found-bar b{color:#00ffff;font-family:'Outfit',sans-serif;letter-spacing:.04em}.found-bar a{margin-left:auto;color:#00ffff;font-weight:700;text-decoration:none}</style>
+    {% endif %}
+    <!-- Slot request from this candidate (only while attempt limits are on) -->
+    {% if settings.enable_attempt_limits and pending_request %}
+    <div class="info-section slot-req-card" id="slotRequestCard">
+        <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+            <div class="section-title mb-0 slot-req-title"><i class="bi bi-send-fill"></i> Slot Request</div>
+            <span class="slot-req-date">Sent {{ pending_request.created_at.strftime('%d %b %Y, %H:%M') }} UTC</span>
+        </div>
+        <div class="slot-req-reason">{{ pending_request.reason }}</div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            {% if remaining_tokens <= 0 %}
+            <button type="button" class="slot-req-grant" data-name="{{ user.full_name }}" onclick="triggerUnlockCandidate({{ user.id }}, this.dataset.name)">
+                <i class="bi bi-unlock-fill me-1"></i> Grant 1 more attempt
+            </button>
+            {% endif %}
+            <button type="button" class="slot-req-decline" id="declineSlotRequest" data-request="{{ pending_request.id }}">
+                <i class="bi bi-x-circle me-1"></i> Decline
+            </button>
+        </div>
+        <div class="slot-req-note mt-2">Granting sends the candidate the "slot unlocked" e-mail. Declining sends a short, polite e-mail.</div>
+    </div>
+    <style>
+        .slot-req-card { border-color: rgba(251, 191, 36, 0.45) !important; }
+        .slot-req-title { color: #fbbf24 !important; }
+        .slot-req-date { font-size: .78rem; color: #94a3b8; }
+        .slot-req-reason { padding: 14px 16px; border-radius: 12px; background: rgba(10, 15, 29, 0.8); border: 1px solid rgba(251, 191, 36, 0.25); border-left: 4px solid #fbbf24; color: #e2e8f0; font-size: .92rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+        .slot-req-grant { background: linear-gradient(135deg, #00ffff, #0284c7) !important; color: #020510 !important; border: none; border-radius: 10px; padding: 9px 18px; font-weight: 800; font-family: 'Outfit', sans-serif; font-size: .88rem; }
+        .slot-req-decline { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); border-radius: 10px; padding: 9px 18px; font-weight: 700; font-size: .88rem; }
+        .slot-req-decline:disabled { opacity: .6; }
+        .slot-req-note { font-size: .78rem; color: #94a3b8; }
+    </style>
+    <script>
+    (function () {
+        var btn = document.getElementById('declineSlotRequest');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            if (!confirm('Decline this request? The candidate will get a short e-mail.')) return;
+            btn.disabled = true; btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Declining...';
+            fetch('/admin/slot-request/' + btn.getAttribute('data-request') + '/decline', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.status === 'success') { window.location.reload(); }
+                    else { alert(d.message || 'Could not decline the request.'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Decline'; }
+                })
+                .catch(function () { alert('Connection error. Please try again.'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Decline'; });
+        });
+    })();
+    </script>
+    {% endif %}
 
     <!-- Assessment Token Status & Access Management -->
     <div class="info-section" style="border-color: rgba(0, 255, 255, 0.3) !important;">
@@ -911,6 +970,18 @@ function fallbackCopy(text, callback) {
     }
     document.body.removeChild(textArea);
 }
+</script>
+<script>
+/* member ID chips: one click copies the ID, ready to paste into a search box or an e-mail */
+document.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('.member-id[data-code]') : null;
+    if (!chip) return;
+    e.preventDefault(); e.stopPropagation();
+    var code = chip.getAttribute('data-code');
+    function done() { chip.classList.add('copied'); var t = chip.innerHTML; chip.innerHTML = '<i class="bi bi-check2"></i> Copied'; setTimeout(function () { chip.innerHTML = t; chip.classList.remove('copied'); }, 1300); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(done, done);
+    else { var a = document.createElement('textarea'); a.value = code; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (x) {} a.remove(); done(); }
+}, true);
 </script>
 </body>
 </html>

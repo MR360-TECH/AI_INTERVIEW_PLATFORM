@@ -85,3 +85,8 @@ html.light-theme .btn-back-hub, html.light-theme .btn-back-detail, html.light-th
 /* report: "Give Feedback" is the dark navy button, as in the reference */
 html.light-theme .btn-action[data-feedback-open] { background: #0e1a33 !important; color: #ffffff !important; border-color: #0e1a33 !important; }
 html.light-theme .btn-action[data-feedback-open] * { color: #ffffff !important; }
+
+/* ---- every Bootstrap modal, on every page: the shared --surface-elevated token is also used for frosted
+   cards, so a dialog must not inherit that translucency, and the dark backdrop needs its own light-mode value ---- */
+html.light-theme .modal-backdrop { background-color: #0b1b44 !important; opacity: .55 !important; }
+html.light-theme .modal .modal-content, html.light-theme .modal-dialog .modal-content { background: rgba(247,250,255,.97) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }

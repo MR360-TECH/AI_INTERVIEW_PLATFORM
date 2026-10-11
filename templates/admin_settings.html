@@ -484,6 +484,56 @@
         </script>
 
     </div>
+
+    <!-- Registered devices: who may open the admin account -->
+    <div class="settings-card mt-4" id="devices">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <h2 class="dev-title"><i class="bi bi-shield-lock-fill me-2"></i>Registered devices</h2>
+            {% if approval_on %}<span class="dev-state on"><i class="bi bi-check-circle-fill"></i> Device approval is on</span>
+            {% else %}<span class="dev-state off"><i class="bi bi-exclamation-triangle-fill"></i> Device approval is off</span>{% endif %}
+        </div>
+        {% if approval_on %}
+        <p class="dev-lead">Only these devices can open the admin account. A new device needs your approval from the e-mail sent to
+            <b>{{ approval_mailbox }}</b>. Removing a device signs it out at once. Changing <b>ADMIN_PASSWORD</b> in Render signs out
+            every device and cancels every approval.</p>
+        {% if devices %}
+        <div class="dev-list">
+            {% for d in devices %}
+            <div class="dev-row">
+                <div class="dev-ic"><i class="bi {{ 'bi-phone' if ('Android' in (d.label or '') or 'iPhone' in (d.label or '')) else 'bi-laptop' }}"></i></div>
+                <div class="dev-info">
+                    <b>{{ d.label or 'Unknown device' }}</b>{% if d.id == this_device %} <span class="dev-this">This device</span>{% endif %}
+                    <small>Approved {{ d.approved_at.strftime('%d %b %Y') if d.approved_at else '-' }} &middot; last used {{ d.last_seen_at.strftime('%d %b %Y, %H:%M') if d.last_seen_at else '-' }} UTC</small>
+                </div>
+                <form method="POST" action="/admin/devices/{{ d.id }}/remove" onsubmit="return confirm('Remove this device? It is signed out at once and needs approval again.');">
+                    <button type="submit" class="dev-remove"><i class="bi bi-trash3"></i> Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="dev-lead mb-0">No devices are approved yet.</p>
+        {% endif %}
+        {% else %}
+        <p class="dev-lead mb-0">The admin password alone opens the admin area. To allow only devices you approve, set
+            <b>ADMIN_APPROVAL_EMAIL</b> in Render to your personal Gmail.</p>
+        {% endif %}
+    </div>
+    <style>
+        .dev-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.15rem; color: #ffffff; margin: 0; }
+        .dev-state { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: .78rem; font-weight: 800; }
+        .dev-state.on { color: #34d399; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.45); }
+        .dev-state.off { color: #fbbf24; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.45); }
+        .dev-lead { font-size: .9rem; color: #cbd5e1; line-height: 1.65; }
+        .dev-list { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+        .dev-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 14px; background: #0b1633; border: 1px solid #334155; }
+        .dev-ic { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #00ffff; background: rgba(0,255,255,.08); border: 1px solid rgba(0,255,255,.3); flex-shrink: 0; }
+        .dev-info { flex: 1; min-width: 0; }
+        .dev-info b { color: #ffffff; font-family: 'Outfit', sans-serif; }
+        .dev-info small { display: block; color: #94a3b8; font-size: .8rem; margin-top: 2px; }
+        .dev-this { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: .68rem; font-weight: 800; color: #020510; background: #00ffff; }
+        .dev-remove { background: rgba(239,68,68,.1); color: #f87171; border: 1px solid rgba(239,68,68,.45); border-radius: 10px; padding: 7px 14px; font-weight: 700; font-size: .84rem; }
+    </style>
 </div>
 <script>
 (function(){

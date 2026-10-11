@@ -249,8 +249,12 @@
         .pw-toggle:hover { color: #00ffff; }
 
         .forgot-row {
-            text-align: right; margin-top: -6px; margin-bottom: 22px;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            margin-top: -6px; margin-bottom: 22px;
         }
+        .remember-me { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; cursor: pointer; margin: 0; }
+        .remember-me input { width: 16px; height: 16px; accent-color: #00e5ff; cursor: pointer; }
+        .auth-alert.info { background: rgba(0, 255, 255, 0.07); border: 1px solid rgba(0, 255, 255, 0.3); color: #a5f3fc; }
         .forgot-link {
             font-size: 0.82rem; color: #cbd5e1; text-decoration: none; font-weight: 700;
             transition: color 0.15s;
@@ -404,7 +408,12 @@
             <div class="or-sep"><span>or continue with email</span></div>
             {% endif %}
 
+            {% if next_member %}
+            <div class="auth-alert info"><i class="bi bi-person-vcard"></i> Sign in to open member {{ next_member }}.</div>
+            {% endif %}
             <form method="POST" id="loginForm" action="/login">
+                <input type="hidden" name="next" value="{{ next_url or '' }}">
+                <input type="hidden" name="remember_box" value="1">
                 <div class="field-group">
                     <label class="field-label" for="email">Email Address</label>
                     <input type="email" name="email" id="email" class="field-input" required
@@ -421,6 +430,7 @@
                     </div>
                 </div>
                 <div class="forgot-row">
+                    <label class="remember-me" for="remember"><input type="checkbox" name="remember" id="remember" checked> Keep me signed in</label>
                     <a href="/forgot-password" class="forgot-link"><i class="bi bi-key me-1"></i>Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-primary-auth">

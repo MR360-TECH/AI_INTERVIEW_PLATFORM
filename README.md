@@ -648,6 +648,16 @@ How it works: `static/js/theme.js` applies the saved choice before the page is d
 | `/admin/export/results.csv`, `/admin/export/candidates.csv` | **CSV export** of the results table or the candidate list, with the same filter, search and order as the screen; spreadsheet formulas typed by a candidate are neutralised |
 | `/admin/guide` | The interactive 38-step guided tour and the 11-module manual |
 
+**Member IDs.** Every account gets a member ID such as `AIP26A0001`: AIP (AI Interview Platform), the two-digit year the member joined, a series letter and a 4-digit number. Each series holds 1000 members (A0001 to A1000, then B0001), and each year starts again at A0001. Candidates see and copy their ID in the account menu and on Edit Profile; the administrator sees it on every list, in the CSV files and in the e-mails, and can paste it into either search box (any case, with or without dashes) to find that member.
+
+**Slot requests.** A candidate who has used every assessment slot sees *Stay Tuned* and a **Request Assessment** button. They write a reason (20-500 characters) and send it; the request is saved and e-mailed to the administrator with the member's name, e-mail, member ID, account, attempts used, latest result and an *Open in admin* button. One open request at a time and at most three a day. On the candidate's admin page the administrator grants one more attempt (the candidate gets the "slot unlocked" e-mail) or declines (the candidate gets a short, polite e-mail). Registered Candidates has a **Slot requests** filter. When the administrator switches attempt limits off, the whole request service is off too.
+
+**Open in admin, from any e-mail.** The buttons in the slot-request and feedback e-mails link straight to that member's profile (`/admin/users?q=<member ID>&open=1`). Signed in already, it opens at once; signed out, the sign-in page says which member it will open and continues there automatically once you are signed in.
+
+**Staying signed in.** "Keep me signed in" (ticked by default on the login page) keeps a candidate or the admin signed in until they press Logout, no matter how long between visits. Unticking it (a shared computer) falls back to the old rule: signed out after `ADMIN_IDLE_MINUTES` (30) / `USER_IDLE_MINUTES` (120) idle, or `SESSION_MAX_HOURS` (12) in any case. A password change (candidate or admin) signs that account out everywhere at once.
+
+**Admin device approval.** Set `ADMIN_APPROVAL_EMAIL` to your own mailbox and the admin password alone is not enough: the first sign-in on a new device sends that mailbox an e-mail naming the device, with **Approve** and **This wasn't me** (the link works once, for one hour). Only after you press Approve does that device open the admin area; every sign-in after that also e-mails you an alert. Admin Settings lists every approved device with a **Remove** button, and changing `ADMIN_PASSWORD` signs out and un-approves every device at once. Leave `ADMIN_APPROVAL_EMAIL` unset and the admin password works on its own, as before.
+
 ---
 
 ## ✉️ E-mail system
@@ -752,7 +762,7 @@ ai_interview_platform/
 | `RESEND_API_KEY`, `RESEND_DOMAIN`, `SENDGRID_API_KEY` | Optional | HTTP mail providers |
 | `FEEDBACK_TO_EMAIL` | Optional | Mailbox that receives user feedback (default: `MAIL_USERNAME`) |
 | `GEMINI_BACKUP_KEYS`, `GEMINI_FALLBACK_MODELS` | Optional | Comma-separated backup keys and models |
-| `ADMIN_2FA` | Optional | `true` adds an e-mailed code after the admin password |
+| `ADMIN_APPROVAL_EMAIL` | Recommended | Your own mailbox for admin device approval and sign-in alerts; set it and knowing the admin password alone is not enough |
 | `ADMIN_IDLE_MINUTES`, `USER_IDLE_MINUTES`, `SESSION_MAX_HOURS` | Optional | Session timeouts (30, 120, 12) |
 | `SHOW_SPAM_HINT` | Optional | `false` hides the spam-folder hint on the code page |
 | `UPLOAD_FOLDER` | Optional | Only for resumes saved before they moved into the database; they are copied into it when first opened |
@@ -798,7 +808,7 @@ Start the app with `python app.py` and open http://localhost:5000. Tables and ne
 ## ✅ Testing
 
 ```bash
-python tests/e2e.py                          # all groups (1040 checks, about one minute)
+python tests/e2e.py                          # all groups (1131 checks, about one minute)
 python tests/e2e.py t_interview_integrity    # one group
 ```
 

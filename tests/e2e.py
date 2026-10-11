@@ -1612,7 +1612,7 @@ def t_feedback_box():
         u = User.query.filter_by(email=email).first()
         rows = Feedback.query.filter_by(user_id=u.id).all()
         check("it is saved in the database", len(rows) == 1 and rows[0].rating == 4 and rows[0].category == "suggestion" and rows[0].session_code == "AIS-000042" and rows[0].page == "result", rows and rows[0].message)
-        uid = u.id
+        uid, ucode = u.id, u.user_code
     m = sent_to("owner@test.local")
     check("exactly one e-mail goes to the configured mailbox", len(m) == 1, [x[1] for x in SENT])
     if m:
@@ -1620,12 +1620,15 @@ def t_feedback_box():
         check("subject names the topic, the rating and the sender", "New feedback" in subject and "A suggestion or new feature" in subject and "4/5" in subject and "Fatima Sheikh" in subject, subject)
         check("the email shows WHO sent it: name", "Name: Fatima Sheikh" in text and "Fatima Sheikh" in html)
         check("the email shows WHO sent it: email address", f"Email: {email}" in text and email in html)
-        check("the email shows account type, course, sign-in method and user id",
-              "Account: Student" in text and "Course / Role: CSE" in text and "Signed in with: Email and password" in text and f"User ID: {uid}" in text, text[:600])
-        check("the email shows a member-since date", "Member since:" in text)
+        check("the email shows the member ID, account type and course",
+              f"Member ID: {ucode}" in text and "Account: Student \u00b7 CSE" in text, text[:600].encode("ascii", "replace"))
+        check("the email leaves out details the admin does not need", "Member since" not in text and "Signed in with" not in text)
+        check("the email says how to find the member and links to their admin page",
+              "Paste the Member ID into the search box" in text and f"/admin/users?q={ucode}&open=1" in text and "Open in admin" in html)
+        check("the subject carries the member ID", ucode in subject)
         check("the email shows the topic, rating, page and session", "Topic: A suggestion or new feature" in text and "\u2605\u2605\u2605\u2605\u2606" in text and "Sent from: Interview result page" in text and "Session ID: AIS-000042" in text, text[:700])
         check("the user's message is in the email", "Please add more mock interview domains for finance roles." in text and "Please add more mock interview domains" in html)
-        check("the email has separate 'Sender details' and 'Feedback details' blocks", "SENDER DETAILS" in text and "FEEDBACK DETAILS" in text)
+        check("the email has separate 'Member' and 'Feedback details' blocks", "MEMBER\nName:" in text and "FEEDBACK DETAILS" in text)
         check("the email follows the app theme", "#08122a" in html and "#00ffff" in html and "New Feedback" in html)
         check("Reply-To is the user's address, so replying reaches them", REPLY_TO[-1][2] == email, REPLY_TO[-1])
         check("nothing secret is in the email (no password hash, no tokens)", "scrypt" not in html and "pbkdf2" not in html and "password" not in text.lower().replace("email and password", ""))
@@ -1741,6 +1744,7 @@ def t_admin_tour():
 def t_web_security():
     section("Plan C: CSRF, POST-only deletes, generic login errors, password rules, session timeout, CSP, admin 2FA")
     import re, time
+    from datetime import datetime, timedelta
     from MODULES.LAYER_2_DATA_PERSISTENCE.models import AuthThrottle
     from MODULES.LAYER_3_BUSINESS_SERVICES import web_security as ws
     from MODULES.LAYER_4_ROUTE_CONTROLLERS import login_env
@@ -1834,33 +1838,76 @@ def t_web_security():
     r = post(c, "/signup/set-password", data={"password": "abcdefg1", "confirm_password": "abcdefg1"})
     check("signup accepts a letter+number password of 8 characters", r.status_code == 302)
 
-    # ---- session timeout
+    # ---- staying signed in
     def aged(client_, seconds_idle, seconds_old=0):
         with client_.session_transaction(base_url="https://localhost") as sess:
             sess["_last_seen"] = time.time() - seconds_idle
             sess["_started"] = time.time() - max(seconds_old, seconds_idle)
-    a2 = client()
-    post(a2, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+
+    def sign_in(email, password, keep=True):
+        c_ = client()
+        data = {"email": email, "password": password, "remember_box": "1"}
+        if keep:
+            data["remember"] = "on"
+        r_ = post(c_, "/login", data=data)
+        return c_, r_
+
+    a1, r = sign_in("admin@test.local", "AdminPass#1")
+    check("'Keep me signed in' (the default): the session cookie survives closing the browser",
+          "Expires=" in r.headers.get("Set-Cookie", "") or "Max-Age" in r.headers.get("Set-Cookie", ""), r.headers.get("Set-Cookie", "")[:120])
+    aged(a1, 30 * 24 * 3600, seconds_old=90 * 24 * 3600)
+    check("a remembered admin stays signed in until Logout (30 days idle, 90 days old)", get(a1, "/admin").status_code == 200)
+    u1, _ = sign_in("real@test.local", "secret12")
+    aged(u1, 60 * 24 * 3600, seconds_old=200 * 24 * 3600)
+    check("a remembered candidate stays signed in until Logout (60 days idle)", get(u1, "/dashboard").status_code == 200)
+    get(u1, "/logout")
+    check("Logout ends it at once", get(u1, "/dashboard").status_code == 302)
+    check("the login page has the 'Keep me signed in' box, ticked by default", 'name="remember"' in get(client(), "/login").data.decode() and "checked" in get(client(), "/login").data.decode())
+
+    # without "Keep me signed in" (shared computer) the old timeouts apply
+    a2, r = sign_in("admin@test.local", "AdminPass#1", keep=False)
+    check("unticked: the session cookie ends with the browser", "Expires=" not in r.headers.get("Set-Cookie", ""))
     check("a fresh admin session works", get(a2, "/admin").status_code == 200)
     aged(a2, 20 * 60)
-    check("an admin idle for 20 minutes is still signed in", get(a2, "/admin").status_code == 200)
+    check("unticked: an admin idle for 20 minutes is still signed in", get(a2, "/admin").status_code == 200)
     aged(a2, 31 * 60)
     r = get(a2, "/admin")
-    check("an admin idle for 31 minutes is signed out", r.status_code == 302 and "session_expired" in r.headers["Location"], r.headers.get("Location"))
+    check("unticked: an admin idle for 31 minutes is signed out", r.status_code == 302 and "session_expired" in r.headers["Location"], r.headers.get("Location"))
     check("...and stays out afterwards", get(a2, "/admin").status_code == 302)
     check("the login page explains the expiry", b"session expired" in get(a2, "/login?error=session_expired").data)
-    u2, _ = login_user("real@test.local")
+    u2, _ = sign_in("real@test.local", "secret12", keep=False)
     aged(u2, 60 * 60)
-    check("a candidate idle for 1 hour is still signed in", get(u2, "/dashboard").status_code == 200)
+    check("unticked: a candidate idle for 1 hour is still signed in", get(u2, "/dashboard").status_code == 200)
     aged(u2, 121 * 60)
-    check("a candidate idle for 2 hours is signed out", get(u2, "/dashboard").status_code == 302)
-    u3, _ = login_user("real@test.local")
+    check("unticked: a candidate idle for 2 hours is signed out", get(u2, "/dashboard").status_code == 302)
+    u3, _ = sign_in("real@test.local", "secret12", keep=False)
     aged(u3, 5, seconds_old=13 * 3600)
-    check("no session lives longer than 12 hours, even if active", get(u3, "/dashboard").status_code == 302)
-    aged(u3, 5)
-    app.config["CSRF_ENABLED"] = True
-    u4, _ = login_user("real@test.local") if False else (None, None)
-    app.config["CSRF_ENABLED"] = False
+    check("unticked: no session lives longer than 12 hours, even if active", get(u3, "/dashboard").status_code == 302)
+
+    # changing a password signs out the other devices
+    u4, _ = sign_in("real@test.local", "secret12")
+    check("a candidate is signed in on a second device", get(u4, "/dashboard").status_code == 200)
+    with app.app_context():
+        from werkzeug.security import generate_password_hash
+        u = User.query.filter_by(email="real@test.local").first()
+        u.password = generate_password_hash("newSecret99")
+        db.session.commit()
+    check("after the candidate's password changes, that device is signed out", get(u4, "/dashboard").status_code == 302)
+    u5, _ = sign_in("real@test.local", "newSecret99")
+    check("...and the new password works", get(u5, "/dashboard").status_code == 200)
+    with app.app_context():
+        u = User.query.filter_by(email="real@test.local").first()
+        u.password = generate_password_hash("secret12")
+        db.session.commit()
+    a3, _ = sign_in("admin@test.local", "AdminPass#1")
+    old_password = login_env.ADMIN_PASSWORD
+    login_env.ADMIN_PASSWORD = "Changed#Password2"
+    try:
+        check("after the admin password changes, every admin device is signed out", get(a3, "/admin").status_code == 302)
+        a4, _ = sign_in("admin@test.local", "Changed#Password2")
+        check("...and only the new admin password opens it", get(a4, "/admin").status_code == 200)
+    finally:
+        login_env.ADMIN_PASSWORD = old_password
 
     # ---- headers
     r = get(client(), "/login")
@@ -1868,29 +1915,126 @@ def t_web_security():
     check("Content-Security-Policy is sent", "default-src 'self'" in csp and "frame-ancestors 'self'" in csp and "object-src 'self'" in csp and "base-uri 'self'" in csp and "form-action 'self'" in csp, csp)
     check("CSP allows only the CDNs the pages use", all(h_ in csp for h_ in ("cdn.jsdelivr.net", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com")) and "*" not in csp.replace("https:", ""))
 
-    # ---- admin 2FA (optional, ADMIN_2FA=true)
-    login_env.ADMIN_2FA = True
+    # ---- admin device approval (on when ADMIN_APPROVAL_EMAIL is set)
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import AdminDevice
+    import re as _re
+    check("approval off (no ADMIN_APPROVAL_EMAIL): the admin password opens the admin area directly",
+          sign_in("admin@test.local", "AdminPass#1")[1].headers["Location"].endswith("/admin"))
+    login_env.ADMIN_APPROVAL_EMAIL = "owner.personal@gmail.com"
     try:
-        OTPS.clear()
-        c = client()
-        r = post(c, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
-        check("2FA: correct password -> code page, not the admin area", r.status_code == 302 and "/admin/verify" in r.headers["Location"], r.headers.get("Location"))
-        check("2FA: the code was e-mailed to the admin address", bool(OTPS) and OTPS[-1][0] == "admin@test.local", OTPS)
-        check("2FA: the admin area is still closed before the code", get(c, "/admin").status_code == 302)
-        r = post(c, "/admin/verify", data={"otp": "000000"})
-        check("2FA: a wrong code is refused", r.status_code == 200 and get(c, "/admin").status_code == 302)
-        h = get(c, "/admin/verify").data.decode()
-        check("2FA: the code page posts to /admin/verify", 'action="/admin/verify"' in h)
-        r = post(c, "/admin/verify", data={"otp": OTPS[-1][1]})
-        check("2FA: the right code opens the admin area", r.status_code == 302 and get(c, "/admin").status_code == 200)
-        check("2FA: /admin/verify is closed to people who never entered the password", get(client(), "/admin/verify").status_code == 302)
-        r = post(client(), "/login", data={"email": "admin@test.local", "password": "wrong"})
-        check("2FA: a wrong password never sends a code", r.status_code == 200)
+        SENT.clear()
+        d1, r = sign_in("admin@test.local", "AdminPass#1")
+        check("approval on: a new device waits instead of opening the admin area", r.status_code == 302 and r.headers["Location"].endswith("/admin/waiting"), r.headers.get("Location"))
+        check("the waiting device gets a device cookie", "aip_admin_device=" in r.headers.get("Set-Cookie", ""))
+        check("the admin area stays closed while it waits", get(d1, "/admin").status_code == 302)
+        page = get(d1, "/admin/waiting").data.decode()
+        check("the waiting page names the mailbox, masked", "o****@gmail.com" in page and "owner.personal" not in page)
+        check("the waiting page reports 'pending'", get(d1, "/admin/device/status").get_json()["status"] == "pending")
+        m = sent_to("owner.personal@gmail.com")
+        check("an approval e-mail goes to the owner's mailbox", len(m) == 1 and "Approve a new admin device" in m[0][1], [x[1] for x in SENT])
+        link = _re.search(r"/admin/device/review/([A-Za-z0-9_\-]+)", m[0][2]).group(1) if m else ""
+        check("the e-mail shows the device and how long the link is valid", m and "Device:" in m[0][2] and "60 minutes" in m[0][2])
+        review = get(client(), "/admin/device/review/" + link).data.decode()
+        check("opening the link only shows the request (approving needs a button press)",
+              "Approve this device?" in review and 'value="approve"' in review and get(d1, "/admin/device/status").get_json()["status"] == "pending")
+        r = post(client(), "/admin/device/review/" + link, data={"action": "approve"})
+        check("pressing Approve approves the device", r.status_code == 200 and b"Device approved" in r.data)
+        st = get(d1, "/admin/device/status").get_json()
+        check("the waiting device continues into the admin area by itself", st["status"] == "approved" and get(d1, "/admin").status_code == 200, st)
+        check("the approval link works only once", get(client(), "/admin/device/review/" + link).status_code == 410)
+        get(d1, "/logout")
+        SENT.clear()
+        r = post(d1, "/login", data={"email": "admin@test.local", "password": "AdminPass#1", "remember_box": "1", "remember": "on"})
+        check("an approved device signs in with the password only", r.headers.get("Location", "").endswith("/admin") and get(d1, "/admin").status_code == 200)
+        check("...and the owner gets a sign-in alert e-mail", any("New admin sign-in" in x[1] for x in sent_to("owner.personal@gmail.com")))
+
+        # the waiting device cancels its own request
+        SENT.clear()
+        x0, r = sign_in("admin@test.local", "AdminPass#1")
+        check("a brand new device waits again (the earlier approval was for a different device)", r.headers["Location"].endswith("/admin/waiting"))
+        waiting_page = get(x0, "/admin/waiting").data.decode()
+        check("the waiting page has a Cancel request button and a close (X) mark",
+              'action="/admin/device/cancel"' in waiting_page and 'dv-close' in waiting_page)
+        with app.app_context():
+            cancelled_id = AdminDevice.query.filter_by(status="pending").order_by(AdminDevice.id.desc()).first().id
+        mm0 = [x for x in sent_to("owner.personal@gmail.com") if "Approve a new admin device" in x[1]]
+        link0 = _re.search(r"/admin/device/review/([A-Za-z0-9_\-]+)", mm0[-1][2]).group(1)
+        r = x0.post("/admin/device/cancel", base_url="https://localhost")
+        check("cancelling redirects to sign-in with a calm message", r.status_code == 302 and "device_cancelled" in r.headers["Location"])
+        check("the sign-in page explains the request was cancelled", b"Request cancelled" in get(x0, r.headers["Location"]).data)
+        with app.app_context():
+            check("cancelling marks the device denied", db.session.get(AdminDevice, cancelled_id).status == "denied")
+        check("cancelling also clears the browser's own session", get(x0, "/admin/device/status").status_code == 400)
+        r = post(client(), "/admin/device/review/" + link0, data={"action": "approve"})
+        check("a cancelled request can no longer be approved from the e-mail link either", r.status_code == 410)
+        r = post(client(), "/admin/device/cancel")
+        check("cancelling needs a waiting session of its own", r.status_code == 302 and r.headers["Location"].endswith("/login?error=device_cancelled"))
+        with app.app_context():
+            # this cancelled device must not eat into the hourly request budget the checks below rely on
+            db.session.get(AdminDevice, cancelled_id).requested_at = datetime.utcnow() - timedelta(hours=2)
+            db.session.commit()
+
+        # someone else with the password
+        x1, r = sign_in("admin@test.local", "AdminPass#1")
+        mm = [x for x in sent_to("owner.personal@gmail.com") if "Approve a new admin device" in x[1]]
+        link2 = _re.search(r"/admin/device/review/([A-Za-z0-9_\-]+)", mm[-1][2]).group(1)
+        post(client(), "/admin/device/review/" + link2, data={"action": "deny"})
+        check("'This wasn't me' keeps the other device out", get(x1, "/admin/device/status").get_json()["status"] == "denied" and get(x1, "/admin").status_code == 302)
+        check("the status page does not work for a browser that never waited", get(client(), "/admin/device/status").status_code == 400)
+        with app.app_context():
+            dev = AdminDevice.query.filter_by(status="pending").first()
+        x2, r = sign_in("admin@test.local", "AdminPass#1")
+        with app.app_context():
+            dev = AdminDevice.query.order_by(AdminDevice.id.desc()).first()
+            dev.approve_expires = dev.requested_at
+            db.session.commit()
+        check("an approval request expires after its hour", get(x2, "/admin/device/status").get_json()["status"] == "expired")
+
+        # Registered devices: list and remove
+        settings_html = get(d1, "/admin/settings").data.decode()
+        check("Admin Settings lists the approved device, marked 'This device'", "Registered devices" in settings_html and "This device" in settings_html)
+        with app.app_context():
+            approved_id = AdminDevice.query.filter_by(status="approved").first().id
+        r = post(d1, f"/admin/devices/{approved_id}/remove")
+        check("removing the current device signs it out at once", r.status_code == 302 and "device_removed" in r.headers["Location"] and get(d1, "/admin").status_code == 302)
+        r = post(d1, "/login", data={"email": "admin@test.local", "password": "AdminPass#1", "remember_box": "1", "remember": "on"})
+        check("a removed device needs approval again", r.headers.get("Location", "").endswith("/admin/waiting"))
+
+        # changing the admin password cancels every approval
+        SENT.clear()
+        r = sign_in("admin@test.local", "AdminPass#1")[0]
+        mm = [x for x in sent_to("owner.personal@gmail.com") if "Approve a new admin device" in x[1]]
+        link3 = _re.search(r"/admin/device/review/([A-Za-z0-9_\-]+)", mm[-1][2]).group(1)
+        post(client(), "/admin/device/review/" + link3, data={"action": "approve"})
+        get(r, "/admin/device/status")
+        check("a freshly approved device is in", get(r, "/admin").status_code == 200)
+        login_env.ADMIN_PASSWORD = "Changed#Password2"
+        try:
+            check("after the admin password changes, the approved device is signed out", get(r, "/admin").status_code == 302)
+            rr = post(r, "/login", data={"email": "admin@test.local", "password": "Changed#Password2", "remember_box": "1", "remember": "on"})
+            check("...and must be approved again, even with the new password", rr.headers.get("Location", "").endswith("/admin/waiting"))
+        finally:
+            login_env.ADMIN_PASSWORD = old_password
+        with app.app_context():
+            check("approval links are stored only as fingerprints, never readable", all(len(d.token_hash) == 64 for d in AdminDevice.query.all()))
     finally:
-        login_env.ADMIN_2FA = False
+        login_env.ADMIN_APPROVAL_EMAIL = ""
+        with app.app_context():
+            AdminDevice.query.delete()
+            db.session.commit()
+
+    # ---- the e-mail button: sign in, then continue to that member
     c = client()
-    r = post(c, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
-    check("2FA off (default): admin signs in directly", r.status_code == 302 and "/admin" in r.headers["Location"] and "verify" not in r.headers["Location"])
+    r = get(c, "/admin/users?q=AIP26A0001&open=1")
+    check("signed out: an admin link sends you to sign in and remembers where you were going",
+          r.status_code == 302 and "/login?next=" in r.headers["Location"] and "open%3D1" in r.headers["Location"], r.headers.get("Location"))
+    check("the sign-in page says which member it will open", "Sign in to open member AIP26A0001" in get(c, r.headers["Location"]).data.decode())
+    r = post(c, "/login", data={"email": "admin@test.local", "password": "AdminPass#1", "next": "/admin/users?q=AIP26A0001&open=1"})
+    check("after signing in it continues to that address", r.headers.get("Location", "").startswith("/admin/users?q=AIP26A0001"), r.headers.get("Location"))
+    r = post(client(), "/login", data={"email": "admin@test.local", "password": "AdminPass#1", "next": "https://evil.example/admin"})
+    check("a 'continue to' address on another site is ignored", r.headers.get("Location", "").endswith("/admin"))
+    r = post(client(), "/login", data={"email": "admin@test.local", "password": "AdminPass#1", "next": "//evil.example/x"})
+    check("a protocol-relative 'continue to' address is ignored", r.headers.get("Location", "").endswith("/admin"))
 
     # ---- the OTP login page now posts to the right place
     c = client()
@@ -3672,7 +3816,7 @@ def t_admin_export_and_analytics():
           len(only_pass) - 1 == len(_apply_filter_rows("selected")), (len(only_pass) - 1, len(_apply_filter_rows("selected"))))
     check("results CSV: an unknown filter falls back to everything", len(list(_csv.reader(get(a, "/admin/export/results.csv?filter=zzz").data.decode("utf-8-sig").splitlines()))) == len(rows))
     cr = list(_csv.reader(get(a, "/admin/export/candidates.csv").data.decode("utf-8-sig").splitlines()))
-    check("candidates CSV: header and one row per candidate", cr[0][:3] == ["ID", "Name", "E-mail"] and len(cr) - 1 >= 3)
+    check("candidates CSV: header and one row per candidate", cr[0][:3] == ["Member ID", "Name", "E-mail"] and len(cr) - 1 >= 3)
     cn = list(_csv.reader(get(a, "/admin/export/candidates.csv?q=Asha").data.decode("utf-8-sig").splitlines()))
     check("candidates CSV: the search gives only matching people", len(cn) - 1 == 1 and cn[1][1] == "Asha Kumar", cn)
     for days in ("7", "30", "90", "0", "junk"):
@@ -3840,10 +3984,198 @@ def t_light_theme():
     check("the password eye button is still on the login page", "bi-eye" in html)
 
 
+def t_member_ids_and_slot_requests():
+    section("Member IDs (AIP26A0001), 'Request Assessment' for locked candidates, admin grant / decline, admin sign-in code mailbox")
+    from datetime import datetime
+    from MODULES.LAYER_2_DATA_PERSISTENCE import models as M
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS import dashboard as dash_mod
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import AdminSettings, SlotRequest, invalidate_settings_cache
+    dash_mod.FEEDBACK_TO_EMAIL = "owner@test.local"
+
+    # ---- the ID format
+    check("format: the first member of 2026 is AIP26A0001", M.format_user_code(2026, 1) == "AIP26A0001")
+    check("format: series A holds 1000 members, then B starts at 0001",
+          M.format_user_code(2026, 1000) == "AIP26A1000" and M.format_user_code(2026, 1001) == "AIP26B0001" and M.format_user_code(2027, 1) == "AIP27A0001")
+    check("format: the position can be read back from an ID", M.user_code_position("AIP26B0001") == 1001 and M.user_code_position("AIP26A0007") == 7)
+    check("a pasted ID is accepted in any case, with spaces or dashes", M.normalize_user_code(" aip26a0001 ") == "AIP26A0001" and M.normalize_user_code("AIP-26-A0001") == "AIP26A0001")
+    check("text that is not an ID is not taken for one", M.normalize_user_code("asha") is None and M.normalize_user_code("AIP26A12") is None)
+
+    # ---- every account gets the next ID, also when several are saved together
+    with app.app_context():
+        codes = [u.user_code for u in User.query.order_by(User.id).all()]
+        check("every existing account has a member ID", all(codes) and all(M.USER_CODE_RE.match(c) for c in codes), codes[:5])
+        check("no two accounts share an ID", len(codes) == len(set(codes)))
+        year = "AIP%02d" % (datetime.utcnow().year % 100)
+        before = max([M.user_code_position(c) for c in codes if c.startswith(year)] or [0])
+        from werkzeug.security import generate_password_hash
+        batch = [User(full_name=f"Batch {i}", email=f"batch{i}@test.local", password=generate_password_hash("secret12"),
+                      gender="male", education="B.Tech", course="CSE", semester="6", auth_provider="local", email_verified=True)
+                 for i in range(3)]
+        db.session.add_all(batch)
+        db.session.commit()
+        got = [M.user_code_position(u.user_code) for u in batch]
+        check("three accounts saved in one go get three consecutive IDs", sorted(got) == [before + 1, before + 2, before + 3], (before, got))
+        # an old account without an ID gets one at start-up
+        old = batch[0]
+        old.user_code = None
+        db.session.commit()
+        given = M.assign_missing_user_codes()
+        check("start-up gives accounts without an ID the next free one", given == 1 and M.USER_CODE_RE.match(db.session.get(User, old.id).user_code or ""))
+
+    # ---- a locked candidate
+    def set_limits(on, allowed=1):
+        with app.app_context():
+            invalidate_settings_cache()
+            M.get_settings()                    # creates the settings row on a fresh database
+            row = AdminSettings.query.first()
+            row.enable_attempt_limits, row.default_allowed_interviews = on, allowed
+            db.session.commit()
+        invalidate_settings_cache()
+
+    uid = make_user("lockme@test.local", "Lock Me")
+    with app.app_context():
+        u = db.session.get(User, uid)
+        u.attempts_count = 1
+        u.user_type = "student"
+        db.session.commit()
+        code = u.user_code
+    set_limits(True, 1)
+    try:
+        c, _ = login_user("lockme@test.local")
+        html = get(c, "/dashboard").data.decode()
+        check("the candidate sees their member ID in the account menu, with a copy button", code in html and f'data-copy-id="{code}"' in html)
+        check("the profile page shows the member ID too", code in get(c, "/edit-profile").data.decode())
+        check("locked: the limit dialog says 'Stay Tuned' and offers 'Request Assessment'",
+              "Got it, Stay Tuned" in html and 'id="openSlotRequest"' in html and 'id="slotRequestModal"' in html)
+        check("there is only one 'limit reached' dialog on the page", html.count('id="attemptLimitReachedModal"') == 1)
+
+        def ask(client, reason):
+            return client.post("/assessment-request", json={"reason": reason}, base_url="https://localhost")
+
+        r = ask(c, "too short")
+        check("a reason under 20 characters is refused", r.status_code == 400 and "20" in r.get_json()["message"])
+        r = ask(c, "x" * 501)
+        check("a reason over 500 characters is refused", r.status_code == 400)
+        SENT.clear(); REPLY_TO.clear()
+        reason = "My first attempt was cut short by a power failure.\nI have prepared again for the backend role."
+        r = ask(c, reason)
+        check("a valid request is accepted", r.status_code == 200 and r.get_json() == {"status": "ok"}, r.get_json())
+        with app.app_context():
+            reqs = SlotRequest.query.filter_by(user_id=uid).all()
+            check("the request is saved as pending, with the reason", len(reqs) == 1 and reqs[0].status == "pending" and reqs[0].reason == reason)
+            req_id = reqs[0].id
+        m = sent_to("owner@test.local", "slot request")
+        check("exactly one e-mail goes to the administrator", len(m) == 1, [x[1] for x in SENT])
+        if m:
+            to, subject, text, html_mail = m[0]
+            check("the subject names the member and their ID", "Lock Me" in subject and code in subject, subject)
+            check("the e-mail shows name, e-mail, member ID and account", "Name: Lock Me" in text and "Email: lockme@test.local" in text and f"Member ID: {code}" in text and "Account: Student" in text)
+            check("the e-mail shows attempts used and the reason", "Attempts used: 1 of 1" in text and "power failure" in text)
+            check("the e-mail button opens the member by ID and says how to search", f"/admin/users?q={code}&open=1" in text and "Paste the Member ID" in text)
+            check("the reason is escaped in the HTML e-mail", "<script" not in html_mail.lower())
+            check("Reply-To is the candidate, so the administrator can answer directly", REPLY_TO and REPLY_TO[-1][2] == "lockme@test.local")
+        r = ask(c, reason)
+        check("a second request while one is open is refused, with the date", r.status_code == 409 and "already sent" in r.get_json()["message"])
+        html = get(c, "/dashboard").data.decode()
+        check("the dialog then says the request was sent, and the button is gone",
+              "Your request was sent on" in html and 'id="openSlotRequest"' not in html)
+        check("nothing about the request shows on the dashboard page itself", html.count("Your request was sent on") == 1)
+        check("the request route is closed to visitors", client().post("/assessment-request", json={"reason": reason}, base_url="https://localhost").status_code == 401)
+
+        # ---- admin side
+        a = client()
+        post(a, "/login", data={"email": "admin@test.local", "password": "AdminPass#1"})
+        users_html = get(a, "/admin/users").data.decode()
+        check("Registered Candidates shows a 'Slot requests' filter with the count", "filter=requests" in users_html and 'class="req-count"' in users_html)
+        filtered = get(a, "/admin/users?filter=requests").data.decode()
+        check("the filter lists the member who asked", "lockme@test.local" in filtered and "Slot request" in filtered)
+        for pasted in (code, code.lower(), code[:3] + "-" + code[3:5] + "-" + code[5:]):
+            found = get(a, "/admin/users?q=" + pasted).data.decode()
+            check(f"pasting the member ID ({pasted}) finds exactly that member", "lockme@test.local" in found and "Showing <b>1</b>" in found or found.count("cand-email") == 1)
+        # ---- live search: the markup contract the client-side JS relies on, and that filtering actually narrows the rows
+        base_page = get(a, "/admin/users").data.decode()
+        check("the page has the two regions live search swaps in place (results, filter chips)",
+              'id="userResults"' in base_page and 'id="userChips"' in base_page and 'id="userToolbar"' in base_page)
+        name_search = get(a, "/admin/users?q=lock").data.decode()
+        check("searching by a partial name narrows the list to that candidate only",
+              "lockme@test.local" in name_search and "arjun@demo.local" not in name_search)
+        email_search = get(a, "/admin/users?q=LOCKME@TEST.LOCAL").data.decode()
+        check("searching by e-mail is case-insensitive", "lockme@test.local" in email_search)
+        no_match = get(a, "/admin/users?q=no-such-candidate-xyz").data.decode()
+        check("a search with no matches shows none of the candidates",
+              '<div class="cand-email">' not in no_match and 'id="userResults"' in no_match and "Showing <b>0</b>" in no_match)
+        check("the export link inside the results carries the current search", "/admin/export/candidates.csv?" in name_search)
+
+        check("the admin dashboard rows carry the member ID for the search box",
+              'data-member-id="{{ user.user_code' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "admin.html"), encoding="utf-8").read())
+        detail = get(a, f"/admin/user/{uid}").data.decode()
+        check("the candidate page shows the request with its reason, Grant and Decline", "power failure" in detail and "Grant 1 more attempt" in detail and 'id="declineSlotRequest"' in detail)
+        check("the candidate page shows the member ID", code in detail)
+        csv_text = get(a, "/admin/export/candidates.csv").data.decode("utf-8-sig")
+        check("the candidates spreadsheet has the member ID column", csv_text.startswith("Member ID,") and code in csv_text)
+
+        r = c.post(f"/admin/slot-request/{req_id}/decline", base_url="https://localhost")
+        check("a candidate cannot decline requests", r.status_code == 401)
+        SENT.clear()
+        r = a.post(f"/admin/slot-request/{req_id}/decline", base_url="https://localhost")
+        check("the administrator declines the request", r.status_code == 200 and r.get_json()["status"] == "success")
+        with app.app_context():
+            check("the request is marked declined", db.session.get(SlotRequest, req_id).status == "declined")
+        mm = sent_to("lockme@test.local")
+        check("the candidate gets one polite e-mail about it", len(mm) == 1 and "reviewed" in mm[0][2].lower() and "Practice Lab" in mm[0][2])
+        r = a.post(f"/admin/slot-request/{req_id}/decline", base_url="https://localhost")
+        check("an answered request cannot be declined twice", r.status_code == 409)
+
+        # a new request, then the administrator grants an attempt
+        r = ask(c, "I would like one more chance after more preparation, thank you.")
+        check("after a decline the candidate may ask again", r.status_code == 200)
+        r = a.post(f"/admin/user/{uid}/unlock-attempt", base_url="https://localhost")
+        with app.app_context():
+            last = SlotRequest.query.filter_by(user_id=uid).order_by(SlotRequest.id.desc()).first()
+            check("granting an attempt marks the open request approved", r.status_code == 200 and last.status == "approved")
+        check("the candidate is no longer locked, so no request button", 'id="openSlotRequest"' not in get(c, "/dashboard").data.decode())
+        r = ask(c, "Another request although I still have a slot left over here.")
+        check("a candidate who still has a slot cannot send a request", r.status_code == 400)
+
+        # daily limit: three requests a day
+        with app.app_context():
+            u = db.session.get(User, uid)
+            u.attempts_count = 5
+            SlotRequest.query.filter_by(user_id=uid).update({"status": "declined"})
+            db.session.commit()
+        r = ask(c, "Third request of the day, written long enough to be valid.")
+        check("a third request in a day is still accepted", r.status_code == 200, r.status_code)
+        with app.app_context():
+            SlotRequest.query.filter_by(user_id=uid).update({"status": "declined"})
+            db.session.commit()
+        r = ask(c, "Fourth request of the day, written long enough to be valid.")
+        check("a fourth request within a day is refused", r.status_code == 429, r.status_code)
+
+        # the admin switches attempt limits off: the whole request service goes with it
+        set_limits(False)
+        html = get(c, "/dashboard").data.decode()
+        check("limits off: no limit dialog, no Request button", 'id="openSlotRequest"' not in html and 'id="slotRequestModal"' not in html)
+        with app.app_context():
+            SlotRequest.query.filter_by(user_id=uid).delete()
+            db.session.commit()
+        r = ask(c, "Limits are off now, so this request must be refused.")
+        check("limits off: the request service refuses requests", r.status_code == 400)
+        check("limits off: the 'Slot requests' filter is hidden", "filter=requests" not in get(a, "/admin/users").data.decode())
+
+        # deleting the member removes their requests
+        set_limits(True, 1)
+        ask(c, "One more request before the account is removed by the admin.")
+        a.post(f"/admin/delete-user/{uid}", base_url="https://localhost")
+        with app.app_context():
+            check("deleting a member removes their requests", SlotRequest.query.filter_by(user_id=uid).count() == 0)
+    finally:
+        set_limits(True, 2)
+
+
 TESTS = [t_public_pages, t_signup_login, t_resume_flow, t_resume_storage, t_resume_first_question, t_health_and_keys, t_route_smoke, t_database_driver, t_practice_page_layout, t_attempt_accounting, t_error_does_not_consume,
          t_proctoring_and_reset, t_practice, t_history_resources, t_admin, t_schema_migration,
          t_bands_and_filter, t_welcome_email, t_assessment_email, t_terminated_email_and_page, t_no_continue_and_restart,
-         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background, t_brand_consistency, t_light_theme]
+         t_ai_layer, t_postgres_strictness, t_feedback_toggle, t_google_chooser, t_practice_modes, t_resume_is_really_used, t_auth_security, t_feedback_box, t_admin_tour, t_web_security, t_template_scripts_are_valid, t_admin_pages_v2, t_library_and_link_health, t_error_recovery, t_interview_integrity, t_difficulty_prompts, t_info_pages_match_features, t_spam_hint, t_motion_and_smoothness, t_legal_and_brand, t_organisation_wording, t_admin_settings_all, t_rate_limiter, t_exit_report, t_deploy_safety, t_admin_export_and_analytics, t_content_above_background, t_brand_consistency, t_light_theme, t_member_ids_and_slot_requests]
 
 if __name__ == "__main__":
     only = sys.argv[1:]

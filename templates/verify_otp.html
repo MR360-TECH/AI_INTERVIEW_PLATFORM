@@ -323,7 +323,7 @@
         <div class="auth-form-wrap">
 
             <div class="form-topbar">
-                <a href="{% if next_step == 'reset_password' %}/forgot-password{% elif next_step == 'admin' %}/login{% elif next_step == 'set_password' %}/signup{% else %}/auth/otp/send{% endif %}" class="back-link">
+                <a href="{% if next_step == 'reset_password' %}/forgot-password{% elif next_step == 'set_password' %}/signup{% else %}/auth/otp/send{% endif %}" class="back-link">
                     <i class="bi bi-arrow-left"></i> Back
                 </a>
             </div>
@@ -336,7 +336,7 @@
             <div class="auth-alert danger"><i class="bi bi-exclamation-circle-fill"></i> {{ error }}</div>
             {% endif %}
 
-            <form method="POST" action="{% if next_step == 'reset_password' %}/forgot-password/verify{% elif next_step == 'admin' %}/admin/verify{% elif next_step == 'set_password' %}/auth/register/verify-otp{% else %}/auth/otp/verify{% endif %}" id="otpForm">
+            <form method="POST" action="{% if next_step == 'reset_password' %}/forgot-password/verify{% elif next_step == 'set_password' %}/auth/register/verify-otp{% else %}/auth/otp/verify{% endif %}" id="otpForm">
 
                 <div class="otp-grid">
                     <input type="text" class="otp-box" maxlength="1" pattern="\d" required autofocus>
@@ -364,7 +364,7 @@
             {% endif %}
 
             <p class="auth-footer-note">
-                Didn't receive code? <a href="{% if next_step == 'reset_password' %}/forgot-password{% elif next_step == 'admin' %}/login{% elif next_step == 'set_password' %}/signup{% else %}/auth/otp/send{% endif %}">Resend Code</a>
+                Didn't receive code? <a href="{% if next_step == 'reset_password' %}/forgot-password{% elif next_step == 'set_password' %}/signup{% else %}/auth/otp/send{% endif %}">Resend Code</a>
             </p>
 
         </div>

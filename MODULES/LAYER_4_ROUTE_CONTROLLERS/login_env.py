@@ -1,15 +1,17 @@
 import os
 import hmac
-from flask import Blueprint, render_template, request, redirect, session, url_for
+from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, session, url_for, jsonify, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
-from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_2FA, has_google_oauth
-from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, is_valid_email, profile_is_complete
+from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db, oauth, ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_APPROVAL_EMAIL, APP_BASE_URL, SECRET_KEY, has_google_oauth
+from MODULES.LAYER_2_DATA_PERSISTENCE.models import User, AdminDevice, is_valid_email, profile_is_complete
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_otp_email
 from MODULES.LAYER_3_BUSINESS_SERVICES.auth_security import (
     issue_otp, verify_otp as check_otp, throttle_seconds_left, throttle_fail, throttle_reset, minutes_text,
     LOGIN_MAX_FAILURES, IP_MAX_FAILURES, OTP_SEND_MAX_PER_IP
 )
-from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_welcome_email
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_welcome_email, queue_admin_mail
+from MODULES.LAYER_3_BUSINESS_SERVICES import admin_access as AA
 from MODULES.LAYER_3_BUSINESS_SERVICES.web_security import password_problem
 
 login_bp = Blueprint('login_bp', __name__)
@@ -85,6 +87,9 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
+        next_url = AA.safe_next(request.form.get("next"), "")
+        # "Keep me signed in" is ticked by default; unticked (shared computer) the session ends with the browser.
+        remember = request.form.get("remember") == "on" if "remember_box" in request.form else True
 
         if not is_valid_email(email):
             return render_template("login.html", error="Please enter a valid email address.", prefill_email=email, has_google_oauth=has_google_oauth)
@@ -112,12 +117,7 @@ def login():
         if ADMIN_EMAIL and email == ADMIN_EMAIL.strip().lower():
             if ADMIN_PASSWORD and hmac.compare_digest(password.encode(), ADMIN_PASSWORD.strip().encode()):
                 throttle_reset(key)
-                if ADMIN_2FA:
-                    return _start_admin_2fa(email)
-                session.clear()
-                session["is_admin"] = True
-                session["user_name"] = "Admin"
-                return redirect("/admin")
+                return _admin_password_ok(next_url, remember)
             return failed(bad_login)
 
         user = User.query.filter_by(email=email).first()
@@ -134,9 +134,10 @@ def login():
             session["user_name"] = user.full_name
             session["user_email"] = user.email
             session["is_admin"] = False
+            start_signed_in_session(remember)
             if not profile_is_complete(user):
                 return redirect("/register")
-            return redirect("/dashboard")
+            return redirect(next_url if next_url and not next_url.startswith("/admin") else "/dashboard")
         return failed(bad_login)
 
     error_msg = None
@@ -147,43 +148,183 @@ def login():
         error_msg = "Google Sign-in is not configured on this server."
     elif err_code == "session_expired":
         error_msg = "Your session expired for security. Please sign in again."
-    return render_template("login.html", error=error_msg, has_google_oauth=has_google_oauth)
+    elif err_code == "device_removed":
+        error_msg = "This device no longer has admin access. Sign in to request approval again."
+    elif err_code == "device_cancelled":
+        error_msg = "Request cancelled. Sign in again whenever you're ready."
+    next_url = AA.safe_next(request.args.get("next"), "")
+    return render_template("login.html", error=error_msg, has_google_oauth=has_google_oauth, next_url=next_url,
+                           next_member=_member_in(next_url))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ADMIN SECOND STEP (only when ADMIN_2FA=true): a code e-mailed to the admin address
+# STAYING SIGNED IN, AND ADMIN DEVICE APPROVAL
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _start_admin_2fa(email):
-    code, reason = issue_otp("admin", email)
-    if code and not send_otp_email(email, code):
-        return render_template("login.html", error="Could not send the admin verification code. Please try again.",
-                               prefill_email=email, has_google_oauth=has_google_oauth)
-    session.clear()
-    session["admin_2fa_email"] = email           # NOT yet an admin session: the code still has to be entered
-    return redirect("/admin/verify")
+def start_signed_in_session(remember=True):
+    """Marks a fresh sign-in. Remembered sessions last until Logout (the cookie survives closing the browser); others end
+    with the browser. The password fingerprint is added on the next request (web_security)."""
+    session["remember"] = bool(remember)
+    session.permanent = bool(remember)
 
 
-@login_bp.route("/admin/verify", methods=["GET", "POST"])
-def admin_verify():
-    email = session.get("admin_2fa_email")
-    if not (ADMIN_2FA and email):
-        return redirect("/login")
-    if request.method == "GET":
-        return render_template("verify_otp.html", error=None, email=email, next_step="admin")
+def admin_password_print():
+    return AA.fingerprint(ADMIN_PASSWORD, "admin|" + (SECRET_KEY or ""))
 
-    key = f"admin2fa:{_client_ip()}"
-    if throttle_seconds_left(key):
-        return render_template("verify_otp.html", error="Too many attempts. Please sign in again later.", email=email, next_step="admin"), 429
-    status = check_otp("admin", email, request.form.get("otp"))
-    if status != "ok":
-        throttle_fail(key, LOGIN_MAX_FAILURES)
-        return render_template("verify_otp.html", error=OTP_MESSAGES[status], email=email, next_step="admin")
-    throttle_reset(key)
+
+def device_approval_on():
+    return bool(ADMIN_APPROVAL_EMAIL)
+
+
+def _member_in(next_url):
+    """The member ID an e-mail button asked for ('/admin/users?q=AIP26A0001&open=1'), for the note on the sign-in page."""
+    from urllib.parse import urlparse, parse_qs
+    from MODULES.LAYER_2_DATA_PERSISTENCE.models import normalize_user_code
+    if not next_url:
+        return None
+    return normalize_user_code((parse_qs(urlparse(next_url).query).get("q") or [""])[0])
+
+
+def _current_device():
+    token = request.cookies.get(AA.DEVICE_COOKIE)
+    if not token:
+        return None, None
+    return token, AdminDevice.query.filter_by(token_hash=AA.token_hash(token)).first()
+
+
+def _open_admin_session(device=None, next_url="", remember=True):
     session.clear()
     session["is_admin"] = True
     session["user_name"] = "Admin"
-    return redirect("/admin")
+    session["admin_print"] = admin_password_print()
+    if device is not None:
+        session["admin_device"] = device.id
+    start_signed_in_session(remember)
+    return redirect(AA.safe_next(next_url, "/admin") if (next_url or "").startswith("/admin") else "/admin")
+
+
+def _alert_signin(device):
+    if device_approval_on():
+        queue_admin_mail(ADMIN_APPROVAL_EMAIL, "admin_signin_alert_email",
+                         device_label=device.label if device else AA.device_label(request.headers.get("User-Agent")),
+                         ip=_client_ip(), when_text=datetime.utcnow().strftime("%d %B %Y, %H:%M UTC"),
+                         settings_url=f"{APP_BASE_URL}/admin/settings#devices")
+
+
+def _admin_password_ok(next_url, remember=True):
+    """The admin password was right. On an approved device the admin area opens; a new device waits for approval."""
+    if not device_approval_on():
+        _alert_signin(None)
+        return _open_admin_session(None, next_url, remember)
+
+    now = datetime.utcnow()
+    token, device = _current_device()
+    if device and device.status == "approved" and device.password_print == admin_password_print():
+        device.last_seen_at = now
+        db.session.commit()
+        _alert_signin(device)
+        return _open_admin_session(device, next_url, remember)
+
+    recent = AdminDevice.query.filter(AdminDevice.requested_at >= now - AA.timedelta(hours=1)).count()
+    if recent >= AA.APPROVAL_REQUESTS_PER_HOUR and not (device and device.status == "pending" and not AA.approval_expired(device, now)):
+        return render_template("login.html", error="Too many approval requests in the last hour. Please try again later.",
+                               has_google_oauth=has_google_oauth), 429
+
+    new_cookie = None
+    if not device:
+        new_cookie = AA.new_token()
+        device = AdminDevice(token_hash=AA.token_hash(new_cookie), created_at=now)
+        db.session.add(device)
+    device.label = AA.device_label(request.headers.get("User-Agent"))
+    device.ip = _client_ip()
+    link = AA.open_approval(device, now)
+    db.session.commit()
+    queue_admin_mail(ADMIN_APPROVAL_EMAIL, "admin_device_request_email", device_label=device.label, ip=device.ip,
+                     when_text=now.strftime("%d %B %Y, %H:%M UTC"), review_url=f"{APP_BASE_URL}/admin/device/review/{link}",
+                     minutes=AA.APPROVAL_LINK_MINUTES)
+
+    session.clear()
+    session["admin_waiting_device"] = device.id
+    session["admin_next"] = next_url
+    session["admin_remember"] = remember
+    response = make_response(redirect("/admin/waiting"))
+    if new_cookie:
+        response.set_cookie(AA.DEVICE_COOKIE, new_cookie, max_age=AA.DEVICE_COOKIE_DAYS * 86400, httponly=True,
+                            secure=request.is_secure, samesite="Lax")
+    return response
+
+
+@login_bp.route("/admin/waiting")
+def admin_waiting():
+    if not session.get("admin_waiting_device"):
+        return redirect("/login")
+    return render_template("admin_device.html", mode="waiting", mailbox=AA.masked(ADMIN_APPROVAL_EMAIL),
+                           minutes=AA.APPROVAL_LINK_MINUTES)
+
+
+@login_bp.route("/admin/device/cancel", methods=["POST"])
+def admin_device_cancel():
+    """The waiting device gives up by itself: its own pending request is denied, so the e-mailed link can no longer
+    approve it either, even if the owner presses Approve afterwards."""
+    device_id = session.get("admin_waiting_device")
+    if device_id:
+        device = db.session.get(AdminDevice, device_id)
+        if device and device.status == "pending":
+            device.status, device.approve_hash, device.approve_expires = "denied", None, None
+            db.session.commit()
+    session.clear()
+    return redirect("/login?error=device_cancelled")
+
+
+@login_bp.route("/admin/device/status")
+def admin_device_status():
+    """Polled by the waiting page: has the owner answered yet?"""
+    device_id = session.get("admin_waiting_device")
+    token, device = _current_device()
+    if not device_id or not device or device.id != device_id:
+        return jsonify({"status": "unknown"}), 400
+    if device.status == "approved" and device.password_print == admin_password_print():
+        next_url = session.get("admin_next") or ""
+        remember = session.get("admin_remember", True)
+        device.last_seen_at = datetime.utcnow()
+        db.session.commit()
+        _open_admin_session(device, next_url, remember)
+        return jsonify({"status": "approved", "next": AA.safe_next(next_url, "/admin") if next_url.startswith("/admin") else "/admin"})
+    if device.status == "denied":
+        session.clear()
+        return jsonify({"status": "denied"})
+    if AA.approval_expired(device):
+        session.clear()
+        return jsonify({"status": "expired"})
+    return jsonify({"status": "pending"})
+
+
+def _device_for_link(link):
+    device = AdminDevice.query.filter_by(approve_hash=AA.token_hash(link)).first() if link else None
+    if not device or device.status != "pending" or AA.approval_expired(device):
+        return None
+    return device
+
+
+@login_bp.route("/admin/device/review/<link>", methods=["GET", "POST"])
+def admin_device_review(link):
+    """The page the approval e-mail opens. Approving is a button press (POST), never the link itself, so an e-mail
+    scanner that opens links cannot approve anything."""
+    device = _device_for_link(link)
+    if not device:
+        return render_template("admin_device.html", mode="invalid"), 410
+    if request.method == "GET":
+        return render_template("admin_device.html", mode="review", device=device, minutes=AA.APPROVAL_LINK_MINUTES)
+    action = request.form.get("action")
+    now = datetime.utcnow()
+    device.approve_hash, device.approve_expires = None, None
+    if action == "approve":
+        device.status, device.approved_at, device.password_print = "approved", now, admin_password_print()
+        db.session.commit()
+        return render_template("admin_device.html", mode="approved", device=device)
+    device.status = "denied"
+    db.session.commit()
+    return render_template("admin_device.html", mode="denied", device=device)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -231,6 +372,7 @@ def auth_google_callback():
         session["user_id"] = user.id
         session["user_name"] = user.full_name
         session["user_email"] = user.email
+        start_signed_in_session(True)
         if not profile_is_complete(user):
             session["pending_google_email"] = user.email
             return redirect("/register?google=1")

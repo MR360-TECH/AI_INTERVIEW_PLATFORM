@@ -529,30 +529,109 @@ def slot_unlocked_email(full_name, base_url):
         footer_reason="You received this email because an administrator updated your assessment access.")
 
 
+def _member_rows(user_name, user_email, user_code, account_type, course_or_role):
+    """The few details an administrator needs to recognise a member and find them with the admin search."""
+    rows = [("Name", one_line(user_name, 60) or "-"), ("Email", one_line(user_email, 80) or "-")]
+    if user_code:
+        rows.append(("Member ID", user_code))
+    if account_type or course_or_role:
+        rows.append(("Account", " · ".join(one_line(v, 40) for v in (account_type, course_or_role) if v)))
+    return rows
+
+
+FIND_MEMBER_TIP = ("Find this member", "Paste the Member ID into the search box on the admin dashboard or on Registered Candidates.")
+
+
 def feedback_received_email(user_name, user_email, rating, category_label, message, page_label, session_code,
-                            when_text, contact_ok, user_id=None, account_type="", course_or_role="", member_since="",
-                            sign_in_method=""):
-    stars = ("\u2605" * rating + "\u2606" * (5 - rating) + f"   {rating} / 5") if rating else "Not rated"
-    sender = [("Name", one_line(user_name, 60) or "-"), ("Email", one_line(user_email, 80) or "-")]
-    for label, value in (("Account", account_type), ("Course / Role", course_or_role), ("Member since", member_since),
-                         ("Signed in with", sign_in_method)):
-        if value:
-            sender.append((label, one_line(value, 60)))
-    if user_id:
-        sender.append(("User ID", str(user_id)))
+                            when_text, contact_ok, user_code="", account_type="", course_or_role="", admin_url=""):
+    stars = ("★" * rating + "☆" * (5 - rating) + f"   {rating} / 5") if rating else "Not rated"
     details = [("Topic", category_label), ("Rating", stars), ("Sent from", page_label)]
     if session_code:
         details.append(("Session ID", session_code))
     details += [("Submitted", when_text),
                 ("Reply allowed", "Yes - just reply to this email" if contact_ok else "No - the user asked not to be contacted")]
     return _build(
-        subject=f"New feedback \u00b7 {category_label}" + (f" \u00b7 {rating}/5" if rating else "")
-                + f" \u00b7 {one_line(user_name, 40) or 'User'}",
+        subject=f"New feedback · {category_label}" + (f" · {rating}/5" if rating else "")
+                + f" · {one_line(user_name, 40) or 'User'}" + (f" · {user_code}" if user_code else ""),
         preheader=f"{one_line(user_name, 40) or 'A user'} ({one_line(user_email, 60)}) sent feedback: {category_label}",
         badge="New Feedback",
         title="New feedback received",
         greeting="Hello,",
-        paragraphs=["A user shared feedback through the platform. Their details and message are below."],
-        groups=[("Sender details", sender), ("Feedback details", details)],
+        paragraphs=["A member shared feedback through the platform. Who sent it and what they wrote are below."],
+        groups=[("Member", _member_rows(user_name, user_email, user_code, account_type, course_or_role)),
+                ("Feedback details", details)],
         quote=("Message", message),
+        callout=FIND_MEMBER_TIP if user_code else None,
+        button=("Open in admin", admin_url) if admin_url else None,
         footer_reason=f"You received this email because feedback was submitted on {APP_NAME}.")
+
+
+def slot_request_email(user_name, user_email, user_code, account_type, course_or_role, attempts_text, last_result,
+                       reason, when_text, admin_url):
+    """To the administrator: a locked candidate asks for one more assessment slot."""
+    return _build(
+        subject=f"Assessment slot request · {one_line(user_name, 40) or 'Member'}" + (f" · {user_code}" if user_code else ""),
+        preheader=f"{one_line(user_name, 40) or 'A member'} has used all assessment slots and asks for one more.",
+        badge="Slot Request",
+        title="A member asks for another assessment",
+        greeting="Hello,",
+        paragraphs=["This member has used all their assessment slots and sent a request for one more. "
+                    "Open their profile to grant one more attempt or to decline the request."],
+        groups=[("Member", _member_rows(user_name, user_email, user_code, account_type, course_or_role)),
+                ("Assessments", [("Attempts used", attempts_text), ("Latest result", last_result or "No result yet"),
+                                 ("Requested", when_text)])],
+        quote=("Reason given", reason),
+        callout=FIND_MEMBER_TIP if user_code else None,
+        button=("Open in admin", admin_url),
+        footer_reason=f"You received this email because a member requested an assessment slot on {APP_NAME}.")
+
+
+def slot_declined_email(full_name, base_url):
+    """To the candidate: the request was not approved this time."""
+    return _build(
+        subject=f"About your assessment slot request - {APP_NAME}",
+        preheader="Your request for another assessment slot was not approved this time.",
+        badge="Assessment Status Update",
+        title="Your request was reviewed",
+        greeting=greeting_for(full_name),
+        paragraphs=["Thank you for your request for another assessment slot. After reviewing it, the administrator "
+                    "could not approve it this time.",
+                    "Your earlier results and reports stay available in your history. You can keep preparing in the "
+                    "Practice Lab and the Preparation Hub, which are free and never count as an attempt."],
+        callout=("What is Next?", "If new assessment rounds open for your account, you will receive an e-mail."),
+        button=(f"Open {APP_NAME}", f"{base_url}/dashboard"),
+        footer_reason="You received this email because you requested an assessment slot.")
+
+
+def admin_device_request_email(device_label, ip, when_text, review_url, minutes):
+    """To the owner: a device signed in with the admin password and waits for approval."""
+    return _build(
+        subject=f"Approve a new admin device? · {one_line(device_label, 40)} - {APP_NAME}",
+        preheader=f"{one_line(device_label, 40)} wants to open the admin account. Review it within {minutes} minutes.",
+        badge="Admin Access Request",
+        title="A device wants to open the admin account",
+        greeting="Hello,",
+        paragraphs=["Someone signed in to the admin account with the correct password on a device that is not approved yet. "
+                    "It can only open the admin area after you approve it."],
+        rows=[("Device", one_line(device_label, 60)), ("Network address", one_line(ip, 60) or "-"), ("Requested", when_text),
+              ("Link valid for", f"{minutes} minutes, one use")],
+        callout=("Not you?", "Open the request and press This wasn't me. Then change ADMIN_PASSWORD in Render: that signs out "
+                             "every device and cancels every approval."),
+        button=("Review this request", review_url),
+        footer_reason=f"You received this email because your address is the admin approval mailbox of {APP_NAME}.")
+
+
+def admin_signin_alert_email(device_label, ip, when_text, settings_url):
+    """To the owner: the admin account was opened."""
+    return _build(
+        subject=f"New admin sign-in · {one_line(device_label, 40)} - {APP_NAME}",
+        preheader=f"The admin account was opened on {one_line(device_label, 40)}.",
+        badge="Security Alert",
+        title="New admin sign-in",
+        greeting="Hello,",
+        paragraphs=["The admin account was just opened. If this was you, there is nothing to do."],
+        rows=[("Device", one_line(device_label, 60)), ("Network address", one_line(ip, 60) or "-"), ("Time", when_text)],
+        callout=("Not you?", "Remove the device under Admin Settings, Registered devices, and change ADMIN_PASSWORD in Render. "
+                             "Changing the password signs out every device at once."),
+        button=("Open Registered devices", settings_url),
+        footer_reason=f"You received this email because your address is the admin approval mailbox of {APP_NAME}.")

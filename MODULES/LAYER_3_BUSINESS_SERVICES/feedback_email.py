@@ -349,3 +349,53 @@ def queue_feedback_notification(to_email, **fields):
             _run_async(_send_feedback_notification, dict(to_email=to_email, **fields))
     except Exception as e:
         print(f"[MAIL] could not queue feedback notification: {e}")
+
+
+def _send_slot_request_notification(to_email, reply_to=None, **fields):
+    try:
+        subject, text, html = email_templates.slot_request_email(**fields)
+        send_email_notification(to_email, subject, text, html, reply_to=reply_to)
+    except Exception as e:
+        print(f"[MAIL] slot request notification error: {e}")
+
+
+def queue_slot_request_notification(to_email, **fields):
+    """E-mails a candidate's slot request to the administrator in the background. Never raises."""
+    try:
+        if to_email:
+            _run_async(_send_slot_request_notification, dict(to_email=to_email, **fields))
+    except Exception as e:
+        print(f"[MAIL] could not queue slot request notification: {e}")
+
+
+def _send_slot_declined(to_email, full_name):
+    try:
+        subject, text, html = email_templates.slot_declined_email(full_name, APP_BASE_URL)
+        send_email_notification(to_email, subject, text, html)
+    except Exception as e:
+        print(f"[MAIL] slot declined email error: {e}")
+
+
+def queue_slot_declined_email(to_email, full_name):
+    try:
+        if to_email:
+            _run_async(_send_slot_declined, dict(to_email=to_email, full_name=full_name))
+    except Exception as e:
+        print(f"[MAIL] could not queue slot declined email: {e}")
+
+
+def _send_admin_mail(to_email, builder, kwargs):
+    try:
+        subject, text, html = getattr(email_templates, builder)(**kwargs)
+        send_email_notification(to_email, subject, text, html)
+    except Exception as e:
+        print(f"[MAIL] {builder} error: {e}")
+
+
+def queue_admin_mail(to_email, builder, **kwargs):
+    """Admin security e-mails (device approval request, sign-in alert) in the background. Never raises."""
+    try:
+        if to_email:
+            _run_async(_send_admin_mail, dict(to_email=to_email, builder=builder, kwargs=kwargs))
+    except Exception as e:
+        print(f"[MAIL] could not queue {builder}: {e}")

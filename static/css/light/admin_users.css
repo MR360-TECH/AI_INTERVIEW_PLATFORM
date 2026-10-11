@@ -69,6 +69,11 @@ html.light-theme .um-tag.ok{color:#22477f !important;background:rgba(189,206,231
 html.light-theme .um-tag.bad{color:#920f0f !important;background:rgba(239,68,68,0.12) !important;border-color:rgba(25,114,230,0.44) !important}
 html.light-theme .um-tag.off{color:#1a3470 !important;background:rgba(148,163,184,0.12) !important;border-color:rgba(30,64,175,0.28) !important}
 @media (max-width: 860px){html.light-theme .results-table tbody td::before{color:#084298 !important}}
+html.light-theme .member-id{color:#0d4394 !important;background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.3) !important}
+html.light-theme .member-id:hover{border-color:#0066ff !important;color:#102146 !important}
+html.light-theme .member-id.copied{color:#22477f !important;border-color:rgba(52,116,211,0.6) !important}
+html.light-theme .req-badge{color:#5c4506 !important;background:rgba(251,191,36,0.1) !important;border:1px solid rgba(251,191,36,0.4) !important}
+html.light-theme .search-busy{border:2px solid rgba(0,102,255,0.25) !important;border-top-color:#0066ff !important}
 html.light-theme [style="--c:#00ffff"]{--c:#084298 !important}
 html.light-theme [style="--c:#34d399"]{--c:#22477f !important}
 html.light-theme [style="--c:#38bdf8"]{--c:#0d4394 !important}

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <title>Admin Device Approval — AI Interview Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { min-height: 100%; margin: 0; }
+        body {
+            font-family: 'Inter', sans-serif; color: #e2e8f0;
+            background: radial-gradient(ellipse 70% 60% at 10% 10%, rgba(0, 136, 255, 0.18), transparent 60%),
+                        radial-gradient(ellipse 60% 50% at 90% 90%, rgba(139, 92, 246, 0.14), transparent 60%), #020510;
+            display: flex; align-items: center; justify-content: center; padding: 32px 16px;
+        }
+        .dv-card {
+            width: 100%; max-width: 480px; padding: 34px 32px; border-radius: 20px; text-align: center;
+            background: #08122a; border: 1px solid rgba(0, 255, 255, 0.22); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        }
+        .dv-brand { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 22px; font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; text-decoration: none; }
+        .dv-brand img { width: 34px; height: 34px; border-radius: 9px; }
+        .dv-icon { width: 70px; height: 70px; margin: 0 auto 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .dv-icon.wait { color: #00ffff; background: rgba(0, 255, 255, 0.08); border: 1.5px solid rgba(0, 255, 255, 0.35); }
+        .dv-icon.ok { color: #34d399; background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.45); }
+        .dv-icon.bad { color: #f87171; background: rgba(239, 68, 68, 0.1); border: 1.5px solid rgba(239, 68, 68, 0.45); }
+        .dv-title { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.45rem; color: #ffffff; margin: 0 0 10px; }
+        .dv-text { font-size: 0.93rem; line-height: 1.65; color: #cbd5e1; margin: 0 0 16px; }
+        .dv-facts { text-align: left; margin: 18px 0; border-radius: 14px; border: 1px solid #334155; background: #0b1633; }
+        .dv-facts div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; font-size: 0.88rem; border-bottom: 1px solid #1e2b45; }
+        .dv-facts div:last-child { border-bottom: 0; }
+        .dv-facts span { color: #94a3b8; }
+        .dv-facts b { color: #ffffff; font-weight: 700; text-align: right; }
+        .dv-actions { display: flex; gap: 10px; margin-top: 8px; }
+        .dv-btn { flex: 1; padding: 13px 16px; border-radius: 12px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.95rem; border: 0; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .dv-btn.approve { background: linear-gradient(135deg, #00ffff, #0284c7); color: #020510; }
+        .dv-btn.deny { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); }
+        .dv-btn.plain { background: rgba(255, 255, 255, 0.06); color: #e2e8f0; border: 1px solid #334155; }
+        .dv-mail { display: inline-block; padding: 2px 10px; border-radius: 8px; font-weight: 800; color: #00ffff; background: rgba(0, 255, 255, 0.08); border: 1px solid rgba(0, 255, 255, 0.3); }
+        .dv-spinner { width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid rgba(0, 255, 255, 0.25); border-top-color: #00ffff; animation: dvspin 0.9s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+        @keyframes dvspin { to { transform: rotate(360deg); } }
+        .dv-status { font-size: 0.86rem; color: #94a3b8; margin-top: 4px; }
+        .dv-note { font-size: 0.8rem; color: #94a3b8; margin-top: 18px; line-height: 1.6; }
+        main.dv-card { position: relative; }
+        .dv-close { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 9px; border: 1px solid #334155;
+                    background: rgba(255,255,255,0.05); color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; text-decoration: none; }
+        .dv-close:hover { color: #ffffff; border-color: #00ffff; }
+        .dv-btn.cancel { background: rgba(239, 68, 68, 0.08); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/admin_device.css') }}">
+</head>
+<body>
+<main class="dv-card">
+    <a class="dv-close" href="{{ '/login' if mode == 'waiting' else '/' }}" aria-label="Close" title="Close"><i class="bi bi-x-lg"></i></a>
+    <a class="dv-brand" href="/"><img src="{{ url_for('static', filename='images/logo-icon.png') }}" alt=""> AI Interview Platform</a>
+
+    {% if mode == "waiting" %}
+    <div class="dv-icon wait"><i class="bi bi-shield-lock"></i></div>
+    <h1 class="dv-title">Waiting for approval</h1>
+    <p class="dv-text">This device is not approved for the admin account yet. We sent an approval request to
+        <span class="dv-mail">{{ mailbox }}</span>. Open it and press <b>Approve</b>.</p>
+    <p class="dv-status" id="dvStatus"><span class="dv-spinner"></span>This page continues by itself once you approve.</p>
+    <p class="dv-note">The request is valid for {{ minutes }} minutes. After that, sign in again for a new one.</p>
+    <div class="dv-actions">
+        <form method="POST" action="/admin/device/cancel" onsubmit="return confirm('Cancel this request? It will no longer be valid, even if you press Approve in the e-mail. You can sign in again any time to send a new one.');" style="flex:1;">
+            <button type="submit" class="dv-btn cancel" style="width:100%;"><i class="bi bi-x-circle"></i> Cancel request</button>
+        </form>
+        <a class="dv-btn plain" href="/login"><i class="bi bi-arrow-left"></i> Back</a>
+    </div>
+    <script>
+    (function () {
+        var status = document.getElementById('dvStatus');
+        function show(icon, text) { status.innerHTML = '<i class="bi ' + icon + ' me-1"></i> ' + text; }
+        function poll() {
+            fetch('/admin/device/status', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.status === 'approved') { show('bi-check-circle-fill', 'Approved. Opening the admin area...'); window.location = d.next || '/admin'; }
+                    else if (d.status === 'denied') { show('bi-x-circle-fill', 'The request was declined. This device cannot open the admin account.'); }
+                    else if (d.status === 'expired') { show('bi-clock-history', 'The request expired. Sign in again to send a new one.'); }
+                    else if (d.status === 'pending') { setTimeout(poll, 3000); }
+                    else { show('bi-exclamation-circle', 'Please sign in again.'); }
+                })
+                .catch(function () { setTimeout(poll, 5000); });
+        }
+        setTimeout(poll, 3000);
+    })();
+    </script>
+
+    {% elif mode == "review" %}
+    <div class="dv-icon wait"><i class="bi bi-laptop"></i></div>
+    <h1 class="dv-title">Approve this device?</h1>
+    <p class="dv-text">This device signed in with the admin password and is waiting. Approve it only if it is yours and you just signed in.</p>
+    <div class="dv-facts">
+        <div><span>Device</span><b>{{ device.label }}</b></div>
+        <div><span>Network address</span><b>{{ device.ip or '-' }}</b></div>
+        <div><span>Requested</span><b>{{ device.requested_at.strftime('%d %b %Y, %H:%M') }} UTC</b></div>
+    </div>
+    <form method="POST" class="dv-actions">
+        <button type="submit" name="action" value="deny" class="dv-btn deny"><i class="bi bi-x-circle"></i> This wasn't me</button>
+        <button type="submit" name="action" value="approve" class="dv-btn approve"><i class="bi bi-check-circle-fill"></i> Approve</button>
+    </form>
+    <p class="dv-note">This link works once and expires after {{ minutes }} minutes.</p>
+
+    {% elif mode == "approved" %}
+    <div class="dv-icon ok"><i class="bi bi-check-lg"></i></div>
+    <h1 class="dv-title">Device approved</h1>
+    <p class="dv-text"><b>{{ device.label }}</b> can now open the admin account. The device that is waiting continues by itself.
+        You can remove it any time under Admin Settings, Registered devices.</p>
+
+    {% elif mode == "denied" %}
+    <div class="dv-icon bad"><i class="bi bi-shield-x"></i></div>
+    <h1 class="dv-title">Request declined</h1>
+    <p class="dv-text"><b>{{ device.label }}</b> cannot open the admin account. If you did not try to sign in, someone knows the
+        admin password: change <b>ADMIN_PASSWORD</b> in Render now. That signs out every device and cancels every approval.</p>
+
+    {% else %}
+    <div class="dv-icon bad"><i class="bi bi-clock-history"></i></div>
+    <h1 class="dv-title">This link is no longer valid</h1>
+    <p class="dv-text">Approval links work once and for one hour. If you still want to approve a device, sign in on it again to get a new e-mail.</p>
+    <div class="dv-actions"><a class="dv-btn plain" href="/login"><i class="bi bi-box-arrow-in-right"></i> Go to sign in</a></div>
+    {% endif %}
+</main>
+</body>
+</html>

@@ -745,6 +745,11 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #00ffff; }
             .header-icon-btn { display: inline-flex; align-items: center; gap: 7px; }
+        /* member ID chip: click to copy */
+        .member-id { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .05em; color: #a5f3fc; background: rgba(0,255,255,.08); border: 1px solid rgba(0,255,255,.3); cursor: pointer; white-space: nowrap; }
+        .member-id:hover { border-color: #00ffff; color: #ffffff; }
+        .member-id.copied { color: #34d399; border-color: rgba(52,211,153,.6); }
+        .req-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #fbbf24; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.4); }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
@@ -848,7 +853,7 @@
         </div>
         <div class="search-container">
             <i class="bi bi-search search-icon"></i>
-            <input type="text" id="searchInput" placeholder="Search by name, email, or session ID..." autocomplete="off">
+            <input type="text" id="searchInput" placeholder="Search by name, email, member ID or session ID..." autocomplete="off">
         </div>
     </div>
 
@@ -867,7 +872,7 @@
                 </thead>
                 <tbody>
                     {% for result, user in results %}
-                    <tr class="searchable-row" data-session-id="{{ result.session_code }}" onclick="window.location='/admin/interview/{{ result.id }}'">
+                    <tr class="searchable-row" data-session-id="{{ result.session_code }}" data-member-id="{{ user.user_code if user and user.user_code else '' }}" onclick="window.location='/admin/interview/{{ result.id }}'">
                         <td>
                             <div class="candidate-cell">
                                 <div class="avatar-circle">{{ user.full_name[0]|upper if user and user.full_name else 'C' }}</div>
@@ -892,6 +897,7 @@
                                     </div>
                                     <div class="cand-email search-email d-flex align-items-center gap-2 flex-wrap mt-1">
                                         <span>{{ user.email if user and user.email else 'No email recorded' }}</span>
+                                        {% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}
                                         <span class="session-code-badge" onclick="event.stopPropagation(); copySessionId('{{ result.session_code }}', this);" title="Click to copy Assessment Session ID">
                                             <i class="bi bi-copy copy-icon"></i> {{ result.session_code }}
                                         </span>
@@ -1041,7 +1047,10 @@
                 const name = nameElem ? nameElem.textContent.toLowerCase() : '';
                 const email = emailElem ? emailElem.textContent.toLowerCase() : '';
                 const sessionCode = (row.getAttribute('data-session-id') || '').toLowerCase();
-                const isMatch = name.includes(query) || email.includes(query) || sessionCode.includes(query);
+                const memberId = (row.getAttribute('data-member-id') || '').toLowerCase();
+                const compact = query.replace(/[^a-z0-9]/g, '');
+                const isMatch = name.includes(query) || email.includes(query) || sessionCode.includes(query) ||
+                                (compact.length > 0 && memberId.includes(compact));
                 row.style.display = isMatch ? '' : 'none';
             });
         });
@@ -1141,5 +1150,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<script>
+/* member ID chips: one click copies the ID, ready to paste into a search box or an e-mail */
+document.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('.member-id[data-code]') : null;
+    if (!chip) return;
+    e.preventDefault(); e.stopPropagation();
+    var code = chip.getAttribute('data-code');
+    function done() { chip.classList.add('copied'); var t = chip.innerHTML; chip.innerHTML = '<i class="bi bi-check2"></i> Copied'; setTimeout(function () { chip.innerHTML = t; chip.classList.remove('copied'); }, 1300); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(done, done);
+    else { var a = document.createElement('textarea'); a.value = code; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (x) {} a.remove(); done(); }
+}, true);
+</script>
 </body>
 </html>

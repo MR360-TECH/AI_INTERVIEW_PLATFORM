@@ -73,6 +73,10 @@ html.light-theme .empty-state p{color:#22418d !important}
 html.light-theme ::-webkit-scrollbar-track{background:rgba(240,246,255,0.62) !important}
 html.light-theme ::-webkit-scrollbar-thumb{background:rgba(240,246,255,0.62) !important}
 html.light-theme ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
+html.light-theme .member-id{color:#0d4394 !important;background:rgba(0,102,255,0.08) !important;border:1px solid rgba(0,102,255,0.3) !important}
+html.light-theme .member-id:hover{border-color:#0066ff !important;color:#102146 !important}
+html.light-theme .member-id.copied{color:#22477f !important;border-color:rgba(52,116,211,0.6) !important}
+html.light-theme .req-badge{color:#5c4506 !important;background:rgba(251,191,36,0.1) !important;border:1px solid rgba(251,191,36,0.4) !important}
 html.light-theme [style="background:#0b1329; border-radius:14px; width:50px; height:50px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1.5px solid #00ffff; box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);"]{background:rgba(240,246,255,0.62) !important;border-radius:14px !important;width:50px !important;height:50px !important;display:flex !important;align-items:center !important;justify-content:center !important;flex-shrink:0 !important;border:1.5px solid #0066ff !important;box-shadow:0 0 15px rgba(37,99,235,0.175) !important}
 html.light-theme [style="background:#0b1329; border:1.5px solid #334155; border-radius:14px;"]{background:rgba(240,246,255,0.62) !important;border:1.5px solid #d7dfea !important;border-radius:14px !important}
 html.light-theme [style="background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid #475569;"]{background:rgba(255,255,255,0.08) !important;color:#1a3470 !important;border:1px solid #ccd5e3 !important}

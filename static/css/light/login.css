@@ -38,6 +38,8 @@ html.light-theme .field-input::placeholder{color:#22418d !important}
 html.light-theme .field-input:focus{border-color:#0066ff !important;background:rgba(240,246,255,0.62) !important;box-shadow:0 0 0 3.5px rgba(37,99,235,0.21) !important}
 html.light-theme .pw-toggle{color:#22418d !important}
 html.light-theme .pw-toggle:hover{color:#084298 !important}
+html.light-theme .remember-me{color:#1a3470 !important}
+html.light-theme .auth-alert.info{background:rgba(0,102,255,0.07) !important;border:1px solid rgba(0,102,255,0.3) !important;color:#0d4394 !important}
 html.light-theme .forgot-link{color:#1a3470 !important}
 html.light-theme .forgot-link:hover{color:#084298 !important}
 html.light-theme .btn-primary-auth{box-shadow:0 6px 24px rgba(37,99,235,0.21) !important;background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}

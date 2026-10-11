@@ -16,7 +16,7 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_2FA             # optional: true = admin also enters a code e-mailed to ADMIN_EMAIL
+      - key: ADMIN_APPROVAL_EMAIL  # recommended: your own mailbox for admin device approval and sign-in alerts
         sync: false
       - key: GEMINI_API_KEY
         sync: false

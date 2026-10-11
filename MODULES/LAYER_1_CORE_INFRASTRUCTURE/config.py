@@ -40,8 +40,6 @@ if not SECRET_KEY:
         SECRET_KEY = secrets.token_hex(32)
         print(" * NOTE: SECRET_KEY is not set, using a temporary random key (sessions reset when the server restarts).")
 
-# Optional: require an e-mailed code for the admin sign-in as well (set ADMIN_2FA=true)
-ADMIN_2FA = (os.environ.get("ADMIN_2FA") or "").strip().lower() in ("1", "true", "yes", "on")
 
 # Admin credentials
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
@@ -49,6 +47,10 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
 if not ADMIN_EMAIL:
     ADMIN_EMAIL = f"admin_{secrets.token_hex(4)}@example.com"
+
+# Device approval: when set, the admin password only works on devices the owner approved. The first sign-in on a new
+# device sends an Approve / This wasn't me e-mail to this mailbox (the owner's personal one). Sign-in alerts go here too.
+ADMIN_APPROVAL_EMAIL = (os.environ.get("ADMIN_APPROVAL_EMAIL") or "").strip()
 
 if not ADMIN_PASSWORD:
     ADMIN_PASSWORD = secrets.token_urlsafe(18)

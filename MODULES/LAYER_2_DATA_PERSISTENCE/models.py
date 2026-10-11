@@ -43,6 +43,7 @@ class User(db.Model):
     extra_allowed_interviews = db.Column(db.Integer, default=0)
     attempts_count = db.Column(db.Integer, default=0)
     welcome_sent = db.Column(db.Boolean, default=False)
+    user_code = db.Column(db.String(20), unique=True, index=True)   # public member ID, e.g. AIP26A0001
 
     def get_attempts_used(self):
         try:
@@ -54,6 +55,64 @@ class User(db.Model):
             InterviewResult.real_attempt_filter()
         ).count()
         return max(curr_count, results_count)
+
+
+# Member IDs, e.g. AIP26A0001: "AIP" (AI Interview Platform) + the two-digit year the member joined + a series letter
+# + a 4-digit number. Each series holds 1000 members (A0001 to A1000, then B0001 ...), and every year starts again at A0001.
+USER_CODE_RE = re.compile(r"^AIP\d{2}[A-Z]\d{4}$")
+USER_CODE_SERIES_SIZE = 1000
+
+
+def format_user_code(year, position):
+    """The member ID of the n-th member (1, 2, 3 ...) who joined in the given year."""
+    series, number = divmod(position - 1, USER_CODE_SERIES_SIZE)
+    if series > 25:
+        raise ValueError("more than 26,000 members joined in one year")
+    return "AIP%02d%s%04d" % (year % 100, chr(ord("A") + series), number + 1)
+
+
+def user_code_position(code):
+    """1 for AIP26A0001, 1000 for AIP26A1000, 1001 for AIP26B0001."""
+    return (ord(code[5]) - ord("A")) * USER_CODE_SERIES_SIZE + int(code[6:])
+
+
+def normalize_user_code(text):
+    """What an admin pasted ('aip26a0001 ', 'AIP-26-A0001') as a member ID, or None if it is not one."""
+    cleaned = re.sub(r"[^A-Z0-9]", "", (text or "").upper())
+    return cleaned if USER_CODE_RE.match(cleaned) else None
+
+
+def _next_user_code(connection, year, pending=()):
+    """The next free member ID of the year. `pending` are IDs already handed out in the same save but not written yet."""
+    from sqlalchemy import text as sql
+    prefix = "AIP%02d" % (year % 100)
+    codes = [row[0] for row in connection.execute(sql("SELECT user_code FROM users WHERE user_code LIKE :p"), {"p": prefix + "%"})]
+    used = [user_code_position(c) for c in list(codes) + list(pending) if c and c.startswith(prefix) and USER_CODE_RE.match(c)]
+    return format_user_code(year, (max(used) if used else 0) + 1)
+
+
+@event.listens_for(User, "before_insert")
+def _give_user_code(mapper, connection, target):
+    """Every new account gets the next member ID the moment it is saved, whichever sign-up path created it."""
+    if not target.user_code:
+        from sqlalchemy.orm import object_session
+        session = object_session(target)
+        pending = [u.user_code for u in (session.new if session else ()) if isinstance(u, User) and u is not target and u.user_code]
+        target.user_code = _next_user_code(connection, (target.registered_at or datetime.utcnow()).year, pending)
+
+
+def assign_missing_user_codes():
+    """Accounts created before member IDs existed get one, in the order they signed up (run at start-up)."""
+    given = 0
+    missing = (User.query.filter((User.user_code.is_(None)) | (User.user_code == ""))
+               .order_by(User.registered_at.asc(), User.id.asc()).all())
+    for user in missing:
+        user.user_code = _next_user_code(db.session.connection(), (user.registered_at or datetime.utcnow()).year)
+        db.session.flush()
+        given += 1
+    if given:
+        db.session.commit()
+    return given
 
 
 class InterviewResult(db.Model):
@@ -161,6 +220,39 @@ class Feedback(db.Model):
     contact_ok = db.Column(db.Boolean, default=True)
     page = db.Column(db.String(30))                      # dashboard | result
     session_code = db.Column(db.String(20))
+    created_at = db.Column(db.DateTime, nullable=False)
+
+
+class SlotRequest(db.Model):
+    """A locked candidate asking the administrator for one more assessment slot, with their reason."""
+    __tablename__ = 'slot_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(12), nullable=False, default='pending')   # pending | approved | declined
+    created_at = db.Column(db.DateTime, nullable=False)
+    decided_at = db.Column(db.DateTime)
+
+
+def pending_slot_request(user_id):
+    return (SlotRequest.query.filter_by(user_id=user_id, status='pending')
+            .order_by(SlotRequest.created_at.desc()).first())
+
+
+class AdminDevice(db.Model):
+    """A browser that asked for, or was given, access to the admin account (device approval)."""
+    __tablename__ = 'admin_devices'
+    id = db.Column(db.Integer, primary_key=True)
+    token_hash = db.Column(db.String(64), unique=True, nullable=False, index=True)   # the device cookie, stored only hashed
+    label = db.Column(db.String(120))                                              # e.g. "Chrome on Windows"
+    ip = db.Column(db.String(64))                                                  # shown in the approval e-mail only
+    status = db.Column(db.String(12), nullable=False, default='pending')           # pending | approved | denied
+    password_print = db.Column(db.String(32))      # fingerprint of the admin password it was approved under
+    approve_hash = db.Column(db.String(64), index=True)                            # the e-mailed one-hour link, hashed
+    approve_expires = db.Column(db.DateTime)
+    requested_at = db.Column(db.DateTime)
+    approved_at = db.Column(db.DateTime)
+    last_seen_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, nullable=False)
 
 

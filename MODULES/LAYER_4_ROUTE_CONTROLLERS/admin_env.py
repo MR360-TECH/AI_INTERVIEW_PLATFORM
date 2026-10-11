@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 from flask import Blueprint, Response, render_template, request, redirect, session, jsonify, current_app
 from sqlalchemy import func
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import db
@@ -16,18 +17,30 @@ from MODULES.LAYER_2_DATA_PERSISTENCE.models import (
     INTEGRITY_SWITCHES,
     InterviewViolation,
     ResourceBookmark,
-    Feedback
+    Feedback,
+    AdminDevice,
+    SlotRequest,
+    pending_slot_request,
+    normalize_user_code
 )
 from MODULES.LAYER_3_BUSINESS_SERVICES.mailer import send_slot_unlocked_email
+from MODULES.LAYER_3_BUSINESS_SERVICES.feedback_email import queue_slot_declined_email
 from MODULES.LAYER_3_BUSINESS_SERVICES import csv_export, result_stats
 
 admin_bp = Blueprint('admin_bp', __name__)
 
 
+def _login_first():
+    """Not signed in as admin: go to the sign-in page, and come back to this exact page afterwards."""
+    if request.method == "GET" and request.path.startswith("/admin"):
+        return redirect("/login?next=" + quote(request.full_path.rstrip("?"), safe=""))
+    return redirect("/login")
+
+
 @admin_bp.route("/admin/db-check")
 def db_check():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     try:
         engine = db.engine
         dialect_name = engine.dialect.name
@@ -74,7 +87,7 @@ def admin():
     if "user_id" in session:
         return redirect("/dashboard")
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     today = date.today()
     current_month = today.month
@@ -109,14 +122,15 @@ def admin():
         rejected_count=rejected_count,
         filter_type=filter_type,
         settings=settings,
-        user_attempt_counts=user_attempt_counts
+        user_attempt_counts=user_attempt_counts,
+        open_requests=SlotRequest.query.filter_by(status="pending").count()
     )
 
 
 @admin_bp.route("/admin/settings", methods=["GET", "POST"])
 def admin_settings():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     if request.method == "POST":
         # Always work directly with the DB row — never modify the cached snapshot
@@ -195,14 +209,35 @@ def admin_settings():
         return redirect("/admin/settings?saved=1")
 
     settings = get_settings()
-    return render_template("admin_settings.html", settings=settings, saved=request.args.get("saved"))
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS import login_env as L
+    from MODULES.LAYER_3_BUSINESS_SERVICES.admin_access import masked
+    devices = (AdminDevice.query.filter_by(status="approved").order_by(AdminDevice.approved_at.desc()).all()
+               if L.device_approval_on() else [])
+    return render_template("admin_settings.html", settings=settings, saved=request.args.get("saved"),
+                           approval_on=L.device_approval_on(), approval_mailbox=masked(L.ADMIN_APPROVAL_EMAIL),
+                           devices=devices, this_device=session.get("admin_device"))
+
+
+@admin_bp.route("/admin/devices/<int:device_id>/remove", methods=["POST"])
+def admin_remove_device(device_id):
+    """Takes a device off the approved list: it is signed out on its next click and needs approval again."""
+    if not session.get("is_admin"):
+        return _login_first()
+    device = db.session.get(AdminDevice, device_id)
+    if device:
+        db.session.delete(device)
+        db.session.commit()
+    if device_id == session.get("admin_device"):
+        session.clear()
+        return redirect("/login?error=device_removed")
+    return redirect("/admin/settings#devices")
 
 
 @admin_bp.route("/admin/guide")
 @admin_bp.route("/admin/info")
 def admin_guide():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     settings = get_settings()
     return render_template("admin_guide.html", settings=settings)
 
@@ -210,7 +245,7 @@ def admin_guide():
 @admin_bp.route("/admin/delete/<int:result_id>", methods=["POST"])
 def delete_result(result_id):
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     record = db.session.get(InterviewResult, result_id)
     if record:
@@ -240,6 +275,8 @@ def admin_unlock_attempt(user_id):
     # Ensure extra grants at least +1 usable token beyond whatever attempts were consumed
     required_extra = max(current_extra + 1, attempts_used - default_allowed + 1)
     user_obj.extra_allowed_interviews = max(0, required_extra)
+    for open_request in SlotRequest.query.filter_by(user_id=user_obj.id, status="pending").all():
+        open_request.status, open_request.decided_at = "approved", datetime.utcnow()
     db.session.commit()
 
     allowed_total = default_allowed + user_obj.extra_allowed_interviews
@@ -261,10 +298,28 @@ def admin_unlock_attempt(user_id):
     })
 
 
+@admin_bp.route("/admin/slot-request/<int:request_id>/decline", methods=["POST"])
+def admin_decline_slot_request(request_id):
+    """The administrator says no to a slot request: the request is closed and the candidate gets a polite e-mail."""
+    if not session.get("is_admin"):
+        return jsonify({"status": "error", "message": "Unauthorized"}), 401
+    slot_request = db.session.get(SlotRequest, request_id)
+    if not slot_request:
+        return jsonify({"status": "error", "message": "Request not found"}), 404
+    if slot_request.status != "pending":
+        return jsonify({"status": "error", "message": "This request was already answered."}), 409
+    slot_request.status, slot_request.decided_at = "declined", datetime.utcnow()
+    db.session.commit()
+    user = db.session.get(User, slot_request.user_id)
+    if user and user.email:
+        queue_slot_declined_email(user.email, user.full_name)
+    return jsonify({"status": "success", "message": "Request declined. The candidate has been informed by e-mail."})
+
+
 @admin_bp.route("/admin/delete-user/<int:user_id>", methods=["POST"])
 def delete_user(user_id):
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     user = db.session.get(User, user_id)
     if user:
@@ -272,6 +327,7 @@ def delete_user(user_id):
 
     InterviewViolation.query.filter_by(user_id=user_id).delete()
     ResourceBookmark.query.filter_by(user_id=user_id).delete()
+    SlotRequest.query.filter_by(user_id=user_id).delete()
     Feedback.query.filter_by(user_id=user_id).update({"user_id": None})      # keep the message, drop the link
     InterviewResult.query.filter_by(user_id=user_id).delete()
     InterviewProgress.query.filter_by(user_id=user_id).delete()
@@ -287,7 +343,7 @@ def delete_user(user_id):
 
 
 USERS_PER_PAGE = 20
-USER_FILTERS = ("all", "locked", "no_resume", "google", "never_assessed")
+USER_FILTERS = ("all", "requests", "locked", "no_resume", "google", "never_assessed")
 USER_SORTS = ("newest", "oldest", "name", "attempts")
 
 
@@ -304,9 +360,12 @@ def _candidate_rows(q, filter_type, sort):
     """The candidate list the admin page shows (before it is split into pages): rows, the summary counters and the settings."""
     settings = get_settings()
     query = User.query
-    if q:
+    code = normalize_user_code(q)
+    if code:                                   # a pasted member ID finds exactly that member
+        query = query.filter(User.user_code == code)
+    elif q:
         query = query.filter(
-            (User.full_name.ilike(f"%{q}%")) | (User.email.ilike(f"%{q}%")) |
+            (User.full_name.ilike(f"%{q}%")) | (User.email.ilike(f"%{q}%")) | (User.user_code.ilike(f"%{q}%")) |
             (User.course.ilike(f"%{q}%")) | (User.skills.ilike(f"%{q}%")))
     users = query.order_by(User.registered_at.desc()).all()
 
@@ -318,6 +377,7 @@ def _candidate_rows(q, filter_type, sort):
         taken[r.user_id] = taken.get(r.user_id, 0) + 1
 
     default_allowed = settings.default_allowed_interviews or 2
+    open_requests = {r.user_id: r for r in SlotRequest.query.filter_by(status="pending").order_by(SlotRequest.created_at).all()}
     rows = []
     for u in users:
         used = u.get_attempts_used()
@@ -330,6 +390,7 @@ def _candidate_rows(q, filter_type, sort):
             "has_resume": bool(u.resume_filename or u.resume_text),
             "taken": taken.get(u.id, 0), "last": last,
             "last_ok": bool(last and _is_recommended(last, settings)),
+            "request": open_requests.get(u.id),
         })
 
     week_ago = datetime.utcnow() - timedelta(days=7)
@@ -339,9 +400,12 @@ def _candidate_rows(q, filter_type, sort):
         "new_week": sum(1 for r in rows if r["user"].registered_at and r["user"].registered_at >= week_ago),
         "with_resume": sum(1 for r in rows if r["has_resume"]),
         "assessed": sum(1 for r in rows if r["taken"]),
+        "requests": sum(1 for r in rows if r["request"]),
     }
 
-    if filter_type == "locked":
+    if filter_type == "requests":
+        rows = [r for r in rows if r["request"]]
+    elif filter_type == "locked":
         rows = [r for r in rows if r["locked"]]
     elif filter_type == "no_resume":
         rows = [r for r in rows if not r["has_resume"]]
@@ -362,7 +426,7 @@ def _candidate_rows(q, filter_type, sort):
 @admin_bp.route("/admin/users")
 def admin_users():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     q = request.args.get("q", "").strip()
     filter_type = request.args.get("filter", "all")
@@ -377,6 +441,9 @@ def admin_users():
         page = 1
 
     rows, stats, settings = _candidate_rows(q, filter_type, sort)
+    code = normalize_user_code(q)
+    if request.args.get("open") and code and len(rows) == 1:
+        return redirect(f"/admin/user/{rows[0]['user'].id}?found={code}")
 
     total_filtered = len(rows)
     pages = max(1, -(-total_filtered // USERS_PER_PAGE))
@@ -391,7 +458,7 @@ def admin_users():
 @admin_bp.route("/admin/user/<int:user_id>")
 def admin_user_detail(user_id):
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     user = db.session.get(User, user_id)
     if not user:
@@ -420,14 +487,18 @@ def admin_user_detail(user_id):
         remaining_tokens=remaining_tokens,
         is_locked=is_locked,
         resume_file_exists=resume_file_exists(user),
-        resume_info=resume_info(user)
+        resume_info=resume_info(user),
+        pending_request=pending_slot_request(user.id),
+        found_code=normalize_user_code(request.args.get("found")),
+        past_requests=(SlotRequest.query.filter(SlotRequest.user_id == user.id, SlotRequest.status != "pending")
+                       .order_by(SlotRequest.created_at.desc()).limit(5).all())
     )
 
 
 @admin_bp.route("/admin/user/<int:user_id>/resume")
 def admin_view_user_resume(user_id):
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     user = db.session.get(User, user_id)
     if not user or not resume_file_exists(user):
         return redirect(f"/admin/user/{user_id}")
@@ -437,7 +508,7 @@ def admin_view_user_resume(user_id):
 @admin_bp.route("/admin/interview/<int:result_id>")
 def admin_interview_detail(result_id):
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
 
     result = db.session.get(InterviewResult, result_id)
     if not result:
@@ -487,7 +558,7 @@ LINK_FILTERS = ("all", "broken", "blocked", "unchecked", "hidden")
 @admin_bp.route("/admin/links")
 def admin_links():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY
     from MODULES.LAYER_2_DATA_PERSISTENCE.models import LinkCheck
 
@@ -531,7 +602,7 @@ def admin_links():
 @admin_bp.route("/admin/links/check", methods=["POST"])
 def admin_links_check():
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     import time
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY
     from MODULES.LAYER_3_BUSINESS_SERVICES.link_checker import start_check
@@ -545,7 +616,7 @@ def admin_links_check():
 def admin_links_hide():
     """Hides (or shows again) one library link for candidates."""
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import LIBRARY_URLS
     from MODULES.LAYER_2_DATA_PERSISTENCE.models import LinkCheck
     url = request.form.get("url", "")
@@ -574,7 +645,7 @@ def _csv_response(text, name):
 def export_results():
     """The results table as a spreadsheet file, with the same filter as the dashboard (?filter=all|today|month|selected|rejected)."""
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     filter_type = request.args.get("filter", "all")
     if filter_type not in RESULT_FILTERS:
         filter_type = "all"
@@ -583,11 +654,11 @@ def export_results():
     for r, u in _apply_result_filter(_counted_results(), filter_type):
         rows.append([
             r.session_code, r.interview_datetime.strftime("%Y-%m-%d %H:%M") if r.interview_datetime else "",
-            u.full_name, u.email, u.user_type or "", r.domain or "",
+            u.full_name, u.user_code or "", u.email, u.user_type or "", r.domain or "",
             "" if r.score is None else f"{float(r.score):.1f}",
             OUTCOME_LABELS[result_stats.outcome_of(r)], "Yes" if _is_recommended(r, settings) else "No",
             r.termination_reason or ""])
-    header = ["Session ID", "Date (UTC)", "Candidate", "E-mail", "Account type", "Domain", "Score (out of 10)",
+    header = ["Session ID", "Date (UTC)", "Candidate", "Member ID", "E-mail", "Account type", "Domain", "Score (out of 10)",
               "Result", "Recommended", "Why the session ended early"]
     return _csv_response(csv_export.build_csv(header, rows), csv_export.file_name("results", filter_type))
 
@@ -596,7 +667,7 @@ def export_results():
 def export_candidates():
     """The candidate list as a spreadsheet file, with the same search, filter and order as the Candidates page."""
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     q = request.args.get("q", "").strip()
     filter_type = request.args.get("filter", "all")
     sort = request.args.get("sort", "newest")
@@ -612,7 +683,7 @@ def export_candidates():
         detail = (f"{u.current_designation or ''} ({u.years_of_experience or '?'} years)" if u.user_type == "professional"
                   else " ".join(x for x in (u.education, u.course, u.semester) if x))
         out.append([
-            u.id, u.full_name, u.email, u.user_type or "", detail.strip(),
+            u.user_code or "", u.full_name, u.email, u.user_type or "", detail.strip(),
             {"local": "Password", "google": "Google", "otp": "E-mail code"}.get(u.auth_provider, u.auth_provider or ""),
             u.registered_at.strftime("%Y-%m-%d") if u.registered_at else "",
             r["taken"], r["used"], default_allowed + (u.extra_allowed_interviews or 0), u.extra_allowed_interviews or 0,
@@ -620,7 +691,7 @@ def export_candidates():
             OUTCOME_LABELS[result_stats.outcome_of(last)] if last else "",
             "" if not last or last.score is None else f"{float(last.score):.1f}",
             "Yes" if r["has_resume"] else "No"])
-    header = ["ID", "Name", "E-mail", "Account type", "Course / designation", "Signs in with", "Registered (UTC)",
+    header = ["Member ID", "Name", "E-mail", "Account type", "Course / designation", "Signs in with", "Registered (UTC)",
               "Assessments taken", "Attempts used", "Attempts allowed", "Extra attempts granted", "Locked",
               "Last result", "Last score", "Has resume"]
     return _csv_response(csv_export.build_csv(header, out), csv_export.file_name("candidates", filter_type))
@@ -630,7 +701,7 @@ def export_candidates():
 def admin_analytics():
     """Pass rate, scores, outcomes, busy days and results by domain (?days=7|30|90|0, 0 = everything)."""
     if not session.get("is_admin"):
-        return redirect("/login")
+        return _login_first()
     try:
         days = int(request.args.get("days", "30"))
     except ValueError:

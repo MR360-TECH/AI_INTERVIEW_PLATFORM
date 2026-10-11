@@ -547,6 +547,11 @@
                 <div class="step-title">Dynamic Re-Lock</div>
                 <p class="step-desc">The Unlock button disappears immediately and only reappears once the candidate exhausts their newly granted token.</p>
             </div>
+            <div class="step-item">
+                <div class="step-num">Phase 5</div>
+                <div class="step-title">Candidate Request</div>
+                <p class="step-desc">A locked candidate can press <strong>Request Assessment</strong> and write a reason (20-500 characters). One open request at a time, at most 3 a day. You get an e-mail with their member ID, attempts used, latest result and the reason; grant or decline from their profile. Switching attempt limits off switches the whole request service off too.</p>
+            </div>
         </div>
 
         <div class="formula-box">
@@ -557,6 +562,10 @@
         <div class="callout emerald">
             <div class="callout-title"><i class="bi bi-envelope-check-fill text-success"></i> Automated Email Dispatch</div>
             <p>Upon unlocking a candidate's session, the backend automatically triggers an HTML email notification to the candidate informing them that their studio session has been authorized.</p>
+        </div>
+        <div class="callout">
+            <div class="callout-title"><i class="bi bi-person-vcard text-info"></i> Finding the right candidate fast</div>
+            <p>Every request e-mail carries the candidate's <strong>member ID</strong> (for example <code style="color:#00ffff;">AIP26A0001</code>) and an <strong>Open in admin</strong> button. Signed in, it opens that profile at once; signed out, you sign in and it continues there by itself. You can also paste the member ID straight into the search box on this page or on Registered Candidates.</p>
         </div>
     </section>
 
@@ -761,6 +770,18 @@
                 <h4><i class="bi bi-trash3-fill text-danger"></i> Cascade Account Purge</h4>
                 <p>Administrative deletion removes candidate records, interview scorecards, and active progress files in a single atomic transaction.</p>
             </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-person-vcard text-info"></i> Member IDs</h4>
+                <p>Every candidate gets a member ID such as <code style="color:#00ffff;">AIP26A0001</code>: AIP, the two-digit join year, a series letter and a 4-digit number (each series holds 1000 members, then the next letter starts; each year starts again at A0001). Candidates see and copy theirs in the account menu and on Edit Profile; it appears on every list, in the CSV files and in every e-mail about them, and pasting it into either search box (any case, with or without dashes) finds that one candidate.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-send-fill text-warning"></i> Slot requests</h4>
+                <p>A locked candidate's <strong>Request Assessment</strong> message (reason, attempts used, latest result) is e-mailed to you and tracked with a status: pending, approved or declined. The <strong>Slot requests</strong> filter on this page shows only candidates with an open one. See Module 02 for the full flow.</p>
+            </div>
+            <div class="feature-card">
+                <h4><i class="bi bi-search text-info"></i> Live search</h4>
+                <p>The search box on this page filters the list as you type, by name, e-mail, member ID, course or skills; the filter chips, the count and the CSV export link all update with it. No button to press, and Enter still works for anyone who prefers it.</p>
+            </div>
         </div>
     </section>
 
@@ -857,8 +878,11 @@
                 <tr><td class="setting-name">Assessment feedback</td><td>After each formal assessment</td><td>Score, session code, three next steps. Tone depends on the pass mark. Can be switched off in Settings.</td></tr>
                 <tr><td class="setting-name">Session ended notice</td><td>When proctoring ends a session</td><td>Neutral wording, no AI note.</td></tr>
                 <tr><td class="setting-name">Slot unlocked</td><td>When you press Authorize &amp; Unlock</td><td>Sent to the candidate in the background.</td></tr>
+                <tr><td class="setting-name">Slot requested (to you)</td><td>When a locked candidate asks for one more attempt</td><td>Name, e-mail, member ID, attempts used, latest result, their reason, and an Open in admin button.</td></tr>
+                <tr><td class="setting-name">Slot request declined</td><td>When you decline a request</td><td>Short and polite; no mention in the candidate's dashboard, only the e-mail.</td></tr>
                 <tr><td class="setting-name">Login / verification code</td><td>Signup, email-code login, password reset</td><td>Six digits, valid 10 minutes, usable once.</td></tr>
-                <tr><td class="setting-name">New feedback (to you)</td><td>When a candidate sends feedback</td><td>See Module 08.</td></tr>
+                <tr><td class="setting-name">New feedback (to you)</td><td>When a candidate sends feedback</td><td>See Module 08. Also carries the member ID and an Open in admin button.</td></tr>
+                <tr><td class="setting-name">Admin device request / sign-in alert</td><td>A new device signs in with the admin password, and every sign-in after</td><td>Sent to ADMIN_APPROVAL_EMAIL. See the device approval card below.</td></tr>
             </tbody>
         </table>
         <div class="feature-grid" style="margin-top: 22px;">
@@ -883,8 +907,8 @@
                 <p>Every form and every background request carries a secret per-session token, so another website cannot make your browser delete a user or change settings. If a page sits open for a long time you may be asked to reload it.</p>
             </div>
             <div class="feature-card">
-                <h4><i class="bi bi-hourglass-split text-warning"></i> Automatic sign-out</h4>
-                <p>An idle admin session ends after 30 minutes, a candidate session after 2 hours, and no session lasts longer than 12 hours. Signed-in pages are never cached by the browser.</p>
+                <h4><i class="bi bi-toggle-on text-success"></i> Staying signed in</h4>
+                <p>"Keep me signed in" on the login page (ticked by default) keeps a candidate or the admin signed in until they press Logout, however long between visits. Unticking it (a shared computer) falls back to the old rule: an idle admin session ends after 30 minutes, a candidate session after 2 hours, and no session lasts longer than 12 hours either way. A password change (candidate or admin) signs that account out everywhere at once. Signed-in pages are never cached by the browser.</p>
             </div>
             <div class="feature-card">
                 <h4><i class="bi bi-trash3-fill text-danger"></i> Deletes are deliberate</h4>
@@ -899,8 +923,8 @@
                 <p>Counts requests in a short sliding window and slows down only scripts and runaway loops, so the AI quota is protected. Limits are very generous (for example about 30 interview answers a minute), signed-in candidates are counted per account, administrators are never limited, and a limited request never uses an attempt. Switch it on or off in <strong>Settings &rarr; Protection</strong>, where the same explanation is shown.</p>
             </div>
             <div class="feature-card">
-                <h4><i class="bi bi-phone-fill text-success"></i> Optional admin two-step sign-in</h4>
-                <p>Set <code style="color:#00ffff;">ADMIN_2FA=true</code> and the admin password is followed by a six-digit code emailed to the admin address. Leave it off if your email delivery is not reliable yet.</p>
+                <h4><i class="bi bi-phone-fill text-success"></i> Optional admin device approval</h4>
+                <p>Set <code style="color:#00ffff;">ADMIN_APPROVAL_EMAIL</code> to your own mailbox and the admin password alone is not enough: the first sign-in on a new device waits on a page that polls for approval, until you press Approve or This wasn't me in an e-mail sent there (the link works once, for one hour). The waiting page itself has a <b>Cancel request</b> button, so the device asking to sign in can give up and invalidate its own request, and an &times; to simply close the page without approving anything. Every sign-in after that also e-mails you an alert. Registered devices are listed in Admin Settings with a Remove button, and changing <code style="color:#00ffff;">ADMIN_PASSWORD</code> signs out and un-approves every device at once. Leave it unset if your e-mail delivery is not reliable yet.</p>
             </div>
         </div>
     </section>
@@ -937,7 +961,7 @@
                 <tr><td class="setting-name">DATABASE_URL</td><td><span class="badge bg-danger">Required</span></td><td>Neon PostgreSQL connection string (use the pooled one).</td></tr>
                 <tr><td class="setting-name">SECRET_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Signs sessions and keys the one-time-code hashes. Use a long random value. The server refuses to start on Render without it.</td></tr>
                 <tr><td class="setting-name">RATE_LIMIT_SCALE / RATE_LIMITS_ENABLED</td><td><span class="badge bg-secondary">Optional</span></td><td>Scale every rate limit (2 doubles them) or force the limiter off. The Settings switch is the normal way to turn it on or off.</td></tr>
-                <tr><td class="setting-name">ADMIN_2FA</td><td><span class="badge bg-secondary">Optional</span></td><td>Set to <code>true</code> to require an emailed code after the admin password.</td></tr>
+                <tr><td class="setting-name">ADMIN_APPROVAL_EMAIL</td><td><span class="badge bg-warning text-dark">Recommended</span></td><td>Your own mailbox for admin device approval and sign-in alerts.</td></tr>
                 <tr><td class="setting-name">GEMINI_API_KEY</td><td><span class="badge bg-danger">Required</span></td><td>Main Gemini key for questions, evaluation and feedback notes.</td></tr>
                 <tr><td class="setting-name">ADMIN_EMAIL / ADMIN_PASSWORD</td><td><span class="badge bg-danger">Required</span></td><td>The administrator login for this console.</td></tr>
                 <tr><td class="setting-name">APP_BASE_URL</td><td><span class="badge bg-warning text-dark">Recommended</span></td><td>Public site address used for links inside emails.</td></tr>

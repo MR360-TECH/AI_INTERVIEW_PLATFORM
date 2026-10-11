@@ -272,6 +272,16 @@
             .um-table td.um-actions::before { display: none; }
         }
 
+        /* member ID chip: click to copy */
+        .member-id { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: .74rem; font-weight: 800; letter-spacing: .05em; color: #a5f3fc; background: rgba(0,255,255,.08); border: 1px solid rgba(0,255,255,.3); cursor: pointer; white-space: nowrap; }
+        .member-id:hover { border-color: #00ffff; color: #ffffff; }
+        .member-id.copied { color: #34d399; border-color: rgba(52,211,153,.6); }
+        .req-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #fbbf24; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.4); }
+        .req-count { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 999px; background: #fbbf24; color: #1a1200; font-size: .72rem; font-weight: 900; text-align: center; }
+        .search-busy { position: absolute; right: 12px; top: 50%; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%; border: 2px solid rgba(0,255,255,.25); border-top-color: #00ffff; animation: umspin .8s linear infinite; }
+        .search-busy[hidden] { display: none; }
+        @keyframes umspin { to { transform: rotate(360deg); } }
+        .search-container { position: relative; }
     </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
@@ -327,7 +337,10 @@
     <!-- Filters, sort and search -->
     <form method="GET" action="/admin/users" class="um-toolbar" id="userToolbar">
         <input type="hidden" name="filter" value="{{ filter_type }}">
-        <div class="um-chips" role="group" aria-label="Filter candidates">
+        <div class="um-chips" id="userChips" role="group" aria-label="Filter candidates">
+            {% if settings.enable_attempt_limits %}
+            <a class="um-chip {{ 'on' if filter_type == 'requests' else '' }}" href="/admin/users?filter=requests&amp;sort={{ sort }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"><i class="bi bi-send"></i> Slot requests{% if stats.requests %} <span class="req-count">{{ stats.requests }}</span>{% endif %}</a>
+            {% endif %}
             {% for key, label, icon in [('all','All','bi-people'),('locked','Locked','bi-lock'),('never_assessed','Not assessed yet','bi-hourglass'),('no_resume','No resume','bi-file-earmark-x'),('google','Google sign-in','bi-google')] %}
             <a class="um-chip {{ 'on' if filter_type == key else '' }}" href="/admin/users?filter={{ key }}&amp;sort={{ sort }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"><i class="bi {{ icon }}"></i> {{ label }}</a>
             {% endfor %}
@@ -344,10 +357,12 @@
             </label>
             <div class="search-container">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" name="q" id="searchInput" placeholder="Search by name, email, course, skills..." value="{{ q or '' }}" autocomplete="off">
+                <input type="search" name="q" id="searchInput" placeholder="Search by name, email, member ID, course, skills..." value="{{ q or '' }}" autocomplete="off" aria-label="Search candidates">
+                <span class="search-busy" id="searchBusy" hidden></span>
             </div>
         </div>
     </form>
+    <div id="userResults">
     <div class="um-count">Showing <b>{{ rows|length }}</b> of <b>{{ total_filtered }}</b> candidate{{ '' if total_filtered == 1 else 's' }}{% if filter_type != 'all' or q %} <a href="/admin/users" class="um-clear"><i class="bi bi-x-circle"></i> Clear filters</a>{% endif %}</div>
 
     <!-- Users Table Panel -->
@@ -381,6 +396,7 @@
                                         {% endif %}
                                     </div>
                                     <div class="cand-email">{{ user.email }}</div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mt-1">{% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}{% if r.request and settings.enable_attempt_limits %}<span class="req-badge" title="{{ r.request.reason }}"><i class="bi bi-send-fill"></i> Slot request</span>{% endif %}</div>
                                 </div>
                             </div>
                         </td>
@@ -460,6 +476,7 @@
         <a class="um-chip {{ 'disabled' if page >= pages }}" href="{{ base }}&amp;page={{ page + 1 if page < pages else pages }}">Next <i class="bi bi-chevron-right"></i></a>
     </nav>
     {% endif %}
+    </div>
 </div>
 
 <!-- ══ CUSTOM THEME UNLOCK CONFIRMATION MODAL ══ -->
@@ -567,6 +584,55 @@ document.addEventListener('DOMContentLoaded', function() {
         s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;top:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*4+2)+'s;animation-delay:'+(Math.random()*6)+'s';
         c.appendChild(s);
     }
+})();
+</script>
+<script>
+/* member ID chips: one click copies the ID, ready to paste into a search box or an e-mail */
+document.addEventListener('click', function (e) {
+    var chip = e.target.closest ? e.target.closest('.member-id[data-code]') : null;
+    if (!chip) return;
+    e.preventDefault(); e.stopPropagation();
+    var code = chip.getAttribute('data-code');
+    function done() { chip.classList.add('copied'); var t = chip.innerHTML; chip.innerHTML = '<i class="bi bi-check2"></i> Copied'; setTimeout(function () { chip.innerHTML = t; chip.classList.remove('copied'); }, 1300); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(done, done);
+    else { var a = document.createElement('textarea'); a.value = code; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (x) {} a.remove(); done(); }
+}, true);
+</script>
+<script>
+/* Live search: the list updates while you type (name, e-mail, member ID, course, skills). Enter still works too. */
+(function () {
+    var form = document.getElementById('userToolbar'), input = document.getElementById('searchInput');
+    var results = document.getElementById('userResults'), chips = document.getElementById('userChips');
+    var busy = document.getElementById('searchBusy');
+    if (!form || !input || !results) return;
+    var timer = null, last = input.value, seq = 0;
+    function run() {
+        var params = new URLSearchParams(new FormData(form));
+        params.delete('page');
+        var url = '/admin/users?' + params.toString(), mine = ++seq;
+        busy.hidden = false;
+        fetch(url, { credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok || r.redirected) throw new Error('reload'); return r.text(); })
+            .then(function (html) {
+                if (mine !== seq) return;                      // a newer search already started
+                var doc = new DOMParser().parseFromString(html, 'text/html');
+                var fresh = doc.getElementById('userResults'), freshChips = doc.getElementById('userChips');
+                if (!fresh) throw new Error('reload');
+                results.innerHTML = fresh.innerHTML;
+                if (chips && freshChips) chips.innerHTML = freshChips.innerHTML;
+                var exp = document.querySelector('a[href^="/admin/export/candidates.csv"]');
+                if (exp) exp.href = '/admin/export/candidates.csv?' + params.toString();
+                history.replaceState(null, '', url);
+            })
+            .catch(function () { if (mine === seq) window.location = url; })
+            .then(function () { if (mine === seq) busy.hidden = true; });
+    }
+    input.addEventListener('input', function () {
+        if (input.value === last) return;
+        last = input.value;
+        clearTimeout(timer);
+        timer = setTimeout(run, 300);
+    });
 })();
 </script>
 </body>
