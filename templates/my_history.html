@@ -432,9 +432,12 @@
             <h1 class="page-title">Assessment History</h1>
             <p class="page-subtitle">Your assessment records and reports</p>
         </div>
-        <a href="/dashboard" class="back-btn-global">
-            <i class="bi bi-arrow-left"></i> Back
-        </a>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" class="back-btn-global" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
+            <a href="/dashboard" class="back-btn-global">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
     </div>
 
     {% if attempts %}

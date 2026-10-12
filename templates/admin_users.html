@@ -184,10 +184,13 @@
         }
         .cand-name { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.98rem; color: #ffffff; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.03em; }
         .cand-email { font-size: 0.82rem; color: #cbd5e1; font-weight: 500; }
-        
-        .auth-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
-        .auth-badge.google { background: rgba(59,130,246,0.15); border: 1.5px solid rgba(59,130,246,0.4); color: #60a5fa; }
-        .auth-badge.verified { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1.5px solid rgba(16, 185, 129, 0.4); }
+
+        /* Identity chips (Google / Verified) sit in the meta row with Member ID and Slot request,
+           sized to match those chips instead of competing with the bold uppercase name above them. */
+        .auth-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; border: 1px solid; }
+        .auth-badge.google { background: rgba(66,133,244,0.12); border-color: rgba(66,133,244,0.35); color: #8ab4f8; }
+        .auth-badge.verified { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
+        .google-g-icon { width: 12px; height: 12px; flex-shrink: 0; }
 
         .btn-view {
             display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px;
@@ -387,16 +390,25 @@
                             <div class="candidate-cell">
                                 <div class="avatar-circle">{{ user.full_name[0]|upper if user.full_name else '?' }}</div>
                                 <div>
-                                    <div class="cand-name d-flex align-items-center gap-2 flex-wrap">
-                                        {{ user.full_name }}
-                                        {% if user.auth_provider == "google" %}
-                                            <span class="auth-badge google"><i class="bi bi-google"></i> GOOGLE</span>
-                                        {% elif user.email_verified %}
-                                            <span class="auth-badge verified"><i class="bi bi-patch-check-fill me-1"></i> VERIFIED</span>
-                                        {% endif %}
-                                    </div>
+                                    <div class="cand-name">{{ user.full_name }}</div>
                                     <div class="cand-email">{{ user.email }}</div>
-                                    <div class="d-flex align-items-center gap-2 flex-wrap mt-1">{% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}{% if r.request and settings.enable_attempt_limits %}<span class="req-badge" title="{{ r.request.reason }}"><i class="bi bi-send-fill"></i> Slot request</span>{% endif %}</div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                                        {% if user.auth_provider == "google" %}
+                                        <span class="auth-badge google">
+                                            <svg class="google-g-icon" viewBox="0 0 48 48">
+                                                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                                                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                                                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                                            </svg>
+                                            Google
+                                        </span>
+                                        {% elif user.email_verified %}
+                                        <span class="auth-badge verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                                        {% endif %}
+                                        {% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}
+                                        {% if r.request and settings.enable_attempt_limits %}<span class="req-badge" title="{{ r.request.reason }}"><i class="bi bi-send-fill"></i> Slot request</span>{% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </td>

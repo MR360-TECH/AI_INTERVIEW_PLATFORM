@@ -1,5 +1,6 @@
 /* Light / dark switch for every page. Loaded in <head> so the saved choice is applied before the page is painted.
-   - the choice is saved in the browser (localStorage "theme": "light" or "dark"); dark is the default
+   - the choice is saved in the browser (localStorage "theme": "light" or "dark"); light is the default until
+     someone switches it themselves, after which their own choice always wins
    - any element with data-theme-toggle switches it (its <i> shows an eye: open = light mode on, slashed = off)
    - elements with data-theme-label show "On" / "Off"
    - a page with data-always-dark on <html> (the live interview) is never switched */
@@ -10,7 +11,7 @@
     var here = document.currentScript ? document.currentScript.src : "";
 
     function saved() {
-        try { return localStorage.getItem(KEY) === "light" ? "light" : "dark"; } catch (e) { return "dark"; }
+        try { return localStorage.getItem(KEY) === "dark" ? "dark" : "light"; } catch (e) { return "light"; }
     }
 
     function loadInlineMap(done) {

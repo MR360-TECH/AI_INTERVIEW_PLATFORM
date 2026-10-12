@@ -389,7 +389,7 @@ def t_attempt_accounting():
     loc = run_interview_form(c)
     check("form-post interview ends with redirect to /interview-result", loc is not None and "interview-result" in loc, loc)
     r = finish(c)
-    check("result page renders (200)", r.status_code == 200, r.status_code)
+    check("a finished assessment redirects to the dashboard", r.status_code == 302 and "/dashboard?assessed=" in r.headers.get("Location", ""), r.headers.get("Location"))
     u, n, cached = used(email)
     check("ONE completed interview consumes exactly ONE attempt", u == 1, f"used={u} real_results={n} cached={cached}")
     check("progress cleared after completion", not progress_exists(email))
@@ -467,7 +467,7 @@ def t_error_does_not_consume():
     check("answers kept so evaluation can be retried", progress_exists(email))
     FAKE["mode"] = "ok"
     r = finish(c)
-    check("retry after Gemini recovers produces a real result", r.status_code == 200 and len(results_for(email)) == 1, r.status_code)
+    check("retry after Gemini recovers produces a real result", r.status_code == 302 and len(results_for(email)) == 1, r.status_code)
     check("...and consumes exactly one attempt", used(email)[0] == 1, used(email))
 
     # (d2) AI answers but returns no score -> treated as failure, nothing stored / charged
@@ -892,7 +892,7 @@ def t_assessment_email():
     r = finish(c3)
     _Models.generate_content = orig
     m = sent_to(email3, "assessment is complete")
-    check("note generation failure -> result stored and fallback email sent", r.status_code == 200 and len(m) == 1 and len(results_for(email3)) == 1)
+    check("note generation failure -> result stored and fallback email sent", r.status_code == 302 and len(m) == 1 and len(results_for(email3)) == 1)
 
     # mail provider down -> result and attempt unaffected
     MAIL["fail"] = True
@@ -902,7 +902,7 @@ def t_assessment_email():
     run_interview(c4)
     r = finish(c4)
     MAIL["fail"] = False
-    check("mail failure does not break the result page", r.status_code == 200, r.status_code)
+    check("mail failure does not break the result page", r.status_code == 302, r.status_code)
     check("mail failure does not change the stored result or the attempt count", len(results_for(email4)) == 1 and used(email4)[0] == 1, f"{results_for(email4)} {used(email4)}")
 
     # evaluation failure -> no email at all
@@ -982,8 +982,15 @@ def t_terminated_email_and_page():
     c2, _ = login_user(email2)
     run_interview(c2)
     r = finish(c2)
-    h2 = r.data.decode()
-    check("normal result page still shows the scoring layout", "Competency Level Index" in h2 and "This session ended early" not in h2)
+    check("a finished assessment redirects straight to the dashboard", r.status_code == 302 and "/dashboard?assessed=" in r.headers.get("Location", ""), r.headers.get("Location"))
+    dash = get(c2, r.headers["Location"]).data.decode()
+    check("the dashboard welcomes the candidate back with their score and a link to the full report",
+          "Assessment complete" in dash and "View Report" in dash, dash[:50])
+    with app.app_context():
+        latest = InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email2).first().id).order_by(InterviewResult.id.desc()).first()
+        report_id = latest.id
+    h2 = get(c2, f"/my-history/{report_id}").data.decode()
+    check("the full report (one click away) still shows the scoring layout", "Competency Level Index" in h2 and "This session ended early" not in h2)
 
 
 def t_no_continue_and_restart():
@@ -1028,7 +1035,7 @@ def t_no_continue_and_restart():
             break
     check("interview started via restart completes and redirects to the result", loc is not None and "interview-result" in loc, loc)
     r = finish(c)
-    check("result stored; one attempt used", r.status_code == 200 and used(email)[0] == 1, used(email))
+    check("result stored; one attempt used", r.status_code == 302 and used(email)[0] == 1, used(email))
 
     # failed evaluation shows a retry link on the dashboard
     email2 = "retry@test.local"
@@ -1212,7 +1219,7 @@ def t_postgres_strictness():
         if j.get("done"):
             break
     r = finish(c)
-    check("a very long first answer does not break saving the result", r.status_code == 200 and len(results_for(email)) == 1,
+    check("a very long first answer does not break saving the result", r.status_code == 302 and len(results_for(email)) == 1,
           f"{r.status_code} {results_for(email)}")
     with app.app_context():
         res = InterviewResult.query.filter_by(user_id=User.query.filter_by(email=email).first().id).first()
@@ -1249,7 +1256,7 @@ def t_feedback_toggle():
     c, _ = login_user(email)
     run_interview(c)
     r = finish(c)
-    check("with the switch OFF the result is still created normally", r.status_code == 200 and len(results_for(email)) == 1 and used(email)[0] == 1)
+    check("with the switch OFF the result is still created normally", r.status_code == 302 and len(results_for(email)) == 1 and used(email)[0] == 1)
     check("with the switch OFF no feedback email is sent", len(sent_to(email, "assessment")) == 0, [x[1] for x in SENT])
 
     # other emails are unaffected while it is off
@@ -1321,6 +1328,7 @@ def t_practice_modes():
         ("drill", dict(mode="drill", drill_subject="Graphs"), "concept drill", "Concept Drill"),
         ("debate", dict(mode="debate"), "debate opponent", "Practice debate"),
         ("convo", dict(mode="convo"), "conversation partner", "Friendly practice conversation"),
+        ("behavioral", dict(mode="behavioral", behavioral_domain="Software Engineer"), "HR interviewer", "Behavioral/HR interview practice"),
     ]
     for mode, form, opening_marker, eval_marker in modes:
         email = f"mode_{mode}@test.local"
@@ -3732,25 +3740,31 @@ def t_database_driver():
 
 
 def t_practice_page_layout():
-    section("Practice Lab page: full-window two-column layout, four labs, working form, no leftover old layout")
+    section("Practice Lab page: full-window two-column layout, seven labs, working form, no leftover old layout")
     make_user("lab@test.local", "Lab Tester")
     c, _ = login_user("lab@test.local")
     html = get(c, "/practice-setup").data.decode()
+    MODES = ("viva", "lang", "drill", "debate", "convo", "behavioral", "rapid")
     check("the page is the new full-width layout (no narrow centred container)", 'class="lab-page"' in html and 'class="container mt-3"' not in html)
-    check("all five labs are shown as cards (viva, language, concept drill, debate, convo)", all(('id="card-%s"' % m) in html for m in ("viva", "lang", "drill", "debate", "convo")))
-    check("each lab card says what it is best for and lists what you practise", html.count("lab-best") >= 5 and html.count('class="lab-points"') == 5)
+    check("all seven labs are shown as cards (viva, language, concept drill, debate, convo, behavioral, rapid fire)", all(('id="card-%s"' % m) in html for m in MODES))
+    check("each lab card says what it is best for and lists what you practise", html.count("lab-best") >= 7 and html.count('class="lab-points"') == 7)
     check("the form still posts to /practice-start with the mode field and the viva subject is required",
           'action="/practice-start"' in html and 'name="mode"' in html and 'name="viva_subject"' in html and "required" in html)
     check("the language settings (language, focus, level) are still there", all(n in html for n in ('name="lang_target"', 'name="lang_focus"', 'name="lang_level"')))
-    check("every lab has its settings block with a tip and an example conversation", all(("%s-details" % m) in html for m in ("viva", "lang", "drill", "debate", "convo")) and html.count("lab-example") >= 5 + 1)
+    check("every lab has its settings block with a tip and an example conversation", all(("%s-details" % m) in html for m in MODES) and html.count("lab-example") >= 7 + 1)
     check("the 'what you get' list and the how-it-works strip fill the lower part of the page", html.count("lab-get") >= 4 and "How a practice session works" in html)
     check("the page works on small screens (responsive rules present)", "@media (max-width: 991px)" in html and "@media (max-width: 575px)" in html)
     check("switching lab shows the right settings (the script sets flex layout)", "'flex' : 'none'" in html)
     check("the Concept Drill setting field is on the page", 'name="drill_subject"' in html)
+    check("the Behavioral Round and Rapid Fire setting fields are on the page", 'name="behavioral_domain"' in html and 'name="rapid_topic"' in html)
     r = post(c, "/practice-start", data={"mode": "drill", "drill_subject": "Recursion"})
     check("starting a concept drill from the page works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
     r = post(c, "/practice-start", data={"mode": "viva", "viva_subject": "Operating Systems"})
     check("starting a viva from the new page still works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
+    r = post(c, "/practice-start", data={"mode": "behavioral", "behavioral_domain": "Software Engineer"})
+    check("starting a behavioral round from the page works", r.status_code in (302, 303) and "/interview" in r.headers.get("Location", ""), r.headers.get("Location"))
+    r = post(c, "/practice-start", data={"mode": "rapid", "rapid_topic": "General Knowledge"})
+    check("starting rapid fire from the page redirects to /rapid-fire", r.status_code in (302, 303) and r.headers.get("Location", "").endswith("/rapid-fire"), r.headers.get("Location"))
 
 
 def t_admin_export_and_analytics():

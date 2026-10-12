@@ -446,13 +446,17 @@
     
         .drill-theme { color: #f59e0b; }
         html.dark-theme .drill-theme { color: #fbbf24; }
+        .behavioral-theme { color: #ec4899; }
+        html.dark-theme .behavioral-theme { color: #f472b6; }
+        .rapid-theme { color: #eab308; }
+        html.dark-theme .rapid-theme { color: #facc15; }
         .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
         @media (max-width: 575px) { .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: auto; } }
     
         /* ── Practice Lab, final layout: five labs across the page, setup and launch below ── */
         .lab-grid { display: flex; flex-direction: column; grid-template-columns: none; gap: 22px; }
         .lab-choose { display: flex; flex-direction: column; gap: 14px; }
-        .lab-cards { grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: auto; flex: none; }
+        .lab-cards { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); grid-auto-rows: auto; flex: none; }
         .lab-cards .practice-card:last-child:nth-child(odd) { grid-column: auto; }
         .lab-setup { flex: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 26px; align-items: stretch; }
         .lab-gets { grid-template-columns: 1fr; flex: 1; align-content: start; }
@@ -500,11 +504,14 @@
             <div>
                 <span class="lab-kicker"><i class="bi bi-stars"></i> Practice Lab</span>
                 <h1 class="lab-title"><i class="bi bi-mortarboard"></i> Practice Mode</h1>
-                <p class="lab-sub">Five practice labs to sharpen your skills with informal, examiner-led feedback sessions. Nothing here is scored, timed or counted as an attempt.</p>
+                <p class="lab-sub">Seven practice labs to sharpen your skills with informal, examiner-led feedback sessions. Nothing here is scored, timed or counted as an attempt.</p>
             </div>
-            <a href="/dashboard" class="back-btn-global">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <button type="button" class="back-btn-global" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
+                <a href="/dashboard" class="back-btn-global">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
         </div>
 
         <form method="POST" action="/practice-start" id="practiceForm" class="lab-grid">
@@ -553,6 +560,22 @@
                         <p>Engage in warm, meaningful, and healthy discussions with moderate friendliness.</p>
                         <ul class="lab-points"><li>Warm, friendly small talk</li><li>Longer, more natural answers</li><li>Confidence in speaking</li></ul>
                         <span class="lab-best convo-theme"><i class="bi bi-bullseye"></i> Best for relaxed, friendly practice</span>
+                    </div>
+                    <div class="card practice-card" id="card-behavioral" onclick="selectMode('behavioral')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon behavioral-theme"><i class="bi bi-people"></i></div>
+                        <h5>Behavioral Round</h5>
+                        <p>Only HR-style behavioral and situational questions, scoped to your domain.</p>
+                        <ul class="lab-points"><li>Teamwork, conflict, failure, leadership</li><li>No technical questions at all</li><li>A new scenario every time</li></ul>
+                        <span class="lab-best behavioral-theme"><i class="bi bi-bullseye"></i> Best for HR rounds and soft-skill prep</span>
+                    </div>
+                    <div class="card practice-card" id="card-rapid" onclick="selectMode('rapid')">
+                        <i class="bi bi-check-circle-fill lab-check"></i>
+                        <div class="practice-icon rapid-theme"><i class="bi bi-lightning-charge-fill"></i></div>
+                        <h5>Rapid Fire</h5>
+                        <p>A fast 10-question multiple-choice quiz on a topic of your choice. Click, submit, repeat.</p>
+                        <ul class="lab-points"><li>4 options per question</li><li>Instant right/wrong scoring</li><li>Correct answers shown for every miss</li></ul>
+                        <span class="lab-best rapid-theme"><i class="bi bi-bullseye"></i> Best for a quick, fun knowledge check</span>
                     </div>
                 </div>
             </section>
@@ -642,6 +665,32 @@
                             <div class="lab-bubble lab-bubble-me"><b>You</b>I watched a film with my family, and we talked about it for hours...</div>
                         </div>
                     </div>
+
+                    <div id="behavioral-details" style="display:none;">
+                        <h6 class="mb-3 behavioral-theme"><i class="bi bi-sliders"></i> Behavioral Round Settings</h6>
+                        <label class="form-label fw-semibold mb-1">Domain / Role</label>
+                        <input type="text" name="behavioral_domain" class="form-control" placeholder="e.g., Software Engineer, Marketing Associate, Data Analyst">
+                        <div class="form-text mt-2">Every question will be a behavioral or situational one, framed for this domain - never technical.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Tip: use the role you are actually targeting, so the scenarios feel realistic.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Examiner</b>Tell me about a time you disagreed with a teammate. How did you handle it?</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>On a group project, we disagreed on the approach, so I suggested we...</div>
+                        </div>
+                    </div>
+
+                    <div id="rapid-details" style="display:none;">
+                        <h6 class="mb-3 rapid-theme"><i class="bi bi-sliders"></i> Rapid Fire Settings</h6>
+                        <label class="form-label fw-semibold mb-1">Quiz Topic</label>
+                        <input type="text" name="rapid_topic" class="form-control" placeholder="e.g., Data Structures, Networking Basics, General Aptitude">
+                        <div class="form-text mt-2">10 multiple-choice questions on this topic, 4 options each. No timer pressure per question, just click and submit.</div>
+                        <div class="lab-tip"><i class="bi bi-lightbulb"></i> Tip: this one shows your score instantly, with the correct answer explained for anything you missed.</div>
+                        <div class="lab-example">
+                            <div class="lab-example-title"><i class="bi bi-chat-dots"></i> What a session looks like</div>
+                            <div class="lab-bubble lab-bubble-ai"><b>Q3 of 10</b>Which data structure uses FIFO order?</div>
+                            <div class="lab-bubble lab-bubble-me"><b>You</b>Click an option, press Next - that's it.</div>
+                        </div>
+                    </div>
                 </div>
 
                 </section>
@@ -691,6 +740,8 @@
             document.getElementById('drill-details').style.display = (mode === 'drill')  ? 'flex' : 'none';
             document.getElementById('debate-details').style.display = (mode === 'debate') ? 'flex' : 'none';
             document.getElementById('convo-details').style.display = (mode === 'convo')  ? 'flex' : 'none';
+            document.getElementById('behavioral-details').style.display = (mode === 'behavioral') ? 'flex' : 'none';
+            document.getElementById('rapid-details').style.display = (mode === 'rapid')  ? 'flex' : 'none';
 
             const vivaInput  = document.querySelector('input[name="viva_subject"]');
             const langInput  = document.getElementById('langTargetInput');

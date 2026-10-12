@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapid Fire Result - AI Interview Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --page-bg: #f0f4ff; --card-bg: #ffffff; --card-border: rgba(0,0,0,0.08);
+            --text-main: #0f172a; --text-muted: #475569; --option-bg: #f8fafc; --option-border: rgba(0,0,0,0.08);
+        }
+        html.dark-theme {
+            --page-bg: #040914; --card-bg: rgba(10,15,29,0.75); --card-border: rgba(0,255,255,0.18);
+            --text-main: #ffffff; --text-muted: #8a9db8; --option-bg: #0b1329; --option-border: #334155;
+        }
+        body { min-height: 100vh; font-family: 'Inter', sans-serif; color: var(--text-main); background: var(--page-bg) !important; }
+        .rr-wrap { max-width: 760px; margin: 0 auto; padding: 32px 18px 60px; }
+        .rr-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+        .rr-back { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .rr-back:hover { color: #00e5ff; }
+        .rr-score-card { background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: 20px; padding: 30px 26px; text-align: center; backdrop-filter: blur(16px); margin-bottom: 24px; }
+        .rr-score { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 3rem; line-height: 1; color: {{ '#1cc88a' if score >= 6 else ('#f6c23e' if score >= 4 else '#e74a3b') }}; }
+        .rr-score small { font-size: 1.3rem; font-weight: 700; color: var(--text-muted); }
+        .rr-score-sub { font-size: 1rem; color: var(--text-muted); margin-top: 6px; }
+        .rr-meta { display: flex; justify-content: center; gap: 22px; margin-top: 16px; flex-wrap: wrap; }
+        .rr-meta-item { font-size: 0.86rem; color: var(--text-muted); font-weight: 600; }
+        .rr-meta-item b { color: var(--text-main); }
+        .rr-item { background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: 16px; padding: 20px 22px; margin-bottom: 14px; }
+        .rr-item-q { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 12px; display: flex; gap: 10px; }
+        .rr-item-num { flex-shrink: 0; color: var(--text-muted); }
+        .rr-opt-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; font-size: 0.94rem; margin-bottom: 6px; background: var(--option-bg); border: 1px solid var(--option-border); }
+        .rr-opt-row.rr-correct { border-color: rgba(28,200,138,0.5); background: rgba(28,200,138,0.1); color: #1cc88a; font-weight: 700; }
+        .rr-opt-row.rr-wrong-chosen { border-color: rgba(231,74,59,0.5); background: rgba(231,74,59,0.1); color: #e74a3b; font-weight: 700; }
+        .rr-badge { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; margin-left: auto; }
+        .rr-badge.rr-ok { background: rgba(28,200,138,0.18); color: #1cc88a; }
+        .rr-badge.rr-bad { background: rgba(231,74,59,0.18); color: #e74a3b; }
+        .rr-explain { margin-top: 10px; padding: 10px 14px; border-radius: 10px; font-size: 0.9rem; line-height: 1.5; background: rgba(0,229,255,0.07); border: 1px dashed rgba(0,229,255,0.35); color: var(--text-muted); }
+        .rr-explain i { color: #00e5ff; margin-right: 4px; }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/rapid_fire_result.css') }}">
+</head>
+<body>
+<div class="rr-wrap">
+    <div class="rr-top">
+        <a href="/dashboard" class="rr-back"><i class="bi bi-arrow-left"></i> Back</a>
+        <button type="button" class="rr-back" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on" style="background:none;border:none;"><i class="bi bi-eye-slash"></i></button>
+    </div>
+
+    <div class="rr-score-card">
+        <div class="rr-score">{{ "%.1f"|format(score) }}<small>/10</small></div>
+        <div class="rr-score-sub">{{ correct }} out of {{ total }} correct</div>
+        <div class="rr-meta">
+            <span class="rr-meta-item">Topic: <b>{{ domain }}</b></span>
+            <span class="rr-meta-item">Date: <b>{{ report_date }}</b></span>
+            <span class="rr-meta-item">Session: <b>{{ session_code }}</b></span>
+        </div>
+    </div>
+
+    {% for item in items %}
+    <div class="rr-item">
+        <div class="rr-item-q"><span class="rr-item-num">{{ loop.index }}.</span><span>{{ item.question }}</span></div>
+        {% for opt in item.options %}
+        {% set is_correct_opt = loop.index0 == item.correct_index %}
+        {% set is_chosen_opt = loop.index0 == item.chosen_index %}
+        <div class="rr-opt-row {{ 'rr-correct' if is_correct_opt else ('rr-wrong-chosen' if is_chosen_opt else '') }}">
+            <span>{{ ['A','B','C','D'][loop.index0] }}) {{ opt }}</span>
+            {% if is_correct_opt %}<span class="rr-badge rr-ok">Correct answer</span>
+            {% elif is_chosen_opt %}<span class="rr-badge rr-bad">Your answer</span>{% endif %}
+        </div>
+        {% endfor %}
+        {% if item.chosen_index != item.correct_index and item.explanation %}
+        <div class="rr-explain"><i class="bi bi-info-circle-fill"></i>{{ item.explanation }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+</body>
+</html>

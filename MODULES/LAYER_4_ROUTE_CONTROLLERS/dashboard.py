@@ -54,6 +54,10 @@ def dashboard():
     ).order_by(InterviewResult.interview_datetime.desc()).limit(5).all()
     has_result = len(recent_results) > 0
 
+    # Just back from a finished assessment: only trust a code that is really this candidate's own result,
+    # so the welcome-back note and feedback prompt can never be triggered for someone else's session.
+    just_assessed = next((r for r in recent_results if r.session_code == request.args.get("assessed")), None)
+
     error_msg = None
     err_code = request.args.get("error")
     if err_code == "file_too_large":
@@ -89,7 +93,7 @@ def dashboard():
 
     pending_request = pending_slot_request(current_user.id) if is_locked else None
     return render_template("dashboard.html", name=session.get("user_name") or current_user.full_name, user=current_user,
-                           pending_request=pending_request,
+                           pending_request=pending_request, just_assessed=just_assessed,
                            has_progress=has_progress, has_result=has_result,
                            recent_results=recent_results, error=error_msg,
                            is_locked=is_locked, attempts_used=attempts_used,

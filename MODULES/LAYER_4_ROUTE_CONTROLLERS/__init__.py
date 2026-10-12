@@ -6,6 +6,7 @@ def register_blueprints(app):
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.interview_engine import interview_bp
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.practicemode import practice_bp
     from MODULES.LAYER_4_ROUTE_CONTROLLERS.resources import resources_bp
+    from MODULES.LAYER_4_ROUTE_CONTROLLERS.rapid_fire import rapid_fire_bp
 
     app.register_blueprint(login_bp)
     app.register_blueprint(dashboard_bp)
@@ -13,3 +14,4 @@ def register_blueprints(app):
     app.register_blueprint(interview_bp)
     app.register_blueprint(practice_bp)
     app.register_blueprint(resources_bp)
+    app.register_blueprint(rapid_fire_bp)

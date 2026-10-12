@@ -38,7 +38,7 @@ LIMITS = {
     "resume":   (30, 3600),    # resume uploads (each one is analysed by the AI)
     "practice": (120, 3600),   # practice sessions started
 }
-AI_PATHS = ("/interview", "/interview/submit")
+AI_PATHS = ("/interview", "/interview/submit", "/rapid-fire")
 EXEMPT_PREFIXES = ("/static/",)
 EXEMPT_PATHS = ("/health", "/favicon.ico", "/interview/heartbeat", "/logout")     # never limited; the administrator is never limited either
 

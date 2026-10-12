@@ -43,6 +43,8 @@ html.light-theme .lab-bubble-me{background:rgba(139,161,250,0.12) !important;bor
 html.light-theme .lab-bubble-me b{color:#102ea8 !important}
 html.light-theme .lab-points li::before{color:#084298 !important}
 html.light-theme .drill-theme{color:#624109 !important}
+html.light-theme .behavioral-theme{color:#85154c !important}
+html.light-theme .rapid-theme{color:#554208 !important}
 html.light-theme [style="color:#17b978;"]{color:#124590 !important}
 html.light-theme [style="color:#4e73df;"]{color:#224095 !important}
 html.light-theme [style="color:#8e44ad;"]{color:#623375 !important}

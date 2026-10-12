@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapid Fire - AI Interview Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --page-bg: #f0f4ff; --card-bg: #ffffff; --card-border: rgba(0,0,0,0.08);
+            --text-main: #0f172a; --text-muted: #475569; --option-bg: #f8fafc; --option-border: rgba(0,0,0,0.08);
+        }
+        html.dark-theme {
+            --page-bg: #040914; --card-bg: rgba(10,15,29,0.75); --card-border: rgba(0,255,255,0.18);
+            --text-main: #ffffff; --text-muted: #8a9db8; --option-bg: #0b1329; --option-border: #334155;
+        }
+        body { min-height: 100vh; font-family: 'Inter', sans-serif; color: var(--text-main); background: var(--page-bg) !important; }
+        .rf-wrap { max-width: 720px; margin: 0 auto; padding: 32px 18px 60px; }
+        .rf-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+        .rf-kicker { display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #00e5ff; }
+        .rf-topic { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 2px 0 0; }
+        .rf-quit { color: var(--text-muted); text-decoration: none; font-size: 0.86rem; font-weight: 600; }
+        .rf-quit:hover { color: #f87171; }
+        .rf-progress-track { height: 8px; border-radius: 99px; background: var(--option-bg); border: 1px solid var(--option-border); overflow: hidden; margin-bottom: 26px; }
+        .rf-progress-fill { height: 100%; background: linear-gradient(90deg, #00e5ff, #0284c7); transition: width 0.3s ease; }
+        .rf-qnum { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; }
+        .rf-card { background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: 18px; padding: 28px 26px; backdrop-filter: blur(16px); }
+        .rf-question { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1.35rem; line-height: 1.4; margin-bottom: 24px; }
+        .rf-options { display: flex; flex-direction: column; gap: 12px; }
+        .rf-option { display: flex; align-items: center; gap: 14px; padding: 15px 18px; border-radius: 14px; background: var(--option-bg); border: 1.5px solid var(--option-border); cursor: pointer; transition: all 0.15s ease; text-align: left; width: 100%; color: var(--text-main); font-size: 1rem; font-weight: 500; }
+        .rf-option:hover { border-color: #00e5ff; background: rgba(0,229,255,0.08); }
+        .rf-option.rf-selected { border-color: #00e5ff; background: rgba(0,229,255,0.14); box-shadow: 0 0 0 1px #00e5ff inset; }
+        .rf-option-letter { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--card-border); font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+        .rf-selected .rf-option-letter { background: #00e5ff; color: #020510; }
+        .rf-submit { width: 100%; margin-top: 24px; padding: 15px; border: none; border-radius: 14px; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; color: #020510; background: linear-gradient(135deg, #00e5ff, #0284c7); transition: all 0.2s ease; }
+        .rf-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+        .rf-submit:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,229,255,0.35); }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visibility.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo-icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/visibility.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light/rapid_fire.css') }}">
+</head>
+<body>
+<div class="rf-wrap">
+    <div class="rf-top">
+        <div>
+            <span class="rf-kicker"><i class="bi bi-lightning-charge-fill"></i> Rapid Fire</span>
+            <div class="rf-topic">{{ topic }}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+            <button type="button" class="rf-quit" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on" style="background:none;border:none;"><i class="bi bi-eye-slash"></i></button>
+            <form method="POST" action="/rapid-fire/quit" onsubmit="return confirm('Exit this rapid fire quiz? Your progress on it will be lost.');">
+                <button type="submit" class="rf-quit" style="background:none;border:none;"><i class="bi bi-x-lg"></i> Exit</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="rf-qnum">Question {{ q_num }} of {{ total }}</div>
+    <div class="rf-progress-track"><div class="rf-progress-fill" style="width: {{ ((q_num - 1) / total * 100) if total else 0 }}%;"></div></div>
+
+    <div class="rf-card">
+        <div class="rf-question">{{ question }}</div>
+        <form method="POST" id="rfForm">
+            <input type="hidden" name="selected" id="rfSelected" value="">
+            <div class="rf-options">
+                {% for opt in options %}
+                <button type="button" class="rf-option" data-idx="{{ loop.index0 }}" onclick="rfSelect({{ loop.index0 }}, this)">
+                    <span class="rf-option-letter">{{ ['A','B','C','D'][loop.index0] }}</span>
+                    <span>{{ opt }}</span>
+                </button>
+                {% endfor %}
+            </div>
+            <button type="submit" class="rf-submit" id="rfSubmit" disabled>
+                {{ 'Next Question' if q_num < total else 'Finish & See Result' }} <i class="bi bi-arrow-right-short"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function rfSelect(idx, btn) {
+    document.getElementById('rfSelected').value = idx;
+    document.querySelectorAll('.rf-option').forEach(function (b) { b.classList.remove('rf-selected'); });
+    btn.classList.add('rf-selected');
+    document.getElementById('rfSubmit').disabled = false;
+}
+</script>
+</body>
+</html>

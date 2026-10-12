@@ -41,6 +41,7 @@ html.light-theme .sc-high{background:rgba(189,206,231,0.1) !important;color:#053
 html.light-theme .sc-mid{background:rgba(29,78,216,0.1) !important}
 html.light-theme .sc-low{background:rgba(239,68,68,0.1) !important;color:#8a1d1d !important}
 html.light-theme .alert-danger{border:1px solid rgba(25,114,230,0.198) !important;color:#8d1313 !important}
+html.light-theme .alert-success{background:rgba(189,206,231,0.08) !important;border:1px solid rgba(189,206,231,0.25) !important;color:var(--emerald, #0d4496) !important}
 html.light-theme .db-bg::before{background:radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,102,255,0.18) 0%, transparent 55%),
                 radial-gradient(ellipse 60% 50% at 85% 10%, rgba(0,51,255,0.14) 0%, transparent 50%),
                 radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,102,255,0.1) 0%, transparent 55%),

@@ -49,6 +49,21 @@ def extract_domain_from_history(history, fallback="General"):
     return fallback
 
 
+_WEAK_ANSWER_PHRASES = ("i don't know", "i do not know", "not sure", "no idea", "not aware", "no clue", "idk", "dont know")
+
+
+def _looks_like_struggle(answer_text):
+    """Cheap, deterministic signal that the candidate's last answer was weak or a non-answer - no extra AI
+    call, so it adds no latency. Used to force a genuine topic change instead of trusting the model's own
+    judgement call every turn (it tended to keep drilling the same category the candidate just failed on)."""
+    t = (answer_text or "").strip().lower()
+    if not t:
+        return True
+    if any(p in t for p in _WEAK_ANSWER_PHRASES):
+        return True
+    return len(re.findall(r"[a-zA-Z0-9]+", t)) <= 8
+
+
 def _guard_response(guard, as_json=False):
     """Turns a refusal from integrity.guard_session() into a response."""
     if guard.get("terminated"):
@@ -268,7 +283,7 @@ def interview():
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
 
-            if practice_mode in ["viva", "lang", "drill", "debate", "convo"]:
+            if practice_mode in ["viva", "lang", "drill", "debate", "convo", "behavioral"]:
                 prompt = build_initial_question_prompt(
                     practice_mode=practice_mode,
                     practice_topic=practice_topic,
@@ -286,6 +301,18 @@ def interview():
             practice_mode = session.get("interview_mode")
             practice_topic = session.get("practice_topic", "General")
 
+            # Standard mode only: what topic was the previous question on, and did the candidate struggle with
+            # it? Both computed server-side (no extra AI call) so the next prompt can force a real topic change
+            # on failure instead of relying on the model to notice and act on it every turn, which it often didn't.
+            prior_category, candidate_struggled = None, False
+            if not practice_mode:
+                for entry in reversed(chat_history[:-1]):
+                    if entry.get("role") == "question" and entry.get("category"):
+                        prior_category = entry["category"]
+                        break
+                last_answer = chat_history[-1]["text"] if chat_history and chat_history[-1].get("role") == "answer" else ""
+                candidate_struggled = _looks_like_struggle(last_answer)
+
             prompt = build_subsequent_question_prompt(
                 practice_mode=practice_mode,
                 practice_topic=practice_topic,
@@ -296,14 +323,22 @@ def interview():
                 q_count=q_count,
                 min_questions=MIN_QUESTIONS,
                 conversation_text=conversation_text,
-                resume_summary=session.get("resume_summary") or ""
+                resume_summary=session.get("resume_summary") or "",
+                domain=session.get("interview_domain"),
+                # decided once, server-side, instead of left to the model's own guess every turn
+                ask_behavioral=(not practice_mode and q_count == max(1, MIN_QUESTIONS - 1)),
+                prior_category=prior_category,
+                candidate_struggled=candidate_struggled
             )
 
         if not question_text:
-            # conversational practice modes write a short reply plus a follow-up, so they get a little more room
-            chatty = session.get("interview_mode") in ("debate", "convo")
-            question_text = generate_text(prompt, max_output_tokens=110 if chatty else 80,
-                                          temperature={"debate": 0.5, "convo": 0.7}.get(session.get("interview_mode"), 0.2))
+            # conversational practice modes write a short reply plus a follow-up, so they get a little more room.
+            # "lang" needs far more: every question is written twice (target language, then its English
+            # translation), plus an optional grammar correction sentence - 80 tokens reliably cut it off mid-reply.
+            mode_now = session.get("interview_mode")
+            token_budget = {"debate": 110, "convo": 110, "lang": 220}.get(mode_now, 80)
+            question_text = generate_text(prompt, max_output_tokens=token_budget,
+                                          temperature={"debate": 0.5, "convo": 0.7}.get(mode_now, 0.2))
     except Exception as e:
         print(f"[INTERVIEW ERROR] {e}")
         db.session.rollback()
@@ -311,6 +346,13 @@ def interview():
 
     if not is_practice and q_count >= MIN_QUESTIONS and ("INTERVIEW_COMPLETE" in question_text.upper() or "[END_INTERVIEW]" in question_text.upper()):
         return redirect("/interview-result")
+
+    # Parse CATEGORY tag (standard mode only) - tells next turn's prompt what topic this question covered
+    question_category = None
+    cat_match = re.search(r'\[CATEGORY:\s*([^\]]+)\]', question_text, re.IGNORECASE)
+    if cat_match:
+        question_category = cat_match.group(1).strip()[:60]
+        question_text = re.sub(r'\s*\[CATEGORY:\s*[^\]]+\]', '', question_text, flags=re.IGNORECASE).strip()
 
     # Parse TYPE tag
     question_type = "text"
@@ -321,7 +363,10 @@ def interview():
             question_type = tag_type
         question_text = re.sub(r'\s*\[TYPE:\s*[A-Z]+\]', '', question_text).strip()
 
-    chat_history.append({"role": "question", "text": question_text, "type": question_type})
+    question_entry = {"role": "question", "text": question_text, "type": question_type}
+    if question_category:
+        question_entry["category"] = question_category
+    chat_history.append(question_entry)
     session.modified = True
     save_progress(user_id, chat_history, q_count)
 
@@ -705,6 +750,12 @@ def interview_result():
     session.pop("lang_focus", None)
     session.pop("lang_level", None)
     clear_progress(user_id)
+
+    if not is_practice:
+        # A formal assessment just finished: go back to the workspace (like a completed task in most apps)
+        # instead of a separate results page. The result itself already shows there, and a quick feedback
+        # prompt opens automatically; the full report stays one click away ("View Report").
+        return redirect(f"/dashboard?assessed={session_code_val}")
 
     return render_template(
         "interview_result.html",

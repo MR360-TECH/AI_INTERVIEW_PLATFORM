@@ -26,7 +26,7 @@ def practice_start():
         return redirect("/login")
 
     mode = request.form.get("mode")
-    if mode not in ("viva", "lang", "drill", "debate", "convo"):
+    if mode not in ("viva", "lang", "drill", "debate", "convo", "behavioral", "rapid"):
         return redirect("/practice-setup")
 
     # A scored assessment interrupted by a server or network problem is still saved. Starting practice would throw it
@@ -46,6 +46,17 @@ def practice_start():
         session["practice_topic"] = "Debate Practice"        # the AI asks for the topic and side in its opening line
     elif mode == "convo":
         session["practice_topic"] = "Healthy Conversation"   # the AI asks what to talk about in its opening line
+    elif mode == "behavioral":
+        behavioral_domain = request.form.get("behavioral_domain", "").strip()
+        session["practice_topic"] = behavioral_domain or "General Professional"
+    elif mode == "rapid":
+        rapid_topic = request.form.get("rapid_topic", "").strip()
+        session["practice_topic"] = rapid_topic or "General Knowledge"
+        session.pop("rapid_quiz", None)
+        session.pop("rapid_idx", None)
+        session.pop("rapid_answers", None)
+        session.modified = True
+        return redirect(url_for("rapid_fire_bp.rapid_fire"))
     else:
         lang_target = request.form.get("lang_target", "").strip()
         lang_focus = request.form.get("lang_focus", "conversation").strip() or "conversation"

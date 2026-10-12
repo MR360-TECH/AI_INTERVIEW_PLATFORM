@@ -832,6 +832,10 @@
 
         .alert-danger { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.18); color: #ef4444; border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px; }
         html.dark-theme .alert-danger { background: rgba(239,68,68,0.12); }
+        .alert-success { display: flex; align-items: center; gap: 12px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); color: var(--emerald, #10b981); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px; }
+        html.dark-theme .alert-success { background: rgba(16,185,129,0.12); }
+        .alert-success .as-score { font-family: 'Outfit', sans-serif; font-weight: 800; color: var(--text-main); }
+        .alert-success .as-text { flex: 1; color: var(--text-main); font-weight: 500; }
 
         /* Animations */
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -1170,6 +1174,14 @@
             {% if error %}
             <div class="alert alert-danger mb-4 anim d0"><i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
                 {% if eval_retry %}<a href="/interview-result" class="btn btn-sm btn-outline-light rounded-pill ms-2 fw-semibold">Retry now</a>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if just_assessed %}
+            <div class="alert alert-success mb-4 anim d0">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <span class="as-text">Assessment complete! You scored <span class="as-score">{{ "%.1f"|format(just_assessed.score or 0) }} / 10</span> &mdash; see it below, or open the full report.</span>
+                <a href="/my-history/{{ just_assessed.id }}" class="btn btn-sm rounded-pill fw-semibold" style="background:var(--emerald);color:#020510;border:none;white-space:nowrap;">View Report</a>
             </div>
             {% endif %}
 
@@ -2402,6 +2414,26 @@ sessionStorage.removeItem('interview_proctor_strikes');
 </script>
 
 {% include "_feedback_modal.html" %}
+{% if just_assessed %}
+<script>
+/* Just back from a finished assessment: a quick feedback prompt opens by itself, the way most apps ask
+   for a rating right after a task finishes. It reuses the normal feedback box - nothing new to maintain. */
+if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, '', '/dashboard');   // a refresh later shows a clean dashboard, not the prompt again
+}
+window.addEventListener('load', function () {
+    setTimeout(function () {
+        var t = document.createElement('button');
+        t.type = 'button'; t.hidden = true;
+        t.setAttribute('data-feedback-open', '');
+        t.setAttribute('data-feedback-page', 'result');
+        t.setAttribute('data-feedback-session', {{ just_assessed.session_code|tojson }});
+        document.body.appendChild(t);
+        t.click();
+    }, 900);
+});
+</script>
+{% endif %}
 <script>
 /* copy the member's own ID */
 document.addEventListener('click', function (e) {

@@ -279,6 +279,14 @@ def build_initial_question_prompt(practice_mode, practice_topic="General", lang_
             "greet the user and ask what they would like to talk about today (for example their day, a hobby, a goal or "
             "something they are curious about). Output ONLY that opening text followed by [TYPE: TEXT] at the end. No preamble."
         )
+    elif practice_mode == "behavioral":
+        return (
+            f"You are a friendly HR interviewer starting a behavioral-interview practice session for the domain/role: {practice_topic}. "
+            "Briefly introduce the session in one short sentence, then ask your first behavioral or situational question "
+            "(for example about teamwork, a past challenge, or a conflict), framed for someone working in this domain. "
+            "Do NOT ask a technical or theory question. "
+            "Output ONLY the question text followed by [TYPE: TEXT] at the end. No preamble, no intro."
+        )
     return ""
 
 
@@ -389,7 +397,7 @@ def build_conversation_prompt(practice_mode, conversation_text):
             "Your next reply (plain text only):")
 
 
-def build_subsequent_question_prompt(practice_mode, practice_topic, lang_target, lang_focus, lang_level, difficulty, q_count, min_questions, conversation_text, resume_summary=""):
+def build_subsequent_question_prompt(practice_mode, practice_topic, lang_target, lang_focus, lang_level, difficulty, q_count, min_questions, conversation_text, resume_summary="", domain=None, ask_behavioral=False, prior_category=None, candidate_struggled=False):
     if practice_mode in CONVERSATION_RULES:
         return build_conversation_prompt(practice_mode, conversation_text)
     if practice_mode == "viva":
@@ -422,6 +430,13 @@ def build_subsequent_question_prompt(practice_mode, practice_topic, lang_target,
             f"The candidate is doing a Concept Drill on: {practice_topic}. "
             "Ask helpful conceptual questions that challenge their logic and reasoning on this topic."
         )
+    elif practice_mode == "behavioral":
+        difficulty_instruction = (
+            f"The candidate is practising behavioral/HR-style interview questions for the domain/role: {practice_topic}. "
+            "Every single question MUST be a behavioral or situational question (teamwork, conflict, failure, leadership, "
+            "time management, a difficult decision, etc.), framed to be realistic for someone in this domain. "
+            "NEVER ask a technical, theory or coding question. Explore a different scenario each time - do not repeat the same situation."
+        )
     else:
         level = get_level(difficulty)
         difficulty_instruction = (
@@ -446,22 +461,75 @@ def build_subsequent_question_prompt(practice_mode, practice_topic, lang_target,
     if q_count >= min_questions:
         completion_option = f"If you have gathered enough evaluation data after {min_questions} questions, you may conclude by outputting ONLY: [END_INTERVIEW]\n"
 
+    category_note = ""
+    category_tag_rule = ""
+    if practice_mode == "behavioral":
+        # Every question is already forced behavioral by difficulty_instruction above - this generic rule would
+        # just be redundant ("you may ask 1-2"), so it is dropped entirely instead of being left to confuse things.
+        domain_rule = (
+            "CRITICAL DOMAIN RULE:\n"
+            "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
+        )
+        behavioral_rule = "5. BEHAVIORAL FOCUS: Every question in this session is already required to be behavioral or situational, per the instructions above - do not ask a technical question.\n"
+    elif practice_mode:
+        # viva / lang / drill: unchanged from before - already tested and working, left exactly as is.
+        domain_rule = (
+            "CRITICAL DOMAIN RULE:\n"
+            "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
+        )
+        behavioral_rule = "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
+    else:
+        # Standard assessment: state the confirmed domain directly instead of asking the model to re-infer it
+        # from the transcript every turn (the old wording let the topic drift after a few turns). The behavioral
+        # question is now decided once, server-side, instead of left to the model's own guess each turn - "you
+        # may ask 1-2" with no memory of whether it already did caused it to sometimes skip it, sometimes stack it.
+        domain_rule = (
+            "CRITICAL DOMAIN RULE:\n"
+            f"The candidate's confirmed domain/role is: {domain or 'the domain stated in their first answer'}. Every question MUST stay strictly 100% "
+            "within this domain only. Never switch to an unrelated field, even if an answer briefly touches on something else.\n\n"
+        )
+        behavioral_rule = (
+            "5. BEHAVIORAL RULE: This question MUST be a short behavioral or situational question (for example 'Tell me about "
+            "yourself', a strength/weakness, or a realistic domain conflict scenario), not a technical one.\n"
+            if ask_behavioral else
+            "5. BEHAVIORAL RULE: Do NOT ask a behavioral or situational question this turn - ask a technical question within the domain.\n"
+        )
+        # The old wording ("change the topic if they struggle") was pure guesswork for the model every turn, and
+        # it often kept drilling the same category anyway. Now the server tracks the previous question's topic
+        # (self-reported via the CATEGORY tag) and whether the answer actually looked weak, and states it plainly.
+        category_tag_rule = (
+            "   - Also append `[CATEGORY: <a short 2-4 word label for this question's own topic, e.g. database "
+            "indexing>]` right before the TYPE tag.\n"
+        )
+        if prior_category:
+            if candidate_struggled:
+                category_note = (
+                    f"TOPIC CONTINUITY: the candidate's previous answer (topic: \"{prior_category}\") was weak or a non-answer. "
+                    f"You MUST now ask about a CLEARLY DIFFERENT category - not \"{prior_category}\" or anything closely related to it.\n\n"
+                )
+            else:
+                category_note = (
+                    f"TOPIC CONTINUITY: the previous question's topic was \"{prior_category}\". Go deeper on it if that fits the "
+                    "candidate's level and the rules above, or move to a new category - your choice.\n\n"
+                )
+
     prompt = (
         "You are an expert interviewer conducting a real-time assessment.\n\n"
         f"CANDIDATE TARGET LEVEL:\n{difficulty_instruction}\n\n"
-        "CRITICAL DOMAIN RULE:\n"
-        "Determine the candidate's core domain/role from their first answer. You MUST stay strictly 100% within this domain. Never switch to unrelated fields.\n\n"
+        f"{domain_rule}"
+        f"{category_note}"
         f"{resume_block}"
         "RULES FOR OUTPUT:\n"
         "1. Output ONLY the raw next question. Keep it concise (under 2 sentences). ZERO preamble, conversational filler, praise, or acknowledgment.\n"
         "2. If they struggle or answer 'I don't know', DO NOT give them the answer. Change the topic/concept/context within the domain and output the next question immediately.\n"
         "3. Explore diverse categories of questions within the domain without repeating topics.\n"
         "4. HUMAN INTERVIEWER CLARIFICATION RULE: If the candidate indicates they do not understand a term or question, briefly clarify (in 1 short sentence), then state the question.\n"
-        "5. BEHAVIORAL RULE: You may seamlessly integrate 1-2 behavioral or situational questions (e.g., 'Tell me about yourself', 'Why should we hire you?', or domain conflict scenarios).\n"
+        f"{behavioral_rule}"
         "6. INPUT TAG RULE: You MUST append a tag at the very end of your output:\n"
         "   - `[TYPE: CODE]` if they need to write or fix code.\n"
         "   - `[TYPE: FILE]` if they need to upload a diagram or image.\n"
         "   - `[TYPE: TEXT]` for all standard conceptual questions.\n"
+        f"{category_tag_rule}"
         f"{completion_option}\n"
         f"Conversation so far:\n{conversation_text}\n"
         "Output ONLY the raw question text with its tag below:"
@@ -510,6 +578,10 @@ def build_evaluation_prompt(practice_mode, practice_topic, lang_target, difficul
     elif practice_mode == "convo":
         grading_instruction = ("Friendly practice conversation. Grade on clarity of expression, engagement with the topic, active listening "
                                "(responding to what was said) and natural conversational flow. This is practice, so be encouraging.")
+    elif practice_mode == "behavioral":
+        grading_instruction = (f"Behavioral/HR interview practice for the domain/role: {practice_topic}. Grade on structure (a clear situation, "
+                               "action and outcome), ownership of the result, honesty, and how relevant the example was to this domain. "
+                               "This is practice, so be encouraging.")
     else:
         level = get_level(difficulty)
         grading_instruction = f"{level['grading']}\n{level['bands']}\n{COMMON_SCORING_RULES}"
@@ -603,3 +675,92 @@ def evaluate_interview(prompt):
         if not summary_text:
             summary_text = "Not enough data to generate a report."
     return score_num, summary_text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# RAPID FIRE: a batch of multiple-choice questions generated in ONE call (instead of one small call per
+# question, like every other mode) - faster for the candidate, and scoring is plain right/wrong matching, so
+# no evaluation call is needed either. A block the parser cannot read is simply skipped, never raised as an
+# error, so one malformed question can never break the whole quiz.
+# ══════════════════════════════════════════════════════════════════════════════
+
+RAPID_FIRE_COUNT = 10
+
+
+def build_mcq_batch_prompt(topic, count=RAPID_FIRE_COUNT):
+    return (
+        f"You are an expert quiz setter creating a {count}-question multiple-choice rapid-fire quiz on: {topic}.\n\n"
+        "RULES:\n"
+        f"1. Write exactly {count} questions, strictly on this topic, covering a good spread of sub-topics - never two "
+        "questions testing the same narrow point.\n"
+        "2. Each question has exactly 4 options (A, B, C, D) and only one is correct.\n"
+        "3. All 4 options must be plausible and of similar length - no joke or obviously-wrong options.\n"
+        "4. Keep the question and every option to one short line each.\n"
+        "5. EXPLAIN is one short sentence giving the reason the correct option is correct.\n\n"
+        "OUTPUT FORMAT - repeat this block exactly once per question, nothing else before, between or after:\n"
+        "Q: <question text>\n"
+        "A) <option>\n"
+        "B) <option>\n"
+        "C) <option>\n"
+        "D) <option>\n"
+        "CORRECT: <A, B, C or D>\n"
+        "EXPLAIN: <one short sentence>\n"
+        "---\n\n"
+        f"Write all {count} questions now, in the exact format above, each block separated by a line containing only ---."
+    )
+
+
+def parse_mcq_batch(raw_text, expected_count=RAPID_FIRE_COUNT):
+    """Returns a list of {"question", "options": [4 strings], "correct_index": 0-3, "explanation"}. A block
+    missing any required field is skipped rather than raising, so one bad block never kills the whole quiz."""
+    blocks = re.split(r"\n-{2,}\s*\n?", raw_text.strip())
+    out = []
+    for block in blocks:
+        q_m = re.search(r"Q:\s*(.+)", block)
+        a_m = re.search(r"A\)\s*(.+)", block)
+        b_m = re.search(r"B\)\s*(.+)", block)
+        c_m = re.search(r"C\)\s*(.+)", block)
+        d_m = re.search(r"D\)\s*(.+)", block)
+        correct_m = re.search(r"CORRECT:\s*([ABCD])", block, re.IGNORECASE)
+        if not (q_m and a_m and b_m and c_m and d_m and correct_m):
+            continue
+        explain_m = re.search(r"EXPLAIN:\s*(.+)", block)
+        out.append({
+            "question": q_m.group(1).strip(),
+            "options": [a_m.group(1).strip(), b_m.group(1).strip(), c_m.group(1).strip(), d_m.group(1).strip()],
+            "correct_index": "ABCD".index(correct_m.group(1).upper()),
+            "explanation": explain_m.group(1).strip() if explain_m else "",
+        })
+        if len(out) >= expected_count:
+            break
+    return out
+
+
+# Used only if the AI cannot produce a usable quiz after a retry - so Rapid Fire can never hard-crash.
+FALLBACK_MCQ_QUIZ = [
+    {"question": "Which of these is generally the FIRST step in solving a new problem?",
+     "options": ["Understanding the requirements", "Writing the final report", "Deploying to production", "Deleting old notes"],
+     "correct_index": 0, "explanation": "You can't solve a problem correctly without first understanding what is being asked."},
+    {"question": "Which habit most helps you catch mistakes before they become serious?",
+     "options": ["Ignoring edge cases", "Reviewing your own work critically", "Skipping testing to save time", "Avoiding feedback"],
+     "correct_index": 1, "explanation": "Critically reviewing your own work catches errors early, before they compound."},
+    {"question": "When you don't know the answer to something, the best first move is usually to:",
+     "options": ["Guess confidently and move on", "Make something up", "Say so honestly and reason through it", "Change the subject"],
+     "correct_index": 2, "explanation": "Honesty plus reasoning it through shows real problem-solving, unlike guessing or bluffing."},
+]
+
+
+def generate_mcq_quiz(topic, count=RAPID_FIRE_COUNT):
+    """Returns a list of MCQ dicts, generated in one AI call with one retry, falling back to a small built-in
+    quiz only if both attempts fail - so this can never raise and never leave the candidate stuck."""
+    prompt = build_mcq_batch_prompt(topic, count)
+    for _attempt in range(2):
+        try:
+            raw = generate_text(prompt, max_output_tokens=1800, temperature=0.4,
+                                deadline_s=45.0, per_call_timeout_s=25.0, trim_truncated=False)
+        except AIUnavailable:
+            continue
+        quiz = parse_mcq_batch(raw, count)
+        if len(quiz) >= min(5, count):
+            return quiz
+    return FALLBACK_MCQ_QUIZ
