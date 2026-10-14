@@ -972,7 +972,7 @@
         </h5>
         <div class="d-flex align-items-center gap-2">
           {% if resume_file_exists %}
-          <a href="/uploads/resumes/{{ candidate.resume_filename }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
+          <a href="/admin/user/{{ candidate.id }}/resume" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
             <i class="bi bi-box-arrow-up-right me-1"></i> Open Original File
           </a>
           {% endif %}
@@ -986,14 +986,14 @@
           {% if ext in ['png', 'jpg', 'jpeg'] %}
             <!-- Image resume view -->
             <div style="text-align:center;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px;max-height:70vh;overflow-y:auto;">
-              <img src="/uploads/resumes/{{ candidate.resume_filename }}" alt="Candidate Resume" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
+              <img src="/admin/user/{{ candidate.id }}/resume" alt="Candidate Resume" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.1);">
             </div>
           {% elif ext == 'pdf' %}
             <!-- PDF resume view -->
             <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;height:75vh;">
-              <object data="/uploads/resumes/{{ candidate.resume_filename }}" type="application/pdf" style="width:100%;height:100%;">
-                <iframe src="/uploads/resumes/{{ candidate.resume_filename }}" style="width:100%;height:100%;border:none;">
-                  <p>Your browser does not support inline PDFs. <a href="/uploads/resumes/{{ candidate.resume_filename }}" target="_blank">Click here to view the PDF file.</a></p>
+              <object data="/admin/user/{{ candidate.id }}/resume" type="application/pdf" style="width:100%;height:100%;">
+                <iframe src="/admin/user/{{ candidate.id }}/resume" style="width:100%;height:100%;border:none;">
+                  <p>Your browser does not support inline PDFs. <a href="/admin/user/{{ candidate.id }}/resume" target="_blank">Click here to view the PDF file.</a></p>
                 </iframe>
               </object>
             </div>
@@ -1002,7 +1002,7 @@
             <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:24px;text-align:center;">
               <i class="bi bi-file-earmark-word-fill" style="font-size:3rem;color:var(--indigo);"></i>
               <h6 class="fw-bold mt-2" style="color:var(--text-1);">Original File: {{ candidate.resume_filename }}</h6>
-              <a href="/uploads/resumes/{{ candidate.resume_filename }}" download class="btn btn-primary rounded-pill px-4 mt-2 fw-bold">
+              <a href="/admin/user/{{ candidate.id }}/resume" download class="btn btn-primary rounded-pill px-4 mt-2 fw-bold">
                 <i class="bi bi-download me-1"></i> Download File
               </a>
             </div>
