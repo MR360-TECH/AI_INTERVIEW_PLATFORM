@@ -12,7 +12,7 @@ html.light-theme .navbar .nav-link:hover{color:#102146 !important;background:rgb
 html.light-theme .navbar .btn-light{background:rgba(0,102,255,0.12) !important;border:1px solid rgba(0,102,255,0.3) !important;color:#084298 !important}
 html.light-theme .navbar .btn-light:hover{background:rgba(0,102,255,0.22) !important;color:#102146 !important}
 html.light-theme .back-btn-global{color:#102146 !important;background:rgba(240,246,255,0.62) !important;border:1.5px solid #ccd5e3 !important;box-shadow:0 4px 16px rgba(30,64,175,0.15) !important}
-html.light-theme .back-btn-global:hover{color:#084298 !important;background:rgba(240,246,255,0.62) !important;border-color:#0066ff !important;box-shadow:0 0 20px rgba(37,99,235,0.245) !important}
+html.light-theme .back-btn-global:hover{color:#0d4394 !important;background:rgba(240,246,255,0.62) !important;border-color:#3885f8 !important;box-shadow:0 0 20px rgba(37,99,235,0.315) !important}
 html.light-theme .topbar{border-bottom:1px solid rgba(0,102,255,0.12) !important}
 html.light-theme .topbar h4{color:#102146 !important;text-shadow:0 1px 3px rgba(30,64,175,0.22) !important}
 html.light-theme .topbar h4 span{color:#084298 !important}

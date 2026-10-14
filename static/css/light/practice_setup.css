@@ -23,7 +23,7 @@ html.light-theme .debate-theme{color:#8d1313 !important}
 html.light-theme .convo-theme{color:#114390 !important}
 html.light-theme .selected-card{border:2px solid #0066ff !important;background-color:rgba(0,102,255,0.08) !important;box-shadow:0 0 15px rgba(37,99,235,0.175) !important}
 html.light-theme .pulse-dot{background:#bdcee7 !important}
-html.light-theme .back-btn-global:hover{border-color:rgba(59,130,246,0.3) !important}
+html.light-theme .back-btn-global:hover{border-color:#3885f8 !important;box-shadow:0 0 16px rgba(37,99,235,0.245) !important}
 html.light-theme code,html.light-theme pre,html.light-theme .code-block,html.light-theme pre code{background:rgba(240,246,255,0.62) !important;color:#084298 !important;border:1px solid rgba(0,102,255,0.15) !important}
 html.light-theme code,html.light-theme pre,html.light-theme .code-block,html.light-theme pre code{background:rgba(240,246,255,0.62) !important;color:#084298 !important;border:1px solid rgba(0,102,255,0.15) !important}
 html.light-theme code,html.light-theme pre,html.light-theme .code-block,html.light-theme pre code{background:rgba(240,246,255,0.62) !important;color:#084298 !important;border:1px solid rgba(0,102,255,0.15) !important}

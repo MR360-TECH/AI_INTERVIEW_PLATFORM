@@ -20,6 +20,8 @@
             --text-1: #1e293b;
             --text-2: #64748b;
             --brand: #2563eb;
+            --attr-bg: #f8fafc;
+            --attr-border: #e0e7ff;
         }
         html.dark-theme {
             --surface: #08122a;
@@ -28,7 +30,32 @@
             --text-1: #ffffff;
             --text-2: #cbd5e1;
             --brand: #00ffff;
+            --attr-bg: rgba(10, 15, 29, 0.8);
+            --attr-border: rgba(0, 255, 255, 0.15);
         }
+
+        /* ── Attribute cards (profile facts: gender, education, links, skills...) ── */
+        .attr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .attr-grid.attr-grid-3 { grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 760px) { .attr-grid, .attr-grid.attr-grid-3 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 460px) { .attr-grid, .attr-grid.attr-grid-3 { grid-template-columns: 1fr; } }
+        .attr-card { background: var(--attr-bg); border: 1.5px solid var(--attr-border); border-radius: 12px; padding: 13px 16px; display: flex; align-items: center; gap: 13px; min-height: 68px; min-width: 0; }
+        .attr-icon { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0; }
+        .attr-icon.ic-green { background: rgba(16,185,129,.15); color: #10b981; }
+        .attr-icon.ic-blue  { background: rgba(59,130,246,.15); color: #3b82f6; }
+        .attr-icon.ic-amber { background: rgba(245,158,11,.15); color: #f59e0b; }
+        .attr-icon.ic-red   { background: rgba(239,68,68,.15);  color: #ef4444; }
+        .attr-icon.ic-mono  { background: rgba(148,163,184,.18); color: var(--text-1); }
+        .attr-icon.ic-link  { background: rgba(10,102,194,.15); color: #00a0dc; }
+        .attr-icon.ic-cyan  { background: rgba(6,182,212,.15);  color: #06b6d4; }
+        .attr-body { min-width: 0; flex: 1; }
+        .attr-label { font-size: .68rem; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
+        .attr-value { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: .9rem; color: var(--text-1); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .attr-value a { color: var(--brand); text-decoration: none; }
+        .attr-value a:hover { text-decoration: underline; }
+        .attr-value.wrap { white-space: normal; text-transform: none; }
+        .attr-skill-chip { background: rgba(0,255,255,.12); border: 1px solid rgba(0,255,255,.3); color: var(--brand); font-size: .72rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; text-decoration: none; display: inline-block; margin: 2px 3px 0 0; }
+        .attr-skill-chip:hover { background: rgba(0,255,255,.25); }
 
         * { box-sizing: border-box; }
 
@@ -510,96 +537,63 @@ html.dark-theme .db-bg { display: block; }
             </div>
         </div>
 
-        <!-- 4 Attribute Blocks -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(16, 185, 129, 0.15) !important; color: #10b981 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-gender-ambiguous"></i></div>
-                    <div>
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Gender</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.gender or '—' }}</div>
-                    </div>
+        <!-- Profile facts -->
+        <div class="attr-grid mb-3">
+            <div class="attr-card">
+                <div class="attr-icon ic-green"><i class="bi bi-gender-ambiguous"></i></div>
+                <div class="attr-body"><div class="attr-label">Gender</div><div class="attr-value">{{ user.gender or '—' }}</div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-icon ic-blue"><i class="bi bi-mortarboard-fill"></i></div>
+                <div class="attr-body"><div class="attr-label">Education Level</div><div class="attr-value">{{ user.education or '—' }}</div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-icon ic-amber"><i class="bi bi-book-half"></i></div>
+                <div class="attr-body"><div class="attr-label">Course</div><div class="attr-value">{{ user.course or '—' }}</div></div>
+            </div>
+            <div class="attr-card">
+                <div class="attr-icon ic-red"><i class="bi bi-calendar3-event"></i></div>
+                <div class="attr-body"><div class="attr-label">Semester</div><div class="attr-value">{{ user.semester or '—' }}</div></div>
+            </div>
+        </div>
+
+        <div class="attr-grid attr-grid-3 mb-2">
+            <div class="attr-card">
+                <div class="attr-icon ic-mono"><i class="bi bi-github"></i></div>
+                <div class="attr-body">
+                    <div class="attr-label">Github</div>
+                    {% if user.github_url %}
+                    <div class="attr-value"><a href="{{ user.github_url }}" target="_blank" rel="noopener">{{ user.github_url.replace('https://github.com/', '') }}</a></div>
+                    {% else %}<div class="attr-value">—</div>{% endif %}
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(59, 130, 246, 0.15) !important; color: #3b82f6 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-mortarboard-fill"></i></div>
-                    <div>
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Education Level</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.education or '—' }}</div>
-                    </div>
+            <div class="attr-card">
+                <div class="attr-icon ic-link"><i class="bi bi-linkedin"></i></div>
+                <div class="attr-body">
+                    <div class="attr-label">LinkedIn</div>
+                    {% if user.linkedin_url %}
+                    <div class="attr-value"><a href="{{ user.linkedin_url }}" target="_blank" rel="noopener">{{ user.linkedin_url.replace('https://www.linkedin.com/in/', '') }}</a></div>
+                    {% else %}<div class="attr-value">—</div>{% endif %}
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(245, 158, 11, 0.15) !important; color: #f59e0b !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-book-half"></i></div>
-                    <div>
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Course</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.course or '—' }}</div>
+            <div class="attr-card">
+                <div class="attr-icon ic-cyan"><i class="bi bi-cpu"></i></div>
+                <div class="attr-body">
+                    <div class="attr-label">Skills</div>
+                    {% if user.skills %}
+                    <div class="attr-value wrap">
+                        {% for skill in user.skills.split(',') %}
+                        <a href="https://www.google.com/search?q={{ skill.strip()|urlencode }}" target="_blank" class="attr-skill-chip">{{ skill.strip() }}</a>
+                        {% endfor %}
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 12px;">
-                    <div style="background: rgba(239, 68, 68, 0.15) !important; color: #ef4444 !important; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="bi bi-calendar3-event"></i></div>
-                    <div>
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Semester</div>
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; text-transform: uppercase;">{{ user.semester or '—' }}</div>
-                    </div>
+                    {% else %}<div class="attr-value">—</div>{% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Github / Linkedin / Skills row -->
-        <div class="row g-3 mb-2">
-            <div class="col-md-4">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
-                    <div style="background: rgba(255, 255, 255, 0.1) !important; color: #ffffff !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-github"></i></div>
-                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Github</div>
-                        {% if user.github_url %}
-                        <a href="{{ user.github_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ user.github_url.replace('https://github.com/', '') }}</a>
-                        {% else %}
-                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px;">
-                    <div style="background: rgba(10, 102, 194, 0.15) !important; color: #00a0dc !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-linkedin"></i></div>
-                    <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;">
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">LinkedIn</div>
-                        {% if user.linkedin_url %}
-                        <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener" style="font-size: 0.9rem; font-weight: 700; color: #00ffff; text-decoration: none; overflow: hidden; text-overflow: ellipsis; display: block;">{{ user.linkedin_url.replace('https://www.linkedin.com/in/', '') }}</a>
-                        {% else %}
-                        <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; min-height: 72px; width: 100%;">
-                    <div style="background: rgba(6, 182, 212, 0.15) !important; color: #06b6d4 !important; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;"><i class="bi bi-cpu"></i></div>
-                    <div>
-                        <div style="font-size: 0.68rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Skills</div>
-                        <div class="d-flex flex-wrap gap-1 mt-1">
-                             {% if user.skills %}
-                                {% for skill in user.skills.split(',') %}
-                                <a href="https://www.google.com/search?q={{ skill.strip()|urlencode }}" target="_blank" style="background: rgba(0, 255, 255, 0.12); border: 1px solid rgba(0, 255, 255, 0.3); color: #00ffff; font-size: 0.72rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(0, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(0, 255, 255, 0.12)'">{{ skill.strip() }}</a>
-                                {% endfor %}
-                            {% else %}
-                                <span style="font-size: 0.9rem; font-weight: 700; color: #ffffff;">—</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Registration Timestamp details inside card bottom -->
-        <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.78rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 6px;">
-            <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: #00ffff;">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p')|upper }}</span>
+        <div class="mt-4 pt-3" style="border-top: 1px solid var(--border); font-size: 0.78rem; font-weight: 600; color: var(--text-2); display: flex; align-items: center; gap: 6px;">
+            <i class="bi bi-calendar-event"></i> REGISTERED ON <span style="color: var(--brand);">{{ user.registered_at.strftime('%d %b %Y, %I:%M %p')|upper }}</span>
         </div>
     </div>
 
@@ -667,10 +661,10 @@ html.dark-theme .db-bg { display: block; }
             {% endif %}
         </div>
 
-        <div class="row g-3">
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 16px;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Account Status</div>
+        <div class="attr-grid attr-grid-3" style="max-width: 560px;">
+            <div class="attr-card" style="min-height:auto;">
+                <div class="attr-body">
+                    <div class="attr-label">Account Status</div>
                     {% if settings.enable_attempt_limits %}
                         {% if remaining_tokens <= 0 %}
                         <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1.5px solid rgba(239, 68, 68, 0.4); font-weight: 800; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;">
@@ -682,16 +676,16 @@ html.dark-theme .db-bg { display: block; }
                         </span>
                         {% endif %}
                     {% else %}
-                        <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #cbd5e1; font-weight: 700; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;">
+                        <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-2); font-weight: 700; font-size: 0.82rem; padding: 4px 10px; border-radius: 6px;">
                             Unlimited Access
                         </span>
                     {% endif %}
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6">
-                <div style="background: rgba(10, 15, 29, 0.8); border: 1.5px solid rgba(0, 255, 255, 0.15); border-radius: 12px; padding: 14px 16px;">
-                    <div style="font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Attempts Taken</div>
-                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 900; color: #ffffff;">{{ attempts_used }}</div>
+            <div class="attr-card" style="min-height:auto;">
+                <div class="attr-body">
+                    <div class="attr-label">Attempts Taken</div>
+                    <div style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--text-1);">{{ attempts_used }}</div>
                 </div>
             </div>
         </div>

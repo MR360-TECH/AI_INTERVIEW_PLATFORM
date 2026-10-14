@@ -49,8 +49,8 @@ html.light-theme .results-table tbody td{color:#102146 !important}
 html.light-theme .avatar-circle{box-shadow:0 4px 15px rgba(37,99,235,0.245) !important;background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 html.light-theme .cand-name{color:#102146 !important}
 html.light-theme .cand-email{color:#1a3470 !important}
-html.light-theme .auth-badge.google{background:rgba(66,133,244,0.12) !important;color:#114497 !important;border-color:rgba(25,114,230,0.385) !important}
-html.light-theme .auth-badge.verified{background:rgba(189,206,231,0.1) !important;color:#22477f !important;border-color:rgba(189,206,231,0.35) !important}
+html.light-theme .auth-badge.google{background:rgba(240,246,255,0.62) !important;border-color:rgba(25,114,230,0.385) !important}
+html.light-theme .auth-badge.verified{background:rgba(189,206,231,0.14) !important;color:#22477f !important;border-color:rgba(189,206,231,0.45) !important}
 html.light-theme .score-wrap{color:#102146 !important}
 html.light-theme .score-total-denom{color:#22418d !important}
 html.light-theme .score-bar-track{background:rgba(240,246,255,0.62) !important}

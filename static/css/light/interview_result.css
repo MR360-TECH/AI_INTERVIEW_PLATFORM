@@ -18,7 +18,7 @@ html.light-theme ::-webkit-scrollbar-thumb:hover{background:linear-gradient(135d
 html.light-theme .btn-primary-action{box-shadow:0 4px 18px rgba(37,99,235,0.245) !important;background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 html.light-theme .btn-primary-action:hover{box-shadow:0 8px 28px rgba(37,99,235,0.385) !important}
 html.light-theme .back-btn-global{background:rgba(240,246,255,0.62) !important;color:#102146 !important;border:1.5px solid #ccd5e3 !important;box-shadow:0 2px 10px rgba(30,64,175,0.105) !important}
-html.light-theme .back-btn-global:hover{background:rgba(240,246,255,0.62) !important;border-color:#0066ff !important;color:#084298 !important;box-shadow:0 4px 18px rgba(37,99,235,0.21) !important}
+html.light-theme .back-btn-global:hover{background:rgba(240,246,255,0.62) !important;border-color:#3885f8 !important;color:#0d4394 !important;box-shadow:0 4px 18px rgba(37,99,235,0.28) !important}
 html.light-theme .report-card{background:rgba(240,246,255,0.62) !important;border:2px solid rgba(0,102,255,0.25) !important;box-shadow:0 24px 70px rgba(30,64,175,0.22) !important}
 html.light-theme .report-card::before{background:linear-gradient(135deg,#1e40af,#2563eb) !important;color:#ffffff !important;border-color:transparent !important}
 html.light-theme .letterhead{background:linear-gradient(135deg, rgba(0,102,255,0.12) 0%, rgba(187,205,232,0.2) 100%) !important;border-bottom:2px solid rgba(0,102,255,0.22) !important;color:#102146 !important}

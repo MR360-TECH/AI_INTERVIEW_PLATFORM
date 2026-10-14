@@ -7,7 +7,7 @@ html.light-theme .login-header h2{color:#102146 !important}
 html.light-theme .login-header p{color:rgba(16,33,70,0.9) !important}
 html.light-theme .btn-login{box-shadow:0 4px 14px rgba(37,99,235,0.21) !important;color:#102146 !important}
 html.light-theme .btn-login:hover{color:#102146 !important;box-shadow:0 8px 20px rgba(37,99,235,0.28) !important}
-html.light-theme .back-btn-global:hover{border-color:rgba(59,130,246,0.3) !important}
+html.light-theme .back-btn-global:hover{border-color:#3885f8 !important;box-shadow:0 0 16px rgba(37,99,235,0.245) !important}
 html.light-theme .db-bg::before{background:radial-gradient(ellipse 80% 60% at 15% 20%, rgba(0,102,255,0.18) 0%, transparent 55%),
                 radial-gradient(ellipse 60% 50% at 85% 10%, rgba(0,51,255,0.14) 0%, transparent 50%),
                 radial-gradient(ellipse 70% 55% at 50% 100%, rgba(0,102,255,0.1) 0%, transparent 55%),
