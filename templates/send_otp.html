@@ -29,8 +29,8 @@
             --back-bg:           #ffffff;
             --back-border:       rgba(0, 0, 0, 0.10);
             --back-color:        #475569;
-            --back-hover-bg:     #f1f5f9;
-            --back-hover-color:  #0f172a;
+            --back-hover-bg:     rgba(56, 189, 248, 0.12);
+            --back-hover-color:  #0369a1;
             --link-color:        #2563eb;
         }
 
@@ -49,7 +49,7 @@
             --back-bg:           #0f1c3a;
             --back-border:       #475569;
             --back-color:        #ffffff;
-            --back-hover-bg:     rgba(0,255,255,0.15);
+            --back-hover-bg:     rgba(56, 189, 248, 0.18);
             --back-hover-color:  #ffffff;
             --link-color:        #00ffff;
         }
@@ -209,12 +209,13 @@
         .back-btn-global:hover {
             color: var(--back-hover-color);
             background: var(--back-hover-bg);
-            border-color: rgba(59, 130, 246, 0.3);
+            border-color: #38bdf8;
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
             transform: translateY(-1px);
         }
 
         html.dark-theme .back-btn-global:hover {
-            border-color: rgba(255, 255, 255, 0.20);
+            border-color: #38bdf8;
         }
 
         @media (max-width: 576px) {

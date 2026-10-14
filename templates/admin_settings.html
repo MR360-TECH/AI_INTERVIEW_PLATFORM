@@ -494,8 +494,7 @@
         </div>
         {% if approval_on %}
         <p class="dev-lead">Only these devices can open the admin account. A new device needs your approval from the e-mail sent to
-            <b>{{ approval_mailbox }}</b>. Removing a device signs it out at once. Changing <b>ADMIN_PASSWORD</b> in Render signs out
-            every device and cancels every approval.</p>
+            <b>{{ approval_mailbox }}</b>. Removing a device signs it out at once.</p>
         {% if devices %}
         <div class="dev-list">
             {% for d in devices %}
@@ -515,8 +514,7 @@
         <p class="dev-lead mb-0">No devices are approved yet.</p>
         {% endif %}
         {% else %}
-        <p class="dev-lead mb-0">The admin password alone opens the admin area. To allow only devices you approve, set
-            <b>ADMIN_APPROVAL_EMAIL</b> in Render to your personal Gmail.</p>
+        <p class="dev-lead mb-0">The admin password alone opens the admin area. Device approval is not set up for this site.</p>
         {% endif %}
     </div>
     <style>

@@ -455,14 +455,11 @@ html.dark-theme .db-bg { display: block; }
 </div>
 <div class="page-shell">
 
-    <div class="top-bar">
+    <div class="top-bar" style="justify-content: flex-start;">
         <button type="button" class="back-btn-global" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
         <a href="/admin/users" class="back-btn-global">
             <i class="bi bi-arrow-left"></i> Back
         </a>
-        <form method="post" action="/admin/delete-user/{{ user.id }}?next=/admin/users" style="display:inline;margin:0" onsubmit="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
-            <button type="submit" class="btn-del-user"><i class="bi bi-trash"></i> Delete User</button>
-        </form>
     </div>
 
     <!-- Profile Hero -->
@@ -472,11 +469,16 @@ html.dark-theme .db-bg { display: block; }
             <div class="d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif; font-weight: 800; color: #ffffff; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em;">
                 <i class="bi bi-person-badge-fill" style="color: #00ffff;"></i> Candidate Profile
             </div>
-            {% if user.resume_filename or user.resume_text %}
-            <button class="btn" data-bs-toggle="modal" data-bs-target="#userResumeModal" style="border: 1.5px solid rgba(0, 255, 255, 0.2); background: rgba(0, 255, 255, 0.05); color: #00ffff; font-weight: 600; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
-                <i class="bi bi-file-earmark-text"></i> User Resume
-            </button>
-            {% endif %}
+            <div class="d-flex align-items-center gap-2">
+                {% if user.resume_filename or user.resume_text %}
+                <button class="btn" data-bs-toggle="modal" data-bs-target="#userResumeModal" style="border: 1.5px solid rgba(0, 255, 255, 0.2); background: rgba(0, 255, 255, 0.05); color: #00ffff; font-weight: 600; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-file-earmark-text"></i> User Resume
+                </button>
+                {% endif %}
+                <form method="post" action="/admin/delete-user/{{ user.id }}?next=/admin/users" style="display:inline;margin:0" onsubmit="return confirm('⚠️ WARNING: CRITICAL DELETION RISK!\n\nThis action cannot be undone.\n- All interview results, transcripts, and scorecards associated with {{ user.full_name }} will be permanently deleted.\n- Active practice sessions will be destroyed.\n- Candidate accounts and login credentials will be removed from the database.\n\nAre you absolutely sure you want to proceed?');">
+                    <button type="submit" class="btn-del-user"><i class="bi bi-trash"></i> Delete User</button>
+                </form>
+            </div>
         </div>
 
         <div class="d-flex align-items-center gap-4 flex-wrap mb-4">

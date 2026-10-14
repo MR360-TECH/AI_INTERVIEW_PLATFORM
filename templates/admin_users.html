@@ -187,10 +187,11 @@
 
         /* Identity chips (Google / Verified) sit in the meta row with Member ID and Slot request,
            sized to match those chips instead of competing with the bold uppercase name above them. */
-        .auth-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; border: 1px solid; }
+        .auth-badge { display: inline-flex; align-items: center; justify-content: center; gap: 3px; width: 22px; height: 22px; padding: 0; border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.68rem; font-weight: 800; white-space: nowrap; border: 1px solid; flex-shrink: 0; }
         .auth-badge.google { background: rgba(66,133,244,0.12); border-color: rgba(66,133,244,0.35); color: #8ab4f8; }
-        .auth-badge.verified { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.35); }
-        .google-g-icon { width: 12px; height: 12px; flex-shrink: 0; }
+        .auth-badge.verified { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.4); }
+        .auth-badge-letter { line-height: 1; }
+        .google-g-icon { width: 11px; height: 11px; flex-shrink: 0; }
 
         .btn-view {
             display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px;
@@ -401,10 +402,10 @@
                                                 <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                                 <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                                             </svg>
-                                            Google
+                                            <span class="auth-badge-letter">G</span>
                                         </span>
                                         {% elif user.email_verified %}
-                                        <span class="auth-badge verified"><i class="bi bi-patch-check-fill"></i> Verified</span>
+                                        <span class="auth-badge verified" title="Verified e-mail"><span class="auth-badge-letter">V</span></span>
                                         {% endif %}
                                         {% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}
                                         {% if r.request and settings.enable_attempt_limits %}<span class="req-badge" title="{{ r.request.reason }}"><i class="bi bi-send-fill"></i> Slot request</span>{% endif %}
