@@ -1,13 +1,37 @@
 import os
 import json
+import socket
 import smtplib
 import threading
+import contextlib
 import urllib.request
 import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from MODULES.LAYER_1_CORE_INFRASTRUCTURE.config import APP_BASE_URL
 from MODULES.LAYER_3_BUSINESS_SERVICES import email_templates
+
+# A plain urllib request carries no User-Agent, and Resend's API sits behind Cloudflare, which fingerprints that
+# as a bot and returns 403 (error 1010) before the request ever reaches Resend. A normal browser UA clears it.
+_BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+               "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+
+@contextlib.contextmanager
+def _force_ipv4_dns():
+    """Render's containers can resolve smtp.gmail.com to an IPv6 (AAAA) address with no outbound IPv6 route,
+    failing with 'Network is unreachable' before TLS even starts. Restricting DNS answers to IPv4 here for the
+    duration of the SMTP connection keeps the hostname (so certificate checks still match) but skips that route."""
+    original = socket.getaddrinfo
+
+    def _ipv4_only(*args, **kwargs):
+        return [r for r in original(*args, **kwargs) if r[0] == socket.AF_INET]
+
+    socket.getaddrinfo = _ipv4_only
+    try:
+        yield
+    finally:
+        socket.getaddrinfo = original
 
 
 def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mail_pass, reply_to=None):
@@ -24,7 +48,7 @@ def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mai
 
     # Try Port 587 (TLS)
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=6) as server:
+        with _force_ipv4_dns(), smtplib.SMTP("smtp.gmail.com", 587, timeout=6) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()
@@ -37,7 +61,7 @@ def _send_via_smtp(to_email, subject, text_content, html_content, mail_user, mai
 
     # Try Port 465 (SSL)
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=6) as server:
+        with _force_ipv4_dns(), smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=6) as server:
             server.ehlo()
             server.login(mail_user, mail_pass)
             server.sendmail(mail_user, [to_email], msg.as_string())
@@ -74,6 +98,7 @@ def _send_via_resend(to_email, subject, text_content, html_content, api_key, rep
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": _BROWSER_UA,
         },
         method="POST"
     )
@@ -113,6 +138,7 @@ def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key, r
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": _BROWSER_UA,
         },
         method="POST"
     )

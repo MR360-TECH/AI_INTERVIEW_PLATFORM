@@ -862,16 +862,20 @@
 <div class="page-wrap">
 
     <div class="top-bar">
-        <button onclick="window.print()" class="btn-action btn-primary-action" id="btn-print-top">
-            <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
-        </button>
-        <button type="button" class="btn-action" id="btn-feedback-top" data-feedback-open data-feedback-page="result" data-feedback-session="{{ session_code or '' }}">
-            <i class="bi bi-chat-heart-fill"></i> Give Feedback
-        </button>
-        <button type="button" class="back-btn-global" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
-        <a href="{{ back_url | default('/dashboard') }}" class="back-btn-global" id="btn-back-top">
-            <i class="bi bi-arrow-left"></i> Back
-        </a>
+        <div class="d-flex align-items-center flex-wrap" style="gap:14px;">
+            <button onclick="window.print()" class="btn-action btn-primary-action" id="btn-print-top">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Report
+            </button>
+            <button type="button" class="btn-action" id="btn-feedback-top" data-feedback-open data-feedback-page="result" data-feedback-session="{{ session_code or '' }}">
+                <i class="bi bi-chat-heart-fill"></i> Give Feedback
+            </button>
+        </div>
+        <div class="d-flex align-items-center" style="gap:10px;">
+            <button type="button" class="back-btn-global" data-theme-toggle aria-label="Light mode on or off" title="Light mode is off. Click to switch it on"><i class="bi bi-eye-slash"></i></button>
+            <a href="{{ back_url | default('/dashboard') }}" class="back-btn-global" id="btn-back-top">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
     </div>
 
     <div class="report-card" id="report-main">
