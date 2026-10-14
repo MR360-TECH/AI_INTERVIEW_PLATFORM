@@ -515,34 +515,32 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             padding: 0;
-            border-radius: 6px;
+            border-radius: 7px;
             font-family: 'Outfit', sans-serif;
-            font-size: 0.68rem;
+            font-size: 0.78rem;
             font-weight: 800;
+            line-height: 1;
             white-space: nowrap;
-            border: 1px solid;
+            border: 1.5px solid;
             flex-shrink: 0;
+            margin-left: 2px;
         }
         .auth-badge.google {
-            background: rgba(66, 133, 244, 0.12);
-            color: #8ab4f8;
+            background: #ffffff;
             border-color: rgba(66, 133, 244, 0.35);
+            padding: 4px;
         }
         .auth-badge.verified {
-            background: rgba(16, 185, 129, 0.12);
+            background: rgba(16, 185, 129, 0.14);
             color: #34d399;
-            border-color: rgba(16, 185, 129, 0.4);
-        }
-        .auth-badge-letter {
-            line-height: 1;
+            border-color: rgba(16, 185, 129, 0.45);
         }
         .google-g-icon {
-            width: 11px;
-            height: 11px;
+            width: 100%;
+            height: 100%;
             flex-shrink: 0;
         }
 
@@ -901,10 +899,9 @@
                                                     <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                                     <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                                                 </svg>
-                                                <span class="auth-badge-letter">G</span>
                                             </span>
                                         {% elif user and user.email_verified %}
-                                            <span class="auth-badge verified" title="Verified e-mail"><span class="auth-badge-letter">V</span></span>
+                                            <span class="auth-badge verified" title="Verified e-mail">V</span>
                                         {% endif %}
                                         <span class="session-code-badge" onclick="event.stopPropagation(); copySessionId('{{ result.session_code }}', this);" title="Click to copy Assessment Session ID">
                                             <i class="bi bi-copy copy-icon"></i> {{ result.session_code }}

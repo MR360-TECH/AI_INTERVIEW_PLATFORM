@@ -187,11 +187,10 @@
 
         /* Identity chips (Google / Verified) sit in the meta row with Member ID and Slot request,
            sized to match those chips instead of competing with the bold uppercase name above them. */
-        .auth-badge { display: inline-flex; align-items: center; justify-content: center; gap: 3px; width: 22px; height: 22px; padding: 0; border-radius: 6px; font-family: 'Outfit', sans-serif; font-size: 0.68rem; font-weight: 800; white-space: nowrap; border: 1px solid; flex-shrink: 0; }
-        .auth-badge.google { background: rgba(66,133,244,0.12); border-color: rgba(66,133,244,0.35); color: #8ab4f8; }
-        .auth-badge.verified { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.4); }
-        .auth-badge-letter { line-height: 1; }
-        .google-g-icon { width: 11px; height: 11px; flex-shrink: 0; }
+        .auth-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border-radius: 7px; font-family: 'Outfit', sans-serif; font-size: 0.78rem; font-weight: 800; line-height: 1; white-space: nowrap; border: 1.5px solid; flex-shrink: 0; margin-left: 2px; }
+        .auth-badge.google { background: #ffffff; border-color: rgba(66,133,244,0.35); padding: 4px; }
+        .auth-badge.verified { background: rgba(16, 185, 129, 0.14); color: #34d399; border-color: rgba(16, 185, 129, 0.45); }
+        .google-g-icon { width: 100%; height: 100%; flex-shrink: 0; }
 
         .btn-view {
             display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 10px;
@@ -377,7 +376,6 @@
                     <tr>
                         <th>Candidate</th>
                         <th>Profile</th>
-                        <th>Latest assessment</th>
                         <th>Attempts taken</th>
                         <th>Joined</th>
                         <th style="text-align: right;">Actions</th>
@@ -402,10 +400,9 @@
                                                 <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
                                                 <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
                                             </svg>
-                                            <span class="auth-badge-letter">G</span>
                                         </span>
                                         {% elif user.email_verified %}
-                                        <span class="auth-badge verified" title="Verified e-mail"><span class="auth-badge-letter">V</span></span>
+                                        <span class="auth-badge verified" title="Verified e-mail">V</span>
                                         {% endif %}
                                         {% if user.user_code %}<span class="member-id" data-code="{{ user.user_code }}" title="Member ID - click to copy"><i class="bi bi-person-vcard"></i> {{ user.user_code }}</span>{% endif %}
                                         {% if r.request and settings.enable_attempt_limits %}<span class="req-badge" title="{{ r.request.reason }}"><i class="bi bi-send-fill"></i> Slot request</span>{% endif %}
@@ -416,25 +413,6 @@
                         <td data-label="Profile">
                             <div class="um-main">{{ user.education|upper or '—' }}</div>
                             <div class="um-sub-cyan">{{ user.course|upper or '' }}{% if user.semester %} · {{ user.semester }}{% endif %}</div>
-                            {% if r.has_resume %}
-                            <span class="um-tag ok"><i class="bi bi-file-earmark-check-fill"></i> Resume</span>
-                            {% else %}
-                            <span class="um-tag off"><i class="bi bi-file-earmark-x"></i> No resume</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Latest assessment">
-                            {% if r.last %}
-                                <div class="um-main">{{ r.last.score }} <span class="um-dim">/ 10</span>
-                                    {% if r.last.is_terminated or 'Terminated' in (r.last.status or '') %}
-                                    <span class="um-tag bad">Terminated</span>
-                                    {% elif r.last.is_exited %}<span class="um-tag bad">Exited early</span>
-                                    {% elif r.last_ok %}<span class="um-tag ok">Recommended</span>
-                                    {% else %}<span class="um-tag bad">Not recommended</span>{% endif %}
-                                </div>
-                                <a class="um-link" href="/admin/interview/{{ r.last.id }}" onclick="event.stopPropagation();"><i class="bi bi-clipboard-data"></i> Open report</a>
-                            {% else %}
-                                <span class="um-dim">Not assessed yet</span>
-                            {% endif %}
                         </td>
                         <td data-label="Attempts taken">
                             <div class="um-main">{{ r.used }}</div>
