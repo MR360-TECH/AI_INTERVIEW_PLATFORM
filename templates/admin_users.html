@@ -517,53 +517,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-var pendingUnlockUserId = null;
-
-function triggerUnlockCandidate(userId, candidateName) {
-    pendingUnlockUserId = userId;
-    var nameSpan = document.getElementById('modalTargetCandidate');
-    if (nameSpan) nameSpan.textContent = candidateName || 'Candidate';
-    
-    var modalElem = document.getElementById('customUnlockModal');
-    if (modalElem && typeof bootstrap !== 'undefined') {
-        var bsModal = bootstrap.Modal.getOrCreateInstance(modalElem);
-        bsModal.show();
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    var confirmBtn = document.getElementById('confirmUnlockModalBtn');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', function() {
-            if (!pendingUnlockUserId) return;
-            
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Authorizing...';
-
-            fetch('/admin/user/' + pendingUnlockUserId + '/unlock-attempt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (data.status === 'success') {
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'Could not unlock candidate attempt.'));
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot';
-                }
-            })
-            .catch(function(err) {
-                alert('Connection Error: ' + err);
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = '<i class="bi bi-unlock-fill me-1"></i> Confirm &amp; Unlock Slot';
-            });
-        });
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 <script>
 (function(){
     var c=document.getElementById('dbParticles');
@@ -576,18 +530,6 @@ document.addEventListener('DOMContentLoaded', function() {
         c.appendChild(s);
     }
 })();
-</script>
-<script>
-/* member ID chips: one click copies the ID, ready to paste into a search box or an e-mail */
-document.addEventListener('click', function (e) {
-    var chip = e.target.closest ? e.target.closest('.member-id[data-code]') : null;
-    if (!chip) return;
-    e.preventDefault(); e.stopPropagation();
-    var code = chip.getAttribute('data-code');
-    function done() { chip.classList.add('copied'); var t = chip.innerHTML; chip.innerHTML = '<i class="bi bi-check2"></i> Copied'; setTimeout(function () { chip.innerHTML = t; chip.classList.remove('copied'); }, 1300); }
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(code).then(done, done);
-    else { var a = document.createElement('textarea'); a.value = code; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); } catch (x) {} a.remove(); done(); }
-}, true);
 </script>
 <script>
 /* Live search: the list updates while you type (name, e-mail, member ID, course, skills). Enter still works too. */

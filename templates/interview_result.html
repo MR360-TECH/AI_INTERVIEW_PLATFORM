@@ -1197,49 +1197,8 @@
         }, 100);
     });
 
-    function copySessionId(text, triggerElem) {
-        if (!text) return;
-        function showFeedback() {
-            if (!triggerElem) return;
-            var origHtml = triggerElem.getAttribute('data-orig-html');
-            if (!origHtml) {
-                origHtml = triggerElem.innerHTML;
-                triggerElem.setAttribute('data-orig-html', origHtml);
-            }
-            triggerElem.innerHTML = '<i class="bi bi-check2 text-success"></i> Copied!';
-            triggerElem.style.borderColor = '#10b981';
-            setTimeout(function() {
-                triggerElem.innerHTML = triggerElem.getAttribute('data-orig-html');
-                triggerElem.style.borderColor = '';
-            }, 1600);
-        }
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(showFeedback).catch(function() {
-                fallbackCopy(text, showFeedback);
-            });
-        } else {
-            fallbackCopy(text, showFeedback);
-        }
-    }
-
-    function fallbackCopy(text, callback) {
-        var textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-999999px";
-        textArea.style.top = "-999999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            if (callback) callback();
-        } catch (err) {
-            console.error('Fallback copy failed', err);
-        }
-        document.body.removeChild(textArea);
-    }
 </script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 
 <script>
 /* ── Evaluation Result page background particle spawner ── */
