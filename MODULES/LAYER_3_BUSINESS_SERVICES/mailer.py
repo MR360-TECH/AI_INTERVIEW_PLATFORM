@@ -155,12 +155,51 @@ def _send_via_sendgrid(to_email, subject, text_content, html_content, api_key, r
         return False
 
 
+def _send_via_brevo(to_email, subject, text_content, html_content, api_key, reply_to=None):
+    """Send via Brevo (formerly Sendinblue) HTTP API (port 443 HTTPS)."""
+    from_addr = (os.environ.get("MAIL_USERNAME") or "aiinterviewplatform26@gmail.com").strip()
+    body = {
+        "sender": {"name": "AI Interview Platform", "email": from_addr},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "htmlContent": html_content,
+        "textContent": text_content,
+    }
+    if reply_to:
+        body["replyTo"] = {"email": reply_to}
+    payload = json.dumps(body).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={
+            "api-key": api_key,
+            "Content-Type": "application/json",
+            "User-Agent": _BROWSER_UA,
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            body = resp.read().decode()
+            print(f"[MAIL] Brevo HTTP response: {resp.status} {body[:100]}")
+            return resp.status in (200, 201)
+    except urllib.error.HTTPError as http_err:
+        err_body = http_err.read().decode() if http_err.fp else ""
+        print(f"[MAIL] Brevo HTTP error {http_err.code}: {err_body[:200]}")
+        return False
+    except urllib.error.URLError as url_err:
+        print(f"[MAIL] Brevo URL error: {url_err.reason}")
+        return False
+
+
 def send_email_notification(to_email, subject, text_content, html_content, reply_to=None):
     """
     Master email dispatcher with multi-provider failover:
       1. Gmail SMTP (port 587 TLS / port 465 SSL)
       2. Resend HTTP API (port 443 HTTPS)
-      3. SendGrid HTTP API (port 443 HTTPS)
+      3. Brevo HTTP API (port 443 HTTPS)
+      4. SendGrid HTTP API (port 443 HTTPS)
     """
     to_email = (to_email or "").strip()
     if not to_email:
@@ -179,7 +218,13 @@ def send_email_notification(to_email, subject, text_content, html_content, reply
         if _send_via_resend(to_email, subject, text_content, html_content, resend_key, reply_to):
             return True
 
-    # 3. Try SendGrid HTTP API
+    # 3. Try Brevo HTTP API
+    brevo_key = (os.environ.get("BREVO_API_KEY") or "").strip()
+    if brevo_key:
+        if _send_via_brevo(to_email, subject, text_content, html_content, brevo_key, reply_to):
+            return True
+
+    # 4. Try SendGrid HTTP API
     sg_key = (os.environ.get("SENDGRID_API_KEY") or "").strip()
     if sg_key:
         if _send_via_sendgrid(to_email, subject, text_content, html_content, sg_key, reply_to):
