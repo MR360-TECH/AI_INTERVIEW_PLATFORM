@@ -1302,6 +1302,11 @@
                         <button class="btn-emerald-grad w-100" data-bs-toggle="modal" data-bs-target="#resumeUploadModal" id="uploadResumeBtn">
                             <i class="bi bi-cloud-upload-fill"></i> {% if user.resume_text %}Sync / Update Profile CV{% else %}Upload Profile CV{% endif %} &rarr;
                         </button>
+                        {% if user.resume_text %}
+                        <button type="button" class="btn-resume-remove-sm w-100 mt-2" data-bs-toggle="modal" data-bs-target="#confirmRemoveResumeModal">
+                            <i class="bi bi-trash3 me-1"></i> Remove Resume
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
 
