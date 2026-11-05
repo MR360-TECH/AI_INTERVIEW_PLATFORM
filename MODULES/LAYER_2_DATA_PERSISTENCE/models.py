@@ -119,6 +119,7 @@ class InterviewResult(db.Model):
     __tablename__ = 'interview_results'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    candidate_name = db.Column(db.String(100), nullable=True)   # denormalized so the name is visible directly in the DB
     score = db.Column(db.Numeric(4, 2))
     status = db.Column(db.String(50))
     strengths = db.Column(db.Text)
@@ -129,6 +130,9 @@ class InterviewResult(db.Model):
     termination_reason = db.Column(db.Text)
     transcript = db.Column(db.Text)          # JSON [{"q", "a"}] of the questions answered (kept for exited sessions)
     interview_datetime = db.Column(db.DateTime, server_default=db.func.now())
+
+    # Relationship to User for easy lookups
+    user = db.relationship('User', backref=db.backref('interview_results', lazy=True))
 
     # The candidate pressed Exit during a scored assessment: the answers given so far are evaluated and it counts
     # as one attempt.
@@ -372,6 +376,16 @@ def _clamp_strings(mapper, connection, target):
 
 event.listen(db.Model, "before_insert", _clamp_strings, propagate=True)
 event.listen(db.Model, "before_update", _clamp_strings, propagate=True)
+
+
+@event.listens_for(InterviewResult, "before_insert")
+def _populate_candidate_name(mapper, connection, target):
+    """Auto-populate candidate_name from the linked User record when not already set."""
+    if not target.candidate_name and target.user_id:
+        from sqlalchemy import text as sql
+        row = connection.execute(sql("SELECT full_name FROM users WHERE id = :uid"), {"uid": target.user_id}).first()
+        if row:
+            target.candidate_name = row[0]
 
 
 # ══════════════════════════════════════════════════════════════════════════════

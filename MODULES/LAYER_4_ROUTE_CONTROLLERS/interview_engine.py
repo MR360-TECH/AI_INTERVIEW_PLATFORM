@@ -703,6 +703,7 @@ def interview_result():
 
         result_record = InterviewResult(
             user_id=user_id,
+            candidate_name=session.get('user_name'),
             score=score_num,
             status=db_verdict,
             summary=summary_text,

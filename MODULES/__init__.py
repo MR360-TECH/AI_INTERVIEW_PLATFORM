@@ -20,6 +20,7 @@ _REQUIRED_COLUMNS = {
         ('is_terminated', 'BOOLEAN DEFAULT FALSE'),
         ('termination_reason', 'TEXT'),
         ('transcript', 'TEXT'),
+        ('candidate_name', 'VARCHAR(100)'),
     ],
     'admin_settings': [
         ('enable_warning_strikes', 'BOOLEAN DEFAULT TRUE'),
@@ -62,6 +63,11 @@ def ensure_columns():
                     # Accounts that existed before this feature must never receive a "welcome" email.
                     with db.engine.begin() as conn:
                         conn.execute(text("UPDATE users SET welcome_sent = TRUE"))
+                if (table, column_name) == ('interview_results', 'candidate_name'):
+                    # Backfill existing rows: copy the user's full_name into candidate_name where it is still NULL.
+                    with db.engine.begin() as conn:
+                        conn.execute(text("UPDATE interview_results SET candidate_name = (SELECT full_name FROM users WHERE users.id = interview_results.user_id) WHERE candidate_name IS NULL"))
+                    print("Backfilled candidate_name for existing interview results.")
             except Exception as schema_err:
                 print(f"Schema check notice ({table}.{column_name}): {schema_err}")
     # Member IDs must be unique. New databases get this index from the model; older ones get it here.

@@ -92,9 +92,10 @@ def terminate(user_id, reason, summary):
     result_id = None
     domain = session.get("interview_domain", "General")
     try:
-        record = InterviewResult(user_id=user_id, score=0.0, status="Terminated (Breach)", summary=summary, domain=domain,
-                                 is_terminated=True, termination_reason=reason)
         user = db.session.get(User, user_id)
+        record = InterviewResult(user_id=user_id, candidate_name=user.full_name if user else None,
+                                 score=0.0, status="Terminated (Breach)", summary=summary, domain=domain,
+                                 is_terminated=True, termination_reason=reason)
         record_counted_attempt(user, record)
         db.session.commit()
         result_id = record.id

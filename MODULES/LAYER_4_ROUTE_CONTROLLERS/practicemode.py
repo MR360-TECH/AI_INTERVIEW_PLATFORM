@@ -150,6 +150,7 @@ def terminate_proctoring():
     try:
         result_record = InterviewResult(
             user_id=user_id,
+            candidate_name=session.get('user_name'),
             score=0.0,
             status="Terminated (Breach)",
             summary=summary_msg,

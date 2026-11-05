@@ -104,7 +104,8 @@ def record_exit(user_id, settings):
 
         try:
             user = db.session.get(User, user_id)
-            record = InterviewResult(user_id=user_id, score=score, status=InterviewResult.EXITED_STATUS,
+            record = InterviewResult(user_id=user_id, candidate_name=user.full_name if user else None,
+                                     score=score, status=InterviewResult.EXITED_STATUS,
                                      summary=summary, domain=domain, transcript=json.dumps(transcript))
             record_counted_attempt(user, record)
             db.session.commit()

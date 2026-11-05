@@ -92,6 +92,7 @@ def _finish_quiz():
 
     result_record = InterviewResult(
         user_id=user_id,
+        candidate_name=session.get('user_name'),
         score=score_num,
         status="Rapid Fire (Practice)",
         summary=RAPIDFIRE_MARKER + json.dumps({"topic": topic, "correct": correct_count, "total": total, "items": breakdown}),
