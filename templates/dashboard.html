@@ -1180,8 +1180,7 @@
             {% if just_assessed %}
             <div class="alert alert-success mb-4 anim d0">
                 <i class="bi bi-check-circle-fill fs-5"></i>
-                <span class="as-text">Assessment complete! You scored <span class="as-score">{{ "%.1f"|format(just_assessed.score or 0) }} / 10</span> &mdash; see it below, or open the full report.</span>
-                <a href="/my-history/{{ just_assessed.id }}" class="btn btn-sm rounded-pill fw-semibold" style="background:var(--emerald);color:#020510;border:none;white-space:nowrap;">View Report</a>
+                <span class="as-text">Assessment submitted! Please check your registered email address for your detailed interview evaluation report and feedback breakdown.</span>
             </div>
             {% endif %}
 

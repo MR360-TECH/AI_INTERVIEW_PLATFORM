@@ -752,14 +752,11 @@ def interview_result():
     session.pop("lang_level", None)
     clear_progress(user_id)
 
-    if not is_practice:
-        # A formal assessment just finished: go back to the workspace (like a completed task in most apps)
-        # instead of a separate results page. The result itself already shows there, and a quick feedback
-        # prompt opens automatically; the full report stays one click away ("View Report").
-        return redirect(f"/dashboard?assessed={session_code_val}")
+    back_url_param = f"/dashboard?assessed={session_code_val}" if not is_practice else "/dashboard"
 
     return render_template(
         "interview_result.html",
+        back_url=back_url_param,
         score=score_num,
         score_percent=score_percent,
         label=label,
